@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+    <!-- title -->
+
+
+    
+
+<!-- keywords -->
+
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="王盛">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="王盛">
+    
+        <meta name="keywords" content="hexo,hexo-theme,hexo-blog">
+    
+    <meta name="description" content="">
+    <meta name="description" content="docker相关知识补充关于docker的详细基础可以看另外一篇博文，这里只介绍与k8s相关的部分，以及做一些补充 Dockerfile的介绍与书写Dockerfile是一个用于定义Docker镜像的文本文件，包含了一系列的指令和参数，用于指示Docker在构建镜像时应该执行哪些操作，例如基于哪个基础镜像、复制哪些文件到镜像中、运行哪些命令等。 是除了从镜像仓库拉取、解压保存镜像以外的自定义构建镜">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s学习记录">
+<meta property="og:url" content="http://durative.github.io/2024/02/27/k8s/index.html">
+<meta property="og:site_name" content="Akemi">
+<meta property="og:description" content="docker相关知识补充关于docker的详细基础可以看另外一篇博文，这里只介绍与k8s相关的部分，以及做一些补充 Dockerfile的介绍与书写Dockerfile是一个用于定义Docker镜像的文本文件，包含了一系列的指令和参数，用于指示Docker在构建镜像时应该执行哪些操作，例如基于哪个基础镜像、复制哪些文件到镜像中、运行哪些命令等。 是除了从镜像仓库拉取、解压保存镜像以外的自定义构建镜">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227171120.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227171550.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227172729.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227174238.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/image.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227174754.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227174831.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/Untitled.png">
+<meta property="article:published_time" content="2024-02-27T08:39:48.000Z">
+<meta property="article:modified_time" content="2024-04-26T10:54:44.178Z">
+<meta property="article:author" content="王盛">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227171120.png">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="icon" href="/assets/favicon.ico">
+    
+    <title>k8s学习记录 · Akemi</title>
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+    (function (w) {
+        'use strict'
+        // rel=preload support test
+        if (!w.loadCSS) {
+            w.loadCSS = function () {}
+        }
+        // define on the loadCSS obj
+        var rp = (loadCSS.relpreload = {})
+        // rel=preload feature support test
+        // runs once and returns a function for compat purposes
+        rp.support = (function () {
+            var ret
+            try {
+                ret = w.document.createElement('link').relList.supports('preload')
+            } catch (e) {
+                ret = false
+            }
+            return function () {
+                return ret
+            }
+        })()
+
+        // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+        // then change that media back to its intended value on load
+        rp.bindMediaToggle = function (link) {
+            // remember existing media attr for ultimate state, or default to 'all'
+            var finalMedia = link.media || 'all'
+
+            function enableStylesheet() {
+                link.media = finalMedia
+            }
+
+            // bind load handlers to enable media
+            if (link.addEventListener) {
+                link.addEventListener('load', enableStylesheet)
+            } else if (link.attachEvent) {
+                link.attachEvent('onload', enableStylesheet)
+            }
+
+            // Set rel and non-applicable media type to start an async request
+            // note: timeout allows this to happen async to let rendering continue in IE
+            setTimeout(function () {
+                link.rel = 'stylesheet'
+                link.media = 'only x'
+            })
+            // also enable media after 3 seconds,
+            // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+            setTimeout(enableStylesheet, 3000)
+        }
+
+        // loop through link elements in DOM
+        rp.poly = function () {
+            // double check this to prevent external calls from running
+            if (rp.support()) {
+                return
+            }
+            var links = w.document.getElementsByTagName('link')
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i]
+                // qualify links to those with rel=preload and as=style attrs
+                if (
+                    link.rel === 'preload' &&
+                    link.getAttribute('as') === 'style' &&
+                    !link.getAttribute('data-loadcss')
+                ) {
+                    // prevent rerunning on link
+                    link.setAttribute('data-loadcss', true)
+                    // bind listeners to toggle media back
+                    rp.bindMediaToggle(link)
+                }
+            }
+        }
+
+        // if unsupported, run the polyfill
+        if (!rp.support()) {
+            // run once at least
+            rp.poly()
+
+            // rerun poly on an interval until onload
+            var run = w.setInterval(rp.poly, 500)
+            if (w.addEventListener) {
+                w.addEventListener('load', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            } else if (w.attachEvent) {
+                w.attachEvent('onload', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            }
+        }
+
+        // commonjs
+        if (typeof exports !== 'undefined') {
+            exports.loadCSS = loadCSS
+        } else {
+            w.loadCSS = loadCSS
+        }
+    })(typeof global !== 'undefined' ? global : this)
+</script>
+
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20211217" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="/css/dark.css?v=20211217" as="style">
+    <link rel="stylesheet" href="/css/dark.css">
+    <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
+    <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
+    <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <!-- algolia -->
+    
+    <!-- 百度统计  -->
+    
+    <!-- Google tag (gtag.js) -->
+    
+
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ == undefined) {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js" />')
+        }
+    </script>
+    
+        <body class="post-body">
+    
+        <!-- header -->
+        <header class="header header-mobile">
+    <!-- top read progress line -->
+    <div class="header-element">
+        <div class="read-progress"></div>
+    </div>
+    <!-- sidebar menu button -->
+    <div class="header-element">
+        
+            <div class="header-sidebar-menu">
+        
+            
+                <div style="padding-left: 1px;">&#xe775;</div>
+            
+        </div>
+    </div>
+    <!-- header actions -->
+    <div class="header-actions">
+        <!-- theme mode switch button -->
+        <span class="header-theme-btn header-element">
+            <i class="fas fa-adjust"></i>
+        </span>
+        <!-- back to home page text -->
+        <span class="home-link header-element">
+            <a href=/>Akemi</a>
+        </span>
+    </div>
+    <!-- toggle banner for post layout -->
+    
+        
+            <div class="banner">
+        
+            <div class="blog-title header-element">
+                <a href="/">Akemi</a>
+            </div>
+            <div class="post-title header-element">
+                <a href="#" class="post-name">k8s学习记录</a>
+            </div>
+        </div>
+    
+</header>
+
+        <!-- fixed footer -->
+        <footer class="footer-fixed">
+    <!-- back to top button -->
+    <div class="footer-fixed-element">
+        
+            <div class="back-top back-top-hidden">
+        
+        
+            <div>&#xe639;</div>
+        
+        </div>
+    </div>
+</footer>
+
+        <!-- wrapper -->
+        <div class="wrapper">
+            <div class="site-intro" style="
+
+
+
+
+
+
+
+    height:50vh;
+
+">
+    
+    <!-- 主页  -->
+    
+        
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post-bg.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+                k8s学习记录
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+                
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页 meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+    
+</div>
+
+                
+                <!-- 文章字数统计 -->
+                
+                <div class="post-intro-meta">
+                    <!-- 撰写日期 -->
+                    <span class="iconfont-archer post-intro-calander">&#xe676;</span>
+                    <span class="post-intro-time">2024/02/27</span>
+                    <!-- busuanzi -->
+                    
+                        <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                            <span class="iconfont-archer post-intro-busuanzi">&#xe602;</span>
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    
+                    <!-- 文章分享 -->
+                    <span class="share-wrapper">
+                        <span class="iconfont-archer share-icon">&#xe71d;</span>
+                        <span class="share-text">Share</span>
+                        <ul class="share-list">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+            <script>
+  // get user agent
+  function getBrowserVersions() {
+    var u = window.navigator.userAgent
+    return {
+      userAgent: u,
+      trident: u.indexOf('Trident') > -1, //IE内核
+      presto: u.indexOf('Presto') > -1, //opera内核
+      webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+      gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+      mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+      ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+      android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+      iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+      iPad: u.indexOf('iPad') > -1, //是否为iPad
+      webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+      weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+      uc: u.indexOf('UCBrowser') > -1, //是否为android下的UC浏览器
+    }
+  }
+  var browser = {
+    versions: getBrowserVersions(),
+  }
+  console.log('userAgent: ' + browser.versions.userAgent)
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded')
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document
+        .getElementsByClassName('intro-title')[0]
+        .classList.add('intro-fade-in')
+      document
+        .getElementsByClassName('intro-subtitle')[0]
+        .classList.add('intro-fade-in')
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in')
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb() {
+    if (browser.versions.uc) {
+      console.log('UCBrowser')
+      fontLoaded()
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular'],
+        },
+        loading: function () {
+          // 所有字体开始加载
+          // console.log('font loading');
+        },
+        active: function () {
+          // 所有字体已渲染
+          fontLoaded()
+        },
+        inactive: function () {
+          // 字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout')
+          fontLoaded()
+        },
+        timeout: 5000, // Set the timeout to two seconds
+      })
+    }
+  }
+
+  function asyncErr() {
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document,
+      t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0]
+    o.src = u
+    if (cb) {
+      o.addEventListener(
+        'load',
+        function (e) {
+          cb(null, e)
+        },
+        false
+      )
+    }
+    if (err) {
+      o.addEventListener(
+        'error',
+        function (e) {
+          err(null, e)
+        },
+        false
+      )
+    }
+    s.parentNode.insertBefore(o, s)
+  }
+
+  var asyncLoadWithFallBack = function (arr, success, reject) {
+    var currReject = function () {
+      reject()
+      arr.shift()
+      if (arr.length) async(arr[0], success, currReject)
+    }
+
+    async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack(
+    [
+      'https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js',
+      'https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js',
+      "/lib/webfontloader.min.js",
+    ],
+    asyncCb,
+    asyncErr
+  )
+</script>
+
+            <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+            <div class="container container-unloaded">
+                <main class="main post-page">
+    <article class="article-entry">
+        <h1 id="docker相关知识补充"><a href="#docker相关知识补充" class="headerlink" title="docker相关知识补充"></a>docker相关知识补充</h1><p>关于docker的详细基础可以看另外一篇博文，这里只介绍与k8s相关的部分，以及做一些补充</p>
+<h2 id="Dockerfile的介绍与书写"><a href="#Dockerfile的介绍与书写" class="headerlink" title="Dockerfile的介绍与书写"></a>Dockerfile的介绍与书写</h2><p>Dockerfile是一个用于定义Docker镜像的文本文件，包含了一系列的指令和参数，用于指示Docker在构建镜像时应该执行哪些操作，例如基于哪个基础镜像、复制哪些文件到镜像中、运行哪些命令等。</p>
+<p>是除了从镜像仓库拉取、解压保存镜像以外的自定义构建镜像的方式，通过docker bulid dockerfile来构建</p>
+<p>主要有几个部分组成，包括基础镜像，创建者信息，镜像操作指令，容器启动指令</p>
+<p>构建指令：<strong>docker build -t&#x3D;”image-name” &lt;文件目录&gt; –load</strong></p>
+<p>#Dockerfile文件指令<br>#FROM<br>FROM指定基础镜像，这个文件需要在本地有<br>如果在docker build后增加–load参数 可以去docker官网进行拉取<br>Dockerfile文件中定义的镜像就以FROM的镜像为基础，可指定tag</p>
+<p>#MAINTAINER<br>是备注，用以指定创建者信息</p>
+<p>#COPY<br>将同目录下的文件复制到镜像中<br>也可以使用—chown&#x3D;参数指定权限<br>格式为 filename path</p>
+<p>#ADD<br>格式同COPY<br>区别是移动tar文件后会自动解压<br>docker官方推荐使用COPY</p>
+<p>#RUN<br>说明镜像构建过程中需要运行的命令，每次执行都会增加一层<br>有shell模式和exec模式<br>shell模式：<br>直接使用linux命令即可<br>exec模式：<br>RUN [“&#x2F;bin&#x2F;bash”,”-c”,” yum -y install xxx”]<br>&#x2F;bin&#x2F;bash表示解释器位置<br>-c代表指定后面是要执行的命令</p>
+<p>#EXPOSE<br>声明端口，说明这个端口是容器映射出去的端口<br>可以指定多个<br>声明后，docker run -P会随机将宿主机端口映射到声明后的端口</p>
+<p>#CMD<br>CMD在docker run命令执行时执行<br>有shell模式和exec模式<br>但会被docker run后自带的命令所覆盖<br>如果使用了ENTRYPOINT指令，作为其默认参数</p>
+<p>#ENTERYPOINT<br>作用于CMD相同<br>有shell模式和exec模式ENTERYPOINT<br>不会被docker run后自带的命令覆盖，如果使用了参数–entrypoint则可以覆盖</p>
+<p>ENTRYPOINT与CMD混用：<br>ENTRYPOINT [“nginx”,”-c”]<br>CMD [“&#x2F;nginx.conf”]<br>nginx是nginx的命令行工具<br>-c代表用xx文件执行该命令<br>&#x2F;nginx.conf基于根目录下的nginx.conf运行，即该文件是默认文件<br>但如果docker run指定了命令，就会覆盖掉CMD指定的文件，转而使用docker run指定的文件</p>
+<p>#VOLUME<br>指定容器内的默认挂载点，使用后会默认把宿主机&#x2F;var&#x2F;lib&#x2F;docker&#x2F;volumes中挂载到容器中的挂载点，在docker run时可以通过-v手动指定宿主机挂载点<br>1.持久化存储，避免因为重启导致数据丢失<br>2.可以通过-v来更好管理存储</p>
+<p>#WORKDIR<br>指定命令的工作目录，需要提前创建好</p>
+<p>#ENV<br>指定环境变量<br>ENV key&#x3D;value<br>例如ENV VERSION&#x3D; 1.0，就可以使用$VERSION来引用</p>
+<p>#USER<br>用以指定用户和用户组</p>
+<p>#ONBUILD<br>延迟执行创建的命令，在某次构建镜像时不会执行，但下次如果有新的dockerfile使用了本镜像进行镜像构建时，就会执行这条命令。</p>
+<h3 id="nginx镜像构建"><a href="#nginx镜像构建" class="headerlink" title="nginx镜像构建"></a>nginx镜像构建</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> wsdockerfile</span><br><span class="line"><span class="comment">#centos8已经停更了，下载软件需要另外的源，这个文件清华镜像站和centos官网都能找到</span></span><br><span class="line"><span class="built_in">cp</span> Centos-vault-8.5.2111.repo wsdockerfile/</span><br><span class="line"><span class="built_in">cd</span> wsdockerfile/</span><br><span class="line"><span class="comment">#删除并替换/etc/yum.repos.d/的源文件</span></span><br><span class="line"><span class="comment">#下载nginx并开放80端口</span></span><br><span class="line"><span class="comment">#用ENTRYPOINT使docker启动时自动启动nginx</span></span><br><span class="line"><span class="built_in">cat</span> &gt; dockerfile &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">FROM centos </span></span><br><span class="line"><span class="string">MAINTAINER ws</span></span><br><span class="line"><span class="string">RUN rm -rf /etc/yum.repos.d/*</span></span><br><span class="line"><span class="string">COPY Centos-vault-8.5.2111.repo /etc/yum.repos.d/</span></span><br><span class="line"><span class="string">RUN yum install -y nginx</span></span><br><span class="line"><span class="string">COPY index.html /usr/share/nginx/html/</span></span><br><span class="line"><span class="string">EXPOSE 80</span></span><br><span class="line"><span class="string">ENTRYPOINT [&quot;/usr/sbin/nginx&quot;,&quot;-g&quot;,&quot;daemon off;&quot;]</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> 123 &gt; index.html</span><br><span class="line"></span><br><span class="line">docker build -t=<span class="string">&quot;ws/nginx:v1&quot;</span> . <span class="comment">#开始构建</span></span><br><span class="line"><span class="comment">#[+] Building 130.1s (10/10) FINISHED                                       docker:default</span></span><br><span class="line"><span class="comment"># =&gt; [internal] load build definition from dockerfile                                 0.0s</span></span><br><span class="line"><span class="comment"># =&gt; =&gt; transferring dockerfile: 270B                                                 0.0s</span></span><br><span class="line"><span class="comment"># =&gt; [internal] load .dockerignore                                                    0.0s</span></span><br><span class="line"><span class="comment"># =&gt; =&gt; transferring context: 2B                                                      0.0s</span></span><br><span class="line"><span class="comment"># =&gt; [internal] load metadata for docker.io/library/centos:latest                     0.0s</span></span><br><span class="line"><span class="comment"># =&gt; [1/5] FROM docker.io/library/centos                                              0.0s</span></span><br><span class="line"><span class="comment"># =&gt; [internal] load build context                                                    0.0s</span></span><br><span class="line"><span class="comment"># =&gt; =&gt; transferring context: 77B                                                     0.0s</span></span><br><span class="line"><span class="comment"># =&gt; CACHED [2/5] RUN rm -rf /etc/yum.repos.d/*                                       0.0s</span></span><br><span class="line"><span class="comment"># =&gt; CACHED [3/5] COPY Centos-vault-8.5.2111.repo /etc/yum.repos.d/                   0.0s</span></span><br><span class="line"><span class="comment"># =&gt; [4/5] RUN yum install -y nginx                                                 129.6s</span></span><br><span class="line"><span class="comment"># =&gt; [5/5] COPY index.html /usr/share/nginx/html/                                     0.0s</span></span><br><span class="line"><span class="comment"># =&gt; exporting to image                                                               0.4s</span></span><br><span class="line"><span class="comment"># =&gt; =&gt; exporting layers                                                              0.4s</span></span><br><span class="line"><span class="comment"># =&gt; =&gt; writing image sha256:075aaa08f6799ed252578b0c82645e41c61a818584e6e183053a6ce  0.0s</span></span><br><span class="line"><span class="comment"># =&gt; =&gt; naming to docker.io/ws/nginx:v1                                               0.0s</span></span><br><span class="line">docker images | grep ws/nginx</span><br><span class="line"><span class="comment">#ws/nginx                  v1        075aaa08f679   51 seconds ago   342MB</span></span><br><span class="line">docker run -d -p 80 --name wshttp ws/nginx:v1</span><br><span class="line"><span class="comment">#1f57b4d4b5a8d73fa5488b792099c08fe15cb1bbfdc71d166c1430f5be9e15d4</span></span><br><span class="line">docker ps</span><br><span class="line"><span class="comment">#CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS          PORTS                                     NAMES</span></span><br><span class="line"><span class="comment">#1f57b4d4b5a8   ws/nginx:v1   &quot;/usr/sbin/nginx -g …&quot;   19 seconds ago   Up 18 seconds   0.0.0.0:32768-&gt;80/tcp, :::32768-&gt;80/tcp   wshttp</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227171120.png" alt="图片"></p>
+<h2 id="docker数据卷容器与备份"><a href="#docker数据卷容器与备份" class="headerlink" title="docker数据卷容器与备份"></a>docker数据卷容器与备份</h2><p>数据卷容器的概念：其他容器通过这个容器实现数据共享，这个容器就叫数据卷容器</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建一个数据卷容器</span></span><br><span class="line"><span class="comment">#可以采用docker run的时候选择-v参数，也可以选择使用dockerfile文件创建时使用VOLUME指令</span></span><br><span class="line"><span class="built_in">cat</span> &gt; dockerfile &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">FROM centos</span></span><br><span class="line"><span class="string">VOLUME [&quot;/volume1&quot;,&quot;/volume2&quot;]</span></span><br><span class="line"><span class="string">CMD /bin/bash</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="comment">#构建</span></span><br><span class="line">docker build -t=<span class="string">&quot;volume&quot;</span> .</span><br><span class="line"><span class="comment">#运行，容器名为data-container</span></span><br><span class="line">docker run -itd --name data-container volume</span><br><span class="line"><span class="comment">#进入容器，在/volume1目录中添加文件</span></span><br><span class="line">docker <span class="built_in">exec</span> -it data-container /bin/bash</span><br><span class="line"><span class="built_in">cd</span> volume1 &amp;&amp; <span class="built_in">touch</span> 123 &amp;&amp; <span class="built_in">exit</span></span><br><span class="line"><span class="comment">#创建data-container2</span></span><br><span class="line">docker run --name data-container2 --volumes-from data-container -itd centos /bin/bash</span><br><span class="line"><span class="comment">#查看container2中卷的情况，能看到data-container和data-container2已经共享了卷</span></span><br><span class="line">docker <span class="built_in">exec</span> -it data-container2 /bin/bash</span><br><span class="line"><span class="built_in">ls</span> volume1</span><br><span class="line"><span class="comment">#123</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#备份</span></span><br><span class="line">docker run --volumes-from data-container2 -v /root/backup:/backup \</span><br><span class="line">--name backup-container centos tar zcvf /backup/volume1.tar.gz /volume1</span><br><span class="line"><span class="comment">#指定共享data-container2中的卷</span></span><br><span class="line"><span class="comment">#指定宿主机/root/backup与容器/backup共享</span></span><br><span class="line"><span class="comment">#指定容器名为backup-container</span></span><br><span class="line"><span class="comment">#传入命令tar zcvf /backup/volume1.tar.gz /volume1，把/volume1打包到/backup/volume1.tar.gz</span></span><br><span class="line"><span class="built_in">ls</span> /root/backup/</span><br><span class="line"><span class="comment">#volume1.tar.gz</span></span><br><span class="line"><span class="comment">#备份完成后原内容就被删除</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#备份的还原</span></span><br><span class="line">docker <span class="built_in">rm</span> -f data-container2</span><br><span class="line">docker run --volumes-from backup-container  \</span><br><span class="line">-v /root/backup:/backup centos tar zxvf /backup/volume1.tar.gz -C /</span><br><span class="line"><span class="comment">#进入查看</span></span><br><span class="line">docker <span class="built_in">exec</span> -it data-container2 /bin/bash</span><br><span class="line"><span class="built_in">ls</span> volume1</span><br></pre></td></tr></table></figure>
+
+<h2 id="docker资源配额"><a href="#docker资源配额" class="headerlink" title="docker资源配额"></a>docker资源配额</h2><p>Docker资源配额指的是对Docker容器或服务在系统资源使用方面的限制。<br>通过资源配额，可以控制和限制Docker容器可以使用的CPU、内存、磁盘空间和网络带宽等资源。</p>
+<p>需要根据应用程序的需求和系统环境来设置适当的资源配额。过于严格的配额可能导致应用程序性能下降，而过于宽松的配额可能会导致资源浪费和冲突，资源配额提供了更好的资源控制和管理机制，以确保容器化环境的稳定性和性能。</p>
+<h3 id="CPU资源配额"><a href="#CPU资源配额" class="headerlink" title="CPU资源配额"></a>CPU资源配额</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看帮助</span></span><br><span class="line">docker run --<span class="built_in">help</span> | grep cpu</span><br><span class="line">      --cpu-period int                 Limit CPU CFS (Completely Fair Scheduler) period</span><br><span class="line">      --cpu-quota int                  Limit CPU CFS (Completely Fair Scheduler) quota</span><br><span class="line">      --cpu-rt-period int              Limit CPU real-time period <span class="keyword">in</span> microseconds</span><br><span class="line">      --cpu-rt-runtime int             Limit CPU real-time runtime <span class="keyword">in</span> microseconds</span><br><span class="line">  -c, --cpu-shares int                 CPU shares (relative weight)</span><br><span class="line">      --cpus decimal                   Number of CPUs</span><br><span class="line">      --cpuset-cpus string             CPUs <span class="keyword">in</span> <span class="built_in">which</span> to allow execution (0-3, 0,1)</span><br><span class="line">      --cpuset-mems string             MEMs <span class="keyword">in</span> <span class="built_in">which</span> to allow execution (0-3, 0,1)</span><br><span class="line"></span><br><span class="line"><span class="comment">#CPU份额-c, --cpu-shares</span></span><br><span class="line">CPU shares在创建容器时指定容器所使用的CPU份额值</span><br><span class="line">是一个相对的加权值，不能保证获取绝对的core数量，默认docker容器cpu份额为1024</span><br><span class="line">份额为1000的A容器和2000的B容器，B获取CPU占用时间的是A的两倍</span><br><span class="line">如果CPU是充足，那么A和B都能获得充足的CPU</span><br><span class="line">docker run -itd --name cpu1 --cpu-shares 1000 centos /bin/bash</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu1 /bin/bash</span><br><span class="line"><span class="built_in">cat</span> /sys/fs/cgroup/cpu/cpu.shares</span><br><span class="line"><span class="comment">#1000</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#CPU核数--cpuset-cpus、--cpuset-mems</span></span><br><span class="line">可以控制容器运行限定使用哪些cpu内核和内存节点</span><br><span class="line">更适用于具有NUMA拓扑（具有多CPU、多内存节点）的服务器</span><br><span class="line"><span class="comment">#nproc查看有多少个可用cpu</span></span><br><span class="line">8</span><br><span class="line"><span class="comment">#使其绑定两个CPU</span></span><br><span class="line">docker run -itd --name cpu1 --cpuset-cpus 0,1 centos /bin/bash</span><br><span class="line"></span><br><span class="line"><span class="comment">#puset-cpus和cpu-shares混合使用</span></span><br><span class="line">docker run -itd --name cpu1 --cpuset-cpus 0,1 --cpu-shares 1000 centos /bin/bash</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu1 /bin/bash</span><br><span class="line"><span class="built_in">rm</span> -rf /etc/yum.repos.d/* &amp;&amp; <span class="built_in">exit</span></span><br><span class="line"></span><br><span class="line">docker <span class="built_in">cp</span> Centos-vault-8.5.2111.repo cpu1:/etc/yum.repos.d/</span><br><span class="line">docker run -itd --name cpu2 --cpuset-cpus 0,1 --cpu-shares 2000 centos /bin/bash</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu2 /bin/bash</span><br><span class="line"><span class="built_in">rm</span> -rf /etc/yum.repos.d/* &amp;&amp; <span class="built_in">exit</span></span><br><span class="line">docker <span class="built_in">cp</span> Centos-vault-8.5.2111.repo cpu2:/etc/yum.repos.d/</span><br><span class="line"><span class="comment">#在容器内下载与使用stress压测软件，然后我忘了要在里面放centos8的源文件了</span></span><br><span class="line">docker <span class="built_in">exec</span> -it cpu1 yum install -y epel-release</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu1 yum install -y stress</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu2 yum install -y epel-release</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu2 yum install -y stress</span><br><span class="line">stress --<span class="built_in">help</span> <span class="comment">#查看stress帮助，直接看example就行</span></span><br><span class="line"><span class="comment">#Example: stress --cpu 8 --io 4 --vm 2 --vm-bytes 128M --timeout 10s</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#开始测试，开三个terminal，一个cpu1，一个cpu2，一个看top</span></span><br><span class="line">docker <span class="built_in">exec</span> -it cpu1 /bin/bash </span><br><span class="line">stress -c 2 --<span class="built_in">timeout</span> 5m</span><br><span class="line">docker <span class="built_in">exec</span> -it cpu2 /bin/bash</span><br><span class="line">stress -c 2 --<span class="built_in">timeout</span> 5m</span><br><span class="line"><span class="comment">#再开一个terminal看top</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227171550.png"></p>
+<h3 id="内存资源配额"><a href="#内存资源配额" class="headerlink" title="内存资源配额"></a>内存资源配额</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">根据容器所运行的业务，配置相应最大内存，防止用太多影响其他的业务</span><br><span class="line">docker run --<span class="built_in">help</span> | grep -i memory</span><br><span class="line">      --kernel-memory bytes            Kernel memory <span class="built_in">limit</span></span><br><span class="line">  -m, --memory bytes                   Memory <span class="built_in">limit</span></span><br><span class="line">      --memory-reservation bytes       Memory soft <span class="built_in">limit</span></span><br><span class="line">      --memory-swap bytes              Swap <span class="built_in">limit</span> equal to memory plus swap: <span class="string">&#x27;-1&#x27;</span> to <span class="built_in">enable</span> unlimited swap</span><br><span class="line">      --memory-swappiness int          Tune container memory swappiness (0 to 100) (default -1)</span><br><span class="line"></span><br><span class="line">docker run -itd --name mem1 -m 1g centos</span><br><span class="line">docker <span class="built_in">exec</span> -it mem1 <span class="built_in">cat</span> /sys/fs/cgroup/memory/memory.limit_in_bytes</span><br><span class="line">1073741824</span><br></pre></td></tr></table></figure>
+
+<h3 id="IO资源配额"><a href="#IO资源配额" class="headerlink" title="IO资源配额"></a>IO资源配额</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">控制IO资源</span><br><span class="line">docker run --<span class="built_in">help</span> | grep write</span><br><span class="line">      --device-write-bps list          Limit write rate (bytes per second) to a device (default [])</span><br><span class="line">      --device-write-iops list         Limit write rate (IO per second) to a device (default [])</span><br><span class="line">docker run --<span class="built_in">help</span> | grep <span class="built_in">read</span></span><br><span class="line">      --device-read-bps list           Limit <span class="built_in">read</span> rate (bytes per second) from a device (default [])</span><br><span class="line">      --device-read-iops list          Limit <span class="built_in">read</span> rate (IO per second) from a device (default [])</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建容器io，设置存储映射关系，设备sda限制io速度1mb每秒</span></span><br><span class="line">docker run -it  -v /test/:/test/ --device /dev/sda:/dev/sda \</span><br><span class="line">--device-write-bps /dev/sda:1mb --name io centos  /bin/bash</span><br><span class="line"><span class="comment">#使用dd命令，从sda写到/test/内，块大小1M，传送60个块，绕过内核缓存，直接读取和写入设备</span></span><br><span class="line">time <span class="built_in">dd</span> <span class="keyword">if</span>=/dev/sda of=/test/transblock bs=1M count=60 oflag=direct,nonblock</span><br><span class="line"></span><br><span class="line"><span class="comment">#读数据同理</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227172729.png"></p>
+<h2 id="docker的结束运行资源释放"><a href="#docker的结束运行资源释放" class="headerlink" title="docker的结束运行资源释放"></a>docker的结束运行资源释放</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">设置容器结束运行后自动释放资源，适用于一次性的容器如测试容器</span><br><span class="line">如果容器是异常退出了也会被删除</span><br><span class="line">docker run --<span class="built_in">help</span> | grep <span class="built_in">rm</span></span><br><span class="line">      --<span class="built_in">rm</span>                             Automatically remove the container when it exits</span><br><span class="line"><span class="comment">#只设置一个5秒钟的任务</span></span><br><span class="line">docker run -it --<span class="built_in">rm</span> --name rmtest alpine <span class="built_in">sleep</span> 5</span><br><span class="line">docker ps -a | grep <span class="built_in">rm</span></span><br><span class="line"><span class="comment">#无，已经被自动删除了</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="k8s1-20搭建"><a href="#k8s1-20搭建" class="headerlink" title="k8s1.20搭建"></a>k8s1.20搭建</h1><p>环境<br>VMware Workstation 17 Pro<br>CentOS Linux release 7.9.2009 (Core)<br>4G，8Core，100G精简置备<br>NAT网络 192.168.8.0&#x2F;24<br>pod网段 10.10.0.0&#x2F;16<br>ServiceSubnet网段 10.96.0.0&#x2F;12 默认<br>ws-k8s-master1 192.168.8.151<br>ws-k8s-node1 192.168.8.152<br>ws-k8s-node2 192.168.8.153</p>
+<h2 id="环境初始化"><a href="#环境初始化" class="headerlink" title="环境初始化"></a>环境初始化</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master节点</span></span><br><span class="line">hostnamectl set-hostname ws-k8s-master1  &amp;&amp; bash</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.151 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.8.152 ws-k8s-node1 </span></span><br><span class="line"><span class="string">192.168.8.153 ws-k8s-node2 </span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"><span class="comment">#通过使用NetworkManager，或networkd调整网络配置，都可以</span></span><br><span class="line">nmcli con modify ens33 ipv4.addresses 192.168.8.151/24 ipv4.gateway 192.168.8.2 ipv4.dns 192.168.8.2 ipv4.method manual</span><br><span class="line">nmcli con up ens33</span><br><span class="line"><span class="comment">#安全相关</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now <span class="comment">#不是一定要关闭</span></span><br><span class="line">yum -y update</span><br><span class="line"><span class="comment">#通过将ssh-keygen生成密钥对并将本地公钥复制到远程主机</span></span><br><span class="line"><span class="comment">#输入yes，无密码</span></span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id ws-k8s-node1</span><br><span class="line">ssh-copy-id ws-k8s-node2</span><br><span class="line"><span class="comment">#k8s默认不允许使用交换分区</span></span><br><span class="line">swapoff -a</span><br><span class="line">sed -i <span class="string">&#x27;$ s/^/#/&#x27;</span> /etc/fstab <span class="comment">#注释掉fstab文件的最后一行swap的内容</span></span><br><span class="line"><span class="comment">#先加载br_netfilter模块，防止写入内核时报错</span></span><br><span class="line">modprobe br_netfilter <span class="comment">#暂时加载</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;modprobe br_netfilter&quot;</span> &gt;&gt; /etc/profile <span class="comment">#永久加载</span></span><br><span class="line"><span class="comment">#修改配置文件并将其载入内核，允许linux进行路由转发</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">&quot;</span>  &gt;&gt; /etc/sysctl.d/k8s.conf</span><br><span class="line">sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line"><span class="comment">#添加阿里源</span></span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line"><span class="comment">#安装k8s组件源，并通过scp传送到node1和node2</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">[kubernetes]</span></span><br><span class="line"><span class="string">name=Kubernetes</span></span><br><span class="line"><span class="string">baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/</span></span><br><span class="line"><span class="string">enabled=1</span></span><br><span class="line"><span class="string">gpgcheck=0</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/yum.repos.d/kubernetes.repo</span><br><span class="line">scp /etc/yum.repos.d/kubernetes.repo ws-k8s-node1:/etc/yum.repos.d/</span><br><span class="line">scp /etc/yum.repos.d/kubernetes.repo ws-k8s-node2:/etc/yum.repos.d/</span><br><span class="line"><span class="comment">#时钟同步，注释掉默认服务器，并使用cn.pool.ntp.org</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd</span><br><span class="line"><span class="comment">#安装docker-ce</span></span><br><span class="line">yum -y install docker-ce</span><br><span class="line">systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line"><span class="comment">#配置docker镜像加速，这是我的阿里云镜像加速器，修改docker驱动为systemd</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line">reboot</span><br><span class="line"></span><br><span class="line"><span class="comment">#node1</span></span><br><span class="line">hostnamectl set-hostname ws-k8s-node1 &amp;&amp; bash</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.151 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.8.152 ws-k8s-node1 </span></span><br><span class="line"><span class="string">192.168.8.153 ws-k8s-node2</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line">nmcli con modify ens33 ipv4.addresses 192.168.8.152/24 ipv4.gateway 192.168.8.2 ipv4.dns 192.168.8.2 ipv4.method manual</span><br><span class="line">nmcli con up ens33</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">yum -y update</span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id ws-k8s-node2</span><br><span class="line">ssh-copy-id ws-k8s-master1</span><br><span class="line">swapoff -a</span><br><span class="line">sed -i <span class="string">&#x27;$ s/^/#/&#x27;</span> /etc/fstab</span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;modprobe br_netfilter&quot;</span> &gt;&gt; /etc/profile</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">&quot;</span>  &gt;&gt; /etc/sysctl.d/k8s.conf</span><br><span class="line">sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd</span><br><span class="line">wget -O get-docker.sh https://get.docker.com</span><br><span class="line">sh get-docker.sh</span><br><span class="line">systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line">reboot</span><br><span class="line"></span><br><span class="line"><span class="comment">#node2</span></span><br><span class="line">hostnamectl set-hostname ws-k8s-node2 &amp;&amp; bash</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.151 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.8.152 ws-k8s-node1 </span></span><br><span class="line"><span class="string">192.168.8.153 ws-k8s-node2</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line">nmcli con modify ens33 ipv4.addresses 192.168.8.153/24 ipv4.gateway 192.168.8.2 ipv4.dns 192.168.8.2 ipv4.method manual</span><br><span class="line">nmcli con up ens33</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack ntpdate telnet ipvsadm</span><br><span class="line">yum -y update</span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id ws-k8s-node1</span><br><span class="line">ssh-copy-id ws-k8s-master1</span><br><span class="line">swapoff -a</span><br><span class="line">sed -i <span class="string">&#x27;$ s/^/#/&#x27;</span> /etc/fstab</span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;modprobe br_netfilter&quot;</span> &gt;&gt; /etc/profile</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">&quot;</span>  &gt;&gt; /etc/sysctl.d/k8s.conf</span><br><span class="line">sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd</span><br><span class="line">wget -O get-docker.sh https://get.docker.com</span><br><span class="line">sh get-docker.sh</span><br><span class="line">systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line">reboot</span><br></pre></td></tr></table></figure>
+
+<h2 id="主节点安装k8s"><a href="#主节点安装k8s" class="headerlink" title="主节点安装k8s"></a>主节点安装k8s</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master节点</span></span><br><span class="line"><span class="comment">#安装基础包，版本为1.20.6，这个版本支持docker，1.24后不支持docker支持container</span></span><br><span class="line"><span class="comment">#kubeadm用以初始化集群，这三个版本需要大于k8s版本，建议保持一致</span></span><br><span class="line"><span class="comment">#kubelet用以启动pod</span></span><br><span class="line"><span class="comment">#kubectl用以管理k8s</span></span><br><span class="line">yum install -y kubelet-1.20.6 kubeadm-1.20.6 kubectl-1.20.6</span><br><span class="line">systemctl <span class="built_in">enable</span> kubelet</span><br><span class="line"></span><br><span class="line"><span class="comment">#生成一个配置文件，并修改</span></span><br><span class="line">kubeadm config <span class="built_in">print</span> init-defaults &gt; kubeadm.yaml</span><br><span class="line">vim kubeadm.yaml</span><br><span class="line">advertiseAddress: 192.168.8.151 <span class="comment">#控制节点ip</span></span><br><span class="line">name: ws-k8s-master1 <span class="comment">#控制节点主机名</span></span><br><span class="line">imageRepository: registry.aliyuncs.com/google_containers <span class="comment">#a阿里云镜像仓库</span></span><br><span class="line">kubernetesVersion: v1.20.6 <span class="comment">#版本号1.20.6</span></span><br><span class="line">在networking中增加并对齐</span><br><span class="line">podSubnet: 10.10.0.0/16 <span class="comment">#指定pod网段</span></span><br><span class="line">注释criSocket这一行 <span class="comment">#这行是用containerd的</span></span><br><span class="line"><span class="comment">#ipvs表示kube-proxy代理模式为ipvs</span></span><br><span class="line"><span class="comment">#cgroup驱动使用systemd</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: kubeproxy.config.k8s.io/v1alpha1</span></span><br><span class="line"><span class="string">kind: KubeProxyConfiguration</span></span><br><span class="line"><span class="string">mode: ipvs</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: kubelet.config.k8s.io/v1beta1</span></span><br><span class="line"><span class="string">kind: KubeletConfiguration</span></span><br><span class="line"><span class="string">cgroupDriver: systemd</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; kubeadm.yaml</span><br><span class="line"><span class="comment">#通过kubeadm.yaml文件初始化k8s，忽略系统验证（System Verification）的预检错误。</span></span><br><span class="line">kubeadm init --config=kubeadm.yaml --ignore-preflight-errors=SystemVerification</span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#安装完成，如图</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#根据安装完成后的提示进行配置</span></span><br><span class="line"><span class="built_in">mkdir</span> -p <span class="variable">$HOME</span>/.kube</span><br><span class="line">sudo <span class="built_in">cp</span> -i /etc/kubernetes/admin.conf <span class="variable">$HOME</span>/.kube/config</span><br><span class="line">sudo <span class="built_in">chown</span> $(<span class="built_in">id</span> -u):$(<span class="built_in">id</span> -g) <span class="variable">$HOME</span>/.kube/config</span><br><span class="line">kubectl get nodes</span><br><span class="line"><span class="comment">#NAME             STATUS     ROLES                  AGE     VERSION</span></span><br><span class="line"><span class="comment">#ws-k8s-master1   NotReady   control-plane,master   5m11s   v1.20.6</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227174238.png"></p>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/image.png"></p>
+<h2 id="工作节点添加"><a href="#工作节点添加" class="headerlink" title="工作节点添加"></a>工作节点添加</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#添加工作节点</span></span><br><span class="line"><span class="comment">#master节点生成token</span></span><br><span class="line">kubeadm token create --print-join-command</span><br><span class="line"><span class="comment">#kubeadm join 192.168.8.151:6443 --token j7k3oa.761wztev8dgrqv59     --discovery-token-ca-cert-hash sha256:800f4cd804c2e7fbcdbb3d5bc163f38368efd65043476404e578e0ffa8529bbf</span></span><br><span class="line"><span class="comment">#node1</span></span><br><span class="line">yum install -y kubelet-1.20.6 kubeadm-1.20.6 kubectl-1.20.6</span><br><span class="line">systemctl <span class="built_in">enable</span> kubelet</span><br><span class="line">kubeadm <span class="built_in">join</span> 192.168.8.151:6443 --token j7k3oa.761wztev8dgrqv59 \</span><br><span class="line">--discovery-token-ca-cert-hash \</span><br><span class="line">sha256:800f4cd804c2e7fbcdbb3d5bc163f38368efd65043476404e578e0ffa8529bbf \</span><br><span class="line">--ignore-preflight-errors=SystemVerification</span><br><span class="line"><span class="comment">#node2</span></span><br><span class="line">yum install -y kubelet-1.20.6 kubeadm-1.20.6 kubectl-1.20.6</span><br><span class="line">systemctl <span class="built_in">enable</span> kubelet</span><br><span class="line">kubeadm <span class="built_in">join</span> 192.168.8.151:6443 --token j7k3oa.761wztev8dgrqv59 \</span><br><span class="line">--discovery-token-ca-cert-hash \</span><br><span class="line">sha256:800f4cd804c2e7fbcdbb3d5bc163f38368efd65043476404e578e0ffa8529bbf \</span><br><span class="line">--ignore-preflight-errors=SystemVerification</span><br><span class="line"><span class="comment">#master</span></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME             STATUS     ROLES                  AGE   VERSION</span><br><span class="line">ws-k8s-master1   NotReady   control-plane,master   21m   v1.20.6</span><br><span class="line">ws-k8s-node1     NotReady   &lt;none&gt;                 98s   v1.20.6</span><br><span class="line">ws-k8s-node2     NotReady   &lt;none&gt;                 60s   v1.20.6</span><br><span class="line"><span class="comment">#添加完成，但是NotReady</span></span><br><span class="line">kubectl get pods -n kube-system</span><br><span class="line">NAME                                     READY   STATUS    RESTARTS   AGE</span><br><span class="line">coredns-7f89b7bc75-6ntkb                 0/1     Pending   0          12m</span><br><span class="line">coredns-7f89b7bc75-cph9t                 0/1     Pending   0          12m</span><br><span class="line">etcd-ws-k8s-master1                      1/1     Running   0          12m</span><br><span class="line">kube-apiserver-ws-k8s-master1            1/1     Running   1          12m</span><br><span class="line">kube-controller-manager-ws-k8s-master1   1/1     Running   0          12m</span><br><span class="line">kube-proxy-2sltc                         1/1     Running   0          12m</span><br><span class="line">kube-scheduler-ws-k8s-master1            1/1     Running   0          12m</span><br><span class="line"><span class="comment">#安装完成后coredns服务由于没有网络插件，没有ip，所以显示离线pending </span></span><br></pre></td></tr></table></figure>
+
+<h2 id="calico网络插件"><a href="#calico网络插件" class="headerlink" title="calico网络插件"></a>calico网络插件</h2><p>Calico通过calico.yaml配置文件<br>通过kubectl apply -f calico.yaml进行安装<br>#<a target="_blank" rel="noopener" href="https://docs.projectcalico.org/manifests/calico.yaml">https://docs.projectcalico.org/manifests/calico.yaml</a></p>
+<h3 id="一些参数"><a href="#一些参数" class="headerlink" title="一些参数"></a>一些参数</h3><p>CALICO_IPV4POOL_IPIP：是否启用IPIP模式，默认采用IPIP<br>使用IPIP模式时，设置CALICO_IPV4POOL_IPIP&#x3D;”Always”，IPIP模式，封装隧道<br>不使用IPIP模式时，设置CALICO_IPV4POOL_IPIP&#x3D;”Off”，BGP模式，使用物理机作为vRouter，需要二层互通</p>
+<p>IP_AUTODETECTION_METHOD：获取Node IP地址的方式，默认使用第1个网络接口的IP地址<br>对于安装了多块网卡的Node，可以使用正则表达式选择正确的网卡，例如”interface&#x3D;eth.*”表示选择名称以eth开头的网卡的IP地址。</p>
+<ul>
+<li>name: IP_AUTODETECTION_METHOD<br> value: “interface&#x3D;ens33”</li>
+</ul>
+<h3 id="Calico组件"><a href="#Calico组件" class="headerlink" title="Calico组件"></a>Calico组件</h3><p>1、felix<br>每个host会有agent，负责互通，接口管理与监听等<br>2、etcd<br>分布式数据库，负责数据同步<br>3、BGP client（BIRD）<br>每个host会有一个BIRD，负责分发信息<br>4、BGP Route Rreflector<br>网络的镜像转发器，用于大规模网络</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master</span></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME             STATUS     ROLES                  AGE   VERSION</span><br><span class="line">ws-k8s-master1   NotReady   control-plane,master   21m   v1.20.6</span><br><span class="line">ws-k8s-node1     NotReady   &lt;none&gt;                 98s   v1.20.6</span><br><span class="line">ws-k8s-node2     NotReady   &lt;none&gt;                 60s   v1.20.6</span><br><span class="line"><span class="comment">#添加完成，但是NotReady</span></span><br><span class="line">kubectl get pods -n kube-system</span><br><span class="line">NAME                                     READY   STATUS    RESTARTS   AGE</span><br><span class="line">coredns-7f89b7bc75-6ntkb                 0/1     Pending   0          12m</span><br><span class="line">coredns-7f89b7bc75-cph9t                 0/1     Pending   0          12m</span><br><span class="line">etcd-ws-k8s-master1                      1/1     Running   0          12m</span><br><span class="line">kube-apiserver-ws-k8s-master1            1/1     Running   1          12m</span><br><span class="line">kube-controller-manager-ws-k8s-master1   1/1     Running   0          12m</span><br><span class="line">kube-proxy-2sltc                         1/1     Running   0          12m</span><br><span class="line">kube-scheduler-ws-k8s-master1            1/1     Running   0          12m</span><br><span class="line"><span class="comment">#安装完成后coredns服务由于没有网络插件，没有ip，所以显示离线pending </span></span><br><span class="line"></span><br><span class="line"><span class="comment">#master添加k8s网络组件Calico</span></span><br><span class="line"><span class="comment">#https://docs.projectcalico.org/manifests/calico.yaml</span></span><br><span class="line">kubectl apply -f calico.yaml</span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME             STATUS   ROLES                  AGE   VERSION</span><br><span class="line">ws-k8s-master1   Ready    control-plane,master   34m   v1.20.6</span><br><span class="line">ws-k8s-node1     Ready    &lt;none&gt;                 14m   v1.20.6</span><br><span class="line">ws-k8s-node2     Ready    &lt;none&gt;                 13m   v1.20</span><br><span class="line">kubectl get pods -n kube-system</span><br><span class="line">NAME                                       READY   STATUS    RESTARTS   AGE</span><br><span class="line">calico-kube-controllers-6949477b58-z9gk4   1/1     Running   0          4m15s</span><br><span class="line">calico-node-d6mvs                          1/1     Running   0          4m15s</span><br><span class="line">calico-node-sx4t8                          1/1     Running   0          4m15s</span><br><span class="line">calico-node-vdxvc                          1/1     Running   0          4m15s</span><br><span class="line">coredns-7f89b7bc75-6ntkb                   1/1     Running   0          35m</span><br><span class="line">coredns-7f89b7bc75-cph9t                   1/1     Running   0          35m</span><br><span class="line">etcd-ws-k8s-master1                        1/1     Running   0          36m</span><br><span class="line">kube-apiserver-ws-k8s-master1              1/1     Running   1          36m</span><br><span class="line">kube-controller-manager-ws-k8s-master1     1/1     Running   0          36m</span><br><span class="line">kube-proxy-2sltc                           1/1     Running   0          35m</span><br><span class="line">kube-proxy-ndfn7                           1/1     Running   0          15m</span><br><span class="line">kube-proxy-rmdfb                           1/1     Running   0          16m</span><br><span class="line">kube-scheduler-ws-k8s-master1              1/1     Running   0          36m</span><br><span class="line"><span class="comment">#全部在线</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="k8s1-26搭建"><a href="#k8s1-26搭建" class="headerlink" title="k8s1.26搭建"></a>k8s1.26搭建</h1><p>环境<br>VMware Workstation 17 Pro<br>CentOS Linux release 7.9.2009 (Core)<br>4G，8Core，100G精简置备<br>NAT网络 192.168.8.0&#x2F;24<br>pod网段 10.10.0.0&#x2F;16<br>ServiceSubnet网段 10.96.0.0&#x2F;12 默认<br>ws-k8s-master1 192.168.8.160<br>ws-k8s-master2 192.168.8.159<br>ws-k8s-node1 192.168.8.161<br>ws-k8s-node2 192.168.8.162</p>
+<h2 id="环境初始化-1"><a href="#环境初始化-1" class="headerlink" title="环境初始化"></a>环境初始化</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master节点</span></span><br><span class="line">hostnamectl set-hostname ws-k8s-master1  &amp;&amp; bash</span><br><span class="line">nmcli con modify ens33 ipv4.addresses 192.168.8.160/24 ipv4.gateway 192.168.8.2 ipv4.dns 192.168.8.2 ipv4.method manual</span><br><span class="line">nmcli con up ens33</span><br><span class="line">yum install -y device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack telnet ipvsadm</span><br><span class="line">yum -y update</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.160 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.8.161 ws-k8s-node1 </span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line">swapoff -a</span><br><span class="line">sed -i <span class="string">&#x27;$ s/^/#/&#x27;</span> /etc/fstab</span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id ws-k8s-node1</span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/sysctl.d/k8s.conf &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">[kubernetes]</span></span><br><span class="line"><span class="string">name=Kubernetes</span></span><br><span class="line"><span class="string">baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/</span></span><br><span class="line"><span class="string">enabled=1</span></span><br><span class="line"><span class="string">gpgcheck=0</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/yum.repos.d/kubernetes.repo</span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">reboot</span><br><span class="line"></span><br><span class="line"><span class="comment">#node节点</span></span><br><span class="line">hostnamectl set-hostname ws-k8s-node1 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens33 ipv4.addresses 192.168.8.161/24 ipv4.gateway 192.168.8.2 ipv4.dns 192.168.8.2 ipv4.method manual</span><br><span class="line">nmcli con up ens33</span><br><span class="line">yum install -y device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack telnet ipvsadm</span><br><span class="line">yum -y update</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.160 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.8.161 ws-k8s-node1 </span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line">swapoff -a</span><br><span class="line">sed -i <span class="string">&#x27;$ s/^/#/&#x27;</span> /etc/fstab</span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/sysctl.d/k8s.conf &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">[kubernetes]</span></span><br><span class="line"><span class="string">name=Kubernetes</span></span><br><span class="line"><span class="string">baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/</span></span><br><span class="line"><span class="string">enabled=1</span></span><br><span class="line"><span class="string">gpgcheck=0</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/yum.repos.d/kubernetes.repo</span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">reboot</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装containerd"><a href="#安装containerd" class="headerlink" title="安装containerd"></a>安装containerd</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master</span></span><br><span class="line">yum install -y containerd.io-1.6.6</span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/containerd</span><br><span class="line"><span class="comment">#配置镜像加速器</span></span><br><span class="line"><span class="built_in">mkdir</span> /etc/containerd/certs.d/docker.io/ -p</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;[host.&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;,host.&quot;https://registry.docker-cn.com&quot;]</span></span><br><span class="line"><span class="string">  capabilities = [&quot;pull&quot;]</span></span><br><span class="line"><span class="string"> &#x27;</span>&gt;&gt; /etc/containerd/certs.d/docker.io/hosts.toml</span><br><span class="line"><span class="comment">#生成containerd配置文件</span></span><br><span class="line">containerd config default &gt; /etc/containerd/config.toml</span><br><span class="line">修改</span><br><span class="line">vim /etc/containerd/config.toml</span><br><span class="line">SystemdCgroup = True</span><br><span class="line">sandbox_image = <span class="string">&quot;registry.aliyuncs.com/google_containers/pause:3.7&quot;</span></span><br><span class="line">config_path = <span class="string">&quot;/etc/containerd/certs.d&quot;</span> <span class="comment">#配置镜像加速器</span></span><br><span class="line">systemctl <span class="built_in">enable</span> containerd.service --now</span><br><span class="line"><span class="comment">#创建crictl.yaml，指定创建pod与调用容器的时候使用containerd</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/crictl.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">runtime-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">image-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">timeout: 10</span></span><br><span class="line"><span class="string">debug: false</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="comment">#重启服务加载文件</span></span><br><span class="line">systemctl restart containerd</span><br><span class="line"><span class="comment">#安装docker，要使用docker的build制作镜像功能</span></span><br><span class="line">yum install -y docker-ce &amp;&amp; systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line"><span class="comment">#配置docker镜像加速器</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;&quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;]</span></span><br><span class="line"><span class="string">&#125;&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line"></span><br><span class="line"><span class="comment">#node1</span></span><br><span class="line">yum install -y containerd.io-1.6.6</span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/containerd</span><br><span class="line">containerd config default &gt; /etc/containerd/config.toml</span><br><span class="line">vim /etc/containerd/config.toml</span><br><span class="line">修改 </span><br><span class="line">SystemdCgroup = True</span><br><span class="line">sandbox_image = <span class="string">&quot;registry.aliyuncs.com/google_containers/pause:3.7&quot;</span></span><br><span class="line">config_path = <span class="string">&quot;/etc/containerd/certs.d&quot;</span></span><br><span class="line"><span class="built_in">mkdir</span> /etc/containerd/certs.d/docker.io/ -p</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;[host.&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;,host.&quot;https://registry.docker-cn.com&quot;]</span></span><br><span class="line"><span class="string">  capabilities = [&quot;pull&quot;]</span></span><br><span class="line"><span class="string"> &#x27;</span>&gt;&gt; /etc/containerd/certs.d/docker.io/hosts.toml</span><br><span class="line">systemctl <span class="built_in">enable</span> containerd.service --now</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/crictl.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">runtime-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">image-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">timeout: 10</span></span><br><span class="line"><span class="string">debug: false</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl restart containerd</span><br><span class="line">yum install -y docker-ce &amp;&amp; systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;&quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;]</span></span><br><span class="line"><span class="string">&#125;&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装k8s"><a href="#安装k8s" class="headerlink" title="安装k8s"></a>安装k8s</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master、node</span></span><br><span class="line"><span class="comment">#安装管理工具126版本</span></span><br><span class="line">yum install -y kubelet-1.26.0 <span class="comment">#用于启动Pod</span></span><br><span class="line">yum install -y kubeadm-1.26.0 <span class="comment">#初始化工具</span></span><br><span class="line">yum install -y kubectl-1.26.0 <span class="comment">#管理的命令行工具</span></span><br><span class="line">systemctl <span class="built_in">enable</span> kubelet</span><br><span class="line"><span class="comment">#设置容器运行时，指定了容器运行时的通信端点地址，指定Unix域套接字协议和路径</span></span><br><span class="line">crictl config runtime-endpoint unix:///run/containerd/containerd.sock</span><br><span class="line"></span><br><span class="line"><span class="comment">#master</span></span><br><span class="line"><span class="comment">#创建配置文件，修改，并根据配置文件安装k8s</span></span><br><span class="line">kubeadm config <span class="built_in">print</span> init-defaults &gt; kubeadm.yaml</span><br><span class="line">vim kubeadm.yaml</span><br><span class="line">修改：</span><br><span class="line">advertiseAddress: 192.168.8.160 <span class="comment">#master IP</span></span><br><span class="line">criSocket: unix:///run/containerd/containerd.sock</span><br><span class="line">name: ws-k8s-master1 <span class="comment">#主机名</span></span><br><span class="line">imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers <span class="comment">#换源k8s</span></span><br><span class="line">kubernetesVersion: 1.26.0 <span class="comment">#版本</span></span><br><span class="line">在networking下添加：</span><br><span class="line">podSubnet: 10.10.0.0/16 <span class="comment">#添加pod网段</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;---</span></span><br><span class="line"><span class="string">apiVersion: kubeproxy.config.k8s.io/v1alpha1</span></span><br><span class="line"><span class="string">kind: KubeProxyConfiguration</span></span><br><span class="line"><span class="string">mode: ipvs                   #kube代理模式为ipvs</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: kubelet.config.k8s.io/v1beta1</span></span><br><span class="line"><span class="string">kind: KubeletConfiguration   #cgroup驱动使用systemd</span></span><br><span class="line"><span class="string">cgroupDriver: systemd&#x27;</span> &gt;&gt; kubeadm.yaml</span><br><span class="line"><span class="comment">#通过kebeadm.yaml初始化k8s集群，且忽略系统预检错误</span></span><br><span class="line">kubeadm init --config=kubeadm.yaml --ignore-preflight-errors=SystemVerification</span><br><span class="line"><span class="comment">#对kubectl进行授权</span></span><br><span class="line"><span class="built_in">mkdir</span> -p <span class="variable">$HOME</span>/.kube </span><br><span class="line">sudo <span class="built_in">cp</span> -i /etc/kubernetes/admin.conf <span class="variable">$HOME</span>/.kube/config</span><br><span class="line">sudo <span class="built_in">chown</span> $(<span class="built_in">id</span> -u):$(<span class="built_in">id</span> -g) <span class="variable">$HOME</span>/.kube/config</span><br><span class="line">kubectl get nodes</span><br><span class="line">kubeadm token create --print-join-command <span class="comment">#生成token</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#使用token在node1上把node1加入集群</span></span><br><span class="line">kubeadm <span class="built_in">join</span> 192.168.8.160:6443 --token oa7h1w.79oq2ol0w3jqcgud \</span><br><span class="line">--discovery-token-ca-cert-hash sha256:d1a70285365b4769a7b8527bb426039010c615e2c96410bbef88656103246362 \</span><br><span class="line">--ignore-preflight-errors=SystemVerification</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227174754.png"></p>
+<h2 id="安装Calico"><a href="#安装Calico" class="headerlink" title="安装Calico"></a>安装Calico</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master</span></span><br><span class="line">kubectl get node</span><br><span class="line">NAME             STATUS     ROLES           AGE   VERSION</span><br><span class="line">ws-k8s-master1   NotReady   control-plane   30m   v1.26.0</span><br><span class="line">ws-k8s-node1     NotReady   &lt;none&gt;          28m   v1.26.0</span><br><span class="line">kubectl get pods -n kube-system -owide</span><br><span class="line">NAME                                      READY   STATUS     RESTARTS   AGE    IP              NODE             NOMINATED NODE   READINESS GATES</span><br><span class="line">coredns-567c556887-9v7nk                  0/1     Pending    0          29m    &lt;none&gt;          &lt;none&gt;           &lt;none&gt;           &lt;none&gt;</span><br><span class="line">coredns-567c556887-z7b9x                  0/1     Pending    0          29m    &lt;none&gt;          &lt;none&gt;           &lt;none&gt;           &lt;none&gt;</span><br><span class="line">etcd-ws-k8s-master1                       1/1     Running    0          29m    192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-apiserver-ws-k8s-master1             1/1     Running    0          29m    192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-controller-manager-ws-k8s-master1    1/1     Running    0          29m    192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-proxy-bg7ck                          1/1     Running    0          29m    192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-proxy-s22ng                          1/1     Running    1          28m    192.168.8.161   ws-k8s-node1     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-scheduler-ws-k8s-master1             1/1     Running    0          29m    192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line"><span class="comment">#需要Calico插件，来让coredns获得IP</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#安装Calico</span></span><br><span class="line"><span class="comment">#https://docs.tigera.io/calico/latest/manifests/calico.yaml</span></span><br><span class="line"><span class="comment">#calico配置文件- name: CALICO_IPV4POOL_IPIP ——选择IPIP或BGP模式</span></span><br><span class="line"><span class="comment">#calico配置文件- name: IP_AUTODETECTION_METHOD ——选择能联网的首块网卡</span></span><br><span class="line">kubectl apply -f calico.yaml</span><br><span class="line"><span class="comment">#一直处于初始化状态，卡住了</span></span><br><span class="line">kubectl get pods -n kube-system -owide</span><br><span class="line">NAME                                      READY   STATUS     RESTARTS   AGE     IP              NODE             NOMINATED NODE   READINESS GATES</span><br><span class="line">calico-kube-controllers-d886b8fff-795k8   0/1     Pending    0          4m33s   &lt;none&gt;          &lt;none&gt;           &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-node-hcfmw                         0/1     Init:0/3   0          4m32s   192.168.8.161   ws-k8s-node1     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-node-vds28                         0/1     Init:0/3   0          4m33s   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line"><span class="comment">#重新删除pods</span></span><br><span class="line">kubectl delete -f  calico.yaml</span><br><span class="line"><span class="comment">#使用离线calico镜像包,https://github.com/projectcalico/calico/releases/tag/v3.27.0/release-v3.27.0.tgz</span></span><br><span class="line">ctr -n=k8s.io images import calico.tar.gz</span><br><span class="line">kubectl apply -f  calico.yaml</span><br><span class="line"><span class="comment">#但node1一直有问题无法连接，尝试从头开始安装node1</span></span><br><span class="line"><span class="comment">#重装node1后成功</span></span><br><span class="line">kubectl get pods -n kube-system -owide</span><br><span class="line">NAME                                      READY   STATUS    RESTARTS   AGE   IP              NODE             NOMINATED NODE   READINESS GATES</span><br><span class="line">calico-kube-controllers-d886b8fff-nc6mm   1/1     Running   0          21s   10.10.179.1     ws-k8s-node1     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-node-4rj9m                         1/1     Running   0          21s   192.168.8.161   ws-k8s-node1     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-node-gn6gm                         1/1     Running   0          21s   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">coredns-567c556887-9v7nk                  1/1     Running   0          77m   10.10.189.193   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">coredns-567c556887-z7b9x                  1/1     Running   0          77m   10.10.189.194   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">etcd-ws-k8s-master1                       1/1     Running   0          77m   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-apiserver-ws-k8s-master1             1/1     Running   0          77m   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-controller-manager-ws-k8s-master1    1/1     Running   0          77m   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-proxy-bg7ck                          1/1     Running   0          77m   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-proxy-s22ng                          1/1     Running   0          75m   192.168.8.161   ws-k8s-node1     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-scheduler-ws-k8s-master1             1/1     Running   0          77m   192.168.8.160   ws-k8s-master1   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">[root@ws-k8s-master1 ~]<span class="comment"># kubectl get node</span></span><br><span class="line">NAME             STATUS   ROLES           AGE   VERSION</span><br><span class="line">ws-k8s-master1   Ready    control-plane   77m   v1.26.0</span><br><span class="line">ws-k8s-node1     Ready    &lt;none&gt;          76m   v1.26.0</span><br><span class="line"></span><br><span class="line"><span class="comment">#测试</span></span><br><span class="line"><span class="comment">#node，从dockerhub拉取busybox的镜像</span></span><br><span class="line">ctr -n k8s.io images pull docker.io/library/busybox:1.28</span><br><span class="line"><span class="comment">#mastaer，启动pod</span></span><br><span class="line">kubectl run busybox --image docker.io/library/busybox:1.28 \</span><br><span class="line">--image-pull-policy=IfNotPresent --restart=Never --<span class="built_in">rm</span> -it busybox -- sh</span><br><span class="line">ping www.baidu.com <span class="comment">#能连外网</span></span><br><span class="line">64 bytes from 180.101.50.188: <span class="built_in">seq</span>=0 ttl=127 time=22.460 ms</span><br><span class="line">64 bytes from 180.101.50.188: <span class="built_in">seq</span>=1 ttl=127 time=16.696 ms</span><br><span class="line"></span><br><span class="line">nslookup kubernetes.default.svc.cluster.local  <span class="comment">#解析域名</span></span><br><span class="line">Server:    10.96.0.10    <span class="comment">#dns服务器</span></span><br><span class="line">Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local</span><br><span class="line"></span><br><span class="line">Name:      kubernetes.default.svc.cluster.local</span><br><span class="line">Address 1: 10.96.0.1 kubernetes.default.svc.cluster.local</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227174831.png"></p>
+<h2 id="ctr和crictl的区别"><a href="#ctr和crictl的区别" class="headerlink" title="ctr和crictl的区别"></a>ctr和crictl的区别</h2><p>ctr是containerd自带的CLI命令行工具<br>crictl是k8s中CRI（容器运行时接口）的客户端，k8s使用该客户端和containerd进行交互；<br>ctr拉取镜像需要指定-n k8s.io中，创建pod时就可以调用镜像</p>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/Untitled.png"></p>
+<h2 id="扩容k8s集群"><a href="#扩容k8s集群" class="headerlink" title="扩容k8s集群"></a>扩容k8s集群</h2><h3 id="添加工作节点"><a href="#添加工作节点" class="headerlink" title="添加工作节点"></a>添加工作节点</h3><p>192.168.8.162 ws-k8s-node2 </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#master1</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;192.168.8.161 ws-k8s-node2</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line">ssh-copy-id ws-k8s-node2</span><br><span class="line">kubeadm token create --print-join-command</span><br><span class="line"><span class="comment">#kubeadm join 192.168.8.160:6443 --token h5lkkm.dsybifhcfj9okvbj \</span></span><br><span class="line"><span class="comment">#--discovery-token-ca-cert-hash sha256:d1a70285365b4769a7b8527bb426039010c615e2c96410bbef88656103246362 \</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#node1</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;192.168.8.161 ws-k8s-node2</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"></span><br><span class="line"><span class="comment">#node2</span></span><br><span class="line">hostnamectl set-hostname ws-k8s-node2 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens33 ipv4.addresses 192.168.8.162/24 ipv4.gateway 192.168.8.2 ipv4.dns 192.168.8.2 ipv4.method manual</span><br><span class="line">nmcli con up ens33</span><br><span class="line">yum install -y device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack telnet ipvsadm</span><br><span class="line">yum -y update</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.160 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.8.161 ws-k8s-node1</span></span><br><span class="line"><span class="string">192.168.8.161 ws-k8s-node2</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line">swapoff -a</span><br><span class="line">sed -i <span class="string">&#x27;$ s/^/#/&#x27;</span> /etc/fstab</span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/sysctl.d/k8s.conf &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">[kubernetes]</span></span><br><span class="line"><span class="string">name=Kubernetes</span></span><br><span class="line"><span class="string">baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/</span></span><br><span class="line"><span class="string">enabled=1</span></span><br><span class="line"><span class="string">gpgcheck=0</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/yum.repos.d/kubernetes.repo</span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line"></span><br><span class="line">yum install -y containerd.io-1.6.6</span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/containerd</span><br><span class="line">containerd config default &gt; /etc/containerd/config.toml</span><br><span class="line">vim /etc/containerd/config.toml</span><br><span class="line">修改 </span><br><span class="line">SystemdCgroup = True</span><br><span class="line">sandbox_image = <span class="string">&quot;registry.aliyuncs.com/google_containers/pause:3.7&quot;</span></span><br><span class="line">config_path = <span class="string">&quot;/etc/containerd/certs.d&quot;</span></span><br><span class="line"><span class="built_in">mkdir</span> /etc/containerd/certs.d/docker.io/ -p</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;[host.&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;,host.&quot;https://registry.docker-cn.com&quot;]</span></span><br><span class="line"><span class="string">  capabilities = [&quot;pull&quot;]</span></span><br><span class="line"><span class="string"> &#x27;</span>&gt;&gt; /etc/containerd/certs.d/docker.io/hosts.toml</span><br><span class="line">systemctl <span class="built_in">enable</span> containerd.service --now</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/crictl.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">runtime-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">image-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">timeout: 10</span></span><br><span class="line"><span class="string">debug: false</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl restart containerd</span><br><span class="line">yum install -y docker-ce &amp;&amp; systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;&quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;]</span></span><br><span class="line"><span class="string">&#125;&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line">yum install -y kubelet-1.26.0 kubeadm-1.26.0 kubectl-1.26.0</span><br><span class="line">systemctl <span class="built_in">enable</span> kubelet</span><br><span class="line">reboot</span><br><span class="line">kubeadm <span class="built_in">join</span> 192.168.8.160:6443 --token h5lkkm.dsybifhcfj9okvbj \</span><br><span class="line">--discovery-token-ca-cert-hash sha256:d1a70285365b4769a7b8527bb426039010c615e2c96410bbef88656103246362 \</span><br></pre></td></tr></table></figure>
+
+    </article>
+    <!-- license -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://Durative.github.io">王盛</a>
+            <p>原文链接：<a href="http://durative.github.io/2024/02/27/k8s/">http://durative.github.io/2024/02/27/k8s/</a>
+            <p>发表日期：<a href="http://durative.github.io/2024/02/27/k8s/">February 27th 2024, 4:39:48 pm</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/02/27/k8s/">April 26th 2024, 6:54:44 pm</a>
+            <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href="/2024/02/27/harbor/" title="本地部署harbor私有镜像仓库">
+                    <div class="nextTitle">本地部署harbor私有镜像仓库</div>
+                </a>
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href="/2024/02/06/python/" title="Python学习记录">
+                    <div class="prevTitle">Python学习记录</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- comment -->
+    
+        <div class="post-comment">
+            <!-- 来必力 City 版安装代码 -->
+
+
+            
+
+            
+
+            
+
+            <!-- utteranc评论 -->
+
+
+            <!-- partial('_partial/comment/changyan') -->
+            <!--PC版-->
+
+
+            
+            
+
+            
+
+        </div>
+    
+    <!-- timeliness note -->
+    <!-- idea from: https://hexo.fluid-dev.com/posts/hexo-injector/#%E6%96%87%E7%AB%A0%E6%97%B6%E6%95%88%E6%80%A7%E6%8F%90%E7%A4%BA -->
+    
+    <!-- Mathjax -->
+    
+</main>
+
+                <!-- profile -->
+                
+            </div>
+            <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+        <div class="social">
+            
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+
+        </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- website approve for Chinese user -->
+    
+    <!-- 不蒜子  -->
+    
+        <div class="busuanzi-container">
+            
+             
+                <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+            
+        </div>
+    	
+</footer>
+
+        </div>
+        <!-- toc -->
+        
+            <div class="toc-wrapper toc-wrapper-loding" style=
+
+
+
+
+
+
+
+    top:50vh;
+
+>
+                <div class="toc-catalog">
+                    <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+                </div>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#docker%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86%E8%A1%A5%E5%85%85"><span class="toc-number">1.</span> <span class="toc-text">docker相关知识补充</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Dockerfile%E7%9A%84%E4%BB%8B%E7%BB%8D%E4%B8%8E%E4%B9%A6%E5%86%99"><span class="toc-number">1.1.</span> <span class="toc-text">Dockerfile的介绍与书写</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#nginx%E9%95%9C%E5%83%8F%E6%9E%84%E5%BB%BA"><span class="toc-number">1.1.1.</span> <span class="toc-text">nginx镜像构建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%A4%87%E4%BB%BD"><span class="toc-number">1.2.</span> <span class="toc-text">docker数据卷容器与备份</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker%E8%B5%84%E6%BA%90%E9%85%8D%E9%A2%9D"><span class="toc-number">1.3.</span> <span class="toc-text">docker资源配额</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU%E8%B5%84%E6%BA%90%E9%85%8D%E9%A2%9D"><span class="toc-number">1.3.1.</span> <span class="toc-text">CPU资源配额</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E8%B5%84%E6%BA%90%E9%85%8D%E9%A2%9D"><span class="toc-number">1.3.2.</span> <span class="toc-text">内存资源配额</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IO%E8%B5%84%E6%BA%90%E9%85%8D%E9%A2%9D"><span class="toc-number">1.3.3.</span> <span class="toc-text">IO资源配额</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker%E7%9A%84%E7%BB%93%E6%9D%9F%E8%BF%90%E8%A1%8C%E8%B5%84%E6%BA%90%E9%87%8A%E6%94%BE"><span class="toc-number">1.4.</span> <span class="toc-text">docker的结束运行资源释放</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s1-20%E6%90%AD%E5%BB%BA"><span class="toc-number">2.</span> <span class="toc-text">k8s1.20搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.1.</span> <span class="toc-text">环境初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%8A%82%E7%82%B9%E5%AE%89%E8%A3%85k8s"><span class="toc-number">2.2.</span> <span class="toc-text">主节点安装k8s</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E8%8A%82%E7%82%B9%E6%B7%BB%E5%8A%A0"><span class="toc-number">2.3.</span> <span class="toc-text">工作节点添加</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6"><span class="toc-number">2.4.</span> <span class="toc-text">calico网络插件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%8F%82%E6%95%B0"><span class="toc-number">2.4.1.</span> <span class="toc-text">一些参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Calico%E7%BB%84%E4%BB%B6"><span class="toc-number">2.4.2.</span> <span class="toc-text">Calico组件</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#k8s1-26%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">k8s1.26搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E5%88%9D%E5%A7%8B%E5%8C%96-1"><span class="toc-number">3.1.</span> <span class="toc-text">环境初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85containerd"><span class="toc-number">3.2.</span> <span class="toc-text">安装containerd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85k8s"><span class="toc-number">3.3.</span> <span class="toc-text">安装k8s</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Calico"><span class="toc-number">3.4.</span> <span class="toc-text">安装Calico</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ctr%E5%92%8Ccrictl%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.5.</span> <span class="toc-text">ctr和crictl的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9k8s%E9%9B%86%E7%BE%A4"><span class="toc-number">3.6.</span> <span class="toc-text">扩容k8s集群</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E5%B7%A5%E4%BD%9C%E8%8A%82%E7%82%B9"><span class="toc-number">3.6.1.</span> <span class="toc-text">添加工作节点</span></a></li></ol></li></ol></li></ol>
+            </div>
+        
+        <!-- sidebar -->
+        <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+        <div class="sidebar-panel-archives">
+    <!-- 在 ejs 中将 archive 按照时间排序 -->
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 5
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+        
+            
+            
+            <div class="archive-year"> 2024 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/harbor/">本地部署harbor私有镜像仓库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/k8s/">k8s学习记录</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/python/">Python学习记录</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/pve/">虚拟化系统PVE物理机快速安装指南</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/02</span>
+            <a class="archive-post-title" href="/2024/02/02/hexo/">使用1panel搭建Hexo博客</a>
+        </li>
+    
+    </div>
+</div>
+
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+        
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+        缺失模块，请参考主题文档进行安装配置：https://github.com/fi3ework/hexo-theme-archer#%E5%AE%89%E8%A3%85%E4%B8%BB%E9%A2%98
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+
+    </div>
+</div>
+
+        <!-- site-meta -->
+        <script>
+    var siteMetaRoot = "/"
+    if (siteMetaRoot === "undefined") {
+        siteMetaRoot = '/'
+    }
+    var siteMeta = {
+        url: "http://Durative.github.io",
+        root: siteMetaRoot,
+        author: "王盛"
+    }
+</script>
+
+        <!-- import experimental options here -->
+        <!-- Custom Font -->
+
+
+        <!-- main func -->
+        <script src="/scripts/main.js?v=20211217"></script>
+        <!-- dark mode -->
+        <script src="/scripts/dark.js?v=20211217"></script>
+        <!-- fancybox -->
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" defer></script>
+        <!-- algolia -->
+        
+        <!-- busuanzi -->
+        
+            <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+        
+        <!-- CNZZ -->
+        
+        <!-- async load share.js -->
+        
+            <script src="/scripts/share.js?v=20211217" async></script>
+        
+        <!-- mermaid -->
+        
+    </body>
+</html>
