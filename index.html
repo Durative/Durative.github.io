@@ -442,6 +442,7 @@
         
         
             
+            
         
         <article class="index-post">
             <a class="abstract-title" href="/2024/02/27/harbor/">
@@ -449,9 +450,15 @@
                 <span class="abstract-title-text">本地部署harbor私有镜像仓库</span>
             </a>
             <div class="abstract-content">
-                环境VMware Workstation 17 ProCentOS Linux release 7.9.2009 (Core)4G，8vCPU，100G精简置备，NAT网络网段192.168.8.0&#x2F;24wsdocker 192.168.8.150&#x2F;24harbor 192.168.8.148&#x2F;24
-harbor版本: v2.10
-自签发证书12345678910111213141516171819202122232425262728293031323334hostnamectl set-hostname harbor &amp;&amp; bash#因为要...
+                <p>环境<br>VMware Workstation 17 Pro<br>CentOS Linux release 7.9.2009 (Core)<br>4G，8vCPU，100G精简置备，NAT网络网段192.168.8.0&#x2F;24<br>wsdocker 192.168.8.150&#x2F;24<br>harbor 192.168.8.148&#x2F;24</p>
+<p>harbor版本: v2.10</p>
+<h1 id="自签发证书"><a href="#自签发证书" class="headerlink" title="自签发证书"></a>自签发证书</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl set-hostname harbor &amp;&amp; bash</span><br><span class="line"><span class="comment">#因为要用https访问harbor，所以需要使用自签发证书</span></span><br><span class="line">1.生成CA证书</span><br><span class="line">SSL工具生成2048位的密钥对，并将私钥保存到名为 <span class="string">&quot;ca.key&quot;</span> 的文件中，3072位更加安全</span><br><span class="line">openssl genrsa -out ca.key 2048</span><br><span class="line">生成一个自签发的 X.509 格式的 CA（证书颁发机构）证书</span><br><span class="line"><span class="comment">#-x509: 生成一个自签发的 X.509 格式的证书，而不是生成证书签署请求</span></span><br><span class="line"><span class="comment">#-key ca.key: 指定用于生成证书的私钥文件路径和文件名为 &quot;ca.key&quot;。该私钥将与生成的证书绑定。</span></span><br><span class="line"><span class="comment">#-out ca.pem: 指定生成的证书文件的输出路径和文件名为 &quot;ca.pem&quot;</span></span><br><span class="line">openssl req -new -x509 -days 365 -key ca.key -out ca.pem</span><br><span class="line"><span class="comment">#选择国家CN，城市BJ</span></span><br><span class="line"></span><br><span class="line">2.生成域名的证书</span><br><span class="line">SSL工具生成2048位的RSA私钥</span><br><span class="line">openssl genrsa -out harbor.key 2048</span><br><span class="line">SSL工具用创建的私钥生成一个证书签署请求，用以向CA申请签署证书</span><br><span class="line"><span class="comment">#-key harbor.key: 指定私钥文件的路径和文件名为 &quot;harbor.key&quot;。该私钥将与生成的证书绑定。</span></span><br><span class="line"><span class="comment">#-out harbor.csr: 指定生成的证书签署请求的输出路径和文件名为 &quot;harbor.csr&quot;</span></span><br><span class="line">openssl req -new -key harbor.key -out harbor.csr</span><br><span class="line"><span class="comment">#选择国家CN，城市BJ，hostname harbor</span></span><br><span class="line"></span><br><span class="line">3.签发证书</span><br><span class="line">证书签署请求（CSR）与根证书进行签署，生成一个具有指定有效期的 X.509 格式的证书</span><br><span class="line"><span class="comment">#-in harbor.csr: 指定输入的证书签署请求文件路径和文件名为 &quot;harbor.csr&quot;</span></span><br><span class="line"><span class="comment">#-CA ca.pem: 指定用于签署证书的自签发 CA 证书文件路径和文件名为 &quot;ca.pem&quot;</span></span><br><span class="line"><span class="comment">#-CAkey ca.key: 指定用于签署证书的自签发 CA 私钥文件路径和文件名为 &quot;ca.key&quot;。该私钥与上述的 CA 证书配对。</span></span><br><span class="line"><span class="comment">#-CAcreateserial: 指定在签署证书时自动生成一个序列号文件。</span></span><br><span class="line"><span class="comment">#-out harbor.pem: 指定生成的证书文件的输出路径和文件名为 &quot;harbor.pem&quot;</span></span><br><span class="line"><span class="comment">#-days 365: 指定生成的证书的有效期为 365 天</span></span><br><span class="line">openssl x509 -req -<span class="keyword">in</span> harbor.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out harbor.pem -days 365</span><br><span class="line"><span class="comment">#Signature ok</span></span><br><span class="line"><span class="comment">#subject=/C=CN/ST=BJ/L=BJ/O=Default Company Ltd/CN=harbor</span></span><br><span class="line"><span class="comment">#Getting CA Private Key</span></span><br><span class="line"><span class="comment">#证书签发成功</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="安装harbor"><a href="#安装harbor" class="headerlink" title="安装harbor"></a>安装harbor</h1><p>harbor版本采用最新的v2.10<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173541.png" alt="图片"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#安全相关</span></span><br><span class="line">yum -y install iptables-services</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld --now</span><br><span class="line">systemctl <span class="built_in">disable</span> iptables --now</span><br><span class="line">iptables -F</span><br><span class="line">sed -i <span class="string">&#x27;s/SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line"></span><br><span class="line"><span class="comment">#时钟同步，注释掉默认服务器，并使用cn.pool.ntp.org</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd.service</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改hosts文件，添加解析</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.150 wsdocker</span></span><br><span class="line"><span class="string">192.168.8.148 harbor</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"></span><br><span class="line"><span class="comment">#软件包安装，多安装几遍</span></span><br><span class="line">yum install -y  wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line">yum install -y  wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line">yum install -y  wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装docker-ce</span></span><br><span class="line">curl -fsSL https://get.docker.com -o get-docker.sh</span><br><span class="line">sh get-docker.sh</span><br><span class="line">systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line">docker --version</span><br><span class="line"><span class="comment">#Docker version 24.0.7, build afdd53b</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#启用linux的ip转发功能，使其可以作为路由器或vpn服务器使用</span></span><br><span class="line"><span class="comment">#加载模块，br_netfilte用于支持网络桥接和网络过滤，暂时加载即可</span></span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="comment">#修改/etc/sysctl.d/docker.conf文件</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">&quot;</span> &gt; /etc/sysctl.d/docker.conf</span><br><span class="line"><span class="comment">#使内核配置文件生效</span></span><br><span class="line">sysctl -p /etc/sysctl.d/docker.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#配置docker镜像加速，这是我的阿里云镜像加速器</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&#x27;</span> &gt;&gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装docker-compose</span></span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">wget https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64</span><br><span class="line"><span class="built_in">mkdir</span> -p /usr/bin/docker-compose</span><br><span class="line"><span class="built_in">mv</span> docker-compose-linux-x86_64 /usr/bin/docker-compose/</span><br><span class="line"><span class="built_in">chmod</span> +x /usr/bin/docker-compose</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装harbor</span></span><br><span class="line"><span class="comment">#在线安装直接wget github上的安装包 wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz</span></span><br><span class="line"><span class="comment">#离线安装需要从可以在github寻找对应版本的offline包，上传至虚机进行安装</span></span><br><span class="line"><span class="comment">#在线安装非常折磨，推荐离线安装</span></span><br><span class="line">tar zxvf harbor-offline-installer-v2.10.0.tgz</span><br><span class="line"><span class="built_in">cd</span> harbor</span><br><span class="line"><span class="built_in">cp</span> harbor.yml.tmpl harbor.yml</span><br><span class="line"><span class="comment">#修改配置文件，改成和上面的证书一致的信息</span></span><br><span class="line"><span class="comment">#把证书相关放到/ssl</span></span><br><span class="line"><span class="built_in">mkdir</span> /ssl</span><br><span class="line"><span class="built_in">cp</span> harbor.* ca.* /ssl/</span><br><span class="line">vim harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/^hostname.*/hostname: harbor/&#x27;</span> harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/\/your\/certificate\/path/\/ssl\/harbor.pem/&#x27;</span> harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/\/your\/private\/key\/path/\/ssl\/harbor.key/&#x27;</span> harbor.yml</span><br><span class="line"><span class="comment">#安装</span></span><br><span class="line"><span class="built_in">cd</span> ~/harbor/</span><br><span class="line">./install.sh</span><br><span class="line"><span class="comment">#成功提示如图</span></span><br><span class="line"><span class="comment">#修改宿主机hosts文件</span></span><br><span class="line">C:\Windows\System32\drivers\etc\hosts</span><br><span class="line">在末尾添加并保存</span><br><span class="line">192.168.8.148 harbor</span><br><span class="line"></span><br><span class="line">宿主机访问https://harbor/</span><br><span class="line"><span class="comment">#默认账号密码admin/Harbor12345</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>安装完成如图提示<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173505.png"></p>
+<p>登录web界面<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173716.png"></p>
+<h1 id="测试：使用harbor内的镜像"><a href="#测试：使用harbor内的镜像" class="headerlink" title="测试：使用harbor内的镜像"></a>测试：使用harbor内的镜像</h1>
             </div>
             <!-- read more -->
             
@@ -470,19 +477,23 @@ harbor版本: v2.10
         
         
         
+            
             
         
         <article class="index-post">
             <a class="abstract-title" href="/2024/02/27/k8s/">
                 
-                <span class="abstract-title-text">k8s学习记录</span>
+                <span class="abstract-title-text">k8s笔记合集</span>
             </a>
             <div class="abstract-content">
-                docker相关知识补充关于docker的详细基础可以看另外一篇博文，这里只介绍与k8s相关的部分，以及做一些补充
-Dockerfile的介绍与书写Dockerfile是一个用于定义Docker镜像的文本文件，包含了一系列的指令和参数，用于指示Docker在构建镜像时应该执行哪些操作，例如基于哪个基础镜像、复制哪些文件到镜像中、运行哪些命令等。
-是除了从镜像仓库拉取、解压保存镜像以外的自定义构建镜像的方式，通过docker bulid dockerfile来构建
-主要有几个部分组成，包括基础镜像，创建者信息，镜像操作指令，容器启动指令
-构建指令：docker build -t&#x3D;...
+                <p>注：本文较长，建议配合右侧目录食用</p>
+<h1 id="docker相关知识补充"><a href="#docker相关知识补充" class="headerlink" title="docker相关知识补充"></a>docker相关知识补充</h1><p>关于docker的详细基础可以看另外一篇博文，这里只介绍与k8s相关的部分，以及做一些补充</p>
+<h2 id="Dockerfile的介绍与书写"><a href="#Dockerfile的介绍与书写" class="headerlink" title="Dockerfile的介绍与书写"></a>Dockerfile的介绍与书写</h2><p>Dockerfile是一个用于定义Docker镜像的文本文件，包含了一系列的指令和参数，用于指示Docker在构建镜像时应该执行哪些操作，例如基于哪个基础镜像、复制哪些文件到镜像中、运行哪些命令等。</p>
+<p>是除了从镜像仓库拉取、解压保存镜像以外的自定义构建镜像的方式，通过docker bulid dockerfile来构建</p>
+<p>主要有几个部分组成，包括基础镜像，创建者信息，镜像操作指令，容器启动指令</p>
+<p>构建指令：<strong>docker build -t&#x3D;”image-name” &lt;文件目录&gt; –load</strong></p>
+<p>#Dockerfile文件指令<br>#FROM<br>FROM指定基础镜像，这个文件需要在本地有<br>如果在docker build后增加–load参数 可以去docker官网进行拉取<br>Dockerfile文件中定义的镜像就以FROM的镜像为基础，可指定tag</p>
+<p>#MAINTAINER<br>是备注，用以指定创建者信息</p>
             </div>
             <!-- read more -->
             
@@ -502,16 +513,20 @@ Dockerfile的介绍与书写Dockerfile是一个用于定义Docker镜像的文本
         
         
             
+            
         
         <article class="index-post">
             <a class="abstract-title" href="/2024/02/06/python/">
                 
-                <span class="abstract-title-text">Python学习记录</span>
+                <span class="abstract-title-text">Python笔记合集</span>
             </a>
             <div class="abstract-content">
-                Anaconda开发环境介绍与搭建Anaconda是一个软件集合，自带了很多的模块的二进制文件（可以直接本地构建模块），并提供了conda和pip两个包管理工具。能够提供python解释器、模块与虚拟环境的管理
-模块 —— 实现具体功能的工具包比如想实现下载、上传功能，存储功能，可以寻找现成的网络的、数据库的模块可以来调用(1)标准模块——python的开发者编写的模块(2)第三方模块
-虚拟环境 —— 给开发环境做用途上的区分通过划分多个开发环境，为不同的环境设置不同版本的解释器和模块，比如区分python2与3的环境比如做web开发、爬虫开发、图形化开发、科学计算和数据分析、机器学习与...
+                <h1 id="Anaconda开发环境介绍与搭建"><a href="#Anaconda开发环境介绍与搭建" class="headerlink" title="Anaconda开发环境介绍与搭建"></a>Anaconda开发环境介绍与搭建</h1><p>Anaconda是一个软件集合，自带了很多的模块的二进制文件（可以直接本地构建模块），并提供了conda和pip两个包管理工具。能够提供python解释器、模块与虚拟环境的管理</p>
+<h2 id="模块-——-实现具体功能的工具包"><a href="#模块-——-实现具体功能的工具包" class="headerlink" title="模块 —— 实现具体功能的工具包"></a>模块 —— 实现具体功能的工具包</h2><p>比如想实现下载、上传功能，存储功能，可以寻找现成的网络的、数据库的模块可以来调用<br>(1)标准模块——python的开发者编写的模块<br>(2)第三方模块</p>
+<h2 id="虚拟环境-——-给开发环境做用途上的区分"><a href="#虚拟环境-——-给开发环境做用途上的区分" class="headerlink" title="虚拟环境 —— 给开发环境做用途上的区分"></a>虚拟环境 —— 给开发环境做用途上的区分</h2><p>通过划分多个开发环境，为不同的环境设置不同版本的解释器和模块，比如区分python2与3的环境<br>比如做web开发、爬虫开发、图形化开发、科学计算和数据分析、机器学习与深度学习<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240206135205.png" alt="图片"></p>
+<h2 id="pip和conda包管理工具的对比："><a href="#pip和conda包管理工具的对比：" class="headerlink" title="pip和conda包管理工具的对比："></a>pip和conda包管理工具的对比：</h2><p>(1)软件仓库的区别<br>conda使用anacconda.org软件仓库<br>pip使用pypi，python官网的软件仓库，模块数量多</p>
+<p>(2)模块内容<br>conda都是二进制，可以直接读取<br>pip源码和二进制都有，源码需要编译会比较慢</p>
+<p>(3)支持的语言<br>conda支持多语言<br>pip只支持python</p>
             </div>
             <!-- read more -->
             
@@ -530,6 +545,7 @@ Dockerfile的介绍与书写Dockerfile是一个用于定义Docker镜像的文本
         
         
         
+            
             
         
         <article class="index-post">
@@ -538,15 +554,13 @@ Dockerfile的介绍与书写Dockerfile是一个用于定义Docker镜像的文本
                 <span class="abstract-title-text">虚拟化系统PVE物理机快速安装指南</span>
             </a>
             <div class="abstract-content">
-                环境：i5-12450H32G内存2T SSD1个以太网卡1个无线网卡pve版本8.1-1
-准备工作下载pve的镜像下载链接，这两个都可以：
-Index of &#x2F;iso&#x2F; (proxmox.com)
-Download Proxmox software, datasheets, agreements
-iso就有1个多G，带驱动的，不用自己封装驱动真好
-制作U盘可以用rufus，免费好用，不赘述
-做完之后会出现三个不可访问的盘符，不用管它，直接插U盘就行了
-还装系统那套流程，进入之后开始调PVE的配置
-安装过程选择安装方式，可选图形化、terminal或terminal带...
+                <p>环境：<br>i5-12450H<br>32G内存<br>2T SSD<br>1个以太网卡1个无线网卡<br>pve版本8.1-1</p>
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><h2 id="下载pve的镜像"><a href="#下载pve的镜像" class="headerlink" title="下载pve的镜像"></a>下载pve的镜像</h2><p>下载链接，这两个都可以：</p>
+<p><a target="_blank" rel="noopener" href="https://enterprise.proxmox.com/iso/">Index of &#x2F;iso&#x2F; (proxmox.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.proxmox.com/en/downloads">Download Proxmox software, datasheets, agreements</a></p>
+<p>iso就有1个多G，带驱动的，不用自己封装驱动真好</p>
+<h2 id="制作U盘"><a href="#制作U盘" class="headerlink" title="制作U盘"></a>制作U盘</h2><p>可以用rufus，免费好用，不赘述</p>
+<p>做完之后会出现三个不可访问的盘符，不用管它，直接插U盘就行了</p>
             </div>
             <!-- read more -->
             
@@ -566,6 +580,7 @@ iso就有1个多G，带驱动的，不用自己封装驱动真好
         
         
             
+            
         
         <article class="index-post">
             <a class="abstract-title" href="/2024/02/02/hexo/">
@@ -573,9 +588,14 @@ iso就有1个多G，带驱动的，不用自己封装驱动真好
                 <span class="abstract-title-text">使用1panel搭建Hexo博客</span>
             </a>
             <div class="abstract-content">
-                环境almalinux9.3 minimal安装12core，16G内存，200G硬盘192.168.10.116&#x2F;24npm版本8.19.4node.js版本21.1.0
-almalinux没有有效的docker安装源
-12345678910#almalinux安装docker与1panel#官方源yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo#阿里云加速源yum-config-manager --add-repo http://mirrors.aliy...
+                <p>环境<br>almalinux9.3 minimal安装<br>12core，16G内存，200G硬盘<br>192.168.10.116&#x2F;24<br>npm版本8.19.4<br>node.js版本21.1.0</p>
+<p>almalinux没有有效的docker安装源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#almalinux安装docker与1panel</span></span><br><span class="line"><span class="comment">#官方源</span></span><br><span class="line">yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo</span><br><span class="line"><span class="comment">#阿里云加速源</span></span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">yum -y update</span><br><span class="line">yum -y install docker-ce docker-ce-cli containerd.io</span><br><span class="line"><span class="comment">#安装1panel</span></span><br><span class="line">curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh &amp;&amp; sudo bash quick_start.sh</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="主机内安装hexo"><a href="#主机内安装hexo" class="headerlink" title="主机内安装hexo"></a>主机内安装hexo</h1><h2 id="环境初始化"><a href="#环境初始化" class="headerlink" title="环境初始化"></a>环境初始化</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建一个目录用以存放文件</span></span><br><span class="line"><span class="built_in">mkdir</span> /blog</span><br><span class="line"><span class="comment">#安装工具</span></span><br><span class="line">yum -y install git npm</span><br><span class="line">npm install -g hexo-cli</span><br><span class="line"><span class="comment">#初始化</span></span><br><span class="line">hexo init /blog/</span><br><span class="line"><span class="built_in">cd</span> /blog</span><br><span class="line">npm install</span><br><span class="line"><span class="comment">#清楚静态文件</span></span><br><span class="line">hexo clean</span><br><span class="line"><span class="comment">#生成静态文件</span></span><br><span class="line">hexo generate</span><br></pre></td></tr></table></figure>
+
+<h2 id="web端创建node-js环境"><a href="#web端创建node-js环境" class="headerlink" title="web端创建node.js环境"></a>web端创建node.js环境</h2><p>因为默认hexo使用的是4000端口，所以在创建时也要使用4000，不然会无法访问<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240205025123.png" alt="图片"></p>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>查看，显示已经启动，并且可以通过curl进行测试<br>curl <a target="_blank" rel="noopener" href="http://localhost:4000/">http://localhost:4000</a><br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240205025141.png" alt="图片"></p>
             </div>
             <!-- read more -->
             
@@ -792,6 +812,8 @@ almalinux没有有效的docker安装源
         
         
         
+        
+        
     
     
     
@@ -821,13 +843,13 @@ almalinux没有有效的docker安装源
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/27</span>
-            <a class="archive-post-title" href="/2024/02/27/k8s/">k8s学习记录</a>
+            <a class="archive-post-title" href="/2024/02/27/k8s/">k8s笔记合集</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/06</span>
-            <a class="archive-post-title" href="/2024/02/06/python/">Python学习记录</a>
+            <a class="archive-post-title" href="/2024/02/06/python/">Python笔记合集</a>
         </li>
     
         
