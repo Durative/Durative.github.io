@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+    <!-- title -->
+
+
+    
+
+<!-- keywords -->
+
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="王盛">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="王盛">
+    
+        <meta name="keywords" content="hexo,hexo-theme,hexo-blog">
+    
+    <meta name="description" content="">
+    <meta name="description" content="概要官网docs.ceph.com 特点：1.支持块级、对象存储、文件级存储2.高性能，分布式并行访问crush算法，支持上千个存储节点，支持EB级数据3.高可用性，支持数据多副本，强一致性，集群部署无单点故障，自动数据修复自愈4.高扩展性，去中心化灵活扩展，线性增加扩展5.后端支撑能力，支持对接KVM，OpenStack，docker，k8s等环境的后端存储6.支持物理机、虚拟机部署7.底层是对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ceph分布式存储">
+<meta property="og:url" content="http://durative.github.io/2024/05/01/ceph/index.html">
+<meta property="og:site_name" content="Akemi">
+<meta property="og:description" content="概要官网docs.ceph.com 特点：1.支持块级、对象存储、文件级存储2.高性能，分布式并行访问crush算法，支持上千个存储节点，支持EB级数据3.高可用性，支持数据多副本，强一致性，集群部署无单点故障，自动数据修复自愈4.高扩展性，去中心化灵活扩展，线性增加扩展5.后端支撑能力，支持对接KVM，OpenStack，docker，k8s等环境的后端存储6.支持物理机、虚拟机部署7.底层是对">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501165658.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501170403.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501170501.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501170614.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501171418.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501172427.png">
+<meta property="article:published_time" content="2024-05-01T08:55:28.000Z">
+<meta property="article:modified_time" content="2024-05-01T09:24:47.197Z">
+<meta property="article:author" content="王盛">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501165658.png">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="icon" href="/assets/akemi.ico">
+    
+    <title>ceph分布式存储 · Akemi</title>
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+    (function (w) {
+        'use strict'
+        // rel=preload support test
+        if (!w.loadCSS) {
+            w.loadCSS = function () {}
+        }
+        // define on the loadCSS obj
+        var rp = (loadCSS.relpreload = {})
+        // rel=preload feature support test
+        // runs once and returns a function for compat purposes
+        rp.support = (function () {
+            var ret
+            try {
+                ret = w.document.createElement('link').relList.supports('preload')
+            } catch (e) {
+                ret = false
+            }
+            return function () {
+                return ret
+            }
+        })()
+
+        // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+        // then change that media back to its intended value on load
+        rp.bindMediaToggle = function (link) {
+            // remember existing media attr for ultimate state, or default to 'all'
+            var finalMedia = link.media || 'all'
+
+            function enableStylesheet() {
+                link.media = finalMedia
+            }
+
+            // bind load handlers to enable media
+            if (link.addEventListener) {
+                link.addEventListener('load', enableStylesheet)
+            } else if (link.attachEvent) {
+                link.attachEvent('onload', enableStylesheet)
+            }
+
+            // Set rel and non-applicable media type to start an async request
+            // note: timeout allows this to happen async to let rendering continue in IE
+            setTimeout(function () {
+                link.rel = 'stylesheet'
+                link.media = 'only x'
+            })
+            // also enable media after 3 seconds,
+            // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+            setTimeout(enableStylesheet, 3000)
+        }
+
+        // loop through link elements in DOM
+        rp.poly = function () {
+            // double check this to prevent external calls from running
+            if (rp.support()) {
+                return
+            }
+            var links = w.document.getElementsByTagName('link')
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i]
+                // qualify links to those with rel=preload and as=style attrs
+                if (
+                    link.rel === 'preload' &&
+                    link.getAttribute('as') === 'style' &&
+                    !link.getAttribute('data-loadcss')
+                ) {
+                    // prevent rerunning on link
+                    link.setAttribute('data-loadcss', true)
+                    // bind listeners to toggle media back
+                    rp.bindMediaToggle(link)
+                }
+            }
+        }
+
+        // if unsupported, run the polyfill
+        if (!rp.support()) {
+            // run once at least
+            rp.poly()
+
+            // rerun poly on an interval until onload
+            var run = w.setInterval(rp.poly, 500)
+            if (w.addEventListener) {
+                w.addEventListener('load', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            } else if (w.attachEvent) {
+                w.attachEvent('onload', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            }
+        }
+
+        // commonjs
+        if (typeof exports !== 'undefined') {
+            exports.loadCSS = loadCSS
+        } else {
+            w.loadCSS = loadCSS
+        }
+    })(typeof global !== 'undefined' ? global : this)
+</script>
+
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20211217" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="/css/dark.css?v=20211217" as="style">
+    <link rel="stylesheet" href="/css/dark.css">
+    <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
+    <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
+    <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <!-- algolia -->
+    
+    <!-- 百度统计  -->
+    
+    <!-- Google tag (gtag.js) -->
+    
+
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ == undefined) {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js" />')
+        }
+    </script>
+    
+        <body class="post-body">
+    
+        <!-- header -->
+        <header class="header header-mobile">
+    <!-- top read progress line -->
+    <div class="header-element">
+        <div class="read-progress"></div>
+    </div>
+    <!-- sidebar menu button -->
+    <div class="header-element">
+        
+            <div class="header-sidebar-menu">
+        
+            
+                <div style="padding-left: 1px;">&#xe775;</div>
+            
+        </div>
+    </div>
+    <!-- header actions -->
+    <div class="header-actions">
+        <!-- theme mode switch button -->
+        <span class="header-theme-btn header-element">
+            <i class="fas fa-adjust"></i>
+        </span>
+        <!-- back to home page text -->
+        <span class="home-link header-element">
+            <a href=/>Akemi</a>
+        </span>
+    </div>
+    <!-- toggle banner for post layout -->
+    
+        
+            <div class="banner banner-clean">
+        
+            <div class="blog-title header-element">
+                <a href="/">Akemi</a>
+            </div>
+            <div class="post-title header-element">
+                <a href="#" class="post-name">ceph分布式存储</a>
+            </div>
+        </div>
+    
+</header>
+
+        <!-- fixed footer -->
+        <footer class="footer-fixed">
+    <!-- back to top button -->
+    <div class="footer-fixed-element">
+        
+            <div class="back-top back-top-hidden">
+        
+        
+            <div>&#xe639;</div>
+        
+        </div>
+    </div>
+</footer>
+
+        <!-- wrapper -->
+        <div class="wrapper">
+            <div class="site-intro" style="
+
+
+
+
+
+
+
+    height:50vh;
+
+">
+    
+    <!-- 主页  -->
+    
+        
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post-bg.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+                ceph分布式存储
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+                
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页 meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+    
+</div>
+
+                
+                <!-- 文章字数统计 -->
+                
+                <div class="post-intro-meta">
+                    <!-- 撰写日期 -->
+                    <span class="iconfont-archer post-intro-calander">&#xe676;</span>
+                    <span class="post-intro-time">2024/05/01</span>
+                    <!-- busuanzi -->
+                    
+                        <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                            <span class="iconfont-archer post-intro-busuanzi">&#xe602;</span>
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    
+                    <!-- 文章分享 -->
+                    <span class="share-wrapper">
+                        <span class="iconfont-archer share-icon">&#xe71d;</span>
+                        <span class="share-text">Share</span>
+                        <ul class="share-list">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+            <script>
+  // get user agent
+  function getBrowserVersions() {
+    var u = window.navigator.userAgent
+    return {
+      userAgent: u,
+      trident: u.indexOf('Trident') > -1, //IE内核
+      presto: u.indexOf('Presto') > -1, //opera内核
+      webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+      gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+      mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+      ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+      android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+      iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+      iPad: u.indexOf('iPad') > -1, //是否为iPad
+      webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+      weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+      uc: u.indexOf('UCBrowser') > -1, //是否为android下的UC浏览器
+    }
+  }
+  var browser = {
+    versions: getBrowserVersions(),
+  }
+  console.log('userAgent: ' + browser.versions.userAgent)
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded')
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document
+        .getElementsByClassName('intro-title')[0]
+        .classList.add('intro-fade-in')
+      document
+        .getElementsByClassName('intro-subtitle')[0]
+        .classList.add('intro-fade-in')
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in')
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb() {
+    if (browser.versions.uc) {
+      console.log('UCBrowser')
+      fontLoaded()
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular'],
+        },
+        loading: function () {
+          // 所有字体开始加载
+          // console.log('font loading');
+        },
+        active: function () {
+          // 所有字体已渲染
+          fontLoaded()
+        },
+        inactive: function () {
+          // 字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout')
+          fontLoaded()
+        },
+        timeout: 5000, // Set the timeout to two seconds
+      })
+    }
+  }
+
+  function asyncErr() {
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document,
+      t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0]
+    o.src = u
+    if (cb) {
+      o.addEventListener(
+        'load',
+        function (e) {
+          cb(null, e)
+        },
+        false
+      )
+    }
+    if (err) {
+      o.addEventListener(
+        'error',
+        function (e) {
+          err(null, e)
+        },
+        false
+      )
+    }
+    s.parentNode.insertBefore(o, s)
+  }
+
+  var asyncLoadWithFallBack = function (arr, success, reject) {
+    var currReject = function () {
+      reject()
+      arr.shift()
+      if (arr.length) async(arr[0], success, currReject)
+    }
+
+    async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack(
+    [
+      'https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js',
+      'https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js',
+      "/lib/webfontloader.min.js",
+    ],
+    asyncCb,
+    asyncErr
+  )
+</script>
+
+            <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+            <div class="container container-unloaded">
+                <main class="main post-page">
+    <article class="article-entry">
+        <h1 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h1><p>官网docs.ceph.com</p>
+<p>特点：<br>1.支持块级、对象存储、文件级存储<br>2.高性能，分布式并行访问crush算法，支持上千个存储节点，支持EB级数据<br>3.高可用性，支持数据多副本，强一致性，集群部署无单点故障，自动数据修复自愈<br>4.高扩展性，去中心化灵活扩展，线性增加扩展<br>5.后端支撑能力，支持对接KVM，OpenStack，docker，k8s等环境的后端存储<br>6.支持物理机、虚拟机部署<br>7.底层是对象存储（和fusion storage一样，而且都通过OSD进行写入）</p>
+<h1 id="ceph基本结构"><a href="#ceph基本结构" class="headerlink" title="ceph基本结构"></a>ceph基本结构</h1><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501165658.png"></p>
+<p>1.RADOS，全称是”可靠性⾃动化分布式对象存储(Reliable Autonomic Distributed Object Store)”，是Ceph集群的基础，RADOS负责Ceph中的所有数据都以对象形式存储。ceph通过RADOS层提供数据⼀致性、可靠性，数据迁移，数据再平衡等⾼级底层特性。</p>
+<p>2.librados是rados的底层函数库 ，⽤作实现作为”RBD、RGW”的基础，可以为Ceph FS提供POSIX接⼝，librados⽬前⽀持PHP、Ruby、Java、Python、C和C++语⾔，⽤来简化RADOS层的访问，并且提供librados API<br>对RADOS进⾏本地化访问。</p>
+<p>3.RBD （RBD，RADOS Block Device），也叫Ceph块设备，原先叫做RADOS块设备，对外提供块存储，它可以像祼磁盘⼀样被映射、格式化、挂载到操作系统上，在云平台中实现云硬盘功能的底层服务。</p>
+<p>4.RGW （RADOS GW），Ceph对象⽹关，简称为RGW，⽬前对Amazon S3和OpenStack对象存储API提供了兼容的Restful API接⼝,可以实现与openstack swift或者Amazon S3类似的对象存储服务。</p>
+<p>5.Ceph FS，Cehp⽂件系统，提供了⼀个任意⼤⼩且兼容POSIX的分布式⽂件系统，可以⽀持FUSE。ceph FUSE（Filesystem in Userspace） 是指 Ceph ⽂件系统的⼀个⽤户态⽂件系统客户端，它允许”⾮特权⽤户以⽤户态程序的⽅式创建和管理⽂件系统”，⽽⽆需修改内核代码。”⾮特权⽤户以⽤户态程序的⽅式创建和管理⽂件系统”是指允许⽤户挂载 Ceph ⽂件系统（CephFS），直接运⾏在⽤户空间中，⽐内核挂载具有更强的稳定性和安全性。不过，由于 FUSE 是在⽤户空间运⾏，通常它的性能会略低于内核客户端。</p>
+<h1 id="ceph存储组件框架"><a href="#ceph存储组件框架" class="headerlink" title="ceph存储组件框架"></a>ceph存储组件框架</h1><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501170403.png"></p>
+<p>Ceph基于RADOS提供了⼀个可扩展的、可靠的存储集群存储服务,Ceph存储集群由多种类型的守护程序组成：<br>Ceph Monitor监控<br>Ceph OSD Daemon守护进程<br>Ceph Metadata Server元数据<br>Ceph Manager管理</p>
+<p>类比：<br>FusionStrorage : FusionStorage Manager , MDC , VBS , OSD</p>
+<h2 id="ceph-OSD"><a href="#ceph-OSD" class="headerlink" title="ceph OSD"></a>ceph OSD</h2><p>与fusionstorage的差不多</p>
+<p>OSD，Ceph对外存储设备，负责数据读写操作，真正存储⽤户数据的组件，⼀个OSD守护进程与集群的⼀个物理磁盘绑定，每⼀块磁盘对应⼀个OSD守护进程，⼀个主机由⼀个或多个 osd 组成。</p>
+<p>⼀般来说，⽤于部署Ceph集群物理机中的磁盘数量与OSD守护进程数量是⼀样的。<br>（如果是SSD，400G划分一个OSD）</p>
+<h2 id="ceph-monitor"><a href="#ceph-monitor" class="headerlink" title="ceph monitor"></a>ceph monitor</h2><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501170501.png"></p>
+<p>MON , Ceph的monitor组件，负责维护ceph的集群状态，ceph将集群的状态保存在⼏个map结构⾥，如OSD、MON、PG和CRUSH，集群内所有的节点都向MON组件上报信息⽤于维护集群状态映射，monitor将每⼀个组件将上报的状态信息存储在不同的map⾥，monitor不存储实际的数据，只存储集群状态信息。 数据读写时，不通过MON。<br>（Ceph Monitors 实现的功能类似于 FusionStorage中的MDC+ZK）</p>
+<ol>
+<li>Ceph维护集群状态是通过跟踪集群中所有其他守护进程的状态和元数据，包括监控守护进程、管理守护进程、对象存储守护进程（OSDs），以及元数据服务器（MDSs）。</li>
+<li>Ceph集群映射包括监控映射、OSD映射、PG（Placement Group）映射和CRUSH（Controlled Replication Under Scalable Hashing）映射。这些映射对于数据的分布和复制⾮常重要。</li>
+<li>Ceph 客户端与Ceph Monitors 交互以获取集群映射和身份验证信息。⼀旦客户端有了这些信息，它们就可<br>以直接与 OSDs 交互来读写数据，后续的读写不再经过 Ceph Monitors。</li>
+<li>在 Ceph 集群中，Ceph Monitors 形成⼀个<strong>仲裁集群</strong>，以保持集群的⼀致性和⾼可⽤性。为了避免脑裂（Split-brain）情况，Monitors 使⽤基于 Paxos 的协议来达成⼀致。在Ceph 中，<strong>Paxos</strong> 是确保集群元数据⼀致性的关键算法，它允许 Ceph Monitors 在出现故障和⽹络问题时，依然能够正确地管理集群状态。</li>
+<li>Ceph Monitors 管理客户端和其他守护进程的身份验证，确保只有经过授权的服务和⽤户才能访问集群资源。</li>
+<li>Ceph Monitors 提供了⼀个集中的配置服务，允许管理员为集群中的守护进程配置和调整运⾏时设置。</li>
+</ol>
+<p>在⼀台服务器上只部署⼀个 Ceph Monitor。为了保证⾼可⽤性，通常建议部署奇数个 Ceph Monitors（如3、5或7个）。这样做是为了在投票过程中避免可能的平票情况（过半数），保证即使在部分 Ceph Monitors 失效的情况下集群仍然能够正常运⾏。</p>
+<p>在⼀个⽣产环境的⾼可⽤ Ceph 集群中，建议⾄少部署三个Ceph Monitor 实例守护进程，并且这些实例应该分布在不同的物理服务器上。这样即使⼀台服务器宕机，其他的 Monitor 还能保持集群的正常运作，并保持quorum 仲裁可⽤状态。部署奇数个 Monitor 实例是为了避免在决策过程中出现平票的情况。</p>
+<h2 id="ceph-MDS——文件系统的元数据"><a href="#ceph-MDS——文件系统的元数据" class="headerlink" title="ceph MDS——文件系统的元数据"></a>ceph MDS——文件系统的元数据</h2><p>Ceph Metadata Server（Ceph MDS）是 Ceph ⽂件系统（CephFS）的关键组件，主要负责存储和管理⽂件系统的元数据。在 CephFS 中，数据本身被存储在对象存储设备（OSDs）中，⽽⽂件和⽬录的元数据（如⽂件名、⽬录结构、权限、时间戳等）则由 MDS元数据服务管理，为ceph ⽂件系统(NFS&#x2F;CephFS)存储元数据，(即 Ceph 块设备和 Ceph 对象存储不使⽤MDS)</p>
+<p>MDS 存储与⽂件相关的所有元数据信息。这包括⽂件名、⽬录结构、⼤⼩、权限、所有权以及其他⽂件属性。当⽤户执⾏⽂件操作（如 ls、find、mkdir）时，这些请求会被发送到 MDS，⽽不是 OSD。测试这样做可以显著提⾼性能，因为元数据操作通常远⽐实际的数据操作更频繁。</p>
+<h2 id="ceph-Manager管理界面——提供dashboard"><a href="#ceph-Manager管理界面——提供dashboard" class="headerlink" title="ceph Manager管理界面——提供dashboard"></a>ceph Manager管理界面——提供dashboard</h2><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501170614.png"></p>
+<p>Ceph Manager (通常称为 ceph-mgr)，ceph-mgr是在⼀个主机上运⾏的⼀个守护进程，Ceph Manager守护进程（ceph-mgr）负责跟踪运⾏时指标和Ceph集群的当前状态，包括存储利⽤率，当前性能指标和系统负载，主要职责是收集所有运⾏中的 Ceph 守护进程的运⾏时性能指标和状态信息。Ceph Manager 守护程序还托管基于 python 的模块来管理和公开 Ceph 集群信息，包括基于 Web 的 Ceph 仪表板和 REST API。</p>
+<p>Ceph Manager 的主要功能包括：<br>1.监控：收集和汇总集群性能和状态信息，如 I&#x2F;O 操作的性能指标、磁盘使⽤情况、节点健康状况等。<br>2.仪表盘：提供基于 Web 的⽤户界⾯，允许⽤户查看集群状态和执⾏某些管理操作。<br>3.插件⽀持：⽀持各种插件，如监控集成（Prometheus, Zabbix等）、告警、⽇志记录等。</p>
+<h1 id="ceph部署"><a href="#ceph部署" class="headerlink" title="ceph部署"></a>ceph部署</h1><h2 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h2><p>虚拟化操作系统PVE-8.1-2<br>Centos7.9.2009<br>4vCPU 4G内存<br>启动盘50G+3块100G 精简置备<br>ceph版本v15.2.1</p>
+<p>192.168.10.141 ceph-node1<br>192.168.10.142 ceph-node2<br>192.168.10.143 ceph-node3</p>
+<h2 id="节点初始化配置"><a href="#节点初始化配置" class="headerlink" title="节点初始化配置"></a>节点初始化配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">节点初始化配置</span><br><span class="line"></span><br><span class="line">setenforce 0</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">yum -y install chrony vim </span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span></span><br><span class="line"><span class="string">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span></span><br><span class="line"><span class="string">192.168.10.121 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.10.141 ceph-node1</span></span><br><span class="line"><span class="string">192.168.10.142 ceph-node2</span></span><br><span class="line"><span class="string">192.168.10.143 ceph-node3&quot;</span> &gt; /etc/hosts</span><br></pre></td></tr></table></figure>
+
+<h2 id="node安装ceph"><a href="#node安装ceph" class="headerlink" title="node安装ceph"></a>node安装ceph</h2><h3 id="每个节点安装"><a href="#每个节点安装" class="headerlink" title="每个节点安装"></a>每个节点安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">yum -y install epel-release</span><br><span class="line">yum -y install deltarpm yum-plugin-priorities yum-utils ntpdate python-setuptools python-pip gcc gcc-c++ autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel zip unzip ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5-devel libidn libidn-devel openssl openssh openssl-devel nss_ldap openldap openldap-devel openldap-clients openldap-servers libxslt-devel libevent-devel ntp libtool-ltdl bison libtool vim-enhanced python wget lsof iptraf strace lrzsz kernel-devel kernel-headers pam-devel tcl tk cmake ncurses-devel bison setuptool popt-devel net-snmp screen perl-devel pcre-devel net-snmp screen tcpdump rsync sysstat man iptables sudo libconfig git bind-utils tmux elinks numactl iftop bwm-ng net-tools expect snappy leveldb gdisk python-argparse gperftools-libs conntrack ipset jq libseccomp socat sshpass</span><br><span class="line">wget https://download.ceph.com/rpm-nautilus/el7/noarch/ceph-release-1-1.el7.noarch.rpm --no-check-certificate</span><br><span class="line">rpm -ivh ceph-release-1-1.el7.noarch.rpm --force</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改ceph源</span></span><br><span class="line">sed -i <span class="string">&#x27;s#download.ceph.com#mirrors.tuna.tsinghua.edu.cn/ceph#&#x27;</span> /etc/yum.repos.d/ceph.repo</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装ceph相关组件</span></span><br><span class="line">yum install -y ceph-mon ceph-radosgw ceph-mds ceph-mgr ceph-osd ceph-common ceph</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="node1安装"><a href="#node1安装" class="headerlink" title="node1安装"></a>node1安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#node1</span></span><br><span class="line">hostnamectl set-hostname ceph-node1 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens18 ifname ens18 ipv4.method manual ipv4.addresses 192.168.10.141/24 \</span><br><span class="line">ipv4.gateway 192.168.10.1 ipv4.dns 192.168.1.1</span><br><span class="line">nmcli con up ens18</span><br><span class="line"></span><br><span class="line"><span class="comment">#ssh互信</span></span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id ceph-node1</span><br><span class="line">ssh-copy-id ceph-node2</span><br><span class="line">ssh-copy-id ceph-node3</span><br><span class="line"></span><br><span class="line"><span class="comment">#node1安装部署工具</span></span><br><span class="line">yum -y install ceph-deploy</span><br><span class="line"><span class="built_in">mkdir</span> /ceph_cluster</span><br><span class="line"><span class="built_in">cd</span> /ceph_cluster</span><br><span class="line"></span><br><span class="line"><span class="comment">#node1使用deploy初始化配置node1-3</span></span><br><span class="line">ceph-deploy new ceph-node1 ceph-node2 ceph-node3</span><br><span class="line"></span><br><span class="line"><span class="comment">#生成monitor角色 强行同步</span></span><br><span class="line">ceph-deploy --overwrite-conf mon create-initial</span><br><span class="line"></span><br><span class="line"><span class="comment">#会生成一堆相关的keyring密钥文件</span></span><br><span class="line"><span class="built_in">ls</span></span><br><span class="line">ceph.bootstrap-mds.keyring			<span class="comment">#引导启动 mds 的密钥文件</span></span><br><span class="line">ceph.bootstrap-mgr.keyring			<span class="comment">#引导启动 mgr 的密钥文件</span></span><br><span class="line">ceph.bootstrap-osd.keyring			<span class="comment">#引导启动 osd 的密钥文件</span></span><br><span class="line">ceph.bootstrap-rgw.keyring			<span class="comment">#引导启动 rgw 的密钥文件</span></span><br><span class="line">ceph.client.admin.keyring			<span class="comment">#ceph客户端和管理端通信的认证密钥，拥有ceph集群的所有权限</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#节点纳管</span></span><br><span class="line">ceph-deploy admin ceph-node1 ceph-node2 ceph-node3</span><br><span class="line"></span><br><span class="line">修改ceph.conf配置文件</span><br><span class="line"><span class="built_in">cat</span> /etc/ceph/ceph.conf</span><br><span class="line">[global]</span><br><span class="line">fsid = 30c9d277-1f46-4f97-b93e-b08327427c09</span><br><span class="line">mon_initial_members = ceph-node1, ceph-node2, ceph-node3</span><br><span class="line">mon_host = 192.168.10.141,192.168.10.142,192.168.10.143</span><br><span class="line">auth_cluster_required = cephx</span><br><span class="line">auth_service_required = cephx</span><br><span class="line">auth_client_required = cephx</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="安装完成查看状态"><a href="#安装完成查看状态" class="headerlink" title="安装完成查看状态"></a>安装完成查看状态</h3><p>#查看状态<br>ceph -s<br>  cluster:<br>    id:     30c9d277-1f46-4f97-b93e-b08327427c09<br>    health: HEALTH_WARN<br>            OSD count 0 &lt; osd_pool_default_size 3<br>            mons are allowing insecure global_id reclaim<br>            clock skew detected on mon.ceph-node3, mon.ceph-node1</p>
+<p>  services:<br>    mon: 3 daemons, quorum ceph-node2,ceph-node3,ceph-node1 (age 4m)<br>    mgr: ceph-node1(active, since 67s), standbys: ceph-node2, ceph-node3<br>    osd: 0 osds: 0 up, 0 in</p>
+<p>  data:<br>    pools:   0 pools, 0 pgs<br>    objects: 0 objects, 0 B<br>    usage:   0 B used, 0 B &#x2F; 0 B avail<br>    pgs:</p>
+<h2 id="ceph-OSD初始化"><a href="#ceph-OSD初始化" class="headerlink" title="ceph OSD初始化"></a>ceph OSD初始化</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda               8:0    0   50G  0 disk</span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0   49G  0 part</span><br><span class="line">  ├─centos-root 253:0    0 45.1G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0  3.9G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0  100G  0 disk</span><br><span class="line">sdc               8:32   0  100G  0 disk</span><br><span class="line">sdd               8:48   0  100G  0 disk</span><br><span class="line">sr0              11:0    1  4.5G  0 rom</span><br><span class="line"></span><br><span class="line"><span class="comment">#部署OSD进程 - 添加磁盘到存储集群</span></span><br><span class="line">ceph-deploy osd create --data /dev/sdb ceph-node1</span><br><span class="line">ceph-deploy osd create --data /dev/sdc ceph-node1</span><br><span class="line">ceph-deploy osd create --data /dev/sdd ceph-node1</span><br><span class="line">ceph-deploy osd create --data /dev/sdb ceph-node2</span><br><span class="line">ceph-deploy osd create --data /dev/sdc ceph-node2</span><br><span class="line">ceph-deploy osd create --data /dev/sdd ceph-node2</span><br><span class="line">ceph-deploy osd create --data /dev/sdb ceph-node3</span><br><span class="line">ceph-deploy osd create --data /dev/sdc ceph-node3</span><br><span class="line">ceph-deploy osd create --data /dev/sdd ceph-node3</span><br><span class="line"></span><br><span class="line"> ceph -s</span><br><span class="line">  cluster:</span><br><span class="line">    <span class="built_in">id</span>:     30c9d277-1f46-4f97-b93e-b08327427c09 <span class="comment">#集群ID</span></span><br><span class="line">    health: HEALTH_WARN  <span class="comment">#健康状态</span></span><br><span class="line">            mons are allowing insecure global_id reclaim</span><br><span class="line">            clock skew detected on mon.ceph-node3, mon.ceph-node1</span><br><span class="line"></span><br><span class="line">  services:  </span><br><span class="line">    mon: 3 daemons, quorum ceph-node2,ceph-node3,ceph-node1 (age 8m) <span class="comment">#mon节点信息</span></span><br><span class="line">    mgr: ceph-node1(active, since 5m), standbys: ceph-node2, ceph-node3 <span class="comment">#mgr节点信息</span></span><br><span class="line">    osd: 9 osds: 9 up (since 7s), 9 <span class="keyword">in</span> (since 7s) <span class="comment">#OSD信息</span></span><br><span class="line"></span><br><span class="line">  task status:</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   0 pools, 0 pgs <span class="comment">#存储池信息</span></span><br><span class="line">    objects: 0 objects, 0 B <span class="comment">#对象信息</span></span><br><span class="line">    usage:   9.0 GiB used, 891 GiB / 900 GiB avail <span class="comment">#使用情况信息，每块磁盘默认预留1G放元数据</span></span><br><span class="line">    pgs:</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看osd状态</span></span><br><span class="line">ceph-deploy osd list ceph-node1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="ceph-Dashboard图形化仪表台"><a href="#ceph-Dashboard图形化仪表台" class="headerlink" title="ceph-Dashboard图形化仪表台"></a>ceph-Dashboard图形化仪表台</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">yum install -y ceph-mgr-dashboard</span><br><span class="line"><span class="comment">#部署ceph-web管理（可以多个部署，web也有主备区别）</span></span><br><span class="line">ceph-deploy mgr create ceph-node1</span><br><span class="line"></span><br><span class="line"><span class="comment">#仪表台配置</span></span><br><span class="line">ceph mgr module <span class="built_in">enable</span> dashboard --force</span><br><span class="line"></span><br><span class="line"><span class="comment">#设置监听地址和端口</span></span><br><span class="line">ceph config <span class="built_in">set</span> mgr mgr/dashboard/server_addr 0.0.0.0</span><br><span class="line">ceph config <span class="built_in">set</span> mgr mgr/dashboard/server_port 8000</span><br><span class="line"></span><br><span class="line"><span class="comment">#重启dashboard</span></span><br><span class="line">ceph mgr module <span class="built_in">disable</span> dashboard</span><br><span class="line">ceph mgr module <span class="built_in">enable</span> dashboard --force</span><br><span class="line"></span><br><span class="line"><span class="comment">#是设置dashboard用户名密码</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;Admin@1234!&#x27;</span> &gt; dashboard_passwd.txt</span><br><span class="line">ceph dashboard ac-user-create admin administrator -i dashboard_passwd.txt</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501171418.png"></p>
+<h1 id="ceph-rbd管理与卷的映射"><a href="#ceph-rbd管理与卷的映射" class="headerlink" title="ceph-rbd管理与卷的映射"></a>ceph-rbd管理与卷的映射</h1><h2 id="基本管理"><a href="#基本管理" class="headerlink" title="基本管理"></a>基本管理</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建一个存储池，名字为pool_01</span></span><br><span class="line">ceph osd pool create pool_01 128 128</span><br><span class="line"></span><br><span class="line"><span class="comment">#设置存储池为块存储池RBD类型</span></span><br><span class="line"> ceph osd pool application <span class="built_in">enable</span> pool_01 rbd</span><br><span class="line"> </span><br><span class="line"><span class="comment">#查看状态</span></span><br><span class="line">rados lspools</span><br><span class="line">ceph <span class="built_in">df</span>                          <span class="comment">#可以看到ID和可用空间</span></span><br><span class="line">ceph -s</span><br><span class="line">ceph osd pool get pool_01 size      <span class="comment">#默认三副本</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool_01 size 2    <span class="comment">#修改副本数</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool_01 pgp_num 64 <span class="comment">#修改pgp数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#开启允许删除存储池</span></span><br><span class="line">ceph tell mon.\* injectargs <span class="string">&#x27;--mon-allow-pool-delete=true&#x27;</span></span><br><span class="line"><span class="comment">#关闭允许删除存储池</span></span><br><span class="line">ceph tell mon.\* injectargs <span class="string">&#x27;--mon-allow-pool-delete=false&#x27;</span></span><br><span class="line"><span class="comment">#删除存储池</span></span><br><span class="line">ceph osd pool delete pool_01 pool_01 --yes-i-really-really-mean-it</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="RBD管理与映射"><a href="#RBD管理与映射" class="headerlink" title="RBD管理与映射"></a>RBD管理与映射</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建卷</span></span><br><span class="line">rbd create pool_01/disk1 --size 10G</span><br><span class="line">rbd <span class="built_in">ls</span> -p pool_01</span><br><span class="line">rbd info pool_01/disk1</span><br><span class="line">rbd image <span class="string">&#x27;disk1&#x27;</span>:</span><br><span class="line">        size 10 GiB <span class="keyword">in</span> 2560 objects    <span class="comment">#颗粒度信息：分割为2560个对象</span></span><br><span class="line">        order 22 (4 MiB objects)       <span class="comment">#4M作为一个对象</span></span><br><span class="line">        snapshot_count: 0</span><br><span class="line">        <span class="built_in">id</span>: 38e4a2960771</span><br><span class="line">        block_name_prefix: rbd_data.38e4a2960771</span><br><span class="line">        format: 2</span><br><span class="line">        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten</span><br><span class="line">        op_features: </span><br><span class="line">        flags: </span><br><span class="line">        create_timestamp: Mon Mar 18 10:11:24 2024</span><br><span class="line">        access_timestamp: Mon Mar 18 10:11:24 2024</span><br><span class="line">        modify_timestamp: Mon Mar 18 10:11:24 2024</span><br><span class="line">[</span><br><span class="line">细颗粒度可以储存更多信息，但查询速度会变慢</span><br><span class="line"></span><br><span class="line"><span class="comment">#order22代表一个object是2^22的大小，就是4M</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#创建另一个卷，指定order为21，此时一个object就是2M</span></span><br><span class="line">rbd create --size 1G --order 21 pool_01/disk2</span><br><span class="line"><span class="comment">#也可以不用指定order，直接指定，--order要被废弃了</span></span><br><span class="line">rbd create --size 1G --object-size 1M pool_01/disk3</span><br><span class="line"></span><br><span class="line">rbd info pool_01/disk2</span><br><span class="line">rbd image <span class="string">&#x27;disk2&#x27;</span>:</span><br><span class="line">        size 1 GiB <span class="keyword">in</span> 512 objects</span><br><span class="line">        order 21 (2 MiB objects)</span><br><span class="line">        snapshot_count: 0</span><br><span class="line">        <span class="built_in">id</span>: 116d7fac892a</span><br><span class="line">        block_name_prefix: rbd_data.116d7fac892a</span><br><span class="line">        format: 2</span><br><span class="line">        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten</span><br><span class="line">        op_features: </span><br><span class="line">        flags: </span><br><span class="line">        create_timestamp: Mon Mar 18 10:15:29 2024</span><br><span class="line">        access_timestamp: Mon Mar 18 10:15:29 2024</span><br><span class="line">        modify_timestamp: Mon Mar 18 10:15:29 2024</span><br><span class="line"></span><br><span class="line"><span class="comment">#删除卷</span></span><br><span class="line">rbd <span class="built_in">rm</span> pool_01/disk1</span><br><span class="line">rbd <span class="built_in">rm</span> pool_01/disk2</span><br><span class="line">rbd <span class="built_in">rm</span> pool_01/disk3</span><br></pre></td></tr></table></figure>
+
+<h3 id="卷映射"><a href="#卷映射" class="headerlink" title="卷映射"></a>卷映射</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br><span class="line">NAME                                                                                                  MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda                                                                                                     8:0    0   50G  0 disk </span><br><span class="line">├─sda1                                                                                                  8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2                                                                                                  8:2    0   49G  0 part </span><br><span class="line">  ├─centos-root                                                                                       253:0    0 45.1G  0 lvm  /</span><br><span class="line">  └─centos-swap                                                                                       253:1    0  3.9G  0 lvm  [SWAP]</span><br><span class="line">sdb                                                                                                     8:16   0  100G  0 disk </span><br><span class="line">└─ceph--a4c0f4de--3e33--4b4a--baad--d963051938dd-osd--block--d9c62f90--ad93--41ee--b53f--3695198c9935 253:2    0  100G  0 lvm  </span><br><span class="line">sdc                                                                                                     8:32   0  100G  0 disk </span><br><span class="line">└─ceph--bcb89fc2--215e--41aa--b3d3--81c346933e63-osd--block--e989ef38--aef1--41c4--b427--f171cef6b88c 253:3    0  100G  0 lvm  </span><br><span class="line">sdd                                                                                                     8:48   0  100G  0 disk </span><br><span class="line">└─ceph--2cf83101--f989--4a4b--bf13--257f399a9b24-osd--block--ce7869ba--31bf--4e39--8898--0b4fb32d5131 253:4    0  100G  0 lvm  </span><br><span class="line">sr0                                                                                                    11:0    1  4.5G  0 rom  </span><br><span class="line"><span class="comment">#此时sdb sdc sdd被ceph纳管状态，主机无法直接使用</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#创建卷</span></span><br><span class="line"><span class="comment">#ceph osd pool create pool_01 128 128</span></span><br><span class="line">rbd create pool_01/disk1 --size 10G</span><br><span class="line"><span class="comment">#直接映射会报错</span></span><br><span class="line">rbd map pool_01/disk1</span><br><span class="line">rbd: sysfs write failed</span><br><span class="line">RBD image feature <span class="built_in">set</span> mismatch. You can <span class="built_in">disable</span> features unsupported by the kernel with <span class="string">&quot;rbd feature disable pool_01/disk1 object-map fast-diff deep-flatten&quot;</span>.</span><br><span class="line">In some cases useful info is found <span class="keyword">in</span> syslog - try <span class="string">&quot;dmesg | tail&quot;</span>.</span><br><span class="line">rbd: map failed: (6) No such device or address</span><br><span class="line"></span><br><span class="line"><span class="comment">#忽略rbd特性并映射卷</span></span><br><span class="line">rbd feature <span class="built_in">disable</span> pool_01/disk1 object-map fast-diff deep-flatten</span><br><span class="line"></span><br><span class="line"><span class="comment">#映射给本机</span></span><br><span class="line">rbd map pool_01/disk1</span><br><span class="line"><span class="comment">#/dev/rbd0 提示映射到了rbd0</span></span><br><span class="line">lsblk | grep rbd</span><br><span class="line">rbd0            252:0    0   10G  0 disk</span><br><span class="line"></span><br><span class="line"><span class="comment">#本地格式化与挂载</span></span><br><span class="line">mkfs.ext4 /dev/rbd0</span><br><span class="line"><span class="built_in">mkdir</span> /ceph_volume01</span><br><span class="line"><span class="comment">#持久化挂载</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;/dev/rbd0 /ceph_volume01 ext4 defaults,_netdev 0 0&quot;</span> &gt;&gt; /etc/fstab</span><br><span class="line">mount -a</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th | grep rbd</span><br><span class="line">/dev/rbd0               ext4      9.8G   37M  9.2G   1% /ceph_volume01</span><br></pre></td></tr></table></figure>
+
+<h1 id="ceph-cephfs管理"><a href="#ceph-cephfs管理" class="headerlink" title="ceph-cephfs管理"></a>ceph-cephfs管理</h1><p>注意点：（为什么k8s需要使用cephfs而不是rbd的方式进行挂载？<br>rbd块存储一般用于存储的池化部署，用以给OpenStack、pve等云平台提供后端的存储<br>但rbd无法同时挂载到多个节点（不支持同时写入），所以在ceph对接k8s时需要通过cephfs进行对接</p>
+<p>一个cephfs至少要求<strong>两个librados存储池，一个为data，一个为metadata</strong>。当配置这两个存储池时，注意：</p>
+<ol>
+<li>为metadata pool设置较高级别的副本级别，因为metadata的损坏可能导致整个文件系统不用</li>
+<li>建议，metadata pool使用低延时存储，比如SSD，因为metadata会直接影响客户端的响应速度。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建ceph文件系统</span></span><br><span class="line">1.创建MDS元数据服务管理，MDS是ceph-fs的关键服务组件，用来存放元数据服务</span><br><span class="line">ceph-deploy mds create ceph-node1 ceph-node2 ceph-node3</span><br><span class="line"></span><br><span class="line">2.创建第一个存储池cephfs-data</span><br><span class="line">ceph osd pool create cephfs_data 128</span><br><span class="line"><span class="comment">#pool &#x27;cephfs_data&#x27; created</span></span><br><span class="line"></span><br><span class="line">3.创建metadata存储池</span><br><span class="line">ceph osd pool create cephfs_metadata 128</span><br><span class="line"><span class="comment">#关于创建存储池</span></span><br><span class="line"><span class="comment">#确定 pg_num 取值是强制性的，因为不能自动计算。下面是几个常用的值：</span></span><br><span class="line"><span class="comment">#*少于 5 个 OSD 时可把 pg_num 设置为 128</span></span><br><span class="line"><span class="comment">#*OSD 数量在 5 到 10 个时，可把 pg_num 设置为 512</span></span><br><span class="line"><span class="comment">#*OSD 数量在 10 到 50 个时，可把 pg_num 设置为 4096</span></span><br><span class="line"><span class="comment">#*OSD 数量大于 50 时，你得理解权衡方法、以及如何自己计算 pg_num 取值</span></span><br><span class="line"></span><br><span class="line">4.基于创建的两个存储池来创建文件系统</span><br><span class="line">ceph fs new ws-ceph-fs cephfs_metadata cephfs_data</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看fs状态</span></span><br><span class="line">ceph fs <span class="built_in">ls</span></span><br><span class="line"></span><br><span class="line">name: ws-ceph-fs, metadata pool: cephfs_metadata, data pools: [cephfs_data]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="ceph管理命令汇总与配置文件说明"><a href="#ceph管理命令汇总与配置文件说明" class="headerlink" title="ceph管理命令汇总与配置文件说明"></a>ceph管理命令汇总与配置文件说明</h1><h2 id="配置文件ceph-conf"><a href="#配置文件ceph-conf" class="headerlink" title="配置文件ceph.conf"></a>配置文件ceph.conf</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ceph.conf</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 时钟漂移阈值：</span></span><br><span class="line">		mon clock drift allowed = 0.500</span><br><span class="line">		mon clock drift warn backoff = 10</span><br><span class="line"><span class="comment"># 全局配置</span></span><br><span class="line">[global]</span><br><span class="line">    fsid = YOUR_CLUSTER_FSID  <span class="comment"># 集群的唯一标识符</span></span><br><span class="line">    mon_initial_members = MON_NODE1, MON_NODE2, MON_NODE3  <span class="comment"># 初始监视器节点的主机名或IP地址</span></span><br><span class="line">    mon_host = MON_NODE1, MON_NODE2, MON_NODE3  <span class="comment"># 监视器节点的主机名或IP地址</span></span><br><span class="line">    auth_cluster_required = cephx  <span class="comment"># 集群级别的认证需求</span></span><br><span class="line">    auth_service_required = cephx  <span class="comment"># 服务级别的认证需求</span></span><br><span class="line">    auth_client_required = cephx  <span class="comment"># 客户端级别的认证需求</span></span><br><span class="line">    osd_journal_size = 1024  <span class="comment"># OSD的日志大小（MB）</span></span><br><span class="line">    filestore_xattr_use_omap = <span class="literal">true</span>  <span class="comment"># 启用基于OMAP的扩展属性存储</span></span><br><span class="line">    osd_pool_default_size = 3  <span class="comment"># 默认的副本数，**可以通过修改这个使两备份的集群生效**</span></span><br><span class="line">    osd_pool_default_min_size = 2  <span class="comment"># 默认的最小副本数</span></span><br><span class="line">    osd_pool_default_pg_num = 128  <span class="comment"># 默认的PG数量</span></span><br><span class="line">    osd_pool_default_pgp_num = 128  <span class="comment"># 默认的PGP数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># OSD配置</span></span><br><span class="line">[osd]</span><br><span class="line">    osd_journal_size = 1024  <span class="comment"># OSD的日志大小（MB）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 池配置</span></span><br><span class="line">[pool]</span><br><span class="line">    pg_num_min = 8  <span class="comment"># 每个池的最小PG数量</span></span><br><span class="line">    pg_num_max = 4096  <span class="comment"># 每个池的最大PG数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 监视器配置</span></span><br><span class="line">[mon]</span><br><span class="line">    mon_osd_full_ratio = 0.95  <span class="comment"># 当OSD使用率达到该阈值时，触发警告</span></span><br><span class="line">    mon_osd_nearfull_ratio = 0.85  <span class="comment"># 当OSD使用率达到该阈值时，触发警告</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 客户端配置</span></span><br><span class="line">[client]</span><br><span class="line">    rbd_cache = <span class="literal">true</span>  <span class="comment"># 启用客户端的RBD缓存</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 日志配置</span></span><br><span class="line">[<span class="built_in">log</span>]</span><br><span class="line">    file = /var/log/ceph/ceph.log  <span class="comment"># 日志文件路径</span></span><br><span class="line">    max_new = 10000  <span class="comment"># 每个日志文件的最大大小（KB）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调试配置</span></span><br><span class="line">[debug]</span><br><span class="line">    debug_default = 0  <span class="comment"># 默认调试级别</span></span><br><span class="line">    debug_mon = 20  <span class="comment"># 监视器模块的调试级别</span></span><br><span class="line">    debug_osd = 20  <span class="comment"># OSD模块的调试级别</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="管理命令汇总"><a href="#管理命令汇总" class="headerlink" title="管理命令汇总"></a>管理命令汇总</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群操作</span></span><br><span class="line">ceph -s                          <span class="comment"># 显示集群的状态摘要</span></span><br><span class="line">ceph health                      <span class="comment"># 显示集群的健康状态</span></span><br><span class="line">ceph quorum_status               <span class="comment"># 显示当前的投票状态和选举的监视器节点</span></span><br><span class="line">ceph osd <span class="built_in">stat</span>                    <span class="comment"># 显示 OSD 的状态和统计信息</span></span><br><span class="line">ceph <span class="built_in">df</span>                          <span class="comment"># 显示集群的存储容量和使用情况</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 存储池操作</span></span><br><span class="line">ceph osd pool create &lt;pool_name&gt; &lt;pg_num&gt; &lt;pgp_num&gt; &lt;pool_type&gt;  <span class="comment"># 创建存储池</span></span><br><span class="line">ceph osd pool delete &lt;pool_name&gt; &lt;pool_name&gt; --yes-i-really-really-mean-it  <span class="comment"># 删除存储池</span></span><br><span class="line">ceph osd pool get &lt;pool_name&gt; &lt;key&gt;                           <span class="comment"># 获取存储池的属性</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> &lt;pool_name&gt; &lt;key&gt; &lt;value&gt;                   <span class="comment"># 设置存储池的属性</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> &lt;pool_name&gt; &lt;app_name&gt;        <span class="comment"># 启用存储池的应用程序</span></span><br><span class="line">ceph osd pool application <span class="built_in">disable</span> &lt;pool_name&gt; &lt;app_name&gt;       <span class="comment"># 禁用存储池的应用程序</span></span><br><span class="line">ceph osd pool <span class="built_in">ls</span>                                                <span class="comment"># 列出所有存储池</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># OSD 操作</span></span><br><span class="line">ceph osd tree                    <span class="comment"># 显示 OSD 树</span></span><br><span class="line">ceph osd lspools                 <span class="comment"># 列出所有 OSD 池</span></span><br><span class="line">ceph osd crush show-tunables     <span class="comment"># 显示 CRUSH 映射的可调节参数</span></span><br><span class="line">ceph osd <span class="built_in">set</span> &lt;osd_id&gt; &lt;key&gt; &lt;value&gt;                           <span class="comment"># 设置 OSD 的属性</span></span><br><span class="line">ceph osd set-require-min-compat-client &lt;release_name&gt;         <span class="comment"># 设置所需的最低客户端兼容性版本</span></span><br><span class="line">ceph osd out &lt;osd_id&gt;                                          <span class="comment"># 使 OSD 离线</span></span><br><span class="line">ceph osd <span class="keyword">in</span> &lt;osd_id&gt;                                           <span class="comment"># 使 OSD 上线</span></span><br><span class="line">ceph osd crush reweight &lt;osd_id&gt; &lt;weight&gt;                      <span class="comment"># 设置 OSD 的权重</span></span><br><span class="line">ceph osd find &lt;osd_id&gt;                                          <span class="comment"># 查找 OSD 的位置</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># MON 操作</span></span><br><span class="line">ceph mon_status                 <span class="comment"># 显示监视器的状态信息</span></span><br><span class="line">ceph mon <span class="built_in">stat</span>                   <span class="comment"># 显示监视器的统计信息</span></span><br><span class="line">ceph mon dump                   <span class="comment"># 显示监视器的配置信息</span></span><br><span class="line">ceph mon getmap -o &lt;file_name&gt;  <span class="comment"># 导出监视器映射到文件</span></span><br><span class="line">ceph mon add &lt;mon_name&gt; &lt;mon_ip&gt;  <span class="comment"># 添加新的监视器</span></span><br><span class="line">ceph mon remove &lt;mon_name&gt;       <span class="comment"># 移除现有的监视器</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># MDS 操作</span></span><br><span class="line">ceph mds <span class="built_in">stat</span>                   <span class="comment"># 显示 MDS 的状态信息</span></span><br><span class="line">ceph mds dump                   <span class="comment"># 显示 MDS 的配置信息</span></span><br><span class="line">ceph fs <span class="built_in">ls</span>                      <span class="comment"># 列出所有文件系统</span></span><br><span class="line">ceph fs status                  <span class="comment"># 显示文件系统的状态</span></span><br><span class="line">ceph fs <span class="built_in">set</span> &lt;fs_name&gt; &lt;key&gt; &lt;value&gt;  <span class="comment"># 设置文件系统的属性</span></span><br><span class="line">ceph fs set_max_mds &lt;max_mds&gt;   <span class="comment"># 设置文件系统的最大 MDS 数量</span></span><br><span class="line">ceph fs add_data_pool &lt;fs_name&gt; &lt;pool_name&gt;  <span class="comment"># 添加数据池到文件系统</span></span><br><span class="line">ceph fs rm_data_pool &lt;fs_name&gt; &lt;pool_name&gt;   <span class="comment"># 从文件系统中删除数据池</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># RADOS 操作</span></span><br><span class="line">rados <span class="built_in">df</span>                        <span class="comment"># 显示 RADOS 存储集群的容量和使用情况</span></span><br><span class="line">rados lspools                   <span class="comment"># 列出所有 RADOS 池</span></span><br><span class="line">rados <span class="built_in">ls</span> &lt;pool_name&gt;            <span class="comment"># 列出指定 RADOS 池中的对象</span></span><br><span class="line">rados <span class="built_in">stat</span> &lt;pool_name&gt; &lt;object_name&gt;  <span class="comment"># 显示指定对象的信息</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># RBD 操作</span></span><br><span class="line">rbd create &lt;image_name&gt; --size &lt;size&gt; --pool &lt;pool_name&gt;  <span class="comment"># 创建 RBD 镜像</span></span><br><span class="line">rbd <span class="built_in">ls</span> &lt;pool_name&gt;              <span class="comment"># 列出指定池中的 RBD 镜像</span></span><br><span class="line">rbd info &lt;image_name&gt;           <span class="comment"># 显示 RBD 镜像的信息</span></span><br><span class="line">rbd resize &lt;image_name&gt; --很抱歉，由于文本格式的限制，无法在单个回答中提供所有的命令。请按照以下链接访问完整的 Ceph 管理命令合集：</span><br><span class="line"></span><br><span class="line">[Ceph 管理命令合集](https://docs.ceph.com/docs/master/rados/operations/administration/)</span><br></pre></td></tr></table></figure>
+
+<h1 id="pve-debian-安装ceph"><a href="#pve-debian-安装ceph" class="headerlink" title="pve(debian)安装ceph"></a>pve(debian)安装ceph</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#每个节点</span></span><br><span class="line"><span class="comment">#安装ceph，以无订阅软件源进行安装</span></span><br><span class="line">pveceph install --repository no-subscription</span><br><span class="line"></span><br><span class="line"><span class="comment">#初始化集群存储网络</span></span><br><span class="line">pveceph init --network 192.168.10.0/24</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建mon</span></span><br><span class="line">pveceph createmon</span><br></pre></td></tr></table></figure>
+
+<p>此时再打开PVE界面能够看到ceph已激活<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501172427.png"></p>
+
+    </article>
+    <!-- license -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://Durative.github.io">王盛</a>
+            <p>原文链接：<a href="http://durative.github.io/2024/05/01/ceph/">http://durative.github.io/2024/05/01/ceph/</a>
+            <p>发表日期：<a href="http://durative.github.io/2024/05/01/ceph/">May 1st 2024, 4:55:28 pm</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/05/01/ceph/">May 1st 2024, 5:24:47 pm</a>
+            <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href="/2024/05/01/ceph-k8s/" title="ceph对接k8s">
+                    <div class="nextTitle">ceph对接k8s</div>
+                </a>
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href="/2024/05/01/PXE/" title="PXE安装">
+                    <div class="prevTitle">PXE安装</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- comment -->
+    
+        <div class="post-comment">
+            <!-- 来必力 City 版安装代码 -->
+
+
+            
+
+            
+
+            
+
+            <!-- utteranc评论 -->
+
+
+            <!-- partial('_partial/comment/changyan') -->
+            <!--PC版-->
+
+
+            
+            
+
+            
+
+        </div>
+    
+    <!-- timeliness note -->
+    <!-- idea from: https://hexo.fluid-dev.com/posts/hexo-injector/#%E6%96%87%E7%AB%A0%E6%97%B6%E6%95%88%E6%80%A7%E6%8F%90%E7%A4%BA -->
+    
+    <!-- Mathjax -->
+    
+</main>
+
+                <!-- profile -->
+                
+            </div>
+            <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+        <div class="social">
+            
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+
+        </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- website approve for Chinese user -->
+    
+    <!-- 不蒜子  -->
+    
+        <div class="busuanzi-container">
+            
+             
+                <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+            
+        </div>
+    	
+</footer>
+
+        </div>
+        <!-- toc -->
+        
+            <div class="toc-wrapper toc-wrapper-loding" style=
+
+
+
+
+
+
+
+    top:50vh;
+
+>
+                <div class="toc-catalog">
+                    <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+                </div>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%A6%81"><span class="toc-number">1.</span> <span class="toc-text">概要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ceph%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84"><span class="toc-number">2.</span> <span class="toc-text">ceph基本结构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ceph%E5%AD%98%E5%82%A8%E7%BB%84%E4%BB%B6%E6%A1%86%E6%9E%B6"><span class="toc-number">3.</span> <span class="toc-text">ceph存储组件框架</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph-OSD"><span class="toc-number">3.1.</span> <span class="toc-text">ceph OSD</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph-monitor"><span class="toc-number">3.2.</span> <span class="toc-text">ceph monitor</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph-MDS%E2%80%94%E2%80%94%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%85%83%E6%95%B0%E6%8D%AE"><span class="toc-number">3.3.</span> <span class="toc-text">ceph MDS——文件系统的元数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph-Manager%E7%AE%A1%E7%90%86%E7%95%8C%E9%9D%A2%E2%80%94%E2%80%94%E6%8F%90%E4%BE%9Bdashboard"><span class="toc-number">3.4.</span> <span class="toc-text">ceph Manager管理界面——提供dashboard</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ceph%E9%83%A8%E7%BD%B2"><span class="toc-number">4.</span> <span class="toc-text">ceph部署</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E8%AF%B4%E6%98%8E"><span class="toc-number">4.1.</span> <span class="toc-text">环境说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E5%88%9D%E5%A7%8B%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="toc-number">4.2.</span> <span class="toc-text">节点初始化配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#node%E5%AE%89%E8%A3%85ceph"><span class="toc-number">4.3.</span> <span class="toc-text">node安装ceph</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%8F%E4%B8%AA%E8%8A%82%E7%82%B9%E5%AE%89%E8%A3%85"><span class="toc-number">4.3.1.</span> <span class="toc-text">每个节点安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#node1%E5%AE%89%E8%A3%85"><span class="toc-number">4.3.2.</span> <span class="toc-text">node1安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%AE%8C%E6%88%90%E6%9F%A5%E7%9C%8B%E7%8A%B6%E6%80%81"><span class="toc-number">4.3.3.</span> <span class="toc-text">安装完成查看状态</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph-OSD%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">4.4.</span> <span class="toc-text">ceph OSD初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph-Dashboard%E5%9B%BE%E5%BD%A2%E5%8C%96%E4%BB%AA%E8%A1%A8%E5%8F%B0"><span class="toc-number">4.5.</span> <span class="toc-text">ceph-Dashboard图形化仪表台</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ceph-rbd%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8D%B7%E7%9A%84%E6%98%A0%E5%B0%84"><span class="toc-number">5.</span> <span class="toc-text">ceph-rbd管理与卷的映射</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%AE%A1%E7%90%86"><span class="toc-number">5.1.</span> <span class="toc-text">基本管理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RBD%E7%AE%A1%E7%90%86%E4%B8%8E%E6%98%A0%E5%B0%84"><span class="toc-number">5.2.</span> <span class="toc-text">RBD管理与映射</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%B7%E6%98%A0%E5%B0%84"><span class="toc-number">5.2.1.</span> <span class="toc-text">卷映射</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ceph-cephfs%E7%AE%A1%E7%90%86"><span class="toc-number">6.</span> <span class="toc-text">ceph-cephfs管理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ceph%E7%AE%A1%E7%90%86%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB%E4%B8%8E%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%B4%E6%98%8E"><span class="toc-number">7.</span> <span class="toc-text">ceph管理命令汇总与配置文件说明</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6ceph-conf"><span class="toc-number">7.1.</span> <span class="toc-text">配置文件ceph.conf</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%A1%E7%90%86%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB"><span class="toc-number">7.2.</span> <span class="toc-text">管理命令汇总</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#pve-debian-%E5%AE%89%E8%A3%85ceph"><span class="toc-number">8.</span> <span class="toc-text">pve(debian)安装ceph</span></a></li></ol>
+            </div>
+        
+        <!-- sidebar -->
+        <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+        <div class="sidebar-panel-archives">
+    <!-- 在 ejs 中将 archive 按照时间排序 -->
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 17
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+        
+            
+            
+            <div class="archive-year"> 2024 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/ceph-k8s/">ceph对接k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/git/">git代码管理工具</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/go-k8s/">go代码封装到k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/PXE/">PXE安装</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/VMware-I2I/">VMware I2I迁移至PVE 小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/ceph/">ceph分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/%E6%A0%B9%E5%88%86%E5%8C%BA%E6%89%A9%E5%AE%B9/">根分区扩容小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/DEBD/">DRBD单活分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/exsi7/">ESXi物理机安装踩坑汇总</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/linux-raid/">基于mdadm创建与管理软raid</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/nginx/">nginx详解</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/ansible/">Ansible笔记集合</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/harbor/">本地部署harbor私有镜像仓库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/k8s/">k8s笔记合集</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/python/">Python笔记合集</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/pve/">虚拟化系统PVE物理机快速安装指南</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/02</span>
+            <a class="archive-post-title" href="/2024/02/02/hexo/">使用1panel搭建Hexo博客</a>
+        </li>
+    
+    </div>
+</div>
+
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+        
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+        缺失模块，请参考主题文档进行安装配置：https://github.com/fi3ework/hexo-theme-archer#%E5%AE%89%E8%A3%85%E4%B8%BB%E9%A2%98
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+
+    </div>
+</div>
+
+        <!-- site-meta -->
+        <script>
+    var siteMetaRoot = "/"
+    if (siteMetaRoot === "undefined") {
+        siteMetaRoot = '/'
+    }
+    var siteMeta = {
+        url: "http://Durative.github.io",
+        root: siteMetaRoot,
+        author: "王盛"
+    }
+</script>
+
+        <!-- import experimental options here -->
+        <!-- Custom Font -->
+
+
+        <!-- main func -->
+        <script src="/scripts/main.js?v=20211217"></script>
+        <!-- dark mode -->
+        <script src="/scripts/dark.js?v=20211217"></script>
+        <!-- fancybox -->
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" defer></script>
+        <!-- algolia -->
+        
+        <!-- busuanzi -->
+        
+            <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+        
+        <!-- CNZZ -->
+        
+        <!-- async load share.js -->
+        
+            <script src="/scripts/share.js?v=20211217" async></script>
+        
+        <!-- mermaid -->
+        
+    </body>
+</html>
