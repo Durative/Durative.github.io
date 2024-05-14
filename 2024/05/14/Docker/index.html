@@ -51,7 +51,7 @@
 <meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240514230032.png">
 <meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240514230209.png">
 <meta property="article:published_time" content="2024-05-14T14:30:49.000Z">
-<meta property="article:modified_time" content="2024-05-14T17:53:24.142Z">
+<meta property="article:modified_time" content="2024-05-14T17:55:26.945Z">
 <meta property="article:author" content="王盛">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240514223604.png">
@@ -605,9 +605,10 @@
 <p>如果要进行持久化存储，则可以通过两种方式，volume与bind mount来实现</p>
 <h2 id="volume"><a href="#volume" class="headerlink" title="volume"></a>volume</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">docker run -tid --name centos -v /etc/selinux/ centos</span><br><span class="line"><span class="built_in">ls</span> /var/lib/docker/volumes/a2b9ad6de48699da4e609f909b38b9c030b40f97b28b98841505c19b9a506a51/_data/</span><br><span class="line">可以看到多了个semanage.conf文件，这是从容器中挂载出的文件，在这个文件中修改时也会将其同步到容器内</span><br><span class="line"></span><br><span class="line">列出volume卷</span><br><span class="line">docker volume <span class="built_in">ls</span></span><br><span class="line">DRIVER    VOLUME NAME</span><br><span class="line"><span class="built_in">local</span>     a2b9ad6de48699da4e609f909b38b9c030b40f97b28b98841505c19b9a506a51</span><br><span class="line"></span><br><span class="line">查看volume卷详情</span><br><span class="line">docker volume inspect a2b9ad6de48699da4e609f909b38b9c030b40f97b28b98841505c19b9a506a51</span><br><span class="line">[</span><br><span class="line">&#123;</span><br><span class="line"><span class="string">&quot;CreatedAt&quot;</span>: <span class="string">&quot;2023-12-10T21:04:12+08:00&quot;</span>,</span><br><span class="line"><span class="string">&quot;Driver&quot;</span>: <span class="string">&quot;local&quot;</span>,</span><br><span class="line"><span class="string">&quot;Labels&quot;</span>: &#123;</span><br><span class="line"><span class="string">&quot;com.docker.volume.anonymous&quot;</span>: <span class="string">&quot;&quot;</span></span><br><span class="line">&#125;,</span><br><span class="line"><span class="string">&quot;Mountpoint&quot;</span>: <span class="string">&quot;/var/lib/docker/volumes/a2b9ad6de48699da4e609f909b38b9c030b40f97b28b98841505c19b9a506a51/_data&quot;</span>,</span><br><span class="line"><span class="string">&quot;Name&quot;</span>: <span class="string">&quot;a2b9ad6de48699da4e609f909b38b9c030b40f97b28b98841505c19b9a506a51&quot;</span>,</span><br><span class="line"><span class="string">&quot;Options&quot;</span>: null,</span><br><span class="line"><span class="string">&quot;Scope&quot;</span>: <span class="string">&quot;local&quot;</span></span><br><span class="line">&#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 
-<p>1.Volume完全由Docker管理.是将特定⽬录挂载给容器。<br>2.使⽤卷Volume时，会在主机上的Docker存储⽬录中创建⼀个新⽬录，Docker会管理该⽬录的内容。<br>3.Volume的内容存在于容器的⽣命周期之外：删除容器后，Docker数据卷仍然存在。<br>4.挂载volume时，不需要指定mount源，指定mount point即可。<br>5.Docker会在&#x2F;var&#x2F;lib&#x2F;docker&#x2F;volumes路径下为每个volume⽣成⼀个⽬录，作为mount源。<br>6.若mount point指向容器中的已有⽬录，则该⽬录下的数据会被copy到volume中。<br>7.若mount point指向容器中的空⽬录，则会⾃动创建所需⽬录。<br>8.若启动挂载尚不存在的卷的容器，Docker会为⾃动创建卷。<br>9.volume在使⽤时，可通过ro参数将容器对volume的权限设置为只读。</p>
-<h2 id="bind-mount"><a href="#bind-mount" class="headerlink" title="bind mount"></a>bind mount</h2><p>将宿主机上已有的目录或文件mount到容器中<br><code>docker run --name web01 -dit -p 8080:80 -v /root/htdocs:/usr/local/apache2/htdocs httpd:2.4</code></p>
-<p>1.Linux绑定挂载（bind mount）主要作⽤是允许将⼀个⽬录或者⽂件（不是整个设备）挂载到⼀个指定的⽬录上。<br>2.在该挂载点上进⾏的任何操作，只是发⽣在被挂载的⽬录或者⽂件上，⽽原挂载点的内容则会被隐藏起来且不受影<br>响。<br>3.容器运⾏过程中，对bind mount⽬录中改动的数据，将被保存。删除容器后，bind mount中的数据仍然存在。<br>4.bind mount可以挂载⼀个⽬录到容器，也可以挂载⼀个⽂件到容器。但必须要指定⽬录或⽂件的路径，即mount<br>源，当然也必须指定mount point。这也限制了容器的可移植性。<br>5.若将bind mount绑定到容器上的某⾮空⽬录下，则会隐藏容器⽬录下的现有内容。若不希望容器的整个⽬录被覆<br>盖，可单独挂载某个⽂件。<br>6.若mount源指向的⽂件或⽬录在宿主机上不存在。则会⾃动创建。<br>7.使⽤bind mount时，可通过ro参数将容器对数据的权限设置为只读。（设置ro参数后，容器⽆法对数据进⾏修改，但宿主机依旧有权限修改其内容。</p>
+<p>特点：<br>1.Volume完全由Docker管理.是将特定⽬录挂载给容器。<br>2.使⽤卷Volume时，会在主机上的Docker存储⽬录中创建⼀个新⽬录，Docker会管理该⽬录的内容。<br>3.Volume的内容存在于容器的⽣命周期之外：删除容器后，Docker数据卷仍然存在。<br>4.挂载volume时，不需要指定mount源，指定mount point即可。<br>5.Docker会在&#x2F;var&#x2F;lib&#x2F;docker&#x2F;volumes路径下为每个volume⽣成⼀个⽬录，作为mount源。<br>6.若mount point指向容器中的已有⽬录，则该⽬录下的数据会被copy到volume中。<br>7.若mount point指向容器中的空⽬录，则会⾃动创建所需⽬录。<br>8.若启动挂载尚不存在的卷的容器，Docker会为⾃动创建卷。<br>9.volume在使⽤时，可通过ro参数将容器对volume的权限设置为只读。</p>
+<h2 id="bind-mount"><a href="#bind-mount" class="headerlink" title="bind mount"></a>bind mount</h2><p>将宿主机上已有的目录或文件mount到容器中</p>
+<p>下面这个操作是创建一个http服务器，并且将本地文件挂载到服务展示文件的位置<br><code>docker run --name web01 -dit -p 8080:80 -v /root/htdocs:/usr/local/apache2/htdocs httpd:2.4</code></p>
+<p>特点：<br>1.Linux绑定挂载（bind mount）主要作⽤是允许将⼀个⽬录或者⽂件（不是整个设备）挂载到⼀个指定的⽬录上。<br>2.在该挂载点上进⾏的任何操作，只是发⽣在被挂载的⽬录或者⽂件上，⽽原挂载点的内容则会被隐藏起来且不受影<br>响。<br>3.容器运⾏过程中，对bind mount⽬录中改动的数据，将被保存。删除容器后，bind mount中的数据仍然存在。<br>4.bind mount可以挂载⼀个⽬录到容器，也可以挂载⼀个⽂件到容器。但必须要指定⽬录或⽂件的路径，即mount<br>源，当然也必须指定mount point。这也限制了容器的可移植性。<br>5.若将bind mount绑定到容器上的某⾮空⽬录下，则会隐藏容器⽬录下的现有内容。若不希望容器的整个⽬录被覆<br>盖，可单独挂载某个⽂件。<br>6.若mount源指向的⽂件或⽬录在宿主机上不存在。则会⾃动创建。<br>7.使⽤bind mount时，可通过ro参数将容器对数据的权限设置为只读。（设置ro参数后，容器⽆法对数据进⾏修改，但宿主机依旧有权限修改其内容。</p>
 
     </article>
     <!-- license -->
@@ -616,7 +617,7 @@
             <p>原文作者：<a href="http://Durative.github.io">王盛</a>
             <p>原文链接：<a href="http://durative.github.io/2024/05/14/Docker/">http://durative.github.io/2024/05/14/Docker/</a>
             <p>发表日期：<a href="http://durative.github.io/2024/05/14/Docker/">May 14th 2024, 10:30:49 pm</a>
-            <p>更新日期：<a href="http://durative.github.io/2024/05/14/Docker/">May 15th 2024, 1:53:24 am</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/05/14/Docker/">May 15th 2024, 1:55:26 am</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -1056,8 +1057,6 @@
         
         
         
-        
-        
     
     
     
@@ -1243,14 +1242,14 @@
         <div class="sidebar-panel-tags">
     <div class="sidebar-tags-name">
         
-            <span class="sidebar-tag-name" data-tags="云原生">
-                <span class="iconfont-archer">&#xe606;</span>
-                云原生
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云原生">
+                <span class="iconfont-archer">&#xe606;</span>
+                云原生
             </span>
         
             <span class="sidebar-tag-name" data-tags="云计算">
