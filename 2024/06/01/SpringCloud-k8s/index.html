@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+    <!-- title -->
+
+
+    
+
+<!-- keywords -->
+
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="王盛">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="王盛">
+    
+        <meta name="keywords" content="容器,云计算,云原生">
+    
+    <meta name="description" content="">
+    <meta name="description" content="整体流程1、把Springcloud开发的java代码做到镜像里：可以基于dockerfile文件做镜像2、把镜像传到镜像仓库3、创建pod，用deployment或statefulset创建4、创建四层代理Service5、搭建七层代理Ingress-nginx-controller6、数据持久化：ceph、nfs、云存储7、搭建监控系统和日志收集系统：prometheus+alertmagae">
+<meta property="og:type" content="article">
+<meta property="og:title" content="将SpringCloud项目迁移至k8s">
+<meta property="og:url" content="http://durative.github.io/2024/06/01/SpringCloud-k8s/index.html">
+<meta property="og:site_name" content="Akemi">
+<meta property="og:description" content="整体流程1、把Springcloud开发的java代码做到镜像里：可以基于dockerfile文件做镜像2、把镜像传到镜像仓库3、创建pod，用deployment或statefulset创建4、创建四层代理Service5、搭建七层代理Ingress-nginx-controller6、数据持久化：ceph、nfs、云存储7、搭建监控系统和日志收集系统：prometheus+alertmagae">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601162944.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163034.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163123.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163136.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163213.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163346.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163320.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163501.png">
+<meta property="article:published_time" content="2024-06-01T08:25:22.000Z">
+<meta property="article:modified_time" content="2024-06-01T08:36:58.581Z">
+<meta property="article:author" content="王盛">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601162944.png">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="icon" href="/assets/akemi.ico">
+    
+    <title>将SpringCloud项目迁移至k8s · Akemi</title>
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+    (function (w) {
+        'use strict'
+        // rel=preload support test
+        if (!w.loadCSS) {
+            w.loadCSS = function () {}
+        }
+        // define on the loadCSS obj
+        var rp = (loadCSS.relpreload = {})
+        // rel=preload feature support test
+        // runs once and returns a function for compat purposes
+        rp.support = (function () {
+            var ret
+            try {
+                ret = w.document.createElement('link').relList.supports('preload')
+            } catch (e) {
+                ret = false
+            }
+            return function () {
+                return ret
+            }
+        })()
+
+        // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+        // then change that media back to its intended value on load
+        rp.bindMediaToggle = function (link) {
+            // remember existing media attr for ultimate state, or default to 'all'
+            var finalMedia = link.media || 'all'
+
+            function enableStylesheet() {
+                link.media = finalMedia
+            }
+
+            // bind load handlers to enable media
+            if (link.addEventListener) {
+                link.addEventListener('load', enableStylesheet)
+            } else if (link.attachEvent) {
+                link.attachEvent('onload', enableStylesheet)
+            }
+
+            // Set rel and non-applicable media type to start an async request
+            // note: timeout allows this to happen async to let rendering continue in IE
+            setTimeout(function () {
+                link.rel = 'stylesheet'
+                link.media = 'only x'
+            })
+            // also enable media after 3 seconds,
+            // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+            setTimeout(enableStylesheet, 3000)
+        }
+
+        // loop through link elements in DOM
+        rp.poly = function () {
+            // double check this to prevent external calls from running
+            if (rp.support()) {
+                return
+            }
+            var links = w.document.getElementsByTagName('link')
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i]
+                // qualify links to those with rel=preload and as=style attrs
+                if (
+                    link.rel === 'preload' &&
+                    link.getAttribute('as') === 'style' &&
+                    !link.getAttribute('data-loadcss')
+                ) {
+                    // prevent rerunning on link
+                    link.setAttribute('data-loadcss', true)
+                    // bind listeners to toggle media back
+                    rp.bindMediaToggle(link)
+                }
+            }
+        }
+
+        // if unsupported, run the polyfill
+        if (!rp.support()) {
+            // run once at least
+            rp.poly()
+
+            // rerun poly on an interval until onload
+            var run = w.setInterval(rp.poly, 500)
+            if (w.addEventListener) {
+                w.addEventListener('load', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            } else if (w.attachEvent) {
+                w.attachEvent('onload', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            }
+        }
+
+        // commonjs
+        if (typeof exports !== 'undefined') {
+            exports.loadCSS = loadCSS
+        } else {
+            w.loadCSS = loadCSS
+        }
+    })(typeof global !== 'undefined' ? global : this)
+</script>
+
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20211217" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="/css/dark.css?v=20211217" as="style">
+    <link rel="stylesheet" href="/css/dark.css">
+    <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
+    <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
+    <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <!-- algolia -->
+    
+    <!-- 百度统计  -->
+    
+    <!-- 谷歌统计  -->
+    
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ == undefined) {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js" />')
+        }
+    </script>
+    
+        <body class="post-body">
+    
+        <!-- header -->
+        <header class="header header-mobile">
+    <!-- top read progress line -->
+    <div class="header-element">
+        <div class="read-progress"></div>
+    </div>
+    <!-- sidebar menu button -->
+    <div class="header-element">
+        
+            <div class="header-sidebar-menu">
+        
+            
+                <div style="padding-left: 1px;">&#xe775;</div>
+            
+        </div>
+    </div>
+    <!-- header actions -->
+    <div class="header-actions">
+        <!-- theme mode switch button -->
+        <span class="header-theme-btn header-element">
+            <i class="fas fa-adjust"></i>
+        </span>
+        <!-- back to home page text -->
+        <span class="home-link header-element">
+            <a href=/>Akemi</a>
+        </span>
+    </div>
+    <!-- toggle banner for post layout -->
+    
+        
+            <div class="banner banner-clean">
+        
+            <div class="blog-title header-element">
+                <a href="/">Akemi</a>
+            </div>
+            <div class="post-title header-element">
+                <a href="#" class="post-name">将SpringCloud项目迁移至k8s</a>
+            </div>
+        </div>
+    
+</header>
+
+        <!-- fixed footer -->
+        <footer class="footer-fixed">
+    <!-- back to top button -->
+    <div class="footer-fixed-element">
+        
+            <div class="back-top back-top-hidden">
+        
+        
+            <div>&#xe639;</div>
+        
+        </div>
+    </div>
+</footer>
+
+        <!-- wrapper -->
+        <div class="wrapper">
+            <div class="site-intro" style="
+
+
+
+
+
+
+
+    height:50vh;
+
+">
+    
+    <!-- 主页  -->
+    
+        
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post-bg.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+                将SpringCloud项目迁移至k8s
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+                
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页 meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+    
+</div>
+
+                
+                <!-- 文章字数统计 -->
+                
+                <div class="post-intro-meta">
+                    <!-- 撰写日期 -->
+                    <span class="iconfont-archer post-intro-calander">&#xe676;</span>
+                    <span class="post-intro-time">2024/06/01</span>
+                    <!-- busuanzi -->
+                    
+                        <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                            <span class="iconfont-archer post-intro-busuanzi">&#xe602;</span>
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    
+                    <!-- 文章分享 -->
+                    <span class="share-wrapper">
+                        <span class="iconfont-archer share-icon">&#xe71d;</span>
+                        <span class="share-text">Share</span>
+                        <ul class="share-list">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+            <script>
+  // get user agent
+  function getBrowserVersions() {
+    var u = window.navigator.userAgent
+    return {
+      userAgent: u,
+      trident: u.indexOf('Trident') > -1, //IE内核
+      presto: u.indexOf('Presto') > -1, //opera内核
+      webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+      gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+      mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+      ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+      android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+      iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+      iPad: u.indexOf('iPad') > -1, //是否为iPad
+      webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+      weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+      uc: u.indexOf('UCBrowser') > -1, //是否为android下的UC浏览器
+    }
+  }
+  var browser = {
+    versions: getBrowserVersions(),
+  }
+  console.log('userAgent: ' + browser.versions.userAgent)
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded')
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document
+        .getElementsByClassName('intro-title')[0]
+        .classList.add('intro-fade-in')
+      document
+        .getElementsByClassName('intro-subtitle')[0]
+        .classList.add('intro-fade-in')
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in')
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb() {
+    if (browser.versions.uc) {
+      console.log('UCBrowser')
+      fontLoaded()
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular'],
+        },
+        loading: function () {
+          // 所有字体开始加载
+          // console.log('font loading');
+        },
+        active: function () {
+          // 所有字体已渲染
+          fontLoaded()
+        },
+        inactive: function () {
+          // 字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout')
+          fontLoaded()
+        },
+        timeout: 5000, // Set the timeout to two seconds
+      })
+    }
+  }
+
+  function asyncErr() {
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document,
+      t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0]
+    o.src = u
+    if (cb) {
+      o.addEventListener(
+        'load',
+        function (e) {
+          cb(null, e)
+        },
+        false
+      )
+    }
+    if (err) {
+      o.addEventListener(
+        'error',
+        function (e) {
+          err(null, e)
+        },
+        false
+      )
+    }
+    s.parentNode.insertBefore(o, s)
+  }
+
+  var asyncLoadWithFallBack = function (arr, success, reject) {
+    var currReject = function () {
+      reject()
+      arr.shift()
+      if (arr.length) async(arr[0], success, currReject)
+    }
+
+    async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack(
+    [
+      'https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js',
+      'https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js',
+      "/lib/webfontloader.min.js",
+    ],
+    asyncCb,
+    asyncErr
+  )
+</script>
+
+            <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+            <div class="container container-unloaded">
+                <main class="main post-page">
+    <article class="article-entry">
+        <p><strong>整体流程</strong><br>1、把Springcloud开发的java代码做到镜像里：可以基于dockerfile文件做镜像<br>2、把镜像传到镜像仓库<br>3、创建pod，用deployment或statefulset创建<br>4、创建四层代理Service<br>5、搭建七层代理Ingress-nginx-controller<br>6、数据持久化：ceph、nfs、云存储<br>7、搭建监控系统和日志收集系统：prometheus+alertmagaer+grafana、EFK+logstash+kafka<br>8、链路监控：pinpoint、zipkin、skywalking</p>
+<h1 id="微服务架构"><a href="#微服务架构" class="headerlink" title="微服务架构"></a>微服务架构</h1><p>微服务是一种软件开发架构模式，用于构建应用程序。它是一种将单个应用程序拆分为一组小型、独立的服务的方法。每个微服务都是一个独立的、可独立部署和扩展的单元，通过轻量级通信机制相互交互。</p>
+<p>微服务架构的核心思想是将应用程序拆分为一组小型服务，每个服务专注于特定的业务功能。每个微服务都有自己的数据库和业务逻辑，并且可以使用不同的编程语言和技术栈进行开发。这使得团队可以独立地开发、测试、部署和扩展每个微服务，而不会对其他服务产生影响。</p>
+<p>特点：</p>
+<ul>
+<li>独立开发和部署：每个微服务可以由不同的团队开发和部署，可以快速迭代和发布新功能。</li>
+<li>弹性和可伸缩性：每个微服务可以独立进行扩展，以满足不同的负载需求。</li>
+<li>技术多样性：不同的微服务可以使用不同的编程语言和技术栈，以适应特定的业务需求。</li>
+<li>容错性和可靠性：如果一个微服务发生故障，其他微服务仍然可以继续工作，降低了系统的整体风险。</li>
+<li>可维护性：由于每个微服务都较小且专注于特定功能，因此更容易理解、调试和修改。</li>
+</ul>
+<p>特性：</p>
+<ol>
+<li><strong>服务拆分与自治性：</strong><br>微服务将应用程序拆分为一组小型服务，每个服务专注于特定的业务功能。每个微服务都是一个独立的、自治的单元，可以独立开发、部署和扩展。这种拆分和自治性使得团队可以独立管理和演化每个微服务。</li>
+<li><strong>独立部署和可扩展性：</strong><br> 微服务可以独立部署和扩展。由于每个微服务是一个独立的组件，可以根据需要对其进行扩展，而不会影响其他服务。这种独立部署和可扩展性使得应用程序更具弹性和可伸缩性。</li>
+<li><strong>轻量级通信机制：</strong><br> 微服务之间通过轻量级的通信机制进行交互，常见的包括基于HTTP的RESTful API、消息队列或RPC（远程过程调用）。这种通信机制使得微服务之间可以进行解耦，实现松耦合的架构。</li>
+<li><strong>多语言和技术栈支持：</strong><br>微服务架构支持使用不同的编程语言和技术栈来开发不同的微服务。团队可以选择最适合自己的技术栈，以满足特定的业务需求。这种灵活性使得团队能够在不同的微服务中使用最佳工具和技术。</li>
+<li><strong>独立数据存储：</strong><br>每个微服务可以拥有自己的数据存储，可以选择适合自己的数据库或存储技术。这样可以使每个微服务能够更好地管理自己的数据，避免数据耦合和共享数据的复杂性。</li>
+<li><strong>容错性和弹性设计：</strong><br>微服务架构具有容错性，即当一个微服务发生故障时，不会影响整个应用程序的运行。其他微服务仍然可以继续工作，从而提高了系统的可靠性。此外，微服务的独立部署和隔离性也有助于减少故障的影响范围。</li>
+<li><strong>持续交付和快速迭代 CI&#x2F;CD：</strong><br>微服务架构支持持续交付和快速迭代的开发流程。由于每个微服务都是独立的，团队可以独立开发、测试和部署每个微服务。这种灵活性使得团队能够更快地发布新功能和修复问题。</li>
+</ol>
+<h1 id="常见微服务框架"><a href="#常见微服务框架" class="headerlink" title="常见微服务框架"></a>常见微服务框架</h1><ol>
+<li><strong>Spring Cloud：</strong> Spring Cloud是基于Java的微服务框架，构建在Spring Framework之上。它提供了一系列工具和库，用于快速开发和部署微服务应用程序。Spring Cloud包括服务注册与发现、负载均衡、断路器、配置管理等功能，如Eureka、Ribbon、Hystrix、Config等。</li>
+<li><strong>Netflix OSS：</strong> Netflix开源了一套用于构建可扩展、高性能微服务的工具集，被广泛应用于微服务架构中。这些工具包括服务注册与发现（Eureka）、负载均衡（Ribbon）、断路器（Hystrix）、网关（Zuul）、分布式跟踪（Zipkin）等。</li>
+<li><strong>Kubernetes：</strong> Kubernetes是一个容器编排平台，也可以用于部署和管理微服务。它提供了强大的容器编排、服务发现、自动伸缩和负载均衡等功能。Kubernetes能够管理和调度微服务的容器实例，并提供故障恢复和自动扩展能力。</li>
+<li><strong>Service Mesh：</strong> Service Mesh是一种用于管理微服务通信的新型架构模式。它通过在微服务之间插入一个专用的代理层，提供了诸如服务发现、负载均衡、安全认证、故障恢复等功能。常见的Service Mesh实现包括Envoy、Linkerd和Istio。</li>
+</ol>
+<h1 id="springcloud组件简单介绍"><a href="#springcloud组件简单介绍" class="headerlink" title="springcloud组件简单介绍"></a>springcloud组件简单介绍</h1><h2 id="Eureka服务发现"><a href="#Eureka服务发现" class="headerlink" title="Eureka服务发现"></a>Eureka服务发现</h2><p>Eureka 是 Netflix 开源的一个服务注册和发现组件，它是 Spring Cloud 中非常常用的组件之一，用于实现微服务架构中的服务注册中心。</p>
+<ol>
+<li>服务注册中心：Eureka 由一个或多个服务注册中心组成，每个注册中心负责管理和维护服务实例的注册信息。服务提供者将自己的信息注册到注册中心，而服务消费者则从注册中心获取服务提供者的信息。注册中心使用心跳机制来监测服务实例的可用性，并在服务实例不可用时进行剔除。</li>
+<li>服务实例：在 Eureka 中，服务提供者被称为服务实例。每个服务实例都会向注册中心注册自己的信息，包括服务名称、IP 地址、端口号等。服务实例会周期性地发送心跳请求，以告知注册中心自己的健康状态。</li>
+<li>服务发现：服务消费者通过向注册中心发送查询请求，从注册中心获取服务实例的信息。Eureka 提供了简单易用的 REST API，使得服务消费者可以通过 HTTP 协议与注册中心进行通信，从而获取服务实例的地址和相关元数据信息。</li>
+<li>客户端库：Eureka 提供了客户端库，使得服务提供者和消费者可以方便地与注册中心进行交互。Spring Cloud 通过集成 Eureka 客户端库，提供了自动化的服务注册和发现的能力。</li>
+</ol>
+<p>特点：</p>
+<ul>
+<li>高可用性：Eureka 的注册中心可以通过运行多个实例来实现高可用性。每个实例通过相互注册来进行信息同步，以确保注册中心的可用性和数据的一致性。</li>
+<li>自我保护机制：Eureka 引入了自我保护机制，用于应对网络分区故障或注册中心出现故障时的情况。当注册中心在一定时间内未接收到心跳时，会进入自我保护模式，不会剔除正常的服务实例。</li>
+<li>可扩展性：Eureka 支持水平扩展，可以根据负载情况和需求增加或减少注册中心的实例数，以提高系统的扩展性和容量。</li>
+</ul>
+<h2 id="Ribbon负载均衡"><a href="#Ribbon负载均衡" class="headerlink" title="Ribbon负载均衡"></a>Ribbon负载均衡</h2><p>Ribbon 是 Netflix 开源的一个客户端负载均衡器，它是 Spring Cloud 中常用的组件之一，用于在服务消费者端实现负载均衡。</p>
+<p>Ribbon实现的是客户端负载均衡，它可以在客户端经过一系列算法来均衡调用服务。Ribbon 工作时分两步：<br>第一步：从Eureka Server中获取服务注册信息列表，它优先选择在同一个 Zone 且负载较少的 Server。<br>第二步：根据用户指定的策略，在从Server取到的服务注册列表中选择一个地址，其中Ribbon提供了多种策略，例如轮询、随机等。</p>
+<p>相比之下<br>Nginx是服务器端负载均衡，所有请求统一交给nginx，由nginx实现负载均衡请求转发，属于服务器端负载均衡。</p>
+<h2 id="Zuul网关"><a href="#Zuul网关" class="headerlink" title="Zuul网关"></a>Zuul网关</h2><p>Zuul是SpringCloud中的网关。也是会在Eureka注册中心中进行服务的注册和发现。</p>
+<p>网关是微服务架构中的入口点，它扮演着转发请求、认证授权、负载均衡、缓存等功能的角色。Zuul 提供了以下主要功能：</p>
+<ol>
+<li>路由转发：Zuul 可以根据请求的路径和规则将请求转发到对应的后端服务实例。它支持动态路由配置，可以根据实际需要进行灵活的路由配置和管理。</li>
+<li>过滤器：Zuul 提供了过滤器机制，可以在请求的不同阶段进行预处理或后处理。通过定义和配置不同类型的过滤器，可以实现请求鉴权、请求日志记录、请求重写等功能。</li>
+<li>负载均衡：Zuul 集成了 Ribbon 负载均衡器，可以将请求分发到多个后端服务实例，以实现负载均衡和高可用性。</li>
+<li>容错机制：Zuul 支持容错和熔断机制，当后端服务实例不可用或发生故障时，可以自动切换到其他可用的实例，以提高系统的可靠性和稳定性。</li>
+<li>缓存支持：Zuul 可以对请求的响应进行缓存，以减轻后端服务的负载并提高响应速度。它支持基于时间或条件的缓存策略，并可以根据需求进行灵活的缓存配置。</li>
+</ol>
+<h2 id="Hystrix熔断器"><a href="#Hystrix熔断器" class="headerlink" title="Hystrix熔断器"></a>Hystrix熔断器</h2><p>在微服务架构中，在高并发情况下，如果请求数量达到一定极限（可以自己设置阈值），超出了设置的阈值，Hystrix会自动开启服务保护功能，然后通过服务降级的方式返回一个友好的提示给客户端。假设当10个请求中，有10%失败时，熔断器就会打开，此时再调用此服务，将会直接返回失败，不再调远程服务。直到10s钟之后，重新检测该触发条件，判断是否把熔断器关闭，或者继续打开。</p>
+<p><strong>服务降级</strong><br>在高并发的场景下，当服务器的压力剧增时，根据当前业务以及流量的情况，对一些服务和页面进行策略控制，对这些请求做简单的处理或者不处理，来释放服务器资源用以保证核心业务不受影响，确保业务可以正常对外提供服务</p>
+<h2 id="springcloud-gateway-API网关"><a href="#springcloud-gateway-API网关" class="headerlink" title="springcloud gateway API网关"></a>springcloud gateway API网关</h2><p>Spring Cloud已经放弃Zuul了。现在Spring Cloud中引用的还是Zuul 1.x版本，而这个版本是基于过滤器的，是阻塞IO，不支持长连接，spring官网上也已经没有zuul的组件了。</p>
+<ol>
+<li>路由转发：Spring Cloud Gateway 可以根据请求的路径和规则将请求转发到对应的后端服务。它支持动态路由配置，可以根据实际需要进行灵活的路由配置和管理。</li>
+<li>过滤器：Gateway 提供了强大的过滤器机制，可以在请求的不同阶段进行预处理或后处理。通过定义和配置不同类型的过滤器，可以实现请求鉴权、请求日志记录、请求转换等功能。</li>
+<li>负载均衡：Spring Cloud Gateway 集成了负载均衡器，可以将请求分发到多个后端服务实例，以实现负载均衡和高可用性。</li>
+<li>断路器：Gateway 支持断路器模式，当后端服务实例不可用或发生故障时，可以通过断路器机制进行故障快速响应，从而提高系统的稳定性。</li>
+<li>集成性：Spring Cloud Gateway 可以方便地与其他 Spring Cloud 组件进行集成，如服务注册与发现组件（如 Eureka、Consul）、配置中心（如 Spring Cloud Config）等，以构建完整的微服务架构。</li>
+</ol>
+<p>与zuul的区别：</p>
+<ol>
+<li>底层技术栈：Spring Cloud Gateway 基于 Spring 5、Spring Boot 2 和 Project Reactor，使用响应式编程模型。而 Zuul 基于 Servlet 技术栈，使用阻塞式 I&#x2F;O 模型。</li>
+<li>性能和可扩展性：由于使用了响应式编程模型和异步非阻塞的方式处理请求，Spring Cloud Gateway 在性能和可扩展性方面更加出色。相比之下，Zuul 在处理高并发请求时可能面临阻塞线程池资源耗尽的问题。</li>
+<li>路由和过滤器：两者都提供了路由转发和过滤器的功能，但实现方式有所不同。Spring Cloud Gateway 使用路由谓词和过滤器链的概念，可以更细粒度地配置路由规则和过滤器。而 Zuul 使用简单的路径匹配和过滤器类型来进行路由和过滤器配置。</li>
+<li>动态路由：Spring Cloud Gateway 提供了动态路由的支持，可以通过配置中心（如 Spring Cloud Config）动态更新路由规则。Zuul 目前在动态路由方面的支持相对较弱。</li>
+<li>生态系统集成：Zuul 是 Netflix 发布的第一代 API 网关，具有丰富的功能和生态系统（如 Ribbon、Eureka）。Spring Cloud Gateway 是 Spring Cloud 生态系统中较新的组件，与 Spring Boot、Spring Cloud 集成更加紧密。</li>
+</ol>
+<h2 id="SpringCloud-Config配置中心"><a href="#SpringCloud-Config配置中心" class="headerlink" title="SpringCloud Config配置中心"></a>SpringCloud Config配置中心</h2><p>Spring Cloud Config 是 Spring Cloud 提供的一个分布式配置管理工具，用于集中管理和提供应用程序的配置信息。它允许将配置文件存储在配置服务器中，并通过客户端将配置动态地分发给不同的服务实例</p>
+<ol>
+<li>配置服务器（Config Server）：配置服务器是一个独立的组件，用于存储和管理配置文件。它可以从本地文件系统、Git 仓库或其他外部存储中获取配置文件，并提供 REST 接口供客户端访问。</li>
+<li>配置文件：配置文件是应用程序的配置信息，如数据库连接、服务端口、日志级别等。Spring Cloud Config 使用约定的文件命名规则（例如 <strong>properties</strong> 或 <strong>application.yml</strong>）来标识不同的配置文件。</li>
+<li>配置客户端（Config Client）：配置客户端是服务实例或应用程序，通过向配置服务器发起请求获取自身所需的配置信息。它与配置服务器进行交互，并将配置信息加载到应用程序中。</li>
+<li>配置刷新（Refresh）：配置刷新是指在运行时更新配置信息，而无需重启应用程序。通过发送请求到配置服务器的 <strong>&#x2F;actuator&#x2F;refresh</strong> 端点，可以触发配置的刷新，使客户端重新加载最新的配置。</li>
+</ol>
+<h1 id="迁移"><a href="#迁移" class="headerlink" title="迁移"></a>迁移</h1><h2 id="安装mysql"><a href="#安装mysql" class="headerlink" title="安装mysql"></a>安装mysql</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm</span><br><span class="line">rpm -ivh mysql-community-release-el7-5.noarch.rpm</span><br><span class="line">yum install mysql-server -y</span><br><span class="line"><span class="comment"># 权限</span></span><br><span class="line"><span class="built_in">chown</span> mysql:mysql -R /var/lib/mysql</span><br><span class="line"><span class="comment"># 初始化</span></span><br><span class="line">mysqld --initialize</span><br><span class="line"><span class="comment"># 启动</span></span><br><span class="line">systemctl <span class="built_in">enable</span> mysqld --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置初始密码</span></span><br><span class="line">mysqladmin -u root password <span class="string">&quot;123456&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 登录</span></span><br><span class="line">mysql -uroot -p123456</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建数据库tb_order、tb_product、tb_stock</span></span><br><span class="line">create database tb_product;</span><br><span class="line">create database tb_stock;</span><br><span class="line">create database tb_order;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入数据</span></span><br><span class="line">use tb_order</span><br><span class="line"><span class="built_in">source</span> /root/order.sql</span><br><span class="line"></span><br><span class="line">use tb_stock</span><br><span class="line"><span class="built_in">source</span> /root/stock.sql</span><br><span class="line"></span><br><span class="line">use tb_product</span><br><span class="line"><span class="built_in">source</span> /root/product.sql</span><br><span class="line"></span><br><span class="line"><span class="comment"># 授权</span></span><br><span class="line">grant all on *.* to <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;%&#x27;</span> identified by <span class="string">&#x27;123456&#x27;</span>;</span><br><span class="line">flush privileges;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="安装openjdk和maven"><a href="#安装openjdk和maven" class="headerlink" title="安装openjdk和maven"></a>安装openjdk和maven</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">yum install java-1.8.0-openjdk  maven-3.0.5* -y</span><br><span class="line"></span><br><span class="line">unzip microservic-test.zip</span><br><span class="line"><span class="built_in">cd</span> microservic-test</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /root/springcloud-k8s/microservic-test/stock-service/stock-service-biz/src/main/resources/application-fat.yml</span><br><span class="line">jdbc:mysql://192.168.10.121:3306/tb_stock?characterEncoding=utf-8</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改数据库链接地址</span></span><br><span class="line">vim /root/springcloud-k8s/microservic-test/stock-service/stock-service-biz/src/main/resources/application-fat.yml</span><br><span class="line"></span><br><span class="line">vim /root/springcloud-k8s/microservic-test/product-service/product-service-biz/src/main/resources/application-fat.yml</span><br><span class="line"></span><br><span class="line">vim /root/springcloud-k8s/microservic-test/order-service/order-service-biz/src/main/resources/application-fat.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译</span></span><br><span class="line">mvn clean package -D maven.test.skip=<span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="部署eureka服务"><a href="#部署eureka服务" class="headerlink" title="部署eureka服务"></a>部署eureka服务</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br></pre></td><td class="code"><pre><span class="line">1.登录harbor，并且拉取、生成harbor的secret</span><br><span class="line">docker login 192.168.10.130</span><br><span class="line">kubectl create ns ms &amp;&amp; kubectl create secret docker-registry \</span><br><span class="line">registry-pull-secret --docker-server=192.168.10.130 --docker-username=admin \</span><br><span class="line">--docker-password=Harbor12345 -n ms</span><br><span class="line"></span><br><span class="line">2.在harbor上创建一个新project - microservice</span><br><span class="line"></span><br><span class="line">3.构建镜像</span><br><span class="line">docker  load -i jave-8.tar.gz</span><br><span class="line"><span class="built_in">cd</span> /root/springcloud-k8s/microservic-test/eureka-service/</span><br><span class="line"><span class="comment"># ls</span></span><br><span class="line"><span class="comment"># Dockerfile  pom.xml  src  target</span></span><br><span class="line">FROM java:8-jdk-alpine</span><br><span class="line">RUN  apk add -U tzdata &amp;&amp; \</span><br><span class="line">     <span class="built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br><span class="line">COPY ./target/eureka-service.jar ./</span><br><span class="line">EXPOSE 8888</span><br><span class="line">CMD java -jar -Deureka.instance.hostname=<span class="variable">$&#123;MY_POD_NAME&#125;</span>.eureka.ms /eureka-service.jar</span><br><span class="line"></span><br><span class="line">docker build -t  192.168.10.130/microservice/eureka:v1 . <span class="comment"># 构建</span></span><br><span class="line">docker push 192.168.10.130/microservice/eureka:v1 <span class="comment"># 推送</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">4.部署pod</span><br><span class="line"><span class="built_in">cat</span> eureka.yaml</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.k8s.io/v1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: eureka</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  ingressClassName: nginx</span><br><span class="line">  rules:</span><br><span class="line">    - host: eureka.ctnrs.com</span><br><span class="line">      http:</span><br><span class="line">        paths:</span><br><span class="line">        - path: /</span><br><span class="line">          pathType:  Prefix</span><br><span class="line">          backend:</span><br><span class="line">            service:</span><br><span class="line">              name: eureka</span><br><span class="line">              port:</span><br><span class="line">                number: 8888</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: eureka</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  clusterIP: None</span><br><span class="line">  ports:</span><br><span class="line">  - port: 8888</span><br><span class="line">    name: eureka</span><br><span class="line">  selector:</span><br><span class="line">    project: ms</span><br><span class="line">    app: eureka</span><br><span class="line">---</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: StatefulSet</span><br><span class="line">metadata:</span><br><span class="line">  name: eureka</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  replicas: 3</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      project: ms</span><br><span class="line">      app: eureka</span><br><span class="line">  serviceName: <span class="string">&quot;eureka&quot;</span></span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        project: ms</span><br><span class="line">        app: eureka</span><br><span class="line">    spec:</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: registry-pull-secret</span><br><span class="line">      containers:</span><br><span class="line">      - name: eureka</span><br><span class="line">        image: 192.168.10.130/microservice/eureka:v1</span><br><span class="line">        ports:</span><br><span class="line">          - protocol: TCP</span><br><span class="line">            containerPort: 8888</span><br><span class="line">        <span class="built_in">env</span>:</span><br><span class="line">          - name: MY_POD_NAME</span><br><span class="line">            valueFrom:</span><br><span class="line">              fieldRef:</span><br><span class="line">                fieldPath: metadata.name</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 0.5</span><br><span class="line">            memory: 256Mi</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 1</span><br><span class="line">            memory: 1Gi</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8888</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        livenessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8888</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">kubectl apply -f eureka.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pods -n ms</span><br><span class="line"><span class="comment">#NAME       READY   STATUS    RESTARTS      AGE</span></span><br><span class="line"><span class="comment">#eureka-0   1/1     Running   0             48m</span></span><br><span class="line"><span class="comment">#eureka-1   1/1     Running   0             47m</span></span><br><span class="line"><span class="comment">#eureka-2   1/1     Running   1 (46m ago)   46m</span></span><br><span class="line"></span><br><span class="line">kubectl get pods -n ingress-nginx -owide</span><br><span class="line"><span class="comment"># ingress-nginx-controller-58b5f9494-ph6bp      192.168.10.133   ws-k8s-node3   &lt;none&gt;           &lt;none&gt;</span></span><br><span class="line"></span><br><span class="line">kubectl get ingress -n ms</span><br><span class="line"><span class="comment">#NAME     CLASS   HOSTS              ADDRESS          PORTS   AGE</span></span><br><span class="line"><span class="comment">#eureka   nginx   eureka.ctnrs.com   192.168.10.133   80      3m20s</span></span><br><span class="line"></span><br><span class="line">5.测试</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601162944.png"></p>
+<h2 id="部署gateway服务"><a href="#部署gateway服务" class="headerlink" title="部署gateway服务"></a>部署gateway服务</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span>构建镜像</span><br><span class="line">cd /root/springcloud-k8s/microservic-test/gateway-service</span><br><span class="line">cat Dockerfile</span><br><span class="line">FROM java:<span class="number">8</span>-jdk-alpine</span><br><span class="line">RUN  apk add -U tzdata &amp;&amp; \</span><br><span class="line">     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br><span class="line">COPY ./target/gateway-service.jar ./</span><br><span class="line">EXPOSE <span class="number">9999</span></span><br><span class="line">CMD java -jar /gateway-service.jar</span><br><span class="line"></span><br><span class="line">docker build -t  <span class="number">192.168</span><span class="number">.10</span><span class="number">.130</span>/microservice/gateway:v1 .</span><br><span class="line">docker push <span class="number">192.168</span><span class="number">.10</span><span class="number">.130</span>/microservice/gateway:v1</span><br><span class="line"></span><br><span class="line"><span class="number">2.</span>部署yaml</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.k8s.io/v1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: gateway</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">	ingressClassName: nginx</span><br><span class="line">  rules:</span><br><span class="line">    - host: gateway.ctnrs.com</span><br><span class="line">      http:</span><br><span class="line">        paths:</span><br><span class="line">        - path: /</span><br><span class="line">          pathType:  Prefix</span><br><span class="line">          backend:</span><br><span class="line">            service:</span><br><span class="line">              name: gateway</span><br><span class="line">              port:</span><br><span class="line">               number: <span class="number">9999</span></span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: gateway</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: <span class="number">9999</span></span><br><span class="line">    name: gateway</span><br><span class="line">  selector:</span><br><span class="line">    project: ms</span><br><span class="line">    app: gateway</span><br><span class="line">---</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: gateway</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  replicas: <span class="number">1</span></span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      project: ms</span><br><span class="line">      app: gateway</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        project: ms</span><br><span class="line">        app: gateway</span><br><span class="line">    spec:</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: registry-pull-secret</span><br><span class="line">      containers:</span><br><span class="line">      - name: gateway</span><br><span class="line">        image: <span class="number">192.168</span><span class="number">.10</span><span class="number">.130</span>/microservice/gateway:v1</span><br><span class="line">        imagePullPolicy: Always</span><br><span class="line">        ports:</span><br><span class="line">          - protocol: TCP</span><br><span class="line">            containerPort: <span class="number">9999</span></span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: <span class="number">0.5</span></span><br><span class="line">            memory: 256Mi</span><br><span class="line">          limits:</span><br><span class="line">            cpu: <span class="number">1</span></span><br><span class="line">            memory: 1Gi</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: <span class="number">9999</span></span><br><span class="line">          initialDelaySeconds: <span class="number">60</span></span><br><span class="line">          periodSeconds: <span class="number">10</span></span><br><span class="line">        livenessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: <span class="number">9999</span></span><br><span class="line">          initialDelaySeconds: <span class="number">60</span></span><br><span class="line">          periodSeconds: <span class="number">10</span></span><br><span class="line">kubectl apply -f gateway.yaml</span><br><span class="line">kubectl get pods -n ms | grep gate</span><br><span class="line"><span class="comment"># gateway-546878bb75-8xkxt   1/1     Running   0             99s</span></span><br><span class="line">kubectl get ingress -n ms</span><br><span class="line"><span class="comment">#NAME      CLASS   HOSTS               ADDRESS          PORTS   AGE</span></span><br><span class="line"><span class="comment">#eureka    nginx   eureka.ctnrs.com    192.168.10.133   80      64m</span></span><br><span class="line"><span class="comment">#gateway   nginx   gateway.ctnrs.com   192.168.10.133   80      115s</span></span><br><span class="line"></span><br><span class="line"><span class="number">3.</span>测试</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163034.png"></p>
+<h2 id="部署portal前端服务"><a href="#部署portal前端服务" class="headerlink" title="部署portal前端服务"></a>部署portal前端服务</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line">1.构建镜像</span><br><span class="line"><span class="built_in">cd</span> /root/springcloud-k8s/microservic-test/portal-service</span><br><span class="line"><span class="built_in">cat</span> Dockerfile</span><br><span class="line">FROM java:8-jdk-alpine</span><br><span class="line">RUN  apk add -U tzdata &amp;&amp; \</span><br><span class="line">     <span class="built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br><span class="line">COPY ./target/portal-service.jar ./</span><br><span class="line">EXPOSE 8080</span><br><span class="line">CMD java -jar /portal-service.jar</span><br><span class="line"></span><br><span class="line">docker build -t  192.168.10.130/microservice/portal:v1 .</span><br><span class="line">docker push   192.168.10.130/microservice/portal:v1</span><br><span class="line"></span><br><span class="line">2.部署yaml</span><br><span class="line">apiVersion: networking.k8s.io/v1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: portal</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  ingressClassName: nginx</span><br><span class="line">  rules:</span><br><span class="line">    - host: portal.ctnrs.com</span><br><span class="line">      http:</span><br><span class="line">        paths:</span><br><span class="line">        - path: /</span><br><span class="line">          pathType:  Prefix</span><br><span class="line">          backend:</span><br><span class="line">            service:</span><br><span class="line">              name: portal</span><br><span class="line">              port:</span><br><span class="line">                number: 8080</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: portal</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 8080</span><br><span class="line">    name: portal</span><br><span class="line">  selector:</span><br><span class="line">    project: ms</span><br><span class="line">    app: portal</span><br><span class="line">---</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: portal</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      project: ms</span><br><span class="line">      app: portal</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        project: ms</span><br><span class="line">        app: portal</span><br><span class="line">    spec:</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: registry-pull-secret</span><br><span class="line">      containers:</span><br><span class="line">      - name: portal</span><br><span class="line">        image: 192.168.10.130/microservice/portal:v1</span><br><span class="line">        imagePullPolicy: Always</span><br><span class="line">        ports:</span><br><span class="line">          - protocol: TCP</span><br><span class="line">            containerPort: 8080</span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 1</span><br><span class="line">            memory: 1Gi</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8080</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        livenessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8080</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">          </span><br><span class="line">kubectl apply -f portal.yaml</span><br><span class="line">kubectl get pod -n ms  | grep portal</span><br><span class="line"><span class="comment">#portal-6dffbf9777-lrtll    1/1     Running   0             2m36s</span></span><br><span class="line">kubectl get ingress -n ms</span><br><span class="line"><span class="comment">#NAME      CLASS   HOSTS               ADDRESS          PORTS   AGE</span></span><br><span class="line"><span class="comment">#eureka    nginx   eureka.ctnrs.com    192.168.10.133   80      87m</span></span><br><span class="line"><span class="comment">#gateway   nginx   gateway.ctnrs.com   192.168.10.133   80      25m</span></span><br><span class="line"><span class="comment">#portal    nginx   portal.ctnrs.com    192.168.10.133   80      2m52s</span></span><br><span class="line"></span><br><span class="line">3.测试</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163123.png"></p>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163136.png"></p>
+<h2 id="部署order订单服务"><a href="#部署order订单服务" class="headerlink" title="部署order订单服务"></a>部署order订单服务</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">1.构建镜像</span><br><span class="line"><span class="built_in">cd</span> /root/springcloud-k8s/microservic-test/order-service/order-service-biz</span><br><span class="line"><span class="built_in">cat</span> Dockerfile</span><br><span class="line">FROM java:8-jdk-alpine</span><br><span class="line">RUN  apk add -U tzdata &amp;&amp; \</span><br><span class="line">     <span class="built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br><span class="line">COPY ./target/order-service-biz.jar ./</span><br><span class="line">EXPOSE 8020</span><br><span class="line">CMD java -jar /order-service-biz.jar</span><br><span class="line"></span><br><span class="line">docker build -t  192.168.10.130/microservice/order:v1 .</span><br><span class="line">docker push   192.168.10.130/microservice/order:v1</span><br><span class="line"></span><br><span class="line">2.部署yaml</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: order</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      project: ms</span><br><span class="line">      app: order</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        project: ms</span><br><span class="line">        app: order</span><br><span class="line">    spec:</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: registry-pull-secret</span><br><span class="line">      containers:</span><br><span class="line">      - name: order</span><br><span class="line">        image: 192.168.10.130/microservice/order:v1</span><br><span class="line">        imagePullPolicy: Always</span><br><span class="line">        ports:</span><br><span class="line">          - protocol: TCP</span><br><span class="line">            containerPort: 8020</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8020</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        livenessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8020</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">kubectl apply -f order.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pods -n ms | grep order</span><br><span class="line"><span class="comment">#order-7cf6564c7c-qxh58     1/1     Running   0             86s</span></span><br><span class="line"></span><br><span class="line">order不需要配置七层代理，因为不需要显示到前端网页</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163213.png"></p>
+<h2 id="部署product产品服务"><a href="#部署product产品服务" class="headerlink" title="部署product产品服务"></a>部署product产品服务</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">构建镜像：</span><br><span class="line"><span class="built_in">cat</span> Dockerfile</span><br><span class="line">FROM java:8-jdk-alpine</span><br><span class="line">RUN  apk add -U tzdata &amp;&amp; \</span><br><span class="line">     <span class="built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br><span class="line">COPY ./target/product-service-biz.jar ./</span><br><span class="line">EXPOSE 8010</span><br><span class="line">CMD java -jar /product-service-biz.jar</span><br><span class="line"></span><br><span class="line">docker build -t  192.168.10.130/microservice/product:v1 .</span><br><span class="line">docker push   192.168.10.130/microservice/product:v1</span><br><span class="line"></span><br><span class="line">创建yaml</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: product</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  replicas: 3</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      project: ms</span><br><span class="line">      app: product</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        project: ms</span><br><span class="line">        app: product</span><br><span class="line">    spec:</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: registry-pull-secret</span><br><span class="line">      containers:</span><br><span class="line">      - name: product</span><br><span class="line">        image: 192.168.10.130/microservice/product:v1</span><br><span class="line">        imagePullPolicy: Always</span><br><span class="line">        ports:</span><br><span class="line">          - protocol: TCP</span><br><span class="line">            containerPort: 8010</span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 1</span><br><span class="line">            memory: 1Gi</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8010</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        livenessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 8010</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">kubectl apply -f product.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pods -n ms | grep pro</span><br><span class="line"><span class="comment">#product-c56f784d7-bpwsh    1/1     Running   0              85s</span></span><br><span class="line"><span class="comment">#product-c56f784d7-cslvp    1/1     Running   0              85s</span></span><br><span class="line"><span class="comment">#product-c56f784d7-pfpnt    1/1     Running   0              85s</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163346.png"></p>
+<h2 id="部署stock库存服务"><a href="#部署stock库存服务" class="headerlink" title="部署stock库存服务"></a>部署stock库存服务</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">构建镜像：</span><br><span class="line">cat Dockerfile</span><br><span class="line">FROM java:<span class="number">8</span>-jdk-alpine</span><br><span class="line">RUN  apk add -U tzdata &amp;&amp; \</span><br><span class="line">     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br><span class="line">COPY ./target/stock-service-biz.jar ./</span><br><span class="line">EXPOSE <span class="number">8030</span></span><br><span class="line">CMD java -jar /stock-service-biz.jar</span><br><span class="line"></span><br><span class="line">docker build --no-cache -t  <span class="number">192.168</span><span class="number">.10</span><span class="number">.130</span>/microservice/stock:v1 .</span><br><span class="line">docker push   <span class="number">192.168</span><span class="number">.10</span><span class="number">.130</span>/microservice/stock:v1</span><br><span class="line"></span><br><span class="line">部署yaml：</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: stock</span><br><span class="line">  namespace: ms</span><br><span class="line">spec:</span><br><span class="line">  replicas: <span class="number">1</span></span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      project: ms</span><br><span class="line">      app: stock</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        project: ms</span><br><span class="line">        app: stock</span><br><span class="line">    spec:</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: registry-pull-secret</span><br><span class="line">      containers:</span><br><span class="line">      - name: stock</span><br><span class="line">        image: <span class="number">192.168</span><span class="number">.10</span><span class="number">.130</span>/microservice/stock:v1</span><br><span class="line">        imagePullPolicy: Always</span><br><span class="line">        ports:</span><br><span class="line">          - protocol: TCP</span><br><span class="line">            containerPort: <span class="number">8030</span></span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: <span class="number">1</span></span><br><span class="line">            memory: 1Gi</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: <span class="number">8030</span></span><br><span class="line">          initialDelaySeconds: <span class="number">60</span></span><br><span class="line">          periodSeconds: <span class="number">10</span></span><br><span class="line">        livenessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: <span class="number">8030</span></span><br><span class="line">          initialDelaySeconds: <span class="number">60</span></span><br><span class="line">          periodSeconds: <span class="number">10</span></span><br><span class="line">kubectl apply -f stock.yaml</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163320.png"></p>
+<h1 id="全链路监控————pinpoint（未完成）"><a href="#全链路监控————pinpoint（未完成）" class="headerlink" title="全链路监控————pinpoint（未完成）"></a>全链路监控————pinpoint（未完成）</h1><p>在分布式微服务架构中，系统为了接收并处理一个前端用户请求，需要让多个微服务应用协同工作，其中的每一个微服务应用都可以用不同的编程语言构建，由不同的团队开发，并可以通过多个对等的应用实例实现水平扩展，甚至分布在横跨多个数据中心的数千台服务器上。单个用户请求会引发不同应用之间产生一串顺序性的调用关系，如果要对这些调用关系进行监控，了解每个应用如何调用，这就产生了全链路监控。</p>
+<ol>
+<li>请求链路追踪，故障快速定位：可以通过调用链结合业务日志快速定位错误信息。</li>
+<li>可视化： 各个阶段耗时，进行性能分析。</li>
+<li>依赖优化：各个调用环节的可用性、梳理服务依赖关系以及优化。</li>
+<li>数据分析，优化链路：可以得到用户的行为路径，汇总分析应用在很多业务场景。</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601163501.png"></p>
+<h2 id="常见的全链路监控工具"><a href="#常见的全链路监控工具" class="headerlink" title="常见的全链路监控工具"></a>常见的全链路监控工具</h2><p><strong>zipkin</strong></p>
+<p>zipkin是一个分布式的追踪系统，它能够帮助你收集服务架构中解决问题需要的时间数据，功能包括收集和查找这些数据。如果日志文件中有跟踪ID，可以直接跳转到它。否则，可以根据服务、操作名称、标记和持续时间等属性进行查询。例如在服务中花费的时间百分比，以及哪些环节操作失败。特点是轻量，使用部署简单。</p>
+<p>zipkin还提供了一个UI界面，它能够显示通过每个应用程序的跟踪请求数。这有助于识别聚合行为，包括错误路径或对不推荐使用的服务的调用。</p>
+<p><strong>skywalking</strong></p>
+<p>skywalking是本土开源的调用链追踪系统，包括监控、跟踪、诊断功能，目前已加入Apache孵化器，专门为微服务、云本地和基于容器（Docker、Kubernetes、Mesos）架构设计。</p>
+<p>主要功能如下：<br>1）服务、服务实例、端点指标数据分析<br>2）根本原因分析，在运行时评测代码<br>3）服务拓扑图分析<br>4）服务、服务实例和端点依赖性分析<br>5）检测到慢速服务和终结点<br>6）性能优化<br>7）分布式跟踪和上下文传播<br>8）数据库访问度量。检测慢速数据库访问语句（包括SQL语句）。<br>9）报警<br>10）浏览器性能监视</p>
+<p><strong>pinpoint</strong></p>
+<p>pinpoint是韩国人开源的基于字节码注入的调用链分析，以及应用监控分析工具。Pinpoint提供了一个解决方案，可以帮助分析系统的整体结构，以及通过跟踪分布式应用程序中的事务来分析其中的组件是如何相互连接的。</p>
+<p>功能如下：<br>1）一目了然地了解应用程序拓扑<br>2）实时监视应用程序<br>3）获得每个事务的代码级可见性<br>4）安装APM代理程序，无需更改一行代码<br>5）对性能的影响最小（资源使用量增加约3%）</p>
+<h2 id="pinpoint全链路监控安装部署-（未完成）"><a href="#pinpoint全链路监控安装部署-（未完成）" class="headerlink" title="pinpoint全链路监控安装部署 （未完成）"></a>pinpoint全链路监控安装部署 （未完成）</h2>
+    </article>
+    <!-- license -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://Durative.github.io">王盛</a>
+            <p>原文链接：<a href="http://durative.github.io/2024/06/01/SpringCloud-k8s/">http://durative.github.io/2024/06/01/SpringCloud-k8s/</a>
+            <p>发表日期：<a href="http://durative.github.io/2024/06/01/SpringCloud-k8s/">June 1st 2024, 4:25:22 pm</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/06/01/SpringCloud-k8s/">June 1st 2024, 4:36:58 pm</a>
+            <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href="/2024/06/01/K8s-Autoscaler/" title="K8s自动扩缩容HPA VPA KPA">
+                    <div class="nextTitle">K8s自动扩缩容HPA VPA KPA</div>
+                </a>
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href="/2024/06/01/Py-k8s/" title="Python代码封装至k8s中运行">
+                    <div class="prevTitle">Python代码封装至k8s中运行</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- comment -->
+    
+        <div class="post-comment">
+            <!-- 来必力 City 版安装代码 -->
+
+
+            
+
+            
+
+            
+
+            <!-- utteranc评论 -->
+
+
+            <!-- partial('_partial/comment/changyan') -->
+            <!--PC版-->
+
+
+            
+            
+
+            
+
+        </div>
+    
+    <!-- timeliness note -->
+    <!-- idea from: https://hexo.fluid-dev.com/posts/hexo-injector/#%E6%96%87%E7%AB%A0%E6%97%B6%E6%95%88%E6%80%A7%E6%8F%90%E7%A4%BA -->
+    
+    <!-- Mathjax -->
+    
+</main>
+
+                <!-- profile -->
+                
+            </div>
+            <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+        <div class="social">
+            
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+
+        </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- website approve for Chinese user -->
+    
+    <!-- 不蒜子  -->
+    
+        <div class="busuanzi-container">
+            
+             
+                <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+            
+        </div>
+    	
+</footer>
+
+        </div>
+        <!-- toc -->
+        
+            <div class="toc-wrapper toc-wrapper-loding" style=
+
+
+
+
+
+
+
+    top:50vh;
+
+>
+                <div class="toc-catalog">
+                    <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+                </div>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">微服务架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%A1%86%E6%9E%B6"><span class="toc-number">2.</span> <span class="toc-text">常见微服务框架</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#springcloud%E7%BB%84%E4%BB%B6%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D"><span class="toc-number">3.</span> <span class="toc-text">springcloud组件简单介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Eureka%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0"><span class="toc-number">3.1.</span> <span class="toc-text">Eureka服务发现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ribbon%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-number">3.2.</span> <span class="toc-text">Ribbon负载均衡</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Zuul%E7%BD%91%E5%85%B3"><span class="toc-number">3.3.</span> <span class="toc-text">Zuul网关</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hystrix%E7%86%94%E6%96%AD%E5%99%A8"><span class="toc-number">3.4.</span> <span class="toc-text">Hystrix熔断器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#springcloud-gateway-API%E7%BD%91%E5%85%B3"><span class="toc-number">3.5.</span> <span class="toc-text">springcloud gateway API网关</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpringCloud-Config%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83"><span class="toc-number">3.6.</span> <span class="toc-text">SpringCloud Config配置中心</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%81%E7%A7%BB"><span class="toc-number">4.</span> <span class="toc-text">迁移</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85mysql"><span class="toc-number">4.1.</span> <span class="toc-text">安装mysql</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85openjdk%E5%92%8Cmaven"><span class="toc-number">4.2.</span> <span class="toc-text">安装openjdk和maven</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2eureka%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.3.</span> <span class="toc-text">部署eureka服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2gateway%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.4.</span> <span class="toc-text">部署gateway服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2portal%E5%89%8D%E7%AB%AF%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.5.</span> <span class="toc-text">部署portal前端服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2order%E8%AE%A2%E5%8D%95%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.6.</span> <span class="toc-text">部署order订单服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2product%E4%BA%A7%E5%93%81%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.7.</span> <span class="toc-text">部署product产品服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2stock%E5%BA%93%E5%AD%98%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.8.</span> <span class="toc-text">部署stock库存服务</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%A8%E9%93%BE%E8%B7%AF%E7%9B%91%E6%8E%A7%E2%80%94%E2%80%94%E2%80%94%E2%80%94pinpoint%EF%BC%88%E6%9C%AA%E5%AE%8C%E6%88%90%EF%BC%89"><span class="toc-number">5.</span> <span class="toc-text">全链路监控————pinpoint（未完成）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E5%85%A8%E9%93%BE%E8%B7%AF%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7"><span class="toc-number">5.1.</span> <span class="toc-text">常见的全链路监控工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pinpoint%E5%85%A8%E9%93%BE%E8%B7%AF%E7%9B%91%E6%8E%A7%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2-%EF%BC%88%E6%9C%AA%E5%AE%8C%E6%88%90%EF%BC%89"><span class="toc-number">5.2.</span> <span class="toc-text">pinpoint全链路监控安装部署 （未完成）</span></a></li></ol></li></ol>
+            </div>
+        
+        <!-- sidebar -->
+        <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+        <div class="sidebar-panel-archives">
+    <!-- 在 ejs 中将 archive 按照时间排序 -->
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 30
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+        
+            
+            
+            <div class="archive-year"> 2024 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/K8s-Autoscaler/">K8s自动扩缩容HPA VPA KPA</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/Py-k8s/">Python代码封装至k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/SpringCloud-k8s/">将SpringCloud项目迁移至k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/17</span>
+            <a class="archive-post-title" href="/2024/05/17/EFK/">EFK</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/15</span>
+            <a class="archive-post-title" href="/2024/05/15/Linux-monitor/">Linux单机监控</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/14</span>
+            <a class="archive-post-title" href="/2024/05/14/Docker/">Docker管理</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/tmux/">linux screen与tmux</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/DevOps/">DevOps工具链</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Helm/">Helm</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Istio/">Istio微服务网格</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Prometheus/">Prometheus普罗米修斯</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Rancher/">Rancher</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Gitlab/">Gitlab</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Ceph-K8s/">ceph对接k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Git/">Git代码管理工具</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Go-k8s/">go代码封装到k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/VMware-I2I/">VMware I2I迁移至PVE 小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/ESXi/">ESXi物理机安装踩坑汇总</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/Ansible/">Ansible笔记集合</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/23</span>
+            <a class="archive-post-title" href="/2024/04/23/root-extend/">根分区扩容小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/16</span>
+            <a class="archive-post-title" href="/2024/03/16/Ceph/">CEPH分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/Harbor/">本地部署harbor私有镜像仓库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/K8s/">k8s基础知识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/Python/">Python笔记合集</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/PVE/">虚拟化系统PVE物理机快速安装指南</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/02</span>
+            <a class="archive-post-title" href="/2024/02/02/Hexo/">使用1panel搭建Hexo博客</a>
+        </li>
+    
+        
+            
+            
+                
+                </ul>
+            
+            <div class="archive-year"> 2023 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/24</span>
+            <a class="archive-post-title" href="/2023/12/24/PXE/">PXE安装</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/14</span>
+            <a class="archive-post-title" href="/2023/12/14/Nginx/">nginx详解</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/12</span>
+            <a class="archive-post-title" href="/2023/11/12/DEBD/">DRBD单活分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/27</span>
+            <a class="archive-post-title" href="/2023/10/27/Linux-raid/">基于mdadm创建与管理软raid</a>
+        </li>
+    
+    </div>
+</div>
+
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+        
+            <span class="sidebar-tag-name" data-tags="Linux">
+                <span class="iconfont-archer">&#xe606;</span>
+                Linux
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云原生">
+                <span class="iconfont-archer">&#xe606;</span>
+                云原生
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云计算">
+                <span class="iconfont-archer">&#xe606;</span>
+                云计算
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="开发">
+                <span class="iconfont-archer">&#xe606;</span>
+                开发
+            </span>
+        
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+        缺失模块，请参考主题文档进行安装配置：https://github.com/fi3ework/hexo-theme-archer#%E5%AE%89%E8%A3%85%E4%B8%BB%E9%A2%98
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+
+    </div>
+</div>
+
+        <!-- site-meta -->
+        <script>
+    var siteMetaRoot = "/"
+    if (siteMetaRoot === "undefined") {
+        siteMetaRoot = '/'
+    }
+    var siteMeta = {
+        url: "http://Durative.github.io",
+        root: siteMetaRoot,
+        author: "王盛"
+    }
+</script>
+
+        <!-- import experimental options here -->
+        <!-- Custom Font -->
+
+
+        <!-- main func -->
+        <script src="/scripts/main.js?v=20211217"></script>
+        <!-- dark mode -->
+        <script src="/scripts/dark.js?v=20211217"></script>
+        <!-- fancybox -->
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" defer></script>
+        <!-- algolia -->
+        
+        <!-- busuanzi -->
+        
+            <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+        
+        <!-- CNZZ -->
+        
+        <!-- async load share.js -->
+        
+            <script src="/scripts/share.js?v=20211217" async></script>
+        
+        <!-- mermaid -->
+        
+    </body>
+</html>

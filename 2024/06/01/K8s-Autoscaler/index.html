@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+    <!-- title -->
+
+
+    
+
+<!-- keywords -->
+
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="王盛">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="王盛">
+    
+        <meta name="keywords" content="容器,云计算,云原生">
+    
+    <meta name="description" content="">
+    <meta name="description" content="弹性伸缩是根据用户的业务需求和策略，自动“调整”其“弹性资源”的管理服务。通过弹性伸缩功能，用户可设置定时、周期或监控策略，恰到好处地增加或减少“弹性资源”，并完成实例配置，保证业务平稳健康运行 在k8s中扩缩容分为两种： 1、Node层面：对K8s物理节点扩容和缩容，根据业务规模实现物理节点自动扩缩容 2、Pod层面：我们一般会使用Deployment中的replicas参数，设置多个副本集来保">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8s自动扩缩容HPA VPA KPA">
+<meta property="og:url" content="http://durative.github.io/2024/06/01/K8s-Autoscaler/index.html">
+<meta property="og:site_name" content="Akemi">
+<meta property="og:description" content="弹性伸缩是根据用户的业务需求和策略，自动“调整”其“弹性资源”的管理服务。通过弹性伸缩功能，用户可设置定时、周期或监控策略，恰到好处地增加或减少“弹性资源”，并完成实例配置，保证业务平稳健康运行 在k8s中扩缩容分为两种： 1、Node层面：对K8s物理节点扩容和缩容，根据业务规模实现物理节点自动扩缩容 2、Pod层面：我们一般会使用Deployment中的replicas参数，设置多个副本集来保">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164007.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164017.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164107.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164149.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164213.png">
+<meta property="article:published_time" content="2024-06-01T08:44:51.000Z">
+<meta property="article:modified_time" content="2024-06-01T08:47:35.070Z">
+<meta property="article:author" content="王盛">
+<meta property="article:tag" content="云原生">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164007.png">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="icon" href="/assets/akemi.ico">
+    
+    <title>K8s自动扩缩容HPA VPA KPA · Akemi</title>
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+    (function (w) {
+        'use strict'
+        // rel=preload support test
+        if (!w.loadCSS) {
+            w.loadCSS = function () {}
+        }
+        // define on the loadCSS obj
+        var rp = (loadCSS.relpreload = {})
+        // rel=preload feature support test
+        // runs once and returns a function for compat purposes
+        rp.support = (function () {
+            var ret
+            try {
+                ret = w.document.createElement('link').relList.supports('preload')
+            } catch (e) {
+                ret = false
+            }
+            return function () {
+                return ret
+            }
+        })()
+
+        // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+        // then change that media back to its intended value on load
+        rp.bindMediaToggle = function (link) {
+            // remember existing media attr for ultimate state, or default to 'all'
+            var finalMedia = link.media || 'all'
+
+            function enableStylesheet() {
+                link.media = finalMedia
+            }
+
+            // bind load handlers to enable media
+            if (link.addEventListener) {
+                link.addEventListener('load', enableStylesheet)
+            } else if (link.attachEvent) {
+                link.attachEvent('onload', enableStylesheet)
+            }
+
+            // Set rel and non-applicable media type to start an async request
+            // note: timeout allows this to happen async to let rendering continue in IE
+            setTimeout(function () {
+                link.rel = 'stylesheet'
+                link.media = 'only x'
+            })
+            // also enable media after 3 seconds,
+            // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+            setTimeout(enableStylesheet, 3000)
+        }
+
+        // loop through link elements in DOM
+        rp.poly = function () {
+            // double check this to prevent external calls from running
+            if (rp.support()) {
+                return
+            }
+            var links = w.document.getElementsByTagName('link')
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i]
+                // qualify links to those with rel=preload and as=style attrs
+                if (
+                    link.rel === 'preload' &&
+                    link.getAttribute('as') === 'style' &&
+                    !link.getAttribute('data-loadcss')
+                ) {
+                    // prevent rerunning on link
+                    link.setAttribute('data-loadcss', true)
+                    // bind listeners to toggle media back
+                    rp.bindMediaToggle(link)
+                }
+            }
+        }
+
+        // if unsupported, run the polyfill
+        if (!rp.support()) {
+            // run once at least
+            rp.poly()
+
+            // rerun poly on an interval until onload
+            var run = w.setInterval(rp.poly, 500)
+            if (w.addEventListener) {
+                w.addEventListener('load', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            } else if (w.attachEvent) {
+                w.attachEvent('onload', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            }
+        }
+
+        // commonjs
+        if (typeof exports !== 'undefined') {
+            exports.loadCSS = loadCSS
+        } else {
+            w.loadCSS = loadCSS
+        }
+    })(typeof global !== 'undefined' ? global : this)
+</script>
+
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20211217" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="/css/dark.css?v=20211217" as="style">
+    <link rel="stylesheet" href="/css/dark.css">
+    <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
+    <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
+    <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <!-- algolia -->
+    
+    <!-- 百度统计  -->
+    
+    <!-- 谷歌统计  -->
+    
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ == undefined) {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js" />')
+        }
+    </script>
+    
+        <body class="post-body">
+    
+        <!-- header -->
+        <header class="header header-mobile">
+    <!-- top read progress line -->
+    <div class="header-element">
+        <div class="read-progress"></div>
+    </div>
+    <!-- sidebar menu button -->
+    <div class="header-element">
+        
+            <div class="header-sidebar-menu">
+        
+            
+                <div style="padding-left: 1px;">&#xe775;</div>
+            
+        </div>
+    </div>
+    <!-- header actions -->
+    <div class="header-actions">
+        <!-- theme mode switch button -->
+        <span class="header-theme-btn header-element">
+            <i class="fas fa-adjust"></i>
+        </span>
+        <!-- back to home page text -->
+        <span class="home-link header-element">
+            <a href=/>Akemi</a>
+        </span>
+    </div>
+    <!-- toggle banner for post layout -->
+    
+        
+            <div class="banner banner-clean">
+        
+            <div class="blog-title header-element">
+                <a href="/">Akemi</a>
+            </div>
+            <div class="post-title header-element">
+                <a href="#" class="post-name">K8s自动扩缩容HPA VPA KPA</a>
+            </div>
+        </div>
+    
+</header>
+
+        <!-- fixed footer -->
+        <footer class="footer-fixed">
+    <!-- back to top button -->
+    <div class="footer-fixed-element">
+        
+            <div class="back-top back-top-hidden">
+        
+        
+            <div>&#xe639;</div>
+        
+        </div>
+    </div>
+</footer>
+
+        <!-- wrapper -->
+        <div class="wrapper">
+            <div class="site-intro" style="
+
+
+
+
+
+
+
+    height:50vh;
+
+">
+    
+    <!-- 主页  -->
+    
+        
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post-bg.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+                K8s自动扩缩容HPA VPA KPA
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+                
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页 meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
+    
+</div>
+
+                
+                <!-- 文章字数统计 -->
+                
+                <div class="post-intro-meta">
+                    <!-- 撰写日期 -->
+                    <span class="iconfont-archer post-intro-calander">&#xe676;</span>
+                    <span class="post-intro-time">2024/06/01</span>
+                    <!-- busuanzi -->
+                    
+                        <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                            <span class="iconfont-archer post-intro-busuanzi">&#xe602;</span>
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    
+                    <!-- 文章分享 -->
+                    <span class="share-wrapper">
+                        <span class="iconfont-archer share-icon">&#xe71d;</span>
+                        <span class="share-text">Share</span>
+                        <ul class="share-list">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+            <script>
+  // get user agent
+  function getBrowserVersions() {
+    var u = window.navigator.userAgent
+    return {
+      userAgent: u,
+      trident: u.indexOf('Trident') > -1, //IE内核
+      presto: u.indexOf('Presto') > -1, //opera内核
+      webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+      gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+      mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+      ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+      android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+      iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+      iPad: u.indexOf('iPad') > -1, //是否为iPad
+      webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+      weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+      uc: u.indexOf('UCBrowser') > -1, //是否为android下的UC浏览器
+    }
+  }
+  var browser = {
+    versions: getBrowserVersions(),
+  }
+  console.log('userAgent: ' + browser.versions.userAgent)
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded')
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document
+        .getElementsByClassName('intro-title')[0]
+        .classList.add('intro-fade-in')
+      document
+        .getElementsByClassName('intro-subtitle')[0]
+        .classList.add('intro-fade-in')
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in')
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb() {
+    if (browser.versions.uc) {
+      console.log('UCBrowser')
+      fontLoaded()
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular'],
+        },
+        loading: function () {
+          // 所有字体开始加载
+          // console.log('font loading');
+        },
+        active: function () {
+          // 所有字体已渲染
+          fontLoaded()
+        },
+        inactive: function () {
+          // 字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout')
+          fontLoaded()
+        },
+        timeout: 5000, // Set the timeout to two seconds
+      })
+    }
+  }
+
+  function asyncErr() {
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document,
+      t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0]
+    o.src = u
+    if (cb) {
+      o.addEventListener(
+        'load',
+        function (e) {
+          cb(null, e)
+        },
+        false
+      )
+    }
+    if (err) {
+      o.addEventListener(
+        'error',
+        function (e) {
+          err(null, e)
+        },
+        false
+      )
+    }
+    s.parentNode.insertBefore(o, s)
+  }
+
+  var asyncLoadWithFallBack = function (arr, success, reject) {
+    var currReject = function () {
+      reject()
+      arr.shift()
+      if (arr.length) async(arr[0], success, currReject)
+    }
+
+    async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack(
+    [
+      'https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js',
+      'https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js',
+      "/lib/webfontloader.min.js",
+    ],
+    asyncCb,
+    asyncErr
+  )
+</script>
+
+            <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+            <div class="container container-unloaded">
+                <main class="main post-page">
+    <article class="article-entry">
+        <p>弹性伸缩是根据用户的业务需求和策略，自动“调整”其“弹性资源”的管理服务。通过弹性伸缩功能，用户可设置定时、周期或监控策略，恰到好处地增加或减少“弹性资源”，并完成实例配置，保证业务平稳健康运行</p>
+<p>在k8s中扩缩容分为两种：</p>
+<p>1、Node层面：<br>对K8s物理节点扩容和缩容，根据业务规模实现物理节点自动扩缩容</p>
+<p>2、Pod层面：<br>我们一般会使用Deployment中的replicas参数，设置多个副本集来保证服务的高可用，但是这是一个固定的值，比如我们设置10个副本，就会启10个pod 同时running来提供服务。如果这个服务平时流量很少的时候，也是10个pod同时在running，而流量突然暴增时，又可能出现10个pod不够用的情况。针对这种情况怎么办？就需要扩容和缩容</p>
+<h1 id="四种扩容方式介绍"><a href="#四种扩容方式介绍" class="headerlink" title="四种扩容方式介绍"></a>四种扩容方式介绍</h1><h2 id="HPA"><a href="#HPA" class="headerlink" title="HPA"></a>HPA</h2><p>Kubernetes HPA（Horizontal Pod Autoscaling）：Pod水平自动伸缩</p>
+<p>通过此功能，只需简单的配置，便可以利用监控指标（cpu使用率、磁盘、自定义的等）自动的扩容或缩容服务中Pod数量，当业务需求增加时，系统将无缝地自动增加适量pod容器，提高系统稳定性。</p>
+<p>HPAv1版只能根据CPU使用率进行自动扩缩容<br>HPAv2可以基于内存和自定义的指标做扩容和缩容</p>
+<p>但是并非所有的系统都可以仅依靠CPU或者Memory指标来扩容，对于大多数 Web 应用的后端来说，基于每秒的请求数量进行弹性伸缩来处理突发流量会更加的靠谱。对于一个自动扩缩容系统来说，我们不能局限于CPU、Memory基础监控数据，每秒请求数RPS等自定义指标也是十分重要。</p>
+<p><strong>如何采集资源指标？</strong><br>如果我们的系统默认依赖Prometheus，自定义的Metrics指标则可以从各种数据源或者exporter中获取，基于拉模型的Prometheus会定期从数据源中拉取数据。 也可以基于metrics-server自动获取节点和pod的资源指标</p>
+<p><strong>如何实现自动扩缩容？</strong><br>K8s的HPA controller已经实现了一套简单的自动扩缩容逻辑，默认情况下，每30s检测一次指标，只要检测到了配置HPA的目标值，则会计算出预期的工作负载的副本数，再进行扩缩容操作。同时，为了避免过于频繁的扩缩容，默认在5min内没有重新扩缩容的情况下，才会触发扩缩容。 HPA本身的算法相对比较保守，可能并不适用于很多场景。例如，一个快速的流量突发场景，如果正处在5min内的HPA稳定期，这个时候根据HPA的策略，会导致无法扩容。</p>
+<h2 id="VPA"><a href="#VPA" class="headerlink" title="VPA"></a>VPA</h2><p>VPA（Vertical Pod Autoscaler），垂直 Pod 自动扩缩容，</p>
+<p>基于Pod的资源使用情况自动为集群设置资源占用的限制，从而让集群将Pod调度到有足够资源的最佳节点上</p>
+<p>它会根据容器资源使用率自动设置pod的CPU和内存的requests，从而允许在节点上进行适当的调度，以便为每个 Pod 提供适当的可用的节点。它既可以缩小过度请求资源的容器，也可以根据其使用情况随时提升资源不足的容量。</p>
+<p>如果不满足要求，pod就会pending，避免这种情况，VPA就会自动设置requests</p>
+<h2 id="KPA"><a href="#KPA" class="headerlink" title="KPA"></a>KPA</h2><p>KPA（Knative Pod Autoscaler）：基于请求数对Pod自动扩缩容，KPA 的主要限制在于它不支持基于 CPU 的自动扩缩容。</p>
+<p>1、根据并发请求数实现自动扩缩容<br>2、设置扩缩容边界实现自动扩缩容（最大和最小pod数量）</p>
+<p>相比HPA，KPA会考虑更多的场景，其中一个比较重要的是流量突发的时候</p>
+<p>一般会与HPA混合使用</p>
+<h2 id="Cluster-autoscaler（CA）"><a href="#Cluster-autoscaler（CA）" class="headerlink" title="Cluster-autoscaler（CA）"></a>Cluster-autoscaler（CA）</h2><p>只能支持云厂商的K8s</p>
+<p>Cluster Autoscaler (CA)是一个独立程序，是用来弹性伸缩kubernetes集群的。它可以自动根据部署应用所请求的资源量来动态的伸缩集群。当集群容量不足时，它会自动去 Cloud Provider （支持 GCE、GKE 和 AWS）创建新的 Node，而在 Node 长时间资源利用率很低时自动将其删除以节省开支。</p>
+<p><strong>在以下情况下，集群自动扩容或者缩放：</strong></p>
+<p>扩容：由于资源不足，某些Pod无法在任何当前节点上进行调度<br>缩容: Node节点资源利用率较低时，且此node节点上存在的pod都能被重新调度到其他node节点上运行</p>
+<p><strong>什么时候集群节点不会被 CA 删除</strong><br>1）节点上有pod被 PodDisruptionBudget 控制器限制。<br>2）节点上有命名空间是 kube-system 的pods。<br>3）节点上的pod不是被控制器创建，例如不是被deployment, replica set, job, stateful set创建。<br>4）节点上有pod使用了本地存储<br>5）节点上pod驱逐后无处可去，即没有其他node能调度这个pod<br>6）节点有注解：”<a target="_blank" rel="noopener" href="http://cluster-autoscaler.kubernetes.io/scale-down-disabled">cluster-autoscaler.kubernetes.io&#x2F;scale-down-disabled</a>“: “true”(在CA 1.0.3或更高版本中受支持)</p>
+<h1 id="部署HPA"><a href="#部署HPA" class="headerlink" title="部署HPA"></a>部署HPA</h1><p>HPA可以基于CPU利用率与自定义指标，对deployment中的pod数量进行自动扩缩容（不适用于daemonset）</p>
+<p>HPA由Kubernetes API资源和控制器实现。控制器会周期性的获取平均CPU利用率，并与目标值相比较后调整deployment中的副本数量。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">kubectl api-versions | grep auto</span><br><span class="line">autoscaling/v1</span><br><span class="line">autoscaling/v2</span><br><span class="line"></span><br><span class="line">kubectl top pods -n kube-system --sort-by=cpu -A</span><br><span class="line">NAMESPACE       NAME                                       CPU(cores)   MEMORY(<span class="built_in">bytes</span>)</span><br><span class="line">kube-system     kube-apiserver-ws-k8s-master1              62m          368Mi</span><br><span class="line">kube-system     etcd-ws-k8s-master1                        51m          149Mi</span><br><span class="line">kube-system     kube-apiserver-ws-k8s-master3              47m          314Mi</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>K8S从1.8版本开始，CPU、内存等资源的metrics信息可以通过 Metrics API来获取，用户可以直接获取这些metrics信息（例如通过执行kubect top命令），HPA使用这些metics信息来实现动态伸缩。</p>
+<p>Metrics server：<br>1、Metrics server是K8S集群资源使用情况的聚合器<br>2、从1.8版本开始，Metrics server可以通过yaml文件的方式进行部署<br>3、Metrics server收集所有node节点的metrics信息</p>
+<h2 id="HPA原理"><a href="#HPA原理" class="headerlink" title="HPA原理"></a>HPA原理</h2><p>HPA的实现是一个控制循环，由controller manager的–horizontal-pod-autoscaler-sync-period参数指定周期（默认值为15秒）。每个周期内，controller manager根据每个HorizontalPodAutoscaler定义中指定的指标查询资源利用率。controller manager可以从resource metrics API（pod 资源指标）和custom metrics API（自定义指标）获取指标。</p>
+<p>通过现有pods的CPU使用率的平均值，除以设定的每个Pod的CPU使用率限额）跟目标使用率进行比较</p>
+<p><strong>读取平均值&#x3D;⇒&gt;比较</strong></p>
+<h2 id="使用流程"><a href="#使用流程" class="headerlink" title="使用流程"></a>使用流程</h2><p>1、创建HPA资源，设定目标CPU使用率限额，以及最大、最小实例数<br>2、收集一组中（PodSelector）每个Pod最近一分钟内的CPU使用率，并计算平均值<br>3、读取HPA中设定的CPU使用限额<br>4、计算：平均值之和&#x2F;限额，求出目标调整的实例个数<br>5、回到第2步，不断循环</p>
+<p>注：目标调整的实例数不能超过1中设定的最大、最小实例数，如果没有超过，则扩容；超过，则扩容至最大的实例个数</p>
+<h2 id="基于CPU进行自动扩缩容"><a href="#基于CPU进行自动扩缩容" class="headerlink" title="基于CPU进行自动扩缩容"></a>基于CPU进行自动扩缩容</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br></pre></td><td class="code"><pre><span class="line">1.安装metrics-server</span><br><span class="line">这个组件Prometheus也会用，我之前安装的是0.5.1，干脆换一个最新版的0.7.1试试</span><br><span class="line"></span><br><span class="line">docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/metrics-server:v0.7.1</span><br><span class="line"></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: metrics-server</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">    rbac.authorization.k8s.io/aggregate-to-admin: <span class="string">&quot;true&quot;</span></span><br><span class="line">    rbac.authorization.k8s.io/aggregate-to-edit: <span class="string">&quot;true&quot;</span></span><br><span class="line">    rbac.authorization.k8s.io/aggregate-to-view: <span class="string">&quot;true&quot;</span></span><br><span class="line">  name: system:aggregated-metrics-reader</span><br><span class="line">rules:</span><br><span class="line">- apiGroups:</span><br><span class="line">  - metrics.k8s.io</span><br><span class="line">  resources:</span><br><span class="line">  - pods</span><br><span class="line">  - nodes</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: system:metrics-server</span><br><span class="line">rules:</span><br><span class="line">- apiGroups:</span><br><span class="line">  - <span class="string">&quot;&quot;</span></span><br><span class="line">  resources:</span><br><span class="line">  - nodes/metrics</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">- apiGroups:</span><br><span class="line">  - <span class="string">&quot;&quot;</span></span><br><span class="line">  resources:</span><br><span class="line">  - pods</span><br><span class="line">  - nodes</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: RoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: metrics-server-auth-reader</span><br><span class="line">  namespace: kube-system</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: Role</span><br><span class="line">  name: extension-apiserver-authentication-reader</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: metrics-server</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: metrics-server:system:auth-delegator</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: system:auth-delegator</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: metrics-server</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: system:metrics-server</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: system:metrics-server</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: metrics-server</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: metrics-server</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - name: https</span><br><span class="line">    port: 443</span><br><span class="line">    protocol: TCP</span><br><span class="line">    targetPort: https</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">---</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: metrics-server</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      k8s-app: metrics-server</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxUnavailable: 0</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        k8s-app: metrics-server</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - args:</span><br><span class="line">        - /metrics-server</span><br><span class="line">        - --cert-dir=/tmp</span><br><span class="line">        - --secure-port=4443</span><br><span class="line">        - --kubelet-insecure-tls</span><br><span class="line">        - --kubelet-preferred-address-types=InternalIP</span><br><span class="line">        - --kubelet-use-node-status-port</span><br><span class="line">        - --metric-resolution=15s</span><br><span class="line">        image: registry.cn-hangzhou.aliyuncs.com/google_containers/metrics-server:v0.6.1</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        livenessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /livez</span><br><span class="line">            port: https</span><br><span class="line">            scheme: HTTPS</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        name: metrics-server</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 4443</span><br><span class="line">          name: https</span><br><span class="line">          protocol: TCP</span><br><span class="line">        readinessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /readyz</span><br><span class="line">            port: https</span><br><span class="line">            scheme: HTTPS</span><br><span class="line">          initialDelaySeconds: 20</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 100m</span><br><span class="line">            memory: 10Mi</span><br><span class="line">        securityContext:</span><br><span class="line">          allowPrivilegeEscalation: <span class="literal">false</span></span><br><span class="line">          readOnlyRootFilesystem: <span class="literal">true</span></span><br><span class="line">          runAsNonRoot: <span class="literal">true</span></span><br><span class="line">          runAsUser: 1000</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - mountPath: /tmp</span><br><span class="line">          name: tmp-dir</span><br><span class="line">      nodeSelector:</span><br><span class="line">        kubernetes.io/os: linux</span><br><span class="line">      priorityClassName: system-cluster-critical</span><br><span class="line">      serviceAccountName: metrics-server</span><br><span class="line">      volumes:</span><br><span class="line">      - emptyDir: &#123;&#125; </span><br><span class="line">        name: tmp-dir</span><br><span class="line">---</span><br><span class="line">apiVersion: apiregistration.k8s.io/v1</span><br><span class="line">kind: APIService</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: metrics-server</span><br><span class="line">  name: v1beta1.metrics.k8s.io</span><br><span class="line">spec:</span><br><span class="line">  group: metrics.k8s.io</span><br><span class="line">  groupPriorityMinimum: 100</span><br><span class="line">  insecureSkipTLSVerify: <span class="literal">true</span></span><br><span class="line">  service:</span><br><span class="line">    name: metrics-server</span><br><span class="line">    namespace: kube-system</span><br><span class="line">  version: v1beta1</span><br><span class="line">  versionPriority: 100</span><br><span class="line"></span><br><span class="line">2.创建一个服务供测试</span><br><span class="line">php文件</span><br><span class="line"><span class="built_in">cat</span> index.php </span><br><span class="line">&lt;?php</span><br><span class="line"><span class="variable">$x</span> = 0.0001;</span><br><span class="line"><span class="keyword">for</span> (<span class="variable">$i</span> = 0; <span class="variable">$i</span> &lt;= 1000000;<span class="variable">$i</span>++) &#123;</span><br><span class="line"><span class="variable">$x</span> += sqrt(<span class="variable">$x</span>);</span><br><span class="line">  &#125;</span><br><span class="line"> <span class="built_in">echo</span> <span class="string">&quot;OK!&quot;</span>;</span><br><span class="line">?&gt;</span><br><span class="line"></span><br><span class="line">dockerfile文件</span><br><span class="line"><span class="built_in">cat</span> dockerfile </span><br><span class="line">FROM php:5-apache</span><br><span class="line">ADD index.php /var/www/html/index.php</span><br><span class="line">RUN <span class="built_in">chmod</span> a+rx index.php</span><br><span class="line"></span><br><span class="line">构建镜像，并上传至harbor</span><br><span class="line">docker build -t 192.168.10.130/wangsheng/hpa-example:v1 .</span><br><span class="line">docker push 192.168.10.130/wangsheng/hpa-example:v1</span><br><span class="line"></span><br><span class="line">3.部署服务的yaml</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata: </span><br><span class="line">  name: php-apache</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      run: php-apache</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        run: php-apache</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: php-apache</span><br><span class="line">        image: 192.168.10.130/wangsheng/hpa-example:v1</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 80</span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 500m</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 200m</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">    name: php-apache</span><br><span class="line">    labels:</span><br><span class="line">      run: php-apache</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">  selector:</span><br><span class="line">   run: php-apache</span><br><span class="line"></span><br><span class="line">kubectl apply -f php-dp.yaml</span><br><span class="line">kubectl get pods</span><br><span class="line"><span class="comment"># NAME                         READY   STATUS    RESTARTS   AGE</span></span><br><span class="line"><span class="comment"># php-apache-bc79b594f-sbs98   1/1     Running   0          13s</span></span><br><span class="line"></span><br><span class="line">3.自定义一个hpa规则</span><br><span class="line">使用kubectl autoscale创建自动缩放器，实现对php-dp的pod自动扩缩容</span><br><span class="line"><span class="comment">#kubectl autoscale deployment --help</span></span><br><span class="line"><span class="comment">#kubectl autoscale deployment [DEPLOYMENT_NAME] --min=MIN_PODS --max=MAX_PODS --cpu-percent=CPU_PERCENT_THRESHOLD</span></span><br><span class="line">kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10</span><br><span class="line">CPU占用率高于50时，最大数量10，最小数量1</span><br><span class="line"></span><br><span class="line">4.测试</span><br><span class="line">创建一个pod，针对php-apache的CPU进行压测</span><br><span class="line">kubectl run v1 -it --image=busybox --image-pull-policy=IfNotPresent /bin/sh</span><br><span class="line">kubectl get svc</span><br><span class="line"><span class="comment">#NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE</span></span><br><span class="line"><span class="comment">#kubernetes   ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP   81d</span></span><br><span class="line"><span class="comment">#php-apache   ClusterIP   10.101.138.183   &lt;none&gt;        80/TCP    14m</span></span><br><span class="line"><span class="keyword">while</span> <span class="literal">true</span>; <span class="keyword">do</span> wget -q -O- http://php-apache.default.svc.cluster.local; <span class="keyword">done</span></span><br><span class="line"></span><br><span class="line">可以看到已经自动扩容了</span><br><span class="line">kubectl get hpa</span><br><span class="line"><span class="comment">#NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE</span></span><br><span class="line"><span class="comment">#php-apache   Deployment/php-apache   90%/50%   1         10        9          2m29s</span></span><br><span class="line"><span class="comment">#php-apache   Deployment/php-apache   48%/50%   1         10        9          2m56s</span></span><br><span class="line">停止压测，自动缩容</span><br><span class="line">kubectl get hpa -w</span><br><span class="line"><span class="comment">#NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE</span></span><br><span class="line"><span class="comment">#php-apache   Deployment/php-apache   0%/50%    1         10        1          9m3s</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164007.png"></p>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164017.png"></p>
+<h2 id="基于内存进行自动扩缩容"><a href="#基于内存进行自动扩缩容" class="headerlink" title="基于内存进行自动扩缩容"></a>基于内存进行自动扩缩容</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><span class="line">1.创建一个基础服务</span><br><span class="line">docker pull nginx</span><br><span class="line">docker tag nginx:latest 192.168.10.130/wangsheng/nginx:latest</span><br><span class="line">docker push 192.168.10.130/wangsheng/nginx:latest</span><br><span class="line"></span><br><span class="line">vim nginx.yaml</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-hpa</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: nginx</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: nginx</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: nginx</span><br><span class="line">        image: 192.168.10.130/wangsheng/nginx</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 80</span><br><span class="line">          name: http</span><br><span class="line">          protocol: TCP</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 0.01</span><br><span class="line">            memory: 25Mi</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 0.05</span><br><span class="line">            memory: 60Mi</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">  labels:</span><br><span class="line">    app: nginx</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx</span><br><span class="line">  <span class="built_in">type</span>: NodePort</span><br><span class="line">  ports:</span><br><span class="line">  - name: http</span><br><span class="line">    protocol: TCP</span><br><span class="line">    port: 80</span><br><span class="line">    targetPort: 80</span><br><span class="line">    nodePort: 30080</span><br><span class="line">kubectl apply -f nginx.yaml</span><br><span class="line"></span><br><span class="line">2.创建hpa</span><br><span class="line">vim hpa-v1.yaml</span><br><span class="line">apiVersion: autoscaling/v2</span><br><span class="line">kind: HorizontalPodAutoscaler</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-hpa</span><br><span class="line">spec:</span><br><span class="line">    maxReplicas: 10 <span class="comment"># 最多10个</span></span><br><span class="line">    minReplicas: 1 <span class="comment"># 最少1个</span></span><br><span class="line">    scaleTargetRef:</span><br><span class="line">      apiVersion: apps/v1</span><br><span class="line">      kind: Deployment</span><br><span class="line">      name: nginx-hpa</span><br><span class="line">    metrics: <span class="comment"># 采集指标</span></span><br><span class="line">    - <span class="built_in">type</span>: Resource </span><br><span class="line">    <span class="comment"># 可选&quot;External&quot; 外部指标</span></span><br><span class="line">    <span class="comment"># &quot;Object&quot;  自定义资源</span></span><br><span class="line">    <span class="comment"># &quot;Pods&quot;  Pod 的自定义指标</span></span><br><span class="line">    <span class="comment"># &quot;Resource&quot;容器资源的使用情况</span></span><br><span class="line">      resource:</span><br><span class="line">        name: memory</span><br><span class="line">        target:</span><br><span class="line">         averageUtilization: 60 <span class="comment"># 比例大于60</span></span><br><span class="line">         <span class="built_in">type</span>: Utilization</span><br><span class="line">         <span class="comment"># 可选Utilization 百分比的使用率</span></span><br><span class="line">         <span class="comment"># Value 一个具体的值</span></span><br><span class="line">         <span class="comment"># AverageValue 平均值</span></span><br><span class="line"></span><br><span class="line">kubectl apply -f hpa-v1.yaml</span><br><span class="line">kubectl get hpa</span><br><span class="line"><span class="comment">#NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE</span></span><br><span class="line"><span class="comment">#nginx-hpa    Deployment/nginx-hpa    24%/60%   1         10        1          4m51s</span></span><br><span class="line"></span><br><span class="line">3.压测nginx</span><br><span class="line"><span class="comment"># 进入pod</span></span><br><span class="line">kubectl <span class="built_in">exec</span> -it nginx-hpa-dc6bdf6-nt2z4 -- /bin/sh</span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=/tmp/a</span><br><span class="line"></span><br><span class="line">kubectl get hpa -w</span><br><span class="line">NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    131%/60%   1         10        3        6m53s</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    62%/60%   1         10        3          7m1s</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    62%/60%   1         10        3          7m15s</span><br><span class="line"></span><br><span class="line"><span class="comment"># 结束压测</span></span><br><span class="line"><span class="built_in">rm</span> -rf /tmp/a</span><br><span class="line">在第20分钟的时候完成缩容</span><br><span class="line">kubectl get hpa -w</span><br><span class="line">NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    25%/60%   1         10        3          15m</span><br><span class="line">php-apache   Deployment/php-apache   0%/50%    1         10        1          72m</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    26%/60%   1         10        2          15m</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    26%/60%   1         10        2          20m</span><br><span class="line">nginx-hpa    Deployment/nginx-hpa    23%/60%   1         10        1          20m</span><br></pre></td></tr></table></figure>
+
+<h1 id="部署VPA"><a href="#部署VPA" class="headerlink" title="部署VPA"></a>部署VPA</h1><p>Vertical Pod Autoscaler（VPA）：垂直Pod自动扩缩容，用户无需为其pods中的容器设置最新的资源request。配置后，它将根据使用情况自动设置request，从而允许在节点上进行适当的调度，以便为每个pod提供适当的资源量。</p>
+<p>随着服务的负载的变化，VPA的推荐值也会不断变化。当目前运行的pod的资源达不到VPA的推荐值，就会执行pod驱逐，重新部署新的足够资源的服务。</p>
+<p>VPA使用限制：<br>不能与HPA（Horizontal Pod Autoscaler ）一起使用<br>Pod比如使用副本控制器，例如属于Deployment或者StatefulSet</p>
+<p>VPA有啥好处：<br>Pod 资源用其所需，所以集群节点使用效率高。<br>Pod 会被安排到具有适当可用资源的节点上。<br>不必运行基准测试任务来确定 CPU 和内存请求的合适值。<br>VPA 可以随时调整 CPU 和内存请求，无需人为操作，因此可以减少维护时间。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164107.png"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line">1.准备工作</span><br><span class="line">准备镜像，直接扔到harbor里</span><br><span class="line">git <span class="built_in">clone</span> -b vpa-release-0.14 https://github.com/kubernetes/autoscaler.git</span><br><span class="line">进入deploy，修改部署vpa的yaml文件</span><br><span class="line"><span class="built_in">cd</span> /root/VPA/autoscaler/vertical-pod-autoscaler/deploy</span><br><span class="line"></span><br><span class="line">sed -i <span class="string">&#x27;s/Always/IfNotPresent/g&#x27;</span>  recommender-deployment.yaml</span><br><span class="line">sed -i <span class="string">&#x27;s/Always/IfNotPresent/g&#x27;</span>  admission-controller-deployment.yaml</span><br><span class="line">sed -i <span class="string">&#x27;s/Always/IfNotPresent/g&#x27;</span>  updater-deployment.yaml</span><br><span class="line"></span><br><span class="line">修改这三个文件的所用镜像分别为下面这三个push的镜像</span><br><span class="line"></span><br><span class="line">docker pull giantswarm/vpa-admission-controller:0.14.0</span><br><span class="line">docker pull giantswarm/vpa-recommender:0.14.0</span><br><span class="line">docker pull giantswarm/vpa-updater:0.14.0</span><br><span class="line">docker tag giantswarm/vpa-admission-controller:0.14.0 192.168.10.130/wangsheng/vpa-admission-controller:0.14.0</span><br><span class="line">docker tag giantswarm/vpa-recommender:0.14.0 192.168.10.130/wangsheng/vpa-recommender:0.14.0</span><br><span class="line">docker tag giantswarm/vpa-updater:0.14.0 192.168.10.130/wangsheng/vpa-updater:0.14.0</span><br><span class="line">docker push 192.168.10.130/wangsheng/vpa-admission-controller:0.14.0</span><br><span class="line">docker push 192.168.10.130/wangsheng/vpa-recommender:0.14.0</span><br><span class="line">docker push 192.168.10.130/wangsheng/vpa-updater:0.14.0</span><br><span class="line"></span><br><span class="line">准备源码包安装openssl</span><br><span class="line">yum -y install gcc gcc-c++</span><br><span class="line">wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz --no-check-certificate &amp;&amp; tar zxf openssl-1.1.1k.tar.gz &amp;&amp; <span class="built_in">cd</span> openssl-1.1.1k</span><br><span class="line">./config</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line"><span class="built_in">mv</span> /usr/local/bin/openssl /usr/local/bin/openssl.bak <span class="comment"># 备份openssl</span></span><br><span class="line"><span class="built_in">mv</span> apps/openssl /usr/local/bin <span class="comment"># 替换掉</span></span><br><span class="line"></span><br><span class="line">做软连接</span><br><span class="line"><span class="built_in">rm</span> -rf /usr/lib64/libssl.so.1.1</span><br><span class="line"><span class="built_in">rm</span> -rf /usr/lib64/libcrypto.so.1.1</span><br><span class="line"><span class="built_in">ln</span> -s /usr/local/lib64/libssl.so.1.1 /usr/lib64/libssl.so.1.1</span><br><span class="line"><span class="built_in">ln</span> -s /usr/local/lib64/libcrypto.so.1.1 /usr/lib64/libcrypto.so.1.1</span><br><span class="line"></span><br><span class="line">2.安装</span><br><span class="line">git <span class="built_in">clone</span></span><br><span class="line">tar xf autoscaler.tar.gz</span><br><span class="line">/root/VPA/autoscaler-master/vertical-pod-autoscaler/hack</span><br><span class="line">./vpa-up.sh <span class="comment"># 执行安装脚本</span></span><br><span class="line"></span><br><span class="line">kubectl get deployments.apps -n kube-system  | grep vpa</span><br><span class="line">vpa-admission-controller   1/1     1            1           13m</span><br><span class="line">vpa-recommender            1/1     1            1           13m</span><br><span class="line">vpa-updater                1/1     1            1           12s</span><br><span class="line"></span><br><span class="line">3.创建测试deployment</span><br><span class="line">kubectl create ns vpa</span><br><span class="line"></span><br><span class="line">vim vpa-1.yaml</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    app: nginx</span><br><span class="line">  name: nginx</span><br><span class="line">  namespace: vpa</span><br><span class="line">spec:</span><br><span class="line">  replicas: 2</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: nginx</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: nginx</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - image: 192.168.10.130/wangsheng/nginx</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        name: nginx</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 100m</span><br><span class="line">            memory: 50Mi</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">  namespace: vpa</span><br><span class="line">spec:</span><br><span class="line">  <span class="built_in">type</span>: NodePort</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">    targetPort: 80</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx</span><br><span class="line"></span><br><span class="line">kubectl apply -f vpa-1.yaml</span><br><span class="line">kubectl get pods -n vpa</span><br><span class="line">NAME                     READY   STATUS    RESTARTS   AGE</span><br><span class="line">nginx-6f68695ff5-b2lpp   1/1     Running   0          18s</span><br><span class="line">nginx-6f68695ff5-wckhv   1/1     Running   0          18s</span><br><span class="line"></span><br><span class="line">curl -I 192.168.10.131:30093 | grep HTTP</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line"></span><br><span class="line">4.创建vpa规则</span><br><span class="line">(1)Off模式</span><br><span class="line">vim vpa-rule-1.yaml</span><br><span class="line">apiVersion: autoscaling.k8s.io/v1</span><br><span class="line">kind: VerticalPodAutoscaler</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-vpa-1</span><br><span class="line">  namespace: vpa</span><br><span class="line">spec:</span><br><span class="line">  targetRef:</span><br><span class="line">    apiVersion: <span class="string">&quot;apps/v1&quot;</span></span><br><span class="line">    kind: Deployment</span><br><span class="line">    name: nginx</span><br><span class="line">  updatePolicy:</span><br><span class="line">    updateMode: <span class="string">&quot;Off&quot;</span> <span class="comment"># 默认为Auto</span></span><br><span class="line">  resourcePolicy: <span class="comment"># 资源策略</span></span><br><span class="line">    containerPolicies:</span><br><span class="line">    - containerName: <span class="string">&quot;nginx&quot;</span> <span class="comment"># 绑定的容器名称</span></span><br><span class="line">      minAllowed: <span class="comment"># 最小允许设置的参数</span></span><br><span class="line">        cpu: <span class="string">&quot;500m&quot;</span></span><br><span class="line">        memory: <span class="string">&quot;100Mi&quot;</span> </span><br><span class="line">      maxAllowed: <span class="comment"># 最大允许设置的参数</span></span><br><span class="line">        cpu: <span class="string">&quot;2000m&quot;</span></span><br><span class="line">        memory: <span class="string">&quot;2600Mi&quot;</span></span><br><span class="line"> kubectl apply -f vpa-rule-1.yaml</span><br><span class="line"></span><br><span class="line">压测</span><br><span class="line">yum -y install httpd-tools</span><br><span class="line">ab -c 100 -n 10000000 http://10.107.198.208:80/</span><br><span class="line"></span><br><span class="line">前后对比图</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164149.png"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">Auto模式：</span><br><span class="line">vim  vpa-rule-<span class="number">2.</span>yaml</span><br><span class="line">apiVersion: autoscaling.k8s.io/v1</span><br><span class="line">kind: VerticalPodAutoscaler</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-vpa-<span class="number">2</span></span><br><span class="line">  namespace: vpa</span><br><span class="line">spec:</span><br><span class="line">  targetRef:</span><br><span class="line">    apiVersion: <span class="string">&quot;apps/v1&quot;</span></span><br><span class="line">    kind: Deployment</span><br><span class="line">    name: nginx</span><br><span class="line">  updatePolicy:</span><br><span class="line">    updateMode: <span class="string">&quot;Auto&quot;</span></span><br><span class="line">  resourcePolicy:</span><br><span class="line">    containerPolicies:</span><br><span class="line">    - containerName: <span class="string">&quot;nginx&quot;</span></span><br><span class="line">      minAllowed:</span><br><span class="line">        cpu: <span class="string">&quot;500m&quot;</span></span><br><span class="line">        memory: <span class="string">&quot;100Mi&quot;</span></span><br><span class="line">      maxAllowed:</span><br><span class="line">        cpu: <span class="string">&quot;2000m&quot;</span></span><br><span class="line">        memory: <span class="string">&quot;2600Mi&quot;</span></span><br><span class="line">kubectl apply -f vpa-rule-<span class="number">2.</span>yaml</span><br><span class="line"></span><br><span class="line">压测：</span><br><span class="line">ab -c <span class="number">100</span> -n <span class="number">10000000</span> http://<span class="number">10.107</span><span class="number">.198</span><span class="number">.208</span>:<span class="number">80</span>/</span><br><span class="line"></span><br><span class="line">查看kubectl get events -n vpa</span><br><span class="line">可以发现有pod已经被kill，并且基于推荐值重新创建pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240601164213.png"></p>
+<h1 id="部署KPA（未完成）"><a href="#部署KPA（未完成）" class="headerlink" title="部署KPA（未完成）"></a>部署KPA（未完成）</h1><p>基于并发请求数进行自动扩缩容与最大最小副本数的控制</p>
+<p>参考官网文档：<br><a target="_blank" rel="noopener" href="https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/">Install Serving with YAML - Knative</a></p>
+<p><a target="_blank" rel="noopener" href="https://baijiahao.baidu.com/s?id=1779379787714883947&wfr=spider&for=pc">技术干货：解密最受欢迎的开源 Serverless 框架弹性技术实现 (baidu.com)</a></p>
+<p>官方建议环境：<br>单节点部署——6C6G 30Gdisk<br>多节点部署——2C4G 20Gdisk<br>k8s版本1.28以上<br>能联网（需要拉取镜像，也可以使用私仓）</p>
+<h2 id="Knative-Serving安装"><a href="#Knative-Serving安装" class="headerlink" title="Knative-Serving安装"></a>Knative-Serving安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line">1.安装Knative Serving组件</span><br><span class="line">本地服务组件：</span><br><span class="line">kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-crds.yaml</span><br><span class="line">核心组件——依赖于本地服务组件：</span><br><span class="line">kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-core.yaml</span><br><span class="line"></span><br><span class="line">2.安装kourier网络组件</span><br><span class="line">提供kourier、Istio、contour三种方式，官方推荐kourier</span><br><span class="line">安装控制器：</span><br><span class="line">kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.14.0/kourier.yaml</span><br><span class="line">在核心组件中添加网络组件配置-具体而言是写入了一个ingress-class</span><br><span class="line">kubectl patch configmap/config-network \</span><br><span class="line">  --namespace knative-serving \</span><br><span class="line">  --<span class="built_in">type</span> merge \</span><br><span class="line">  --patch <span class="string">&#x27;&#123;&quot;data&quot;:&#123;&quot;ingress-class&quot;:&quot;kourier.ingress.networking.knative.dev&quot;&#125;&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">查看外部地址或CNAME</span><br><span class="line">kubectl --namespace kourier-system get service kourier</span><br><span class="line"><span class="comment">#NAME      TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE</span></span><br><span class="line"><span class="comment">#kourier   LoadBalancer   10.101.131.83   &lt;pending&gt;     80:30296/TCP,443:30857/TCP   4m24s</span></span><br><span class="line"></span><br><span class="line">3.重新准备镜像</span><br><span class="line">kubectl get pods -n knative-serving</span><br><span class="line">NAME                                      READY   STATUS             RESTARTS   AGE</span><br><span class="line">activator-5d7f9fc58d-rg7bq                0/1     ImagePullBackOff   0          5m48s</span><br><span class="line">autoscaler-d57d974cb-pts52                0/1     ImagePullBackOff   0          5m48s</span><br><span class="line">controller-b8b47f9b9-dhllq                0/1     ImagePullBackOff   0          5m48s</span><br><span class="line">net-kourier-controller-68d89f78d5-8clfx   0/1     ImagePullBackOff   0          5m33s</span><br><span class="line">webhook-5676f857c4-tc9fq                  0/1     ImagePullBackOff   0          5m48s</span><br><span class="line">通过describe查看pod，列出了需要的镜像</span><br><span class="line">gcr.io/knative-releases/knative.dev/serving/cmd/activator</span><br><span class="line">gcr.io/knative-releases/knative.dev/serving/cmd/autoscaler</span><br><span class="line">gcr.io/knative-releases/knative.dev/serving/cmd/controller</span><br><span class="line">gcr.io/knative-releases/knative.dev/net-kourier/cmd/kourier</span><br><span class="line">gcr.io/knative-releases/knative.dev/serving/cmd/webhook</span><br><span class="line"></span><br><span class="line">（1）第一种方法：（不推荐）</span><br><span class="line">重新用docker拉取，tag并且push到私仓，再修改deployment中的image来源</span><br><span class="line">docker pull gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/activator:v1.14.1</span><br><span class="line">docker pull gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/autoscaler:v1.14.1</span><br><span class="line">docker pull gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/controller:v1.14.1</span><br><span class="line">docker pull gcr.dockerproxy.com/knative-releases/knative.dev/net-kourier/cmd/kourier</span><br><span class="line">docker pull gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/webhook</span><br><span class="line"></span><br><span class="line">docker tag gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/activator:v1.14.1 </span><br><span class="line">docker tag gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/autoscaler:v1.14.1</span><br><span class="line">docker tag gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/controller:v1.14.1</span><br><span class="line">docker tag gcr.dockerproxy.com//knative-releases/knative.dev/net-kourier/cmd/kourier:latest</span><br><span class="line">docker tag gcr.dockerproxy.com/knative-releases/knative.dev/serving/cmd/webhook:latest</span><br><span class="line"></span><br><span class="line">（2）第二种方法（推荐）</span><br><span class="line">直接edit deployment，将gcr.io修改为gcr.dockerproxy.com</span><br><span class="line"> </span><br><span class="line">kubectl get pods -n knative-serving</span><br><span class="line">NAME                                     READY   STATUS    RESTARTS   AGE</span><br><span class="line">activator-f66494978-v9btl                1/1     Running   0          5m46s</span><br><span class="line">autoscaler-5f55df446-2q4x6               1/1     Running   0          4m19s</span><br><span class="line">controller-f47dcfc5d-mk7lp               1/1     Running   0          3m58s</span><br><span class="line">net-kourier-controller-5c65d5f9b-qfgmp   1/1     Running   0          2m55s</span><br><span class="line">webhook-7cfc867c9c-49slw                 1/1     Running   0          2m23s</span><br><span class="line"></span><br><span class="line">4.配置dns</span><br><span class="line">kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-default-domain.yaml</span><br><span class="line"></span><br><span class="line">5.安装HPA插件</span><br><span class="line">kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-hpa.yaml</span><br><span class="line">并edit修改镜像源</span><br><span class="line"></span><br><span class="line">kubectl get pods -n knative-serving</span><br><span class="line">NAME                                     READY   STATUS    RESTARTS   AGE</span><br><span class="line">activator-7b5b999c5-whn5w                1/1     Running   0          7m23s</span><br><span class="line">autoscaler-f7785c775-ghcg4               1/1     Running   0          6m36s</span><br><span class="line">autoscaler-hpa-88c48f8bc-s7fzh           1/1     Running   0          3m8s</span><br><span class="line">controller-6878f5f766-bnrtp              1/1     Running   0          7m6s</span><br><span class="line">default-domain-h5mk6                     1/1     Running   0          5m</span><br><span class="line">net-kourier-controller-5c65d5f9b-qfgmp   1/1     Running   0          19m</span><br><span class="line">webhook-7cfc867c9c-49slw                 1/1     Running   0          18m</span><br></pre></td></tr></table></figure>
+
+
+
+    </article>
+    <!-- license -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://Durative.github.io">王盛</a>
+            <p>原文链接：<a href="http://durative.github.io/2024/06/01/K8s-Autoscaler/">http://durative.github.io/2024/06/01/K8s-Autoscaler/</a>
+            <p>发表日期：<a href="http://durative.github.io/2024/06/01/K8s-Autoscaler/">June 1st 2024, 4:44:51 pm</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/06/01/K8s-Autoscaler/">June 1st 2024, 4:47:35 pm</a>
+            <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href="/2024/06/01/SpringCloud-k8s/" title="将SpringCloud项目迁移至k8s">
+                    <div class="prevTitle">将SpringCloud项目迁移至k8s</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- comment -->
+    
+        <div class="post-comment">
+            <!-- 来必力 City 版安装代码 -->
+
+
+            
+
+            
+
+            
+
+            <!-- utteranc评论 -->
+
+
+            <!-- partial('_partial/comment/changyan') -->
+            <!--PC版-->
+
+
+            
+            
+
+            
+
+        </div>
+    
+    <!-- timeliness note -->
+    <!-- idea from: https://hexo.fluid-dev.com/posts/hexo-injector/#%E6%96%87%E7%AB%A0%E6%97%B6%E6%95%88%E6%80%A7%E6%8F%90%E7%A4%BA -->
+    
+    <!-- Mathjax -->
+    
+</main>
+
+                <!-- profile -->
+                
+            </div>
+            <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+        <div class="social">
+            
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+
+        </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- website approve for Chinese user -->
+    
+    <!-- 不蒜子  -->
+    
+        <div class="busuanzi-container">
+            
+             
+                <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+            
+        </div>
+    	
+</footer>
+
+        </div>
+        <!-- toc -->
+        
+            <div class="toc-wrapper toc-wrapper-loding" style=
+
+
+
+
+
+
+
+    top:50vh;
+
+>
+                <div class="toc-catalog">
+                    <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+                </div>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E7%A7%8D%E6%89%A9%E5%AE%B9%E6%96%B9%E5%BC%8F%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">四种扩容方式介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#HPA"><span class="toc-number">1.1.</span> <span class="toc-text">HPA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VPA"><span class="toc-number">1.2.</span> <span class="toc-text">VPA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#KPA"><span class="toc-number">1.3.</span> <span class="toc-text">KPA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cluster-autoscaler%EF%BC%88CA%EF%BC%89"><span class="toc-number">1.4.</span> <span class="toc-text">Cluster-autoscaler（CA）</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2HPA"><span class="toc-number">2.</span> <span class="toc-text">部署HPA</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#HPA%E5%8E%9F%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">HPA原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="toc-number">2.2.</span> <span class="toc-text">使用流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8ECPU%E8%BF%9B%E8%A1%8C%E8%87%AA%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9"><span class="toc-number">2.3.</span> <span class="toc-text">基于CPU进行自动扩缩容</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AD%98%E8%BF%9B%E8%A1%8C%E8%87%AA%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9"><span class="toc-number">2.4.</span> <span class="toc-text">基于内存进行自动扩缩容</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2VPA"><span class="toc-number">3.</span> <span class="toc-text">部署VPA</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2KPA%EF%BC%88%E6%9C%AA%E5%AE%8C%E6%88%90%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">部署KPA（未完成）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Knative-Serving%E5%AE%89%E8%A3%85"><span class="toc-number">4.1.</span> <span class="toc-text">Knative-Serving安装</span></a></li></ol></li></ol>
+            </div>
+        
+        <!-- sidebar -->
+        <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+        <div class="sidebar-panel-archives">
+    <!-- 在 ejs 中将 archive 按照时间排序 -->
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 30
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+        
+            
+            
+            <div class="archive-year"> 2024 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/K8s-Autoscaler/">K8s自动扩缩容HPA VPA KPA</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/Py-k8s/">Python代码封装至k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/SpringCloud-k8s/">将SpringCloud项目迁移至k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/17</span>
+            <a class="archive-post-title" href="/2024/05/17/EFK/">EFK</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/15</span>
+            <a class="archive-post-title" href="/2024/05/15/Linux-monitor/">Linux单机监控</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/14</span>
+            <a class="archive-post-title" href="/2024/05/14/Docker/">Docker管理</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/tmux/">linux screen与tmux</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/DevOps/">DevOps工具链</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Helm/">Helm</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Istio/">Istio微服务网格</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Prometheus/">Prometheus普罗米修斯</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Rancher/">Rancher</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Gitlab/">Gitlab</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Ceph-K8s/">ceph对接k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Git/">Git代码管理工具</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Go-k8s/">go代码封装到k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/VMware-I2I/">VMware I2I迁移至PVE 小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/ESXi/">ESXi物理机安装踩坑汇总</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/Ansible/">Ansible笔记集合</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/23</span>
+            <a class="archive-post-title" href="/2024/04/23/root-extend/">根分区扩容小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/16</span>
+            <a class="archive-post-title" href="/2024/03/16/Ceph/">CEPH分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/Harbor/">本地部署harbor私有镜像仓库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/K8s/">k8s基础知识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/Python/">Python笔记合集</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/PVE/">虚拟化系统PVE物理机快速安装指南</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/02</span>
+            <a class="archive-post-title" href="/2024/02/02/Hexo/">使用1panel搭建Hexo博客</a>
+        </li>
+    
+        
+            
+            
+                
+                </ul>
+            
+            <div class="archive-year"> 2023 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/24</span>
+            <a class="archive-post-title" href="/2023/12/24/PXE/">PXE安装</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/14</span>
+            <a class="archive-post-title" href="/2023/12/14/Nginx/">nginx详解</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/12</span>
+            <a class="archive-post-title" href="/2023/11/12/DEBD/">DRBD单活分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/27</span>
+            <a class="archive-post-title" href="/2023/10/27/Linux-raid/">基于mdadm创建与管理软raid</a>
+        </li>
+    
+    </div>
+</div>
+
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+        
+            <span class="sidebar-tag-name" data-tags="Linux">
+                <span class="iconfont-archer">&#xe606;</span>
+                Linux
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云原生">
+                <span class="iconfont-archer">&#xe606;</span>
+                云原生
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云计算">
+                <span class="iconfont-archer">&#xe606;</span>
+                云计算
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="开发">
+                <span class="iconfont-archer">&#xe606;</span>
+                开发
+            </span>
+        
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+        缺失模块，请参考主题文档进行安装配置：https://github.com/fi3ework/hexo-theme-archer#%E5%AE%89%E8%A3%85%E4%B8%BB%E9%A2%98
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+
+    </div>
+</div>
+
+        <!-- site-meta -->
+        <script>
+    var siteMetaRoot = "/"
+    if (siteMetaRoot === "undefined") {
+        siteMetaRoot = '/'
+    }
+    var siteMeta = {
+        url: "http://Durative.github.io",
+        root: siteMetaRoot,
+        author: "王盛"
+    }
+</script>
+
+        <!-- import experimental options here -->
+        <!-- Custom Font -->
+
+
+        <!-- main func -->
+        <script src="/scripts/main.js?v=20211217"></script>
+        <!-- dark mode -->
+        <script src="/scripts/dark.js?v=20211217"></script>
+        <!-- fancybox -->
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" defer></script>
+        <!-- algolia -->
+        
+        <!-- busuanzi -->
+        
+            <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+        
+        <!-- CNZZ -->
+        
+        <!-- async load share.js -->
+        
+            <script src="/scripts/share.js?v=20211217" async></script>
+        
+        <!-- mermaid -->
+        
+    </body>
+</html>
