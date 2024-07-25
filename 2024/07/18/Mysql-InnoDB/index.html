@@ -21,7 +21,7 @@
     <meta name="description" content="">
     <meta name="description" content="MySQL是一个关系型数据库管理系统，由MySQL AB公司开发 MySQL发行版Percona Server（性能）是一个独立的数据库，可以完全与MySQL兼容，使用XtraDB，说它自己性能比InnoDB好提供PXC高解决方案，提供precona-toolkit等管理工具MariaDB（尝新）为了防止MySQL被oracle闭源，由MySQL创始人开发，完全兼容MySQL，包括API和命令行提">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Mysql基础知识-InnoDB存储引擎">
+<meta property="og:title" content="Mysql-InnoDB存储引擎、InnoDB事务">
 <meta property="og:url" content="http://durative.github.io/2024/07/18/Mysql-InnoDB/index.html">
 <meta property="og:site_name" content="Akemi">
 <meta property="og:description" content="MySQL是一个关系型数据库管理系统，由MySQL AB公司开发 MySQL发行版Percona Server（性能）是一个独立的数据库，可以完全与MySQL兼容，使用XtraDB，说它自己性能比InnoDB好提供PXC高解决方案，提供precona-toolkit等管理工具MariaDB（尝新）为了防止MySQL被oracle闭源，由MySQL创始人开发，完全兼容MySQL，包括API和命令行提">
@@ -29,8 +29,14 @@
 <meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212415.png">
 <meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212438.png">
 <meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212515.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145737.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145820.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145838.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145903.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145917.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725150025.png">
 <meta property="article:published_time" content="2024-07-18T13:20:38.000Z">
-<meta property="article:modified_time" content="2024-07-20T03:24:07.313Z">
+<meta property="article:modified_time" content="2024-07-25T07:00:43.822Z">
 <meta property="article:author" content="王盛">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212415.png">
@@ -38,7 +44,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link rel="icon" href="/assets/akemi.ico">
     
-    <title>Mysql基础知识-InnoDB存储引擎 · Akemi</title>
+    <title>Mysql-InnoDB存储引擎、InnoDB事务 · Akemi</title>
     <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
 /* This file is meant as a standalone workflow for
 - testing support for link[rel=preload]
@@ -263,7 +269,7 @@
                 <a href="/">Akemi</a>
             </div>
             <div class="post-title header-element">
-                <a href="#" class="post-name">Mysql基础知识-InnoDB存储引擎</a>
+                <a href="#" class="post-name">Mysql-InnoDB存储引擎、InnoDB事务</a>
             </div>
         </div>
     
@@ -309,7 +315,7 @@
         <h1 class="intro-title">
             <!-- 主页  -->
             
-                Mysql基础知识-InnoDB存储引擎
+                Mysql-InnoDB存储引擎、InnoDB事务
             <!-- 404 -->
             
         </h1>
@@ -539,6 +545,86 @@
 <p>用来处理产生partial write时的数据恢复（断电之后page损坏，用来做数据恢复）</p>
 <p><strong>dirty page</strong><br>指的是正在写入，但没有完全写入数据文件的page，会先刷新到Double Write Buffer中<br>如果此时出现数据丢失，就会通过Double Write Buffer将page刷新到数据文件中</p>
 <h2 id="InnoDB逻辑存储结构"><a href="#InnoDB逻辑存储结构" class="headerlink" title="InnoDB逻辑存储结构"></a>InnoDB逻辑存储结构</h2><p>表空间-段-区-页<br>表空间：所有数据都在表空间内<br>段：表空间有若干段组成，比如数据段、索引段、回滚段<br>区：每64个连续的页组成区，区大小正好为1M<br>页：InnoDB管理及磁盘的最小单位，固定为16K<br>行：InnoDB表中数据按行存储，每页最多可以存放7992个行</p>
+<h1 id="InnoDB事务"><a href="#InnoDB事务" class="headerlink" title="InnoDB事务"></a>InnoDB事务</h1><p>事务是指单个逻辑单元执行的一系列操作，要么完全执行要么完全不执行</p>
+<p>一个逻辑工作单元要成为事务，必须满足ACID原子性、一致性、隔离型、持久性</p>
+<p>A：Atomic，原子性，将所有SQL作为原子工作单元执行，要么全部执行，要么全部不执行；（如果失败就会回滚）</p>
+<p>C：Consistent，一致性，事务完成后，所有数据的状态都是一致的，即A账户只要减去了100，B账户则必定加上了100；</p>
+<p>I：Isolation，隔离性，如果有多个事务并发执行，每个事务作出的修改必须与其他事务隔离；</p>
+<p>D：Duration，持久性，即事务完成后，对数据库数据的修改被持久化存储。</p>
+<h2 id="事务的问题"><a href="#事务的问题" class="headerlink" title="事务的问题"></a>事务的问题</h2><p>1.AB同时读写同一张表同一行<br>解决方法：锁行</p>
+<p>2.脏读<br>A读取了B还未提交的数据</p>
+<p>3.不可重复读<br>A重复读取同一个数据，这个过程中B进行了修改<br>解决方法：锁行，在修改事务完全提交后才可以进行读取数据</p>
+<p>4.幻读<br>A修改后未提交时，B新增或删除了，A再查询，发现其中有某条未修改<br>解决方法：锁表</p>
+<h2 id="事务的隔离级别"><a href="#事务的隔离级别" class="headerlink" title="事务的隔离级别"></a>事务的隔离级别</h2><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145737.png"></p>
+<h3 id="读未提交read-uncommited"><a href="#读未提交read-uncommited" class="headerlink" title="读未提交read uncommited"></a>读未提交read uncommited</h3><p>最低的隔离级别，一个事务可以读到另一个事物未提交的结果</p>
+<p>所有问题都会出现</p>
+<h3 id="读已提交read-commited（推荐、大多数）"><a href="#读已提交read-commited（推荐、大多数）" class="headerlink" title="读已提交read commited（推荐、大多数）"></a>读已提交read commited（推荐、大多数）</h3><p>大多数数据库的默认隔离级别</p>
+<p>只有事务提交后其更新结果才会被其他事务看见，能解决脏读</p>
+<h3 id="重复读repeated-read（不安全）"><a href="#重复读repeated-read（不安全）" class="headerlink" title="重复读repeated read（不安全）"></a>重复读repeated read（不安全）</h3><p>少数数据库的默认隔离级别，如MySQL的InnoDB，但建议使用读已提交</p>
+<p>在一个事务中对同个数据读取结果总是相同</p>
+<p>解决了脏读、不可重复读，但不安全</p>
+<h3 id="串行化Serialization（表锁）"><a href="#串行化Serialization（表锁）" class="headerlink" title="串行化Serialization（表锁）"></a>串行化Serialization（表锁）</h3><p>事务串行化执行，隔离级别最高，牺牲了系统的并发性能</p>
+<p>可以解决所有问题</p>
+<h3 id="查看与设置数据库的隔离级别"><a href="#查看与设置数据库的隔离级别" class="headerlink" title="查看与设置数据库的隔离级别"></a>查看与设置数据库的隔离级别</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">show global variables like <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">| Variable_name | Value           |</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">| tx_isolation  | REPEATABLE-READ |</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">可以看到默认为重复读</span><br><span class="line"></span><br><span class="line">设置参数</span><br><span class="line"><span class="built_in">set</span> global tx_isolation=<span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line"><span class="built_in">set</span> session tx_isolation=<span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line">或添加my.cnf</span><br><span class="line">tx_isolation=</span><br><span class="line">READ-UNCOMMITTED</span><br><span class="line">READ-COMMITTED</span><br><span class="line">REPEATABLE-READ</span><br><span class="line">SERIALIZABLE</span><br></pre></td></tr></table></figure>
+
+<h3 id="事务的操作命令"><a href="#事务的操作命令" class="headerlink" title="事务的操作命令"></a>事务的操作命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">start transaction;手动开始执行事务操作</span><br><span class="line">rollback;         在事务未提交前回滚，放弃修改</span><br><span class="line">savepoint a;      设置当前位置节点保存点为a</span><br><span class="line">rollback to a;    回滚至保存点a</span><br><span class="line">commit;           提交事务</span><br><span class="line"></span><br><span class="line">查看是否自动提交事务</span><br><span class="line"><span class="built_in">set</span> global autocommit=0;</span><br><span class="line">打开自动提交风险很大</span><br></pre></td></tr></table></figure>
+
+<h2 id="事务隔离等级演示"><a href="#事务隔离等级演示" class="headerlink" title="事务隔离等级演示"></a>事务隔离等级演示</h2><p><strong>读未提交</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">开两个窗口A和B</span><br><span class="line">use wsdb;</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> autocommit<span class="operator">=</span><span class="number">0</span>;</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;READ-UNCOMMITTED&#x27;</span>;</span><br><span class="line"><span class="keyword">show</span> session variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name <span class="operator">|</span> <span class="keyword">Value</span>            <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+ </span></span><br><span class="line"><span class="operator">|</span> tx_isolation  <span class="operator">|</span> READ<span class="operator">-</span>UNCOMMITTED <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+</span></span><br><span class="line">A窗口</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">1</span>,<span class="string">&#x27;ws1&#x27;</span>);</span><br><span class="line">此时尚未提交，A和B都能查询到未提交的数据，这是脏数据</span><br><span class="line"></span><br><span class="line">A回滚事务</span><br><span class="line"><span class="keyword">rollback</span>;</span><br><span class="line">此时A和B都无法查询到数据</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145820.png"></p>
+<p><strong>读已提交</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line"><span class="keyword">show</span> session variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">2</span>,<span class="string">&#x27;ws2&#x27;</span>);</span><br><span class="line">可见未提交状态下，A终端可以查询到，而B终端无法查询到</span><br><span class="line"></span><br><span class="line">但此时又会有重复读问题，因为<span class="keyword">commit</span>后，重复读时值会变化</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145838.png"></p>
+<p><strong>可重复读</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;REPEATABLE-READ&#x27;</span>;</span><br><span class="line"></span><br><span class="line">开始事务</span><br><span class="line"><span class="keyword">start</span> transaction;</span><br><span class="line"></span><br><span class="line">A窗口插入数据</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">3</span>,<span class="string">&#x27;ws3&#x27;</span>);</span><br><span class="line"></span><br><span class="line">此时A能查到，B无法查到</span><br><span class="line"></span><br><span class="line">A窗口提交数据</span><br><span class="line"><span class="keyword">commit</span>;</span><br><span class="line"></span><br><span class="line">此时A能查到，B依然无法查到（因为B处于事务状态）</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145903.png"></p>
+<p><strong>串行化</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;SERIALIZABLE&#x27;</span>;</span><br><span class="line"></span><br><span class="line">AB窗口开始事务</span><br><span class="line"><span class="keyword">start</span> transaction;</span><br><span class="line"></span><br><span class="line">A窗口插入</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">4</span>,<span class="string">&#x27;ws4&#x27;</span>);</span><br><span class="line"></span><br><span class="line">B窗口<span class="keyword">select</span>查询，发现被锁，处于阻塞状态</span><br><span class="line"></span><br><span class="line">A窗口<span class="keyword">commit</span>;</span><br><span class="line">此时B窗口查询成功</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145917.png"></p>
+<h1 id="MVCC多版本并发控制"><a href="#MVCC多版本并发控制" class="headerlink" title="MVCC多版本并发控制"></a>MVCC多版本并发控制</h1><p>MVCC（Multi-Version Concurrency Control），即多版本并发控制，是一种用于提高数据库并发性能的技术。它允许在数据库中存在数据的多个版本，从而在不阻塞读写操作的情况下，处理并发事务中的读写冲突。</p>
+<p>最早的数据库版本之后读读可以并发，读写&#x2F;写读都会阻塞，引入多版本后，只有写写相互阻塞，其他三种操作都可以并行，大幅提高了InnoDB的并发度</p>
+<p>内部实现中，InnoDB通过在<strong>undo log</strong>中实现，通过undo log可以找回数据的历史版本（前镜像），也可以在回滚的时候覆盖数据页上的数据</p>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>当每个事务启动时，InnoDB会为每个事务提供一个当前时刻的镜像</p>
+<p>为了实现此功能，InnoDB会为每个表提供2个隐藏字段<br>1.保存行的创建时间<br>2.保存行的失效时间(系统版本号SVN)</p>
+<p>某个事务中使用和当前事务相等或更旧的版本号数据，保证都是过去的数据</p>
+<h2 id="MVCC的特点"><a href="#MVCC的特点" class="headerlink" title="MVCC的特点"></a>MVCC的特点</h2><p><strong>优点</strong><br>获取数据的时候使用SVN检查版本号，来控制读取需要的数据版本，而不使用锁，使并发度能大大提高</p>
+<p><strong>缺点</strong><br>为了实现SVN，每行都需要增加相应字段来存储版本信息。在检索行时需要进行版本的比较，降低了一些性能；需要定期清理不再需要的版本，及时回收空间，增加开销</p>
+<p><strong>注意事项</strong><br>MVCC只在读已提交和重复读的隔离级别下有效<br>因为读未提交一定是读取最新的数据行；串行化会对所有行都加锁</p>
+<h1 id="InnoDB的redo和undo"><a href="#InnoDB的redo和undo" class="headerlink" title="InnoDB的redo和undo"></a>InnoDB的redo和undo</h1><p><strong>redo log重做日志</strong></p>
+<p>任何事务的操作都会记录redo日志，是InnoDB独有的，用于恢复数据库到宕机为止</p>
+<p>redo log记录的是新数据的备份<br>在事务提交前，会先写到redo log中——即使事务未提交，数据库崩溃时，也可以通过redo log进行恢复</p>
+<p>在数据库崩溃之后先用redo log和旧的数据块做前滚<br>再用undo log做回滚<br>通过这种方式来保护修改又没写入到磁盘的脏页</p>
+<p><strong>rolling forward前滚</strong></p>
+<p>数据库启动时，通过redo logs，重现实例崩溃前对数据库的修改操作</p>
+<p>将已经提交但未写入的数据，以及未提交的事务的数据全部写入数据文件</p>
+<p><strong>rolling back回滚</strong></p>
+<p>前滚后，虽然已修改的数据已经被写入数据文件，但未提交的也被写入，所以使用undo log将这些事务撤销</p>
+<h2 id="dirty-page与redo-log"><a href="#dirty-page与redo-log" class="headerlink" title="dirty page与redo log"></a>dirty page与redo log</h2><p>1.InnoDB的buffer pool是数据库页面的缓存，进行数据修改会首先在page上进行，这样的页面会被放到专门的dirty page缓存页上，后续再由专门的线程阶段性将其写入磁盘</p>
+<p>可以避免每次写对硬盘造成的负载，所以设计了一个这样类似水位线的机制</p>
+<p>2.为了避免dirty page丢失，将所有页面修改写入了redo log，当数据库启动时就可以进行恢复操作</p>
+<p>3.redo log info会写写到redo log buffer（这也是InnoDB存储引擎的一个缓存池），根据条件刷新到redo log file</p>
+<p>4.redo log file由log block组成，每个block512字节，重做日志文件都是以块的方式进行保存，称为重做日志块redo log block</p>
+<h2 id="redo-log触发机制"><a href="#redo-log触发机制" class="headerlink" title="redo log触发机制"></a>redo log触发机制</h2><ul>
+<li>每1秒写</li>
+<li>大于log buffer空间二分之一的时候</li>
+<li>log buffer到了1M时</li>
+<li>WAL日志先写——日志要比磁盘时数据更新，就写日志</li>
+<li>commit提交时</li>
+</ul>
+<p>（1）Innodb_flush_log_at_trx_commit&#x3D;0事务提交不刷新redo log buffer，直接写redo log file（失去最后一秒的数据）<br>（2）Innodb_flush_log_at_trx_commit&#x3D;0 事务提交直接将buffer刷新到磁盘（最安全不会丢数据、IO压力大）<br>（3）Innodb_flush_log_at_trx_commit&#x3D;0 事务提交时将buffer刷新到os缓存（可能丢失数据）</p>
+<h2 id="redo-log-file"><a href="#redo-log-file" class="headerlink" title="redo log file"></a>redo log file</h2><p>根据innodb_log_file_size配置</p>
+<p>redo是物理逻辑日志，记录的是对页的操作（也就是对内存的操作）</p>
+<p>undo日志本身也要写redo日志</p>
+<p>redo log循环覆盖，如果脏页没有写到磁盘，那就不会覆盖</p>
+<p>redo log只能对InnoDB的表起作用</p>
+<h2 id="undo-log"><a href="#undo-log" class="headerlink" title="undo log"></a>undo log</h2><p>用于前滚，记录的是对事务的逆向操作</p>
+<p>undo也会产生redo，通过redo还原undo的操作来进行回滚</p>
+<p>用于MVCC并发控制事务</p>
+<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725150025.png"></p>
 
     </article>
     <!-- license -->
@@ -547,7 +633,7 @@
             <p>原文作者：<a href="http://Durative.github.io">王盛</a>
             <p>原文链接：<a href="http://durative.github.io/2024/07/18/Mysql-InnoDB/">http://durative.github.io/2024/07/18/Mysql-InnoDB/</a>
             <p>发表日期：<a href="http://durative.github.io/2024/07/18/Mysql-InnoDB/">July 18th 2024, 9:20:38 pm</a>
-            <p>更新日期：<a href="http://durative.github.io/2024/07/18/Mysql-InnoDB/">July 20th 2024, 11:24:07 am</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/07/18/Mysql-InnoDB/">July 25th 2024, 3:00:43 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -556,8 +642,8 @@
         <li class="next">
             
                 <div class="nextSlogan">Next Post</div>
-                <a href="/2024/07/22/Mysql-Auth/" title="Mysql用户权限与密码管理">
-                    <div class="nextTitle">Mysql用户权限与密码管理</div>
+                <a href="/2024/07/22/Mysql-Auth/" title="Mysql用户权限与密码管理、角色管理">
+                    <div class="nextTitle">Mysql用户权限与密码管理、角色管理</div>
                 </a>
             
         </li>
@@ -684,7 +770,7 @@
                 <div class="toc-catalog">
                     <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
                 </div>
-                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#MySQL%E5%8F%91%E8%A1%8C%E7%89%88"><span class="toc-number">1.</span> <span class="toc-text">MySQL发行版</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#mysql%E5%85%B3%E9%94%AE%E6%96%87%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">mysql关键文件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">3.</span> <span class="toc-text">存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#MyISAM%E4%B8%8EInnoDB%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="toc-number">3.1.</span> <span class="toc-text">MyISAM与InnoDB的对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">4.</span> <span class="toc-text">InnoDB存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#InnoDB-Buffer-Pool%E7%BC%93%E5%AD%98%E6%B1%A0"><span class="toc-number">4.1.</span> <span class="toc-text">InnoDB Buffer Pool缓存池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#additional-memory-pool%E9%A2%9D%E5%A4%96%E5%86%85%E5%AD%98%E6%B1%A0"><span class="toc-number">4.2.</span> <span class="toc-text">additional memory pool额外内存池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log-buffer%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97%E7%BC%93%E5%AD%98"><span class="toc-number">4.3.</span> <span class="toc-text">redo log buffer重做日志缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E7%BC%93%E5%86%B2%E5%8C%BABinlog-Buffer"><span class="toc-number">4.4.</span> <span class="toc-text">二进制日志缓冲区Binlog Buffer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E7%BC%93%E5%86%B2%E5%8C%BA%E4%B8%8E%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97%E7%BC%93%E5%AD%98%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">4.4.1.</span> <span class="toc-text">二进制日志缓冲区与重做日志缓存的区别</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Double-Write-Buffer"><span class="toc-number">4.5.</span> <span class="toc-text">Double Write Buffer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#InnoDB%E9%80%BB%E8%BE%91%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="toc-number">4.6.</span> <span class="toc-text">InnoDB逻辑存储结构</span></a></li></ol></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#MySQL%E5%8F%91%E8%A1%8C%E7%89%88"><span class="toc-number">1.</span> <span class="toc-text">MySQL发行版</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#mysql%E5%85%B3%E9%94%AE%E6%96%87%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">mysql关键文件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">3.</span> <span class="toc-text">存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#MyISAM%E4%B8%8EInnoDB%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="toc-number">3.1.</span> <span class="toc-text">MyISAM与InnoDB的对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">4.</span> <span class="toc-text">InnoDB存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#InnoDB-Buffer-Pool%E7%BC%93%E5%AD%98%E6%B1%A0"><span class="toc-number">4.1.</span> <span class="toc-text">InnoDB Buffer Pool缓存池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#additional-memory-pool%E9%A2%9D%E5%A4%96%E5%86%85%E5%AD%98%E6%B1%A0"><span class="toc-number">4.2.</span> <span class="toc-text">additional memory pool额外内存池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log-buffer%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97%E7%BC%93%E5%AD%98"><span class="toc-number">4.3.</span> <span class="toc-text">redo log buffer重做日志缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E7%BC%93%E5%86%B2%E5%8C%BABinlog-Buffer"><span class="toc-number">4.4.</span> <span class="toc-text">二进制日志缓冲区Binlog Buffer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E7%BC%93%E5%86%B2%E5%8C%BA%E4%B8%8E%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97%E7%BC%93%E5%AD%98%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">4.4.1.</span> <span class="toc-text">二进制日志缓冲区与重做日志缓存的区别</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Double-Write-Buffer"><span class="toc-number">4.5.</span> <span class="toc-text">Double Write Buffer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#InnoDB%E9%80%BB%E8%BE%91%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="toc-number">4.6.</span> <span class="toc-text">InnoDB逻辑存储结构</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E4%BA%8B%E5%8A%A1"><span class="toc-number">5.</span> <span class="toc-text">InnoDB事务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">5.1.</span> <span class="toc-text">事务的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-number">5.2.</span> <span class="toc-text">事务的隔离级别</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E6%9C%AA%E6%8F%90%E4%BA%A4read-uncommited"><span class="toc-number">5.2.1.</span> <span class="toc-text">读未提交read uncommited</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E5%B7%B2%E6%8F%90%E4%BA%A4read-commited%EF%BC%88%E6%8E%A8%E8%8D%90%E3%80%81%E5%A4%A7%E5%A4%9A%E6%95%B0%EF%BC%89"><span class="toc-number">5.2.2.</span> <span class="toc-text">读已提交read commited（推荐、大多数）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%A4%8D%E8%AF%BBrepeated-read%EF%BC%88%E4%B8%8D%E5%AE%89%E5%85%A8%EF%BC%89"><span class="toc-number">5.2.3.</span> <span class="toc-text">重复读repeated read（不安全）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%B2%E8%A1%8C%E5%8C%96Serialization%EF%BC%88%E8%A1%A8%E9%94%81%EF%BC%89"><span class="toc-number">5.2.4.</span> <span class="toc-text">串行化Serialization（表锁）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E4%B8%8E%E8%AE%BE%E7%BD%AE%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-number">5.2.5.</span> <span class="toc-text">查看与设置数据库的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">5.2.6.</span> <span class="toc-text">事务的操作命令</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%AD%89%E7%BA%A7%E6%BC%94%E7%A4%BA"><span class="toc-number">5.3.</span> <span class="toc-text">事务隔离等级演示</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MVCC%E5%A4%9A%E7%89%88%E6%9C%AC%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6"><span class="toc-number">6.</span> <span class="toc-text">MVCC多版本并发控制</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-number">6.1.</span> <span class="toc-text">实现原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MVCC%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-number">6.2.</span> <span class="toc-text">MVCC的特点</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E7%9A%84redo%E5%92%8Cundo"><span class="toc-number">7.</span> <span class="toc-text">InnoDB的redo和undo</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#dirty-page%E4%B8%8Eredo-log"><span class="toc-number">7.1.</span> <span class="toc-text">dirty page与redo log</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log%E8%A7%A6%E5%8F%91%E6%9C%BA%E5%88%B6"><span class="toc-number">7.2.</span> <span class="toc-text">redo log触发机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log-file"><span class="toc-number">7.3.</span> <span class="toc-text">redo log file</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#undo-log"><span class="toc-number">7.4.</span> <span class="toc-text">undo log</span></a></li></ol></li></ol>
             </div>
         
         <!-- sidebar -->
@@ -1461,7 +1547,7 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/22</span>
-            <a class="archive-post-title" href="/2024/07/22/Mysql-Auth/">Mysql用户权限与密码管理</a>
+            <a class="archive-post-title" href="/2024/07/22/Mysql-Auth/">Mysql用户权限与密码管理、角色管理</a>
         </li>
     
         
@@ -1473,7 +1559,7 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/18</span>
-            <a class="archive-post-title" href="/2024/07/18/Mysql-InnoDB/">Mysql基础知识-InnoDB存储引擎</a>
+            <a class="archive-post-title" href="/2024/07/18/Mysql-InnoDB/">Mysql-InnoDB存储引擎、InnoDB事务</a>
         </li>
     
         
