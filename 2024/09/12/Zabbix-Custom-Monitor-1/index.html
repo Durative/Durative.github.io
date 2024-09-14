@@ -19,33 +19,32 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="MySQL是一个关系型数据库管理系统，由MySQL AB公司开发 MySQL发行版Percona Server（性能）是一个独立的数据库，可以完全与MySQL兼容，使用XtraDB，说它自己性能比InnoDB好提供PXC高解决方案，提供precona-toolkit等管理工具MariaDB（尝新）为了防止MySQL被oracle闭源，由MySQL创始人开发，完全兼容MySQL，包括API和命令行提">
+    <meta name="description" content="很多时候工作中的需求无法使用模板来满足，所以需要自定义监控 监控相关概念 监控项：自定义的服务器主机信息模板：多个监控项和触发器、图形的集合动作：发送报警的信息报警类型：邮件、微信、钉钉触发器：参数阈值→报警提示图形：可视化界面报警媒介：报警的方式——邮件等应用集：监控项的集合，是一个用来分类查看的属性 监控项类型 zabbix客户端(默认)：服务器端从客户端使用get方法拉取数据，会增加服务器负">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Mysql-InnoDB存储引擎、InnoDB事务">
-<meta property="og:url" content="http://durative.github.io/2024/07/18/MySQL-InnoDB/index.html">
+<meta property="og:title" content="Zabbix自定义监控">
+<meta property="og:url" content="http://durative.github.io/2024/09/12/Zabbix-Custom-Monitor-1/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="MySQL是一个关系型数据库管理系统，由MySQL AB公司开发 MySQL发行版Percona Server（性能）是一个独立的数据库，可以完全与MySQL兼容，使用XtraDB，说它自己性能比InnoDB好提供PXC高解决方案，提供precona-toolkit等管理工具MariaDB（尝新）为了防止MySQL被oracle闭源，由MySQL创始人开发，完全兼容MySQL，包括API和命令行提">
+<meta property="og:description" content="很多时候工作中的需求无法使用模板来满足，所以需要自定义监控 监控相关概念 监控项：自定义的服务器主机信息模板：多个监控项和触发器、图形的集合动作：发送报警的信息报警类型：邮件、微信、钉钉触发器：参数阈值→报警提示图形：可视化界面报警媒介：报警的方式——邮件等应用集：监控项的集合，是一个用来分类查看的属性 监控项类型 zabbix客户端(默认)：服务器端从客户端使用get方法拉取数据，会增加服务器负">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212415.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212438.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212515.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145737.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145820.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145838.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145903.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145917.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725150025.png">
-<meta property="article:published_time" content="2024-07-18T13:20:38.000Z">
-<meta property="article:modified_time" content="2024-08-18T12:16:00.001Z">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/df6908459ed2b53dd58a44bb283f00e5.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/337be6a59c625562fc434f2cd645c734.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/ac2ceaa769fd6a3f51aec64c4a774c06.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/6eebb0b06ea2c4ad0e2296998b163ed6.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/ad66cfd0e53ee0406925a1808ab827a1.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/a73f6656ffa4eac29d9518f5e8cf9c23.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/b0747a92bb3fcae26b88c98c4a6feb60.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/c5776626b876f8b1e38f004a96fab5c6.png">
+<meta property="og:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/fbbaa3dc28333c9f426e4888caa75349.png">
+<meta property="article:published_time" content="2024-09-12T13:37:55.000Z">
+<meta property="article:modified_time" content="2024-09-12T13:45:49.957Z">
 <meta property="article:author" content="王盛">
-<meta property="article:tag" content="mysql">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212415.png">
+<meta name="twitter:image" content="https://ws-img.akemi.zj.cn/wangsheng/2024/09/df6908459ed2b53dd58a44bb283f00e5.png">
     <meta http-equiv="Cache-control" content="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link rel="icon" href="/assets/akemi.ico">
     
-    <title>Mysql-InnoDB存储引擎、InnoDB事务 · Akemi</title>
+    <title>Zabbix自定义监控 · Akemi</title>
     <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
 /* This file is meant as a standalone workflow for
 - testing support for link[rel=preload]
@@ -270,7 +269,7 @@
                 <a href="/">Akemi</a>
             </div>
             <div class="post-title header-element">
-                <a href="#" class="post-name">Mysql-InnoDB存储引擎、InnoDB事务</a>
+                <a href="#" class="post-name">Zabbix自定义监控</a>
             </div>
         </div>
     
@@ -316,7 +315,7 @@
         <h1 class="intro-title">
             <!-- 主页  -->
             
-                Mysql-InnoDB存储引擎、InnoDB事务
+                Zabbix自定义监控
             <!-- 404 -->
             
         </h1>
@@ -336,8 +335,6 @@
                     <div class= post-intro-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="mysql">mysql</a>
-    
 </div>
 
                 
@@ -346,7 +343,7 @@
                 <div class="post-intro-meta">
                     <!-- 撰写日期 -->
                     <span class="iconfont-archer post-intro-calander">&#xe676;</span>
-                    <span class="post-intro-time">2024/07/18</span>
+                    <span class="post-intro-time">2024/09/12</span>
                     <!-- busuanzi -->
                     
                         <span id="busuanzi_container_page_pv" class="busuanzi-pv">
@@ -501,142 +498,42 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <p>MySQL是一个关系型数据库管理系统，由MySQL AB公司开发</p>
-<h1 id="MySQL发行版"><a href="#MySQL发行版" class="headerlink" title="MySQL发行版"></a>MySQL发行版</h1><p><strong>Percona Server（性能）</strong><br>是一个独立的数据库，可以完全与MySQL兼容，使用XtraDB，说它自己性能比InnoDB好<br>提供PXC高解决方案，提供precona-toolkit等管理工具<br><strong>MariaDB（尝新）</strong><br>为了防止MySQL被oracle闭源，由MySQL创始人开发，完全兼容MySQL，包括API和命令行<br>提供MySQL标准的存储引擎MyISAM和InnoDB，10.0.9版本后使用XtraDB代替InnoDB<br><strong>MySQL（稳定）</strong></p>
-<p><strong>SQLServer（微软的产品绑定使用）</strong></p>
-<p><strong>总结</strong><br>线上系统首选percona（稳定，工具包功能多），其次选择MySQL，其次Mariadb</p>
-<h1 id="mysql关键文件"><a href="#mysql关键文件" class="headerlink" title="mysql关键文件"></a>mysql关键文件</h1><p>错误日志：对mysql的启动运行关闭进行了记录</p>
-<p>二进制日志：记录了对数据库进行变更的操作，不包括select和show操作，主要用于恢复、复制</p>
-<p>慢查询日志：记录运行较慢的sql，用来做优化的参考</p>
-<p>全查询日志：记录mysql的所有请求，用以审计和问题排查，会损失性能</p>
-<p>redo日志：用来恢复数据的日志，数据库先写日志，再写数据文件</p>
-<p>undo日志：存储了数据更新操作，回滚时将其数据回写到数据文件内</p>
-<p>socket文件：linux下本地连接mysql时采用套接字socket方式，一般在&#x2F;tmp下</p>
-<p>pid文件：自己的pid进程号</p>
-<p>mysql表结构文件：存放mysql表结构定义的文件，比如<code>.*frm *.ibd</code></p>
-<p>数据引擎文件：记录存储引擎信息的文件</p>
-<h1 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h1><p>存储引擎称为表类型，决定了数据库如何存储数据、如何为数据建立索引、如何更新、如何查询数据的实现方法</p>
-<p>mysql可选的存储引擎：可选MyISAM、InnoDB，MERGE等，最常用MyISAM，InnoDB，MySQL5.5开始将默认存储引擎从MyISAM换成了InnoDB</p>
-<h2 id="MyISAM与InnoDB的对比"><a href="#MyISAM与InnoDB的对比" class="headerlink" title="MyISAM与InnoDB的对比"></a>MyISAM与InnoDB的对比</h2><p>1.InnoDB支持事务，MyISAM不支持<br>2.MyISAM查询速度快，适合大量select，可以全文索引(查的更快)，InnoDB适合频繁修改和安全性高的业务<br>3.InnoDB支持外键、行级锁，MyISAM不支持<br>4.MyISAM索引和数据分开，索引是压缩的，索引缓存在内存中；InnoDB把数据缓存在内存中，内存越大优势越大<br>5.InnoDB支持高并发请求，比如大量insert、update操作<br><strong>总结</strong><br>1.如果要使用事务，使用InnoDB<br>2.如果只对查询性能要求比较高的情况，使用MyISAM（不推荐）</p>
-<p><strong>InnoDB存储引擎关键文件</strong><br>.frm文件：表的结构，索引文件<br>ibdata1 数据文件<br>ib_logfile0 ib_logfile1：事务日志文件（读写操作日志）<br>数据库宕机时进行回滚，保证数据一致性。首先写0，写满后写1<br>mysql最大可以将这个文件设置成512G，一般设置为4G。对这个文件做镜像，可以做同时读写，</p>
-<p><strong>MyISAM存储引擎关键文件</strong><br>.frm文件：表结构<br>.MYD：表数据文件<br>.MYI：表索引文件</p>
-<h1 id="InnoDB存储引擎"><a href="#InnoDB存储引擎" class="headerlink" title="InnoDB存储引擎"></a>InnoDB存储引擎</h1><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212415.png"></p>
-<h2 id="InnoDB-Buffer-Pool缓存池"><a href="#InnoDB-Buffer-Pool缓存池" class="headerlink" title="InnoDB Buffer Pool缓存池"></a>InnoDB Buffer Pool缓存池</h2><p>不仅缓存索引数据，还会缓存表的数据。并且完全按照数据文件中的数据块结构信息来缓存</p>
-<p>缓存池大小表明一共有多少个缓冲帧，每个缓冲帧buffer frame为16K</p>
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212438.png"></p>
-<p><strong>undo page</strong><br>事务的提交回滚，保证事务的正常运行</p>
-<p><strong>change buffer page</strong><br>保存缓存和索引的信息</p>
-<p><strong>adaptive  hash index自适应哈希索引</strong><br>通过缓冲池的B+树构造而来，InnoDB会根据访问的频率和模式自动建立哈希索引</p>
-<p><strong>index page</strong><br>对于数据记录(查找、插入、删除)操作的缓存</p>
-<p><strong>lock info</strong><br>缓存InnoDB中的锁信息</p>
-<p><strong>data dictionary数据字典</strong><br>缓存数据字典的信息</p>
-<h2 id="additional-memory-pool额外内存池"><a href="#additional-memory-pool额外内存池" class="headerlink" title="additional memory pool额外内存池"></a>additional memory pool额外内存池</h2><p>用来保存数据字典信息和其他内部数据结构的内存池的大小</p>
-<p>相关参数：<br>innodb_additional_mem_pool_size(字节)可以对这个池子进行设置</p>
-<h2 id="redo-log-buffer重做日志缓存"><a href="#redo-log-buffer重做日志缓存" class="headerlink" title="redo log buffer重做日志缓存"></a>redo log buffer重做日志缓存</h2><p>重做日志信息会缓存到buffer，然后写入重做日志文件ib_logfile0 ib_blogfile1</p>
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240718212515.png"></p>
-<p>相关参数：<br>innodb_log_buffer_size 默认为8M</p>
-<p>将redo log buffer中的重做日志信息刷新到重做日志文件有几种情况（策略）</p>
-<p>1.每秒将重做日志缓冲刷新到文件</p>
-<p>2.每个事务提交时，刷新到文件</p>
-<p>3.当重做日志缓冲池剩余空间只剩1&#x2F;2时，将日志缓冲刷新到重做文件</p>
-<h2 id="二进制日志缓冲区Binlog-Buffer"><a href="#二进制日志缓冲区Binlog-Buffer" class="headerlink" title="二进制日志缓冲区Binlog Buffer"></a>二进制日志缓冲区Binlog Buffer</h2><p>主要用来缓存各种数据变更所产生的二进制日志信息：为了提高性能，mysql并不每次将二进制日志直接写入log file，而是先写入缓存，满足特定条件后再一次写入log file中</p>
-<h3 id="二进制日志缓冲区与重做日志缓存的区别"><a href="#二进制日志缓冲区与重做日志缓存的区别" class="headerlink" title="二进制日志缓冲区与重做日志缓存的区别"></a>二进制日志缓冲区与重做日志缓存的区别</h3><p><strong>二进制日志</strong></p>
-<p>只记录mysql相关的日志记录<br>记录事务的具体操作内容，逻辑日志<br>只在事务提交完成后进行写入，只写磁盘一次</p>
-<p><strong>重做日志</strong></p>
-<p>记录物理内存中，每页的更改情况<br>在事务进行中就不断有重做日志写入重做日志文件</p>
-<h2 id="Double-Write-Buffer"><a href="#Double-Write-Buffer" class="headerlink" title="Double Write Buffer"></a>Double Write Buffer</h2><p>是InnoDB表空间ibdata中一块连续128页（2兆）的存储空间</p>
-<p>用来处理产生partial write时的数据恢复（断电之后page损坏，用来做数据恢复）</p>
-<p><strong>dirty page</strong><br>指的是正在写入，但没有完全写入数据文件的page，会先刷新到Double Write Buffer中<br>如果此时出现数据丢失，就会通过Double Write Buffer将page刷新到数据文件中</p>
-<h2 id="InnoDB逻辑存储结构"><a href="#InnoDB逻辑存储结构" class="headerlink" title="InnoDB逻辑存储结构"></a>InnoDB逻辑存储结构</h2><p>表空间-段-区-页<br>表空间：所有数据都在表空间内<br>段：表空间有若干段组成，比如数据段、索引段、回滚段<br>区：每64个连续的页组成区，区大小正好为1M<br>页：InnoDB管理及磁盘的最小单位，固定为16K<br>行：InnoDB表中数据按行存储，每页最多可以存放7992个行</p>
-<h1 id="InnoDB事务"><a href="#InnoDB事务" class="headerlink" title="InnoDB事务"></a>InnoDB事务</h1><p>事务是指单个逻辑单元执行的一系列操作，要么完全执行要么完全不执行</p>
-<p>一个逻辑工作单元要成为事务，必须满足ACID原子性、一致性、隔离型、持久性</p>
-<p>A：Atomic，原子性，将所有SQL作为原子工作单元执行，要么全部执行，要么全部不执行；（如果失败就会回滚）</p>
-<p>C：Consistent，一致性，事务完成后，所有数据的状态都是一致的，即A账户只要减去了100，B账户则必定加上了100；</p>
-<p>I：Isolation，隔离性，如果有多个事务并发执行，每个事务作出的修改必须与其他事务隔离；</p>
-<p>D：Duration，持久性，即事务完成后，对数据库数据的修改被持久化存储。</p>
-<h2 id="事务的问题"><a href="#事务的问题" class="headerlink" title="事务的问题"></a>事务的问题</h2><p>1.AB同时读写同一张表同一行<br>解决方法：锁行</p>
-<p>2.脏读<br>A读取了B还未提交的数据</p>
-<p>3.不可重复读<br>A重复读取同一个数据，这个过程中B进行了修改<br>解决方法：锁行，在修改事务完全提交后才可以进行读取数据</p>
-<p>4.幻读<br>A修改后未提交时，B新增或删除了，A再查询，发现其中有某条未修改<br>解决方法：锁表</p>
-<h2 id="事务的隔离级别"><a href="#事务的隔离级别" class="headerlink" title="事务的隔离级别"></a>事务的隔离级别</h2><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145737.png"></p>
-<h3 id="读未提交read-uncommited"><a href="#读未提交read-uncommited" class="headerlink" title="读未提交read uncommited"></a>读未提交read uncommited</h3><p>最低的隔离级别，一个事务可以读到另一个事物未提交的结果</p>
-<p>所有问题都会出现</p>
-<h3 id="读已提交read-commited（推荐、大多数）"><a href="#读已提交read-commited（推荐、大多数）" class="headerlink" title="读已提交read commited（推荐、大多数）"></a>读已提交read commited（推荐、大多数）</h3><p>大多数数据库的默认隔离级别</p>
-<p>只有事务提交后其更新结果才会被其他事务看见，能解决脏读</p>
-<h3 id="重复读repeated-read（不安全）"><a href="#重复读repeated-read（不安全）" class="headerlink" title="重复读repeated read（不安全）"></a>重复读repeated read（不安全）</h3><p>少数数据库的默认隔离级别，如MySQL的InnoDB，但建议使用读已提交</p>
-<p>在一个事务中对同个数据读取结果总是相同</p>
-<p>解决了脏读、不可重复读，但不安全</p>
-<h3 id="串行化Serialization（表锁）"><a href="#串行化Serialization（表锁）" class="headerlink" title="串行化Serialization（表锁）"></a>串行化Serialization（表锁）</h3><p>事务串行化执行，隔离级别最高，牺牲了系统的并发性能</p>
-<p>可以解决所有问题</p>
-<h3 id="查看与设置数据库的隔离级别"><a href="#查看与设置数据库的隔离级别" class="headerlink" title="查看与设置数据库的隔离级别"></a>查看与设置数据库的隔离级别</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">show global variables like <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">| Variable_name | Value           |</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">| tx_isolation  | REPEATABLE-READ |</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">可以看到默认为重复读</span><br><span class="line"></span><br><span class="line">设置参数</span><br><span class="line"><span class="built_in">set</span> global tx_isolation=<span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line"><span class="built_in">set</span> session tx_isolation=<span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line">或添加my.cnf</span><br><span class="line">tx_isolation=</span><br><span class="line">READ-UNCOMMITTED</span><br><span class="line">READ-COMMITTED</span><br><span class="line">REPEATABLE-READ</span><br><span class="line">SERIALIZABLE</span><br></pre></td></tr></table></figure>
+        <p>很多时候工作中的需求无法使用模板来满足，所以需要自定义监控</p>
+<p><strong>监控相关概念</strong></p>
+<p>监控项：自定义的服务器主机信息<br>模板：多个监控项和触发器、图形的集合<br>动作：发送报警的信息<br>报警类型：邮件、微信、钉钉<br>触发器：参数阈值→报警提示<br>图形：可视化界面<br>报警媒介：报警的方式——邮件等<br>应用集：监控项的集合，是一个用来分类查看的属性</p>
+<p><strong>监控项类型</strong></p>
+<p>zabbix客户端(默认)：服务器端从客户端使用get方法拉取数据，会增加服务器负担<br>zabbix客户端(主动模式)：类似于Prometheus的Pushgateway，不会增加服务器负担。并且适用于在被防火墙或者安全规则限制的情况<br>简单检查：不需要客户端的检查，如监控ip<br>SNMP：监控网络设备，如交换机、路由器、防火墙等<br>JMX：监控java进程的资源指标<br>IPMI：监控硬件，风扇速度、电压、温度等</p>
+<h2 id="自定义监控——tcp状态探测"><a href="#自定义监控——tcp状态探测" class="headerlink" title="自定义监控——tcp状态探测"></a>自定义监控——tcp状态探测</h2><h3 id="单状态监测"><a href="#单状态监测" class="headerlink" title="单状态监测"></a><strong>单状态监测</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">1.尝试用脚本或者shell获取状态，并且返回值</span><br><span class="line"></span><br><span class="line">netstat -ant | awk <span class="string">&#x27;NR &gt; 2 &#123;print $6&#125;&#x27;</span> | <span class="built_in">sort</span> | <span class="built_in">uniq</span> -c</span><br><span class="line">      2 ESTABLISHED</span><br><span class="line">      5 LISTEN</span><br><span class="line">     40 TIME_WAIT</span><br><span class="line"></span><br><span class="line">netstat -ant | awk <span class="string">&#x27;NR &gt; 2 &#123;print $6&#125;&#x27;</span> | grep -i -c <span class="variable">$&#123;status&#125;</span></span><br><span class="line">status=time_wait</span><br><span class="line">status=ESTABLISHED</span><br><span class="line">status=LISTEN</span><br><span class="line"></span><br><span class="line">2.在agnet写一个子配置文件</span><br><span class="line">UserParameter：允许用户自定义数据收集的命令</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/zabbix/zabbix_agent2.d/tcp.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">UserParameter=TIME_WAIT,netstat -ant | awk &#x27;NR &gt; 2 &#123;print $6&#125;&#x27; | grep -i -c time_wait</span></span><br><span class="line"><span class="string">UserParameter=ESTABLISHED,netstat -ant | awk &#x27;NR &gt; 2 &#123;print $6&#125;&#x27; | grep -i -c ESTABLISHED</span></span><br><span class="line"><span class="string">UserParameter=LISTEN,netstat -ant | awk &#x27;NR &gt; 2 &#123;print $6&#125;&#x27; | grep -i -c LISTEN</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl restart zabbix-agent2.service</span><br><span class="line"></span><br><span class="line">3.在zabbix-server中测试调用这个值</span><br><span class="line">yum -y install zabbix-get</span><br><span class="line">zabbix_get -s 192.168.10.172 -p 10050 -k ESTABLISHED</span><br><span class="line">3</span><br><span class="line">zabbix_get -s 192.168.10.172 -p 10050 -k TIME_WAIT</span><br><span class="line">41</span><br><span class="line"></span><br><span class="line">4.在web——主机——监控项——创建监控项</span><br><span class="line">监控项名称tcp监控</span><br><span class="line">将TIME_WAIT作为key添加</span><br><span class="line">可以点测试进行验证</span><br><span class="line"></span><br><span class="line">5.主机——图表——新建图表</span><br><span class="line">将监控项tcp监控，作为监控项添加</span><br><span class="line"></span><br><span class="line">6.在监测-主机-图形中查看图表</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/df6908459ed2b53dd58a44bb283f00e5.png"></p>
+<h3 id="多状态监测"><a href="#多状态监测" class="headerlink" title="多状态监测"></a><strong>多状态监测</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">7.web中在agent主机添加另外两个监控项</span><br><span class="line">分别涵盖LISTEN和ESTABLISHED</span><br><span class="line">TCP_LISTEN LISTEN</span><br><span class="line">TCP_ESTABLISHED ESTABLISHED</span><br><span class="line"></span><br><span class="line">8.在图形<span class="string">&quot;tcp监控中添加这几个监控项&quot;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<h3 id="事务的操作命令"><a href="#事务的操作命令" class="headerlink" title="事务的操作命令"></a>事务的操作命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">start transaction;手动开始执行事务操作</span><br><span class="line">rollback;         在事务未提交前回滚，放弃修改</span><br><span class="line">savepoint a;      设置当前位置节点保存点为a</span><br><span class="line">rollback to a;    回滚至保存点a</span><br><span class="line">commit;           提交事务</span><br><span class="line"></span><br><span class="line">查看是否自动提交事务</span><br><span class="line"><span class="built_in">set</span> global autocommit=0;</span><br><span class="line">打开自动提交风险很大</span><br></pre></td></tr></table></figure>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/337be6a59c625562fc434f2cd645c734.png"></p>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/ac2ceaa769fd6a3f51aec64c4a774c06.png"></p>
+<h3 id="使用应用集"><a href="#使用应用集" class="headerlink" title="使用应用集"></a><strong>使用应用集</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">9.在配置-主机-应用集-创建应用集TCP状态</span><br><span class="line"></span><br><span class="line">10.上面那三个配置项，归类到TCP状态应用集中</span><br><span class="line"></span><br><span class="line">11.在监测-最新数据-应用集-TCP状态中可以查看到</span><br></pre></td></tr></table></figure>
 
-<h2 id="事务隔离等级演示"><a href="#事务隔离等级演示" class="headerlink" title="事务隔离等级演示"></a>事务隔离等级演示</h2><p><strong>读未提交</strong></p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">开两个窗口A和B</span><br><span class="line">use wsdb;</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> autocommit<span class="operator">=</span><span class="number">0</span>;</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;READ-UNCOMMITTED&#x27;</span>;</span><br><span class="line"><span class="keyword">show</span> session variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name <span class="operator">|</span> <span class="keyword">Value</span>            <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+ </span></span><br><span class="line"><span class="operator">|</span> tx_isolation  <span class="operator">|</span> READ<span class="operator">-</span>UNCOMMITTED <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+</span></span><br><span class="line">A窗口</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">1</span>,<span class="string">&#x27;ws1&#x27;</span>);</span><br><span class="line">此时尚未提交，A和B都能查询到未提交的数据，这是脏数据</span><br><span class="line"></span><br><span class="line">A回滚事务</span><br><span class="line"><span class="keyword">rollback</span>;</span><br><span class="line">此时A和B都无法查询到数据</span><br></pre></td></tr></table></figure>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/6eebb0b06ea2c4ad0e2296998b163ed6.png"></p>
+<h3 id="使用触发器"><a href="#使用触发器" class="headerlink" title="使用触发器"></a><strong>使用触发器</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">12.在配置-主机-触发器-创建触发器中添加触发器</span><br><span class="line">添加要检测的监控项与条件的表达式</span><br><span class="line"></span><br><span class="line">13.此时在监测——仪表盘</span><br><span class="line">监测——问题等界面都能看到这个告警</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145820.png"></p>
-<p><strong>读已提交</strong></p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line"><span class="keyword">show</span> session variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">2</span>,<span class="string">&#x27;ws2&#x27;</span>);</span><br><span class="line">可见未提交状态下，A终端可以查询到，而B终端无法查询到</span><br><span class="line"></span><br><span class="line">但此时又会有重复读问题，因为<span class="keyword">commit</span>后，重复读时值会变化</span><br></pre></td></tr></table></figure>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/ad66cfd0e53ee0406925a1808ab827a1.png"></p>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/a73f6656ffa4eac29d9518f5e8cf9c23.png"></p>
+<h2 id="自定义监控——80端口状态探测"><a href="#自定义监控——80端口状态探测" class="headerlink" title="自定义监控——80端口状态探测"></a>自定义监控——80端口状态探测</h2><h3 id="准备与创建配置项"><a href="#准备与创建配置项" class="headerlink" title="准备与创建配置项"></a>准备与创建配置项</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">1.agent节点搞个80端口模拟</span><br><span class="line">yum -y install httpd</span><br><span class="line">systemctl start httpd</span><br><span class="line"></span><br><span class="line">2.如何使用shell查看80端口状态</span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/zabbix/zabbix_agent2.d/nginx.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">UserParameter=nginx_port,netstat -tunl | grep  -wc 80</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl restart zabbix-agent2.service</span><br><span class="line">zabbix_get -s 192.168.10.172 -p 10050 -k nginx_port</span><br><span class="line">1</span><br><span class="line"></span><br><span class="line">3.使用2的结论创建一个监控项nginx:80和触发器配置</span><br></pre></td></tr></table></figure>
 
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145838.png"></p>
-<p><strong>可重复读</strong></p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;REPEATABLE-READ&#x27;</span>;</span><br><span class="line"></span><br><span class="line">开始事务</span><br><span class="line"><span class="keyword">start</span> transaction;</span><br><span class="line"></span><br><span class="line">A窗口插入数据</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">3</span>,<span class="string">&#x27;ws3&#x27;</span>);</span><br><span class="line"></span><br><span class="line">此时A能查到，B无法查到</span><br><span class="line"></span><br><span class="line">A窗口提交数据</span><br><span class="line"><span class="keyword">commit</span>;</span><br><span class="line"></span><br><span class="line">此时A能查到，B依然无法查到（因为B处于事务状态）</span><br></pre></td></tr></table></figure>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/b0747a92bb3fcae26b88c98c4a6feb60.png"></p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">4.测试该触发器</span><br><span class="line">在agent节点关闭nginx</span><br><span class="line">systemctl stop httpd</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145903.png"></p>
-<p><strong>串行化</strong></p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;SERIALIZABLE&#x27;</span>;</span><br><span class="line"></span><br><span class="line">AB窗口开始事务</span><br><span class="line"><span class="keyword">start</span> transaction;</span><br><span class="line"></span><br><span class="line">A窗口插入</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">4</span>,<span class="string">&#x27;ws4&#x27;</span>);</span><br><span class="line"></span><br><span class="line">B窗口<span class="keyword">select</span>查询，发现被锁，处于阻塞状态</span><br><span class="line"></span><br><span class="line">A窗口<span class="keyword">commit</span>;</span><br><span class="line">此时B窗口查询成功</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/c5776626b876f8b1e38f004a96fab5c6.png"></p>
+<h2 id="自定义监控——监控主机在线状态"><a href="#自定义监控——监控主机在线状态" class="headerlink" title="自定义监控——监控主机在线状态"></a>自定义监控——监控主机在线状态</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1.使用简单检查创建监控项</span><br><span class="line">键值输入icmpping</span><br><span class="line">0表示失败，1表示成功</span><br><span class="line"></span><br><span class="line">2.创建触发器，设置其=0就报警</span><br><span class="line"></span><br><span class="line">3.测试触发器，在agent上配置禁ping</span><br><span class="line"><span class="built_in">echo</span> 1 &gt; /proc/sys/net/ipv4/icmp_echo_ignore_all</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145917.png"></p>
-<h1 id="MVCC多版本并发控制"><a href="#MVCC多版本并发控制" class="headerlink" title="MVCC多版本并发控制"></a>MVCC多版本并发控制</h1><p>MVCC（Multi-Version Concurrency Control），即多版本并发控制，是一种用于提高数据库并发性能的技术。它允许在数据库中存在数据的多个版本，从而在不阻塞读写操作的情况下，处理并发事务中的读写冲突。</p>
-<p>最早的数据库版本之后读读可以并发，读写&#x2F;写读都会阻塞，引入多版本后，只有写写相互阻塞，其他三种操作都可以并行，大幅提高了InnoDB的并发度</p>
-<p>内部实现中，InnoDB通过在<strong>undo log</strong>中实现，通过undo log可以找回数据的历史版本（前镜像），也可以在回滚的时候覆盖数据页上的数据</p>
-<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>当每个事务启动时，InnoDB会为每个事务提供一个当前时刻的镜像</p>
-<p>为了实现此功能，InnoDB会为每个表提供2个隐藏字段<br>1.保存行的创建时间<br>2.保存行的失效时间(系统版本号SVN)</p>
-<p>某个事务中使用和当前事务相等或更旧的版本号数据，保证都是过去的数据</p>
-<h2 id="MVCC的特点"><a href="#MVCC的特点" class="headerlink" title="MVCC的特点"></a>MVCC的特点</h2><p><strong>优点</strong><br>获取数据的时候使用SVN检查版本号，来控制读取需要的数据版本，而不使用锁，使并发度能大大提高</p>
-<p><strong>缺点</strong><br>为了实现SVN，每行都需要增加相应字段来存储版本信息。在检索行时需要进行版本的比较，降低了一些性能；需要定期清理不再需要的版本，及时回收空间，增加开销</p>
-<p><strong>注意事项</strong><br>MVCC只在读已提交和重复读的隔离级别下有效<br>因为读未提交一定是读取最新的数据行；串行化会对所有行都加锁</p>
-<h1 id="InnoDB的redo和undo"><a href="#InnoDB的redo和undo" class="headerlink" title="InnoDB的redo和undo"></a>InnoDB的redo和undo</h1><p><strong>redo log重做日志</strong></p>
-<p>任何事务的操作都会记录redo日志，是InnoDB独有的，用于恢复数据库到宕机为止</p>
-<p>redo log记录的是新数据的备份<br>在事务提交前，会先写到redo log中——即使事务未提交，数据库崩溃时，也可以通过redo log进行恢复</p>
-<p>在数据库崩溃之后先用redo log和旧的数据块做前滚<br>再用undo log做回滚<br>通过这种方式来保护修改又没写入到磁盘的脏页</p>
-<p><strong>rolling forward前滚</strong></p>
-<p>数据库启动时，通过redo logs，重现实例崩溃前对数据库的修改操作</p>
-<p>将已经提交但未写入的数据，以及未提交的事务的数据全部写入数据文件</p>
-<p><strong>rolling back回滚</strong></p>
-<p>前滚后，虽然已修改的数据已经被写入数据文件，但未提交的也被写入，所以使用undo log将这些事务撤销</p>
-<h2 id="dirty-page与redo-log"><a href="#dirty-page与redo-log" class="headerlink" title="dirty page与redo log"></a>dirty page与redo log</h2><p>1.InnoDB的buffer pool是数据库页面的缓存，进行数据修改会首先在page上进行，这样的页面会被放到专门的dirty page缓存页上，后续再由专门的线程阶段性将其写入磁盘</p>
-<p>可以避免每次写对硬盘造成的负载，所以设计了一个这样类似水位线的机制</p>
-<p>2.为了避免dirty page丢失，将所有页面修改写入了redo log，当数据库启动时就可以进行恢复操作</p>
-<p>3.redo log info会写写到redo log buffer（这也是InnoDB存储引擎的一个缓存池），根据条件刷新到redo log file</p>
-<p>4.redo log file由log block组成，每个block512字节，重做日志文件都是以块的方式进行保存，称为重做日志块redo log block</p>
-<h2 id="redo-log触发机制"><a href="#redo-log触发机制" class="headerlink" title="redo log触发机制"></a>redo log触发机制</h2><ul>
-<li>每1秒写</li>
-<li>大于log buffer空间二分之一的时候</li>
-<li>log buffer到了1M时</li>
-<li>WAL日志先写——日志要比磁盘时数据更新，就写日志</li>
-<li>commit提交时</li>
-</ul>
-<p>（1）Innodb_flush_log_at_trx_commit&#x3D;0事务提交不刷新redo log buffer，直接写redo log file（失去最后一秒的数据）<br>（2）Innodb_flush_log_at_trx_commit&#x3D;0 事务提交直接将buffer刷新到磁盘（最安全不会丢数据、IO压力大）<br>（3）Innodb_flush_log_at_trx_commit&#x3D;0 事务提交时将buffer刷新到os缓存（可能丢失数据）</p>
-<h2 id="redo-log-file"><a href="#redo-log-file" class="headerlink" title="redo log file"></a>redo log file</h2><p>根据innodb_log_file_size配置</p>
-<p>redo是物理逻辑日志，记录的是对页的操作（也就是对内存的操作）</p>
-<p>undo日志本身也要写redo日志</p>
-<p>redo log循环覆盖，如果脏页没有写到磁盘，那就不会覆盖</p>
-<p>redo log只能对InnoDB的表起作用</p>
-<h2 id="undo-log"><a href="#undo-log" class="headerlink" title="undo log"></a>undo log</h2><p>用于前滚，记录的是对事务的逆向操作</p>
-<p>undo也会产生redo，通过redo还原undo的操作来进行回滚</p>
-<p>用于MVCC并发控制事务</p>
-<p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725150025.png"></p>
+<p><img src="https://ws-img.akemi.zj.cn/wangsheng/2024/09/fbbaa3dc28333c9f426e4888caa75349.png"></p>
 
     </article>
     <!-- license -->
     
         <div class="license-wrapper">
             <p>原文作者：<a href="http://Durative.github.io">王盛</a>
-            <p>原文链接：<a href="http://durative.github.io/2024/07/18/MySQL-InnoDB/">http://durative.github.io/2024/07/18/MySQL-InnoDB/</a>
-            <p>发表日期：<a href="http://durative.github.io/2024/07/18/MySQL-InnoDB/">July 18th 2024, 9:20:38 pm</a>
-            <p>更新日期：<a href="http://durative.github.io/2024/07/18/MySQL-InnoDB/">August 18th 2024, 8:16:00 pm</a>
+            <p>原文链接：<a href="http://durative.github.io/2024/09/12/Zabbix-Custom-Monitor-1/">http://durative.github.io/2024/09/12/Zabbix-Custom-Monitor-1/</a>
+            <p>发表日期：<a href="http://durative.github.io/2024/09/12/Zabbix-Custom-Monitor-1/">September 12th 2024, 9:37:55 pm</a>
+            <p>更新日期：<a href="http://durative.github.io/2024/09/12/Zabbix-Custom-Monitor-1/">September 12th 2024, 9:45:49 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -645,16 +542,16 @@
         <li class="next">
             
                 <div class="nextSlogan">Next Post</div>
-                <a href="/2024/07/22/MySQL-Auth/" title="Mysql用户权限与密码管理、角色管理">
-                    <div class="nextTitle">Mysql用户权限与密码管理、角色管理</div>
+                <a href="/2024/09/12/Zabbix-Custom-Template/" title="Zabbix自定义模板">
+                    <div class="nextTitle">Zabbix自定义模板</div>
                 </a>
             
         </li>
         <li class="previous">
             
                 <div class="prevSlogan">Previous Post</div>
-                <a href="/2024/07/17/Redis-Cluster/" title="Redis-Cluster集群模式">
-                    <div class="prevTitle">Redis-Cluster集群模式</div>
+                <a href="/2024/09/12/Zabbix-Install/" title="Zabbix5.0安装与部署">
+                    <div class="prevTitle">Zabbix5.0安装与部署</div>
                 </a>
             
         </li>
@@ -773,7 +670,7 @@
                 <div class="toc-catalog">
                     <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
                 </div>
-                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#MySQL%E5%8F%91%E8%A1%8C%E7%89%88"><span class="toc-number">1.</span> <span class="toc-text">MySQL发行版</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#mysql%E5%85%B3%E9%94%AE%E6%96%87%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">mysql关键文件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">3.</span> <span class="toc-text">存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#MyISAM%E4%B8%8EInnoDB%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="toc-number">3.1.</span> <span class="toc-text">MyISAM与InnoDB的对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">4.</span> <span class="toc-text">InnoDB存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#InnoDB-Buffer-Pool%E7%BC%93%E5%AD%98%E6%B1%A0"><span class="toc-number">4.1.</span> <span class="toc-text">InnoDB Buffer Pool缓存池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#additional-memory-pool%E9%A2%9D%E5%A4%96%E5%86%85%E5%AD%98%E6%B1%A0"><span class="toc-number">4.2.</span> <span class="toc-text">additional memory pool额外内存池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log-buffer%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97%E7%BC%93%E5%AD%98"><span class="toc-number">4.3.</span> <span class="toc-text">redo log buffer重做日志缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E7%BC%93%E5%86%B2%E5%8C%BABinlog-Buffer"><span class="toc-number">4.4.</span> <span class="toc-text">二进制日志缓冲区Binlog Buffer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E7%BC%93%E5%86%B2%E5%8C%BA%E4%B8%8E%E9%87%8D%E5%81%9A%E6%97%A5%E5%BF%97%E7%BC%93%E5%AD%98%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">4.4.1.</span> <span class="toc-text">二进制日志缓冲区与重做日志缓存的区别</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Double-Write-Buffer"><span class="toc-number">4.5.</span> <span class="toc-text">Double Write Buffer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#InnoDB%E9%80%BB%E8%BE%91%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="toc-number">4.6.</span> <span class="toc-text">InnoDB逻辑存储结构</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E4%BA%8B%E5%8A%A1"><span class="toc-number">5.</span> <span class="toc-text">InnoDB事务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">5.1.</span> <span class="toc-text">事务的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-number">5.2.</span> <span class="toc-text">事务的隔离级别</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E6%9C%AA%E6%8F%90%E4%BA%A4read-uncommited"><span class="toc-number">5.2.1.</span> <span class="toc-text">读未提交read uncommited</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E5%B7%B2%E6%8F%90%E4%BA%A4read-commited%EF%BC%88%E6%8E%A8%E8%8D%90%E3%80%81%E5%A4%A7%E5%A4%9A%E6%95%B0%EF%BC%89"><span class="toc-number">5.2.2.</span> <span class="toc-text">读已提交read commited（推荐、大多数）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%A4%8D%E8%AF%BBrepeated-read%EF%BC%88%E4%B8%8D%E5%AE%89%E5%85%A8%EF%BC%89"><span class="toc-number">5.2.3.</span> <span class="toc-text">重复读repeated read（不安全）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%B2%E8%A1%8C%E5%8C%96Serialization%EF%BC%88%E8%A1%A8%E9%94%81%EF%BC%89"><span class="toc-number">5.2.4.</span> <span class="toc-text">串行化Serialization（表锁）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E4%B8%8E%E8%AE%BE%E7%BD%AE%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-number">5.2.5.</span> <span class="toc-text">查看与设置数据库的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">5.2.6.</span> <span class="toc-text">事务的操作命令</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%AD%89%E7%BA%A7%E6%BC%94%E7%A4%BA"><span class="toc-number">5.3.</span> <span class="toc-text">事务隔离等级演示</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MVCC%E5%A4%9A%E7%89%88%E6%9C%AC%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6"><span class="toc-number">6.</span> <span class="toc-text">MVCC多版本并发控制</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-number">6.1.</span> <span class="toc-text">实现原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MVCC%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-number">6.2.</span> <span class="toc-text">MVCC的特点</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#InnoDB%E7%9A%84redo%E5%92%8Cundo"><span class="toc-number">7.</span> <span class="toc-text">InnoDB的redo和undo</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#dirty-page%E4%B8%8Eredo-log"><span class="toc-number">7.1.</span> <span class="toc-text">dirty page与redo log</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log%E8%A7%A6%E5%8F%91%E6%9C%BA%E5%88%B6"><span class="toc-number">7.2.</span> <span class="toc-text">redo log触发机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redo-log-file"><span class="toc-number">7.3.</span> <span class="toc-text">redo log file</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#undo-log"><span class="toc-number">7.4.</span> <span class="toc-text">undo log</span></a></li></ol></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9B%91%E6%8E%A7%E2%80%94%E2%80%94tcp%E7%8A%B6%E6%80%81%E6%8E%A2%E6%B5%8B"><span class="toc-number">1.</span> <span class="toc-text">自定义监控——tcp状态探测</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E7%8A%B6%E6%80%81%E7%9B%91%E6%B5%8B"><span class="toc-number">1.1.</span> <span class="toc-text">单状态监测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E7%8A%B6%E6%80%81%E7%9B%91%E6%B5%8B"><span class="toc-number">1.2.</span> <span class="toc-text">多状态监测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%BA%94%E7%94%A8%E9%9B%86"><span class="toc-number">1.3.</span> <span class="toc-text">使用应用集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%A7%A6%E5%8F%91%E5%99%A8"><span class="toc-number">1.4.</span> <span class="toc-text">使用触发器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9B%91%E6%8E%A7%E2%80%94%E2%80%9480%E7%AB%AF%E5%8F%A3%E7%8A%B6%E6%80%81%E6%8E%A2%E6%B5%8B"><span class="toc-number">2.</span> <span class="toc-text">自定义监控——80端口状态探测</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E4%B8%8E%E5%88%9B%E5%BB%BA%E9%85%8D%E7%BD%AE%E9%A1%B9"><span class="toc-number">2.1.</span> <span class="toc-text">准备与创建配置项</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-number">2.2.</span> <span class="toc-text">测试</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9B%91%E6%8E%A7%E2%80%94%E2%80%94%E7%9B%91%E6%8E%A7%E4%B8%BB%E6%9C%BA%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81"><span class="toc-number">3.</span> <span class="toc-text">自定义监控——监控主机在线状态</span></a></li></ol>
             </div>
         
         <!-- sidebar -->
