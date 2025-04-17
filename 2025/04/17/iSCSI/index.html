@@ -1,0 +1,5452 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+    <!-- title -->
+
+
+    
+
+<!-- keywords -->
+
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="王盛">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="王盛">
+    
+        <meta name="keywords" content="容器,云计算,云原生">
+    
+    <meta name="description" content="">
+    <meta name="description" content="SCSI协议栈SCSI（Small Computer System Interface）协议栈是一套分层的标准化体系，定义了计算机与存储设备（或其他外设）之间的通信规则，涵盖从物理连接、数据传输到高级命令交互的完整流程。其核心目标是为存储操作提供统一、可扩展且高性能的接口 SCSI结构SCSI协议栈基于 客户端-服务端（Initiator-Target） 架构，分为以下四层： 1.应用层（SCSI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iSCSI协议">
+<meta property="og:url" content="https://akemi.zj.cn/2025/04/17/iSCSI/index.html">
+<meta property="og:site_name" content="Akemi">
+<meta property="og:description" content="SCSI协议栈SCSI（Small Computer System Interface）协议栈是一套分层的标准化体系，定义了计算机与存储设备（或其他外设）之间的通信规则，涵盖从物理连接、数据传输到高级命令交互的完整流程。其核心目标是为存储操作提供统一、可扩展且高性能的接口 SCSI结构SCSI协议栈基于 客户端-服务端（Initiator-Target） 架构，分为以下四层： 1.应用层（SCSI">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417103511998.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417103744352.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417104513577.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417105741375.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417111318640.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417111457024.png">
+<meta property="article:published_time" content="2025-04-17T10:02:22.000Z">
+<meta property="article:modified_time" content="2025-04-17T10:04:41.796Z">
+<meta property="article:author" content="王盛">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417103511998.png">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="icon" href="/assets/akemi.ico">
+    
+    <title>iSCSI协议 · Akemi</title>
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+    (function (w) {
+        'use strict'
+        // rel=preload support test
+        if (!w.loadCSS) {
+            w.loadCSS = function () {}
+        }
+        // define on the loadCSS obj
+        var rp = (loadCSS.relpreload = {})
+        // rel=preload feature support test
+        // runs once and returns a function for compat purposes
+        rp.support = (function () {
+            var ret
+            try {
+                ret = w.document.createElement('link').relList.supports('preload')
+            } catch (e) {
+                ret = false
+            }
+            return function () {
+                return ret
+            }
+        })()
+
+        // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+        // then change that media back to its intended value on load
+        rp.bindMediaToggle = function (link) {
+            // remember existing media attr for ultimate state, or default to 'all'
+            var finalMedia = link.media || 'all'
+
+            function enableStylesheet() {
+                link.media = finalMedia
+            }
+
+            // bind load handlers to enable media
+            if (link.addEventListener) {
+                link.addEventListener('load', enableStylesheet)
+            } else if (link.attachEvent) {
+                link.attachEvent('onload', enableStylesheet)
+            }
+
+            // Set rel and non-applicable media type to start an async request
+            // note: timeout allows this to happen async to let rendering continue in IE
+            setTimeout(function () {
+                link.rel = 'stylesheet'
+                link.media = 'only x'
+            })
+            // also enable media after 3 seconds,
+            // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+            setTimeout(enableStylesheet, 3000)
+        }
+
+        // loop through link elements in DOM
+        rp.poly = function () {
+            // double check this to prevent external calls from running
+            if (rp.support()) {
+                return
+            }
+            var links = w.document.getElementsByTagName('link')
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i]
+                // qualify links to those with rel=preload and as=style attrs
+                if (
+                    link.rel === 'preload' &&
+                    link.getAttribute('as') === 'style' &&
+                    !link.getAttribute('data-loadcss')
+                ) {
+                    // prevent rerunning on link
+                    link.setAttribute('data-loadcss', true)
+                    // bind listeners to toggle media back
+                    rp.bindMediaToggle(link)
+                }
+            }
+        }
+
+        // if unsupported, run the polyfill
+        if (!rp.support()) {
+            // run once at least
+            rp.poly()
+
+            // rerun poly on an interval until onload
+            var run = w.setInterval(rp.poly, 500)
+            if (w.addEventListener) {
+                w.addEventListener('load', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            } else if (w.attachEvent) {
+                w.attachEvent('onload', function () {
+                    rp.poly()
+                    w.clearInterval(run)
+                })
+            }
+        }
+
+        // commonjs
+        if (typeof exports !== 'undefined') {
+            exports.loadCSS = loadCSS
+        } else {
+            w.loadCSS = loadCSS
+        }
+    })(typeof global !== 'undefined' ? global : this)
+</script>
+
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20211217" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="/css/dark.css?v=20211217" as="style">
+    <link rel="stylesheet" href="/css/dark.css">
+    <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
+    <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
+    <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <!-- algolia -->
+    
+    <!-- 百度统计  -->
+    
+    <!-- 谷歌统计  -->
+    
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ == undefined) {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js" />')
+        }
+    </script>
+    
+        <body class="post-body">
+    
+        <!-- header -->
+        <header class="header header-mobile">
+    <!-- top read progress line -->
+    <div class="header-element">
+        <div class="read-progress"></div>
+    </div>
+    <!-- sidebar menu button -->
+    <div class="header-element">
+        
+            <div class="header-sidebar-menu">
+        
+            
+                <div style="padding-left: 1px;">&#xe775;</div>
+            
+        </div>
+    </div>
+    <!-- header actions -->
+    <div class="header-actions">
+        <!-- theme mode switch button -->
+        <span class="header-theme-btn header-element">
+            <i class="fas fa-adjust"></i>
+        </span>
+        <!-- back to home page text -->
+        <span class="home-link header-element">
+            <a href=/>Akemi</a>
+        </span>
+    </div>
+    <!-- toggle banner for post layout -->
+    
+        
+            <div class="banner banner-clean">
+        
+            <div class="blog-title header-element">
+                <a href="/">Akemi</a>
+            </div>
+            <div class="post-title header-element">
+                <a href="#" class="post-name">iSCSI协议</a>
+            </div>
+        </div>
+    
+</header>
+
+        <!-- fixed footer -->
+        <footer class="footer-fixed">
+    <!-- back to top button -->
+    <div class="footer-fixed-element">
+        
+            <div class="back-top back-top-hidden">
+        
+        
+            <div>&#xe639;</div>
+        
+        </div>
+    </div>
+</footer>
+
+        <!-- wrapper -->
+        <div class="wrapper">
+            <div class="site-intro" style="
+
+
+
+
+
+
+
+    height:50vh;
+
+">
+    
+    <!-- 主页  -->
+    
+        
+    <!-- 404页  -->
+    
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post-bg.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+                iSCSI协议
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+                
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页 meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class= post-intro-tags >
+    
+    
+</div>
+
+                
+                <!-- 文章字数统计 -->
+                
+                <div class="post-intro-meta">
+                    <!-- 撰写日期 -->
+                    <span class="iconfont-archer post-intro-calander">&#xe676;</span>
+                    <span class="post-intro-time">2025/04/17</span>
+                    <!-- busuanzi -->
+                    
+                        <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                            <span class="iconfont-archer post-intro-busuanzi">&#xe602;</span>
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    
+                    <!-- 文章分享 -->
+                    <span class="share-wrapper">
+                        <span class="iconfont-archer share-icon">&#xe71d;</span>
+                        <span class="share-text">Share</span>
+                        <ul class="share-list">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+            <script>
+  // get user agent
+  function getBrowserVersions() {
+    var u = window.navigator.userAgent
+    return {
+      userAgent: u,
+      trident: u.indexOf('Trident') > -1, //IE内核
+      presto: u.indexOf('Presto') > -1, //opera内核
+      webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+      gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+      mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+      ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+      android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+      iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+      iPad: u.indexOf('iPad') > -1, //是否为iPad
+      webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+      weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+      uc: u.indexOf('UCBrowser') > -1, //是否为android下的UC浏览器
+    }
+  }
+  var browser = {
+    versions: getBrowserVersions(),
+  }
+  console.log('userAgent: ' + browser.versions.userAgent)
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded')
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document
+        .getElementsByClassName('intro-title')[0]
+        .classList.add('intro-fade-in')
+      document
+        .getElementsByClassName('intro-subtitle')[0]
+        .classList.add('intro-fade-in')
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in')
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb() {
+    if (browser.versions.uc) {
+      console.log('UCBrowser')
+      fontLoaded()
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular'],
+        },
+        loading: function () {
+          // 所有字体开始加载
+          // console.log('font loading');
+        },
+        active: function () {
+          // 所有字体已渲染
+          fontLoaded()
+        },
+        inactive: function () {
+          // 字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout')
+          fontLoaded()
+        },
+        timeout: 5000, // Set the timeout to two seconds
+      })
+    }
+  }
+
+  function asyncErr() {
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document,
+      t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0]
+    o.src = u
+    if (cb) {
+      o.addEventListener(
+        'load',
+        function (e) {
+          cb(null, e)
+        },
+        false
+      )
+    }
+    if (err) {
+      o.addEventListener(
+        'error',
+        function (e) {
+          err(null, e)
+        },
+        false
+      )
+    }
+    s.parentNode.insertBefore(o, s)
+  }
+
+  var asyncLoadWithFallBack = function (arr, success, reject) {
+    var currReject = function () {
+      reject()
+      arr.shift()
+      if (arr.length) async(arr[0], success, currReject)
+    }
+
+    async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack(
+    [
+      'https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js',
+      'https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js',
+      "/lib/webfontloader.min.js",
+    ],
+    asyncCb,
+    asyncErr
+  )
+</script>
+
+            <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+            <div class="container container-unloaded">
+                <main class="main post-page">
+    <article class="article-entry">
+        <h1 id="SCSI协议栈"><a href="#SCSI协议栈" class="headerlink" title="SCSI协议栈"></a>SCSI协议栈</h1><p>SCSI（Small Computer System Interface）协议栈是一套分层的标准化体系，定义了计算机与存储设备（或其他外设）之间的通信规则，涵盖从物理连接、数据传输到高级命令交互的完整流程。其核心目标是为存储操作提供统一、可扩展且高性能的接口</p>
+<h2 id="SCSI结构"><a href="#SCSI结构" class="headerlink" title="SCSI结构"></a>SCSI结构</h2><p><strong>SCSI协议栈基于 客户端-服务端（Initiator-Target） 架构，分为以下四层：</strong></p>
+<p><strong>1.应用层（SCSI Command Layer）</strong><br>功能：定义存储操作的语义，即 SCSI指令集（如 READ, WRITE, INQUIRY 等）。</p>
+<p><strong>2.传输层（Transport Layer）</strong><br>功能：负责将SCSI指令和数据进行封装、传输、错误恢复和流量控制。</p>
+<p><strong>常见传输协议</strong>：</p>
+<p><strong>iSCSI：通过TCP&#x2F;IP网络传输SCSI指令。<br>SAS（Serial Attached SCSI）</strong>：基于串行物理链路的SCSI协议。<br><strong>Fibre Channel（FC）</strong>：用于高性能SAN（存储区域网络）。<br><strong>USB Attached SCSI（UAS）</strong>：通过USB接口传输SCSI指令。<br><strong>SRP（SCSI RDMA Protocol）</strong>：基于RDMA（如InfiniBand）的高性能传输。</p>
+<p><strong>3.物理层（Physical Layer）</strong></p>
+<p><strong>4.管理扩展层</strong><br>功能：提供设备发现、多路径管理、安全认证等高级功能。</p>
+<h2 id="SCSI核心组件"><a href="#SCSI核心组件" class="headerlink" title="SCSI核心组件"></a><strong>SCSI核心组件</strong></h2><p><strong>1. Initiator（启动器）</strong></p>
+<ul>
+<li><strong>角色</strong>：发起存储请求的设备（如服务器的HBA卡、<strong>iSCSI Initiator软件</strong>）。</li>
+<li><strong>功能</strong>：生成SCSI指令，通过传输协议发送到目标设备。</li>
+</ul>
+<p><strong>2. Target（目标器–服务端）</strong></p>
+<ul>
+<li><strong>角色</strong>：响应存储请求的设备（如硬盘阵列、iSCSI Target服务器）。</li>
+<li><strong>功能</strong>：接收并执行SCSI指令，返回结果或数据。</li>
+</ul>
+<p><strong>3. 逻辑单元（LUN）</strong></p>
+<ul>
+<li><strong>定义</strong>：目标器上的逻辑存储单元（如一个虚拟磁盘、磁带卷）。</li>
+<li>寻址：通过 LUN ID 唯一标识（例如 LUN 0 表示第一个逻辑磁盘）。</li>
+</ul>
+<h2 id="SCSI工作流程"><a href="#SCSI工作流程" class="headerlink" title="SCSI工作流程"></a><strong>SCSI工作流程</strong></h2><p><strong>1.指令生成</strong>：<br>Initiator应用层生成SCSI指令（如 READ(10)），封装为CDB。</p>
+<p><strong>2.传输封装</strong>：<br>传输层将CDB和数据封装为协议数据单元（如iSCSI PDU或SAS帧）。</p>
+<p><strong>3.物理传输</strong>：<br>物理层通过电缆或网络将数据发送到目标器。</p>
+<p><strong>4.指令执行</strong>：<br>Target解析CDB，访问指定LUN的数据块，执行读&#x2F;写操作。</p>
+<p><strong>5.结果返回</strong>：<br>响应数据或状态码（如成功&#x2F;错误）通过协议栈返回Initiator。</p>
+<h1 id="iSCIS协议"><a href="#iSCIS协议" class="headerlink" title="iSCIS协议"></a>iSCIS协议</h1><p>iSCIS协议允许通过 IP 网络（如以太网）传输 SCSI 命令，将远程存储设备（如 SAN 存储阵列）<strong>虚拟化成本地磁盘</strong>供计算机使用。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li><strong>基于 TCP&#x2F;IP</strong>：通过标准网络传输，无需专用硬件（如光纤通道）。</li>
+<li><strong>跨平台支持</strong>：Windows、Linux、VMware 等均支持 iSCSI。</li>
+<li><strong>典型应用</strong>：企业级存储区域网络（SAN）、云服务器挂载远程磁盘。</li>
+</ul>
+<h3 id="iSCSI概念—IQN"><a href="#iSCSI概念—IQN" class="headerlink" title="iSCSI概念—IQN"></a>iSCSI概念—IQN</h3><p><strong>IQN（iSCSI Qualified Name）</strong> 是 iSCSI（Internet Small Computer System Interface）协议中用于唯一标识 <strong>iSCSI发起端（Initiator）</strong> 和 <strong>iSCSI目标端（Target）</strong> 的标准命名格式。它的核心作用是确保在 IP 网络中传输 SCSI 指令时，设备能够被准确识别和寻址。</p>
+<p><strong>相当于是IP，毕竟iSCSI本身也是基于TCP&#x2F;IP协议的</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">**IQN的命名规则：**</span><br><span class="line"></span><br><span class="line">iqn.&lt;yyyy-mm&gt;.&lt;反写域名&gt;:&lt;自定义标识&gt;</span><br><span class="line"></span><br><span class="line">比如：</span><br><span class="line">iqn.2025-04.com.example:server01</span><br><span class="line"></span><br><span class="line">iqn.2025-04.com.example:storage-array-01</span><br></pre></td></tr></table></figure>
+
+<h3 id="iSCSI概念—Portal"><a href="#iSCSI概念—Portal" class="headerlink" title="iSCSI概念—Portal"></a>iSCSI概念—Portal</h3><p>指的是IP+端口的一组地址</p>
+<h3 id="iSCSI概念—TPG"><a href="#iSCSI概念—TPG" class="headerlink" title="iSCSI概念—TPG"></a>iSCSI概念—TPG</h3><p>包含了target、Portal，LUN、ACL的所有配置</p>
+<h3 id="块存储的共享挂载问题"><a href="#块存储的共享挂载问题" class="headerlink" title="块存储的共享挂载问题"></a>块存储的共享挂载问题</h3><p>块存储（如 iSCSI、FC 等）通过网络共享给多台主机时，<strong>技术上可以挂载，但存在严重的数据一致性问题风险</strong></p>
+<table>
+<thead>
+<tr>
+<th><strong>类型</strong></th>
+<th><strong>块存储（Block Storage）</strong></th>
+<th><strong>文件存储（File Storage）</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>共享方式</strong></td>
+<td>提供原始块设备（如 <code>/dev/sdb</code>）</td>
+<td>提供文件系统接口（如 NFS、SMB）</td>
+</tr>
+<tr>
+<td><strong>多主机访问</strong></td>
+<td>需集群文件系统（如 GFS2、OCFS2）协调</td>
+<td>天然支持并发访问（服务端管理锁机制）</td>
+</tr>
+<tr>
+<td><strong>典型协议</strong></td>
+<td>iSCSI、Fibre Channel (FC)</td>
+<td>NFS、CIFS&#x2F;SMB、GlusterFS</td>
+</tr>
+<tr>
+<td><strong>风险</strong></td>
+<td>直接挂载到多台主机会导致数据损坏</td>
+<td>无此问题（服务端处理并发）</td>
+</tr>
+</tbody></table>
+<h1 id="在Linux上搭建iSCSI-target"><a href="#在Linux上搭建iSCSI-target" class="headerlink" title="在Linux上搭建iSCSI target"></a>在Linux上搭建iSCSI target</h1><p>target文件配置存放位置&#x2F;etc&#x2F;target&#x2F;saveconfig.json</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417103511998.png"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl set-hostname iscsi-target &amp;&amp; bash</span><br><span class="line"></span><br><span class="line">yum -y install targetcli</span><br><span class="line">targetcli</span><br><span class="line">/&gt; <span class="built_in">ls</span></span><br><span class="line">o- / ......................................................................................... [...]</span><br><span class="line">  o- backstores .............................................................................. [...]</span><br><span class="line">  | o- block .................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- fileio ................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- pscsi .................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- ramdisk ................................................................ [Storage Objects: 0]</span><br><span class="line">  o- iscsi ............................................................................ [Targets: 0]</span><br><span class="line">  o- loopback ......................................................................... [Targets: 0]</span><br></pre></td></tr></table></figure>
+
+<h2 id="targetcli-的目录结构解析"><a href="#targetcli-的目录结构解析" class="headerlink" title="targetcli 的目录结构解析"></a>targetcli 的目录结构解析</h2><p><strong>(1) &#x2F;backstores —— 存储后端（Storage Backends）</strong><br>作用：定义存储资源的来源（物理磁盘、文件、内存等）。<br>子目录：<br>block：使用物理块设备（如 &#x2F;dev&#x2F;sdb）作为存储。<br>fileio：使用文件（如 .img 文件）模拟块设备。<br>pscsi：直通物理 SCSI 设备（如磁带机）。<br>ramdisk：使用内存作为临时存储（重启后数据丢失）。<br><strong>(2) &#x2F;iscsi —— iSCSI 目标配置</strong><br>作用：定义 iSCSI Target（存储服务端），配置访问规则和 LUN 映射。<br>初始状态：[Targets: 0] 表示尚未创建任何 iSCSI 目标。<br><strong>(3) &#x2F;loopback —— 本地回环目标</strong><br>作用：用于本地测试，将存储映射到同一台机器的其他服务（如虚拟机）。</p>
+<h2 id="创建iSCSI—block设备"><a href="#创建iSCSI—block设备" class="headerlink" title="创建iSCSI—block设备"></a>创建iSCSI—block设备</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 硬盘分区</span></span><br><span class="line">我有一块多的磁盘，将其分一下区</span><br><span class="line">lsblk</span><br><span class="line">NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS</span><br><span class="line">sr0     11:0    1 1024M  0 rom</span><br><span class="line">vda    252:0    0   10G  0 disk</span><br><span class="line">└─vda1 252:1    0  7.8G  0 part /</span><br><span class="line">vdb    252:16   0   50G  0 disk</span><br><span class="line">├─vdb1 252:17   0   20G  0 part</span><br><span class="line">└─vdb2 252:18   0   25G  0 part</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将vbd2做成逻辑卷</span></span><br><span class="line">pvcreate /dev/vdb2</span><br><span class="line">vgcreate iscsi /dev/vdb2</span><br><span class="line">lvcreate -n iscsi-lvs-1 -L 5G iscsi</span><br><span class="line"></span><br><span class="line">lsblk</span><br><span class="line">NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS</span><br><span class="line">sr0                      11:0    1 1024M  0 rom</span><br><span class="line">vda                     252:0    0   10G  0 disk</span><br><span class="line">└─vda1                  252:1    0  7.8G  0 part /</span><br><span class="line">vdb                     252:16   0   50G  0 disk</span><br><span class="line">├─vdb1                  252:17   0   20G  0 part</span><br><span class="line">└─vdb2                  252:18   0   25G  0 part</span><br><span class="line">  └─iscsi-iscsi--lvs--1 253:0    0    5G  0 lvm</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建iSCSI</span></span><br><span class="line">targetcli</span><br><span class="line">/&gt; /backstores/block create name=for-linux dev=/dev/vdb1</span><br><span class="line">Created block storage object for-linux using /dev/vdb1.</span><br><span class="line">/&gt; /backstores/block create name=for-windows dev=/dev/iscsi/iscsi-lvs-1</span><br><span class="line">Created block storage object for-windows using /dev/iscsi/iscsi-lvs-1.</span><br><span class="line"></span><br><span class="line">/&gt; <span class="built_in">ls</span></span><br><span class="line">o- / ......................................................................................... [...]</span><br><span class="line">  o- backstores .............................................................................. [...]</span><br><span class="line">  | o- block .................................................................. [Storage Objects: 2]</span><br><span class="line">  | | o- for-linux .................................... [/dev/vdb1 (20.0GiB) write-thru deactivated]</span><br><span class="line">  | | | o- alua ................................................................... [ALUA Groups: 1]</span><br><span class="line">  | | |   o- default_tg_pt_gp ....................................... [ALUA state: Active/optimized]</span><br><span class="line">  | | o- for-windows ...................... [/dev/iscsi/iscsi-lvs-1 (5.0GiB) write-thru deactivated]</span><br><span class="line">  | |   o- alua ................................................................... [ALUA Groups: 1]</span><br><span class="line">  | |     o- default_tg_pt_gp ....................................... [ALUA state: Active/optimized]</span><br><span class="line">  | o- fileio ................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- pscsi .................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- ramdisk ................................................................ [Storage Objects: 0]</span><br><span class="line">  o- iscsi ............................................................................ [Targets: 0]</span><br><span class="line">  o- loopback ......................................................................... [Targets: 0]</span><br><span class="line">  </span><br><span class="line">  </span><br></pre></td></tr></table></figure>
+
+<h2 id="创建target-for-linux"><a href="#创建target-for-linux" class="headerlink" title="创建target-for-linux"></a>创建target-for-linux</h2><h3 id="创建一个iqn"><a href="#创建一个iqn" class="headerlink" title="创建一个iqn"></a><strong>创建一个iqn</strong></h3><p>这个行为实际上就是已经创建了一个target了</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">/&gt;/iscsi create iqn.2025-04.com.wangsheng.storage:for-linux</span><br><span class="line">Created target iqn.2025-04.com.wangsheng.storage:for-linux.</span><br><span class="line">Created TPG 1.</span><br><span class="line">Global pref auto_add_default_portal=<span class="literal">true</span></span><br><span class="line">Created default portal listening on all IPs (0.0.0.0), port 3260.</span><br><span class="line"></span><br><span class="line">默认创建完target之后就有一个tpg1</span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/</span><br><span class="line">/iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/*</span><br><span class="line">/iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/acls/</span><br><span class="line">/iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/luns/</span><br><span class="line">/iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/portals/</span><br><span class="line"></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/ create tpg2</span><br><span class="line">Created TPG 2.</span><br><span class="line">Default portal not created, TPGs within a target cannot share ip:port.</span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/ delete tpg2</span><br><span class="line">Deleted TPGT 2.</span><br></pre></td></tr></table></figure>
+
+<h3 id="配置target的tpg"><a href="#配置target的tpg" class="headerlink" title="配置target的tpg"></a><strong>配置target的tpg</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">/&gt; <span class="built_in">ls</span></span><br><span class="line">o- / ......................................................................................... [...]</span><br><span class="line">  o- backstores .............................................................................. [...]</span><br><span class="line">  | o- block .................................................................. [Storage Objects: 2]</span><br><span class="line">  | | o- for-linux .................................... [/dev/vdb1 (20.0GiB) write-thru deactivated]</span><br><span class="line">  | | | o- alua ................................................................... [ALUA Groups: 1]</span><br><span class="line">  | | |   o- default_tg_pt_gp ....................................... [ALUA state: Active/optimized]</span><br><span class="line">  | | o- for-windows ...................... [/dev/iscsi/iscsi-lvs-1 (5.0GiB) write-thru deactivated]</span><br><span class="line">  | |   o- alua ................................................................... [ALUA Groups: 1]</span><br><span class="line">  | |     o- default_tg_pt_gp ....................................... [ALUA state: Active/optimized]</span><br><span class="line">  | o- fileio ................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- pscsi .................................................................. [Storage Objects: 0]</span><br><span class="line">  | o- ramdisk ................................................................ [Storage Objects: 0]</span><br><span class="line">  o- iscsi ............................................................................ [Targets: 1]</span><br><span class="line">  | o- iqn.2025-04.com.wangsheng.storage:for-linux ....................................... [TPGs: 1]</span><br><span class="line">  |   o- tpg1 ............................................................... [no-gen-acls, no-auth]</span><br><span class="line">  |     o- acls .......................................................................... [ACLs: 0]</span><br><span class="line">  |     o- luns .......................................................................... [LUNs: 0]</span><br><span class="line">  |     o- portals .................................................................... [Portals: 1]</span><br><span class="line">  |       o- 0.0.0.0:3260 ..................................................................... [OK]</span><br><span class="line">  o- loopback ......................................................................... [Targets: 0]</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 修改portal</span></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/portals/ delete 0.0.0.0 3260</span><br><span class="line">Deleted network portal 0.0.0.0:3260</span><br><span class="line"></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/portals/ create 10.163.2.106 3260</span><br><span class="line">Using default IP port 3260</span><br><span class="line">Created network portal 10.163.2.106:3260.</span><br><span class="line"></span><br><span class="line"><span class="comment"># 分配lun</span></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/luns create /backstores/block/for-linux</span><br><span class="line">Created LUN 0.</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置acl</span></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-linux/tpg1/acls create iqn.2025-04.com.wangsheng.linux:linux</span><br><span class="line">Created Node ACL <span class="keyword">for</span> iqn.2025-04.com.wangsheng.linux:linux</span><br><span class="line">Created mapped LUN 0.</span><br><span class="line"></span><br><span class="line"><span class="comment"># 保存退出</span></span><br><span class="line">/&gt; saveconfig</span><br><span class="line">Last 10 configs saved <span class="keyword">in</span> /etc/target/backup/.</span><br><span class="line">Configuration saved to /etc/target/saveconfig.json</span><br><span class="line">/&gt; <span class="built_in">exit</span></span><br><span class="line">Global pref auto_save_on_exit=<span class="literal">true</span></span><br><span class="line">Last 10 configs saved <span class="keyword">in</span> /etc/target/backup/.</span><br><span class="line">Configuration saved to /etc/target/saveconfig.json</span><br></pre></td></tr></table></figure>
+
+<h2 id="创建与配置target-for-windows"><a href="#创建与配置target-for-windows" class="headerlink" title="创建与配置target-for-windows"></a>创建与配置target-for-windows</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">/&gt; /iscsi/ create iqn.2025-04.com.wangsheng.storage:for-windows</span><br><span class="line">Created target iqn.2025-04.com.wangsheng.storage:for-windows.</span><br><span class="line">Created TPG 1.</span><br><span class="line">Default portal not created, TPGs within a target cannot share ip:port.</span><br><span class="line"></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-windows/tpg1/portals create 10.163.2.106 3260</span><br><span class="line">Using default IP port 3260</span><br><span class="line">Created network portal 10.163.2.106:3260.</span><br><span class="line"></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-windows/tpg1/luns create /backstores/block/for-windows</span><br><span class="line">Created LUN 0.</span><br><span class="line"></span><br><span class="line">/&gt; /iscsi/iqn.2025-04.com.wangsheng.storage:for-windows/tpg1/acls create iqn.2025-04.com.wangsheng.windows:windows</span><br><span class="line">Created Node ACL <span class="keyword">for</span> iqn.2025-04.com.wangsheng.windows:windows</span><br><span class="line">Created mapped LUN 0.</span><br><span class="line"></span><br><span class="line">/&gt; saveconfig</span><br><span class="line">Configuration saved to /etc/target/saveconfig.json</span><br><span class="line">/&gt; <span class="built_in">exit</span></span><br><span class="line">Global pref auto_save_on_exit=<span class="literal">true</span></span><br><span class="line">Last 10 configs saved <span class="keyword">in</span> /etc/target/backup/.</span><br><span class="line">Configuration saved to /etc/target/saveconfig.json</span><br></pre></td></tr></table></figure>
+
+<p>白名单放通了<br><strong>iqn.2025-04.com.wangsheng.linux:linux<br>iqn.2025-04.com.wangsheng.windows:windows</strong></p>
+<p>这两个就是一会我配置Initiator时，需要设置的iqn</p>
+<h2 id="非交互式配置target"><a href="#非交互式配置target" class="headerlink" title="非交互式配置target"></a>非交互式配置target</h2><p>使用方法也很简单，只要在targetcli后面加上要执行的命令就可以</p>
+<p>但是就获取不到tab帮助了，适合做过一次之后记录下来做自动化</p>
+<p><strong>非交互式需要手动保存targetcli saveconfig</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">targetcli /iscsi/ create iqn.2025-04.com.wangsheng.storage:for-windows</span><br><span class="line">targetcli /iscsi/iqn.2025-04.com.wangsheng.storage:for-windows/tpg1/portals create 10.163.2.106 3260</span><br><span class="line">targetcli saveconfig</span><br></pre></td></tr></table></figure>
+
+<h1 id="在windows上使用iSCSI启动器"><a href="#在windows上使用iSCSI启动器" class="headerlink" title="在windows上使用iSCSI启动器"></a>在windows上使用iSCSI<strong>启动器</strong></h1><h2 id="连接iSCSI"><a href="#连接iSCSI" class="headerlink" title="连接iSCSI"></a>连接iSCSI</h2><ul>
+<li>打开iSCSI服务</li>
+</ul>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417103744352.png"></p>
+<ul>
+<li>直接在搜索栏输入iSCSI，直接打开</li>
+</ul>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417104513577.png"></p>
+<ul>
+<li>配置本机启动器IQN</li>
+</ul>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417105741375.png"></p>
+<ul>
+<li>将其格式化之后就可以使用了</li>
+</ul>
+<h2 id="自动挂载iSCSI"><a href="#自动挂载iSCSI" class="headerlink" title="自动挂载iSCSI"></a>自动挂载iSCSI</h2><ul>
+<li>打开Service服务，找到服务Microsoft iSCSI启动器</li>
+<li>设置其为自动启动</li>
+<li>重启，查看其是否会自动挂载</li>
+</ul>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417111318640.png"><br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250417111457024.png"></p>
+<h1 id="在linux上使用iSCSI启动器"><a href="#在linux上使用iSCSI启动器" class="headerlink" title="在linux上使用iSCSI启动器"></a>在linux上使用iSCSI启动器</h1><p>iscsi启动器可以有软件和硬件两种，</p>
+<p>硬件需要使用网卡或HBA卡</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl set-hostname iscsi-client1 &amp;&amp; bash</span><br><span class="line"></span><br><span class="line">yum -y install iscsi-initiator-utils bash-completion vim</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置IQN</span></span><br><span class="line">vim /etc/iscsi/initiatorname.iscsi</span><br><span class="line">InitiatorName=iqn.2025-04.com.wangsheng.linux:linux</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> iscsid.service --now</span><br><span class="line">systemctl restart iscsid.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 发现target</span></span><br><span class="line">iscsiadm -m discovery -t st -p 10.163.2.106</span><br><span class="line">10.163.2.106:3260,1 iqn.2025-04.com.wangsheng.storage:for-linux</span><br><span class="line">10.163.2.106:3260,1 iqn.2025-04.com.wangsheng.storage:for-windows</span><br><span class="line"></span><br><span class="line"><span class="comment"># 连接target</span></span><br><span class="line">iscsiadm -m node -T iqn.2025-04.com.wangsheng.storage:for-linux -l</span><br><span class="line">Logging <span class="keyword">in</span> to [iface: default, target: iqn.2025-04.com.wangsheng.storage:for-linux, portal: 10.163.2.106,3260] (multiple)</span><br><span class="line">Login to [iface: default, target: iqn.2025-04.com.wangsheng.storage:for-linux, portal: 10.163.2.106,3260] successful.</span><br><span class="line"></span><br><span class="line"><span class="comment"># 断开连接</span></span><br><span class="line">iscsiadm -m node -T iqn.2025-04.com.wangsheng.storage:for-linux -u</span><br><span class="line">Logging out of session [sid: 1, target: iqn.2025-04.com.wangsheng.storage:for-linux, portal: 10.163.2.106,3260]</span><br><span class="line">Logout of [sid: 1, target: iqn.2025-04.com.wangsheng.storage:for-linux, portal: 10.163.2.106,3260] successful.</span><br><span class="line"></span><br><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">fd0               2:0    1    4K  0 disk</span><br><span class="line">sda               8:0    0   10G  0 disk</span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0    9G  0 part</span><br><span class="line">  ├─centos-root 253:0    0    8G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0    1G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0  500G  0 disk</span><br><span class="line">sdc               8:32   0  500G  0 disk</span><br><span class="line">sdd               8:48   0  500G  0 disk</span><br><span class="line"></span><br><span class="line">iscsiadm -m node -T iqn.2025-04.com.wangsheng.storage:for-linux -l</span><br><span class="line"></span><br><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">fd0               2:0    1    4K  0 disk</span><br><span class="line">sda               8:0    0   10G  0 disk</span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0    9G  0 part</span><br><span class="line">  ├─centos-root 253:0    0    8G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0    1G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0  500G  0 disk</span><br><span class="line">sdc               8:32   0  500G  0 disk</span><br><span class="line">sdd               8:48   0  500G  0 disk</span><br><span class="line">sde               8:64   0   20G  0 disk</span><br><span class="line"></span><br><span class="line">可见多了一个sde 20G</span><br><span class="line">重启之后依然可以存在</span><br><span class="line"></span><br><span class="line"><span class="comment"># 格式化后进行挂载</span></span><br><span class="line">mkfs.ext4 /dev/sde</span><br><span class="line"><span class="built_in">mkdir</span> /mnt/iscsi-1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开机自动挂载</span></span><br><span class="line">_netdev表示该挂载为网络设备，会在网络服务启动后再进行挂载</span><br><span class="line">vim /etc/fstab</span><br><span class="line">/dev/sde /mnt/iscsi-1 ext4 defaults,_netdev 0 0</span><br><span class="line"></span><br><span class="line">systemctl reboot</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th</span><br><span class="line">Filesystem              Type      Size  Used Avail Use% Mounted on</span><br><span class="line">/dev/mapper/centos-root xfs       8.0G  1.7G  6.4G  21% /</span><br><span class="line">devtmpfs                devtmpfs  3.9G     0  3.9G   0% /dev</span><br><span class="line">tmpfs                   tmpfs     3.9G     0  3.9G   0% /dev/shm</span><br><span class="line">tmpfs                   tmpfs     3.9G  8.5M  3.9G   1% /run</span><br><span class="line">tmpfs                   tmpfs     3.9G     0  3.9G   0% /sys/fs/cgroup</span><br><span class="line">/dev/sda1               xfs      1014M  193M  822M  20% /boot</span><br><span class="line">/dev/sde                ext4       20G   45M   19G   1% /mnt/iscsi-1</span><br><span class="line">tmpfs                   tmpfs     799M     0  799M   0% /run/user/0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+    </article>
+    <!-- license -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="https://akemi.zj.cn">王盛</a>
+            <p>原文链接：<a href="https://akemi.zj.cn/2025/04/17/iSCSI/">https://akemi.zj.cn/2025/04/17/iSCSI/</a>
+            <p>发表日期：<a href="https://akemi.zj.cn/2025/04/17/iSCSI/">April 17th 2025, 6:02:22 pm</a>
+            <p>更新日期：<a href="https://akemi.zj.cn/2025/04/17/iSCSI/">April 17th 2025, 6:04:41 pm</a>
+            <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+        </li>
+        <li class="previous">
+            
+                <div class="prevSlogan">Previous Post</div>
+                <a href="/2025/04/17/SMB-multiuser/" title="Samba多用户挂载">
+                    <div class="prevTitle">Samba多用户挂载</div>
+                </a>
+            
+        </li>
+    </ul>
+    <!-- comment -->
+    
+        <div class="post-comment">
+            <!-- 来必力 City 版安装代码 -->
+
+
+            
+
+            
+
+            
+
+            <!-- utteranc评论 -->
+
+
+            <!-- partial('_partial/comment/changyan') -->
+            <!--PC版-->
+
+
+            
+            
+
+            
+
+        </div>
+    
+    <!-- timeliness note -->
+    <!-- idea from: https://hexo.fluid-dev.com/posts/hexo-injector/#%E6%96%87%E7%AB%A0%E6%97%B6%E6%95%88%E6%80%A7%E6%8F%90%E7%A4%BA -->
+    
+    <!-- Mathjax -->
+    
+</main>
+
+                <!-- profile -->
+                
+            </div>
+            <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+        <div class="social">
+            
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+
+        </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- website approve for Chinese user -->
+    
+    <!-- 不蒜子  -->
+    
+        <div class="busuanzi-container">
+            
+             
+                <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+            
+        </div>
+    	
+</footer>
+
+        </div>
+        <!-- toc -->
+        
+            <div class="toc-wrapper toc-wrapper-loding" style=
+
+
+
+
+
+
+
+    top:50vh;
+
+>
+                <div class="toc-catalog">
+                    <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+                </div>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#SCSI%E5%8D%8F%E8%AE%AE%E6%A0%88"><span class="toc-number">1.</span> <span class="toc-text">SCSI协议栈</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#SCSI%E7%BB%93%E6%9E%84"><span class="toc-number">1.1.</span> <span class="toc-text">SCSI结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SCSI%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-number">1.2.</span> <span class="toc-text">SCSI核心组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SCSI%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-number">1.3.</span> <span class="toc-text">SCSI工作流程</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#iSCIS%E5%8D%8F%E8%AE%AE"><span class="toc-number">2.</span> <span class="toc-text">iSCIS协议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#iSCSI%E6%A6%82%E5%BF%B5%E2%80%94IQN"><span class="toc-number">2.0.1.</span> <span class="toc-text">iSCSI概念—IQN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#iSCSI%E6%A6%82%E5%BF%B5%E2%80%94Portal"><span class="toc-number">2.0.2.</span> <span class="toc-text">iSCSI概念—Portal</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#iSCSI%E6%A6%82%E5%BF%B5%E2%80%94TPG"><span class="toc-number">2.0.3.</span> <span class="toc-text">iSCSI概念—TPG</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%97%E5%AD%98%E5%82%A8%E7%9A%84%E5%85%B1%E4%BA%AB%E6%8C%82%E8%BD%BD%E9%97%AE%E9%A2%98"><span class="toc-number">2.0.4.</span> <span class="toc-text">块存储的共享挂载问题</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9C%A8Linux%E4%B8%8A%E6%90%AD%E5%BB%BAiSCSI-target"><span class="toc-number">3.</span> <span class="toc-text">在Linux上搭建iSCSI target</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#targetcli-%E7%9A%84%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%A7%A3%E6%9E%90"><span class="toc-number">3.1.</span> <span class="toc-text">targetcli 的目录结构解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAiSCSI%E2%80%94block%E8%AE%BE%E5%A4%87"><span class="toc-number">3.2.</span> <span class="toc-text">创建iSCSI—block设备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAtarget-for-linux"><span class="toc-number">3.3.</span> <span class="toc-text">创建target-for-linux</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAiqn"><span class="toc-number">3.3.1.</span> <span class="toc-text">创建一个iqn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AEtarget%E7%9A%84tpg"><span class="toc-number">3.3.2.</span> <span class="toc-text">配置target的tpg</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%85%8D%E7%BD%AEtarget-for-windows"><span class="toc-number">3.4.</span> <span class="toc-text">创建与配置target-for-windows</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%9E%E4%BA%A4%E4%BA%92%E5%BC%8F%E9%85%8D%E7%BD%AEtarget"><span class="toc-number">3.5.</span> <span class="toc-text">非交互式配置target</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9C%A8windows%E4%B8%8A%E4%BD%BF%E7%94%A8iSCSI%E5%90%AF%E5%8A%A8%E5%99%A8"><span class="toc-number">4.</span> <span class="toc-text">在windows上使用iSCSI启动器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9E%E6%8E%A5iSCSI"><span class="toc-number">4.1.</span> <span class="toc-text">连接iSCSI</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E6%8C%82%E8%BD%BDiSCSI"><span class="toc-number">4.2.</span> <span class="toc-text">自动挂载iSCSI</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9C%A8linux%E4%B8%8A%E4%BD%BF%E7%94%A8iSCSI%E5%90%AF%E5%8A%A8%E5%99%A8"><span class="toc-number">5.</span> <span class="toc-text">在linux上使用iSCSI启动器</span></a></li></ol>
+            </div>
+        
+        <!-- sidebar -->
+        <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+        <div class="sidebar-panel-archives">
+    <!-- 在 ejs 中将 archive 按照时间排序 -->
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 196
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+        
+            
+            
+            <div class="archive-year"> 2025 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/17</span>
+            <a class="archive-post-title" href="/2025/04/17/iSCSI/">iSCSI协议</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/17</span>
+            <a class="archive-post-title" href="/2025/04/17/SMB-multiuser/">Samba多用户挂载</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/15</span>
+            <a class="archive-post-title" href="/2025/04/15/Python-jenkins/">Python自动化调整Jenkins从节点并发数</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/15</span>
+            <a class="archive-post-title" href="/2025/04/15/SMB-linux/">SMB文件共享协议--在linux上通过SMB实现共享</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/15</span>
+            <a class="archive-post-title" href="/2025/04/15/SMB-windows/">SMB文件共享协议--在windows上通过SMB实现共享</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/11</span>
+            <a class="archive-post-title" href="/2025/04/11/HAProxy-base/">HAProxy代理后端服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/10</span>
+            <a class="archive-post-title" href="/2025/04/10/Varnish-webcache/">Varnish缓存加速</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/10</span>
+            <a class="archive-post-title" href="/2025/04/10/EVE-NG-image/">制作适用于EVE-NG的操作系统镜像win与centos</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/09</span>
+            <a class="archive-post-title" href="/2025/04/09/Apache-vhost/">Apache虚拟主机</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/08</span>
+            <a class="archive-post-title" href="/2025/04/08/K8s-resource/">k8s剩余资源计算脚本</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/08</span>
+            <a class="archive-post-title" href="/2025/04/08/Postfix-send-only/">Postfix搭建send-only邮件服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/08</span>
+            <a class="archive-post-title" href="/2025/04/08/Postfix/">Postfix搭建内网环境邮件服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/03</span>
+            <a class="archive-post-title" href="/2025/04/03/CUPS/">CUPS服务管理打印机</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/02</span>
+            <a class="archive-post-title" href="/2025/04/02/DHCP/">DHCPv4服务器搭建</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/01</span>
+            <a class="archive-post-title" href="/2025/04/01/DNS-BIND-Master-salve/">BIND搭建主从DNS权威服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/31</span>
+            <a class="archive-post-title" href="/2025/03/31/DNS-troubleshooting/">DNS排查</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/28</span>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/28</span>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/25</span>
+            <a class="archive-post-title" href="/2025/03/25/Linux-bond/">Linux网卡绑定</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/24</span>
+            <a class="archive-post-title" href="/2025/03/24/SystemRole-network/">使用RHEL System Roles管理网络</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/22</span>
+            <a class="archive-post-title" href="/2025/03/22/Cronjob-k8s-check/">使用cronjob自动化巡检k8s告警</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/22</span>
+            <a class="archive-post-title" href="/2025/03/22/Systemd-service/">systemd Unit及其配置文件</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/11</span>
+            <a class="archive-post-title" href="/2025/03/11/SSL-Encrypt/">通过Let's Encrypt生成免费SSL证书</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/07</span>
+            <a class="archive-post-title" href="/2025/03/07/ESXi-Network/">ESXi网络</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/07</span>
+            <a class="archive-post-title" href="/2025/03/07/CKS/">CKS认证题目与解法（2025版）</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/07</span>
+            <a class="archive-post-title" href="/2025/03/07/CKA/">CKA认证题目与解法（2024版）</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/28</span>
+            <a class="archive-post-title" href="/2025/02/28/Apache-file-server/">使用Apache搭建能够传输大文件的web文件服务器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/28</span>
+            <a class="archive-post-title" href="/2025/02/28/Apache-config/">Apache配置文件详解与性能调优</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/28</span>
+            <a class="archive-post-title" href="/2025/02/28/EffcientLinux-RunCommand/">高效使用Linux-执行命令的不同方式</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/26</span>
+            <a class="archive-post-title" href="/2025/02/26/EffcientLinux-env/">高效使用Linux-父与子shell环境</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/26</span>
+            <a class="archive-post-title" href="/2025/02/26/Git-cherry-pick/">git仓库使用cherry-pick进行单独代码合并</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span>
+            <a class="archive-post-title" href="/2025/02/24/Docker-Proxy/">win10使用代理docker拉取外网镜像</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/24</span>
+            <a class="archive-post-title" href="/2025/02/24/EffcientLinux-txt/">高效使用Linux-文本处理</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/21</span>
+            <a class="archive-post-title" href="/2025/02/21/Python-pytest/">Python-pytest框架</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/21</span>
+            <a class="archive-post-title" href="/2025/02/21/EffcientLinux-path/">高效使用Linux-文件系统目录</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/20</span>
+            <a class="archive-post-title" href="/2025/02/20/OSS-rclone/">使用rclone进行对象存储迁移-R2→OSS</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/19</span>
+            <a class="archive-post-title" href="/2025/02/19/RHCA-RHAAP/">RHAAP红帽Ansible自动化平台</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/19</span>
+            <a class="archive-post-title" href="/2025/02/19/EffcientLinux-history/">高效使用Linux-历史记录操作</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/19</span>
+            <a class="archive-post-title" href="/2025/02/19/Nginx-tune/">基于ECS的网站访问速度与nginx优化</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/19</span>
+            <a class="archive-post-title" href="/2025/02/19/EffcientLinux-shell/">高效使用Linux-shell环境与运算</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/13</span>
+            <a class="archive-post-title" href="/2025/02/13/SSH-jump/">SSH跳板</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/13</span>
+            <a class="archive-post-title" href="/2025/02/13/EffcientLinux-pipe/">高效使用Linux-管道与组合命令</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/13</span>
+            <a class="archive-post-title" href="/2025/02/13/Helm-TakeOver/">生产环境数据库pod使用helm接管</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/08</span>
+            <a class="archive-post-title" href="/2025/02/08/ifnames/">修改网络接口命名规则</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2025/02/06/K8s-Kind/">使用kind快速部署多节点k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2025/02/06/K8s-Minikube/">使用Minikube快速部署k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/05</span>
+            <a class="archive-post-title" href="/2025/02/05/Image-gcr/">docker拉取gcr.io镜像</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/05</span>
+            <a class="archive-post-title" href="/2025/02/05/K8s-crt/">k8s证书延长有效期</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/17</span>
+            <a class="archive-post-title" href="/2025/01/17/Python-Django/">Python-Django框架入门学习</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/16</span>
+            <a class="archive-post-title" href="/2025/01/16/Helm-details/">Helm定义规范与模板全解析</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/15</span>
+            <a class="archive-post-title" href="/2025/01/15/Gitlab-Jenkins-argo-k8s/">Gitlab+Jenkins+argo+k8s CICD</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/14</span>
+            <a class="archive-post-title" href="/2025/01/14/Blog-ECS/">博客从github page迁移到ECS</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/13</span>
+            <a class="archive-post-title" href="/2025/01/13/JS/">前端入门--JS</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/13</span>
+            <a class="archive-post-title" href="/2025/01/13/Jenkins-Generic-Webhook-Trigger/">jenkins插件Generic Webhook Trigger</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/13</span>
+            <a class="archive-post-title" href="/2025/01/13/Jenkins-git/">jenkins流水线与git凭证报错</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/03</span>
+            <a class="archive-post-title" href="/2025/01/03/CSS-selector/">前端入门--CSS选择器</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">01/03</span>
+            <a class="archive-post-title" href="/2025/01/03/CSS-style/">前端入门--CSS样式</a>
+        </li>
+    
+        
+            
+            
+                
+                </ul>
+            
+            <div class="archive-year"> 2024 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/30</span>
+            <a class="archive-post-title" href="/2024/12/30/HTML-tag/">前端入门--HTML基础标签</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/17</span>
+            <a class="archive-post-title" href="/2024/12/17/Helm-subChart/">Helm父子chart的关系与实战</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/12</span>
+            <a class="archive-post-title" href="/2024/12/12/CLI-OSS/">常用的对象存储连接方式</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/11</span>
+            <a class="archive-post-title" href="/2024/12/11/Shell-openvpn/">Shell脚本-添加Openvpn账号密码</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/10</span>
+            <a class="archive-post-title" href="/2024/12/10/Python-Tk-httpd/">Python-tk库—图形化管理httpd服务</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/09</span>
+            <a class="archive-post-title" href="/2024/12/09/Python-Tk-tomcat/">Python-tk库—图形化管理tomcat服务</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/09</span>
+            <a class="archive-post-title" href="/2024/12/09/ArgoCD-install/">argoCD介绍，部署与对接代码仓库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span>
+            <a class="archive-post-title" href="/2024/12/08/CRD/">CRD自定义API资源介绍与使用官方案例</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span>
+            <a class="archive-post-title" href="/2024/12/08/Image-Repository/">无敌的镜像加速器地址</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/08</span>
+            <a class="archive-post-title" href="/2024/12/08/Mongodb-Kubernetes-Operator/">使用Mongodb-Kubernetes-Operator部署mongodb集群</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/05</span>
+            <a class="archive-post-title" href="/2024/12/05/OpenVPN/">OpenVPN原理与证书类型</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/05</span>
+            <a class="archive-post-title" href="/2024/12/05/Helm-minIO/">Helm部署minIO-单点与分布式</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/04</span>
+            <a class="archive-post-title" href="/2024/12/04/Helm-mysql8/">Helm部署mysql8</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/04</span>
+            <a class="archive-post-title" href="/2024/12/04/Helm-redis5/">Helm部署redis5与使用local-path-provisioner</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span>
+            <a class="archive-post-title" href="/2024/12/01/K8s-skopeo/">镜像管理工具skopeo部署与实战</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span>
+            <a class="archive-post-title" href="/2024/12/01/Python-Tk-nginx/">Python-tk库—图形化管理nginx服务</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span>
+            <a class="archive-post-title" href="/2024/12/01/K3s-Install/">k3s两节点测试环境快速部署</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/01</span>
+            <a class="archive-post-title" href="/2024/12/01/K8s-Ubuntu-Install/">ubuntu20.04桌面版快速部署单点k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/19</span>
+            <a class="archive-post-title" href="/2024/11/19/Python-check-status/">Python基于多种方式检测linux服务运行状态(进程筛选、systemctl、API)</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/17</span>
+            <a class="archive-post-title" href="/2024/11/17/Python-Module-mysql-connector-python/">Python使用mysql-connector-python库实现CRUD</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/16</span>
+            <a class="archive-post-title" href="/2024/11/16/Python-Module-kubernetes-2/">Python-kubernetes模块案例—根据不同ns更新pod副本数</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/16</span>
+            <a class="archive-post-title" href="/2024/11/16/Python-Module-kubernetes-1/">Python-kubernetes模块—k8s集群资源管理方法</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/13</span>
+            <a class="archive-post-title" href="/2024/11/13/Python-Module-socket/">Python socket模块案例—简单网络编程</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/13</span>
+            <a class="archive-post-title" href="/2024/11/13/Python-boto3/">Python boto3模块—访问S3风格API</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/11</span>
+            <a class="archive-post-title" href="/2024/11/11/Python-Flask/">Python Flask框架—快速开发API</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/10</span>
+            <a class="archive-post-title" href="/2024/11/10/Python-Module-request/">Python request模块常用方法</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/09</span>
+            <a class="archive-post-title" href="/2024/11/09/Python-Module-json/">Python json模块案例—提取与交换json数据</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/09</span>
+            <a class="archive-post-title" href="/2024/11/09/Python-Module-yaml/">Python yaml模块案例——提取与修改k8s配置文件</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/08</span>
+            <a class="archive-post-title" href="/2024/11/08/Python-Module-fabric/">Python fabric模块案例—更方便使用ssh</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/07</span>
+            <a class="archive-post-title" href="/2024/11/07/Python-Module-paramiko/">Python paramiko模块案例—创建SSH、SFTP连接</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/07</span>
+            <a class="archive-post-title" href="/2024/11/07/Python-Module-logging/">Python logging模块案例—切割日志与告警发送</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/05</span>
+            <a class="archive-post-title" href="/2024/11/05/Python-Module-psutil/">Python psutil模块案例—获取系统硬件状态</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/03</span>
+            <a class="archive-post-title" href="/2024/11/03/Python-Module-subprocess/">Python subprocess模块案例—执行系统命令与创建子进程</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/01</span>
+            <a class="archive-post-title" href="/2024/11/01/MySQL-Locked-1/">面对锁表，他的选择是……查询锁源</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/01</span>
+            <a class="archive-post-title" href="/2024/11/01/MySQL-Locked-2/">面对锁表，他的选择是……监控锁状态与查看死锁</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/01</span>
+            <a class="archive-post-title" href="/2024/11/01/MySQL-Replication-relay/">面对主从延时，他的选择是……主从性能优化</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/31</span>
+            <a class="archive-post-title" href="/2024/10/31/Python-Project-1/">Python案例——备份文件，清理过期日志，批量重命名文件</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/29</span>
+            <a class="archive-post-title" href="/2024/10/29/Blog-cloudflare/">博客迁移小记——从github page迁移到cloudflare page</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/16</span>
+            <a class="archive-post-title" href="/2024/10/16/Kafka-Install/">Kafka集群搭建</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/15</span>
+            <a class="archive-post-title" href="/2024/10/15/Jenkins-Pipeline-k8s/">jenkins构建pipeline项目到k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/13</span>
+            <a class="archive-post-title" href="/2024/10/13/K8s-Binary-installation/">K8s二进制安装</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/10</span>
+            <a class="archive-post-title" href="/2024/10/10/Jenkins-Pipeline-docker/">Jenkins构建pipeline项目到docker</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/08</span>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Install/">Jenkins yum部署与k8s容器化部署</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/08</span>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Master-Slave/">Jenkins主从架构</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/08</span>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Maven/">Jenkins构建maven项目</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/08</span>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-freestyle/">Jenkins构建自由风格项目——拉取gitlab代码、使用脚本上传代码</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/05</span>
+            <a class="archive-post-title" href="/2024/10/05/Dockerfile-tomcat/">使用Dockerfile打包与发布一个tomcat博客</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/01</span>
+            <a class="archive-post-title" href="/2024/10/01/Git-organize/">Git与Gitlab使用知识整理</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/26</span>
+            <a class="archive-post-title" href="/2024/09/26/Ansible-Project/">Ansible项目</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/24</span>
+            <a class="archive-post-title" href="/2024/09/24/Redis-MS-Optimization/">Redis集群主从关系优化</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/24</span>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/24</span>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/24</span>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Scaling/">Redis-Cluster扩容与缩容</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/22</span>
+            <a class="archive-post-title" href="/2024/09/22/Redis-Replication/">Redis主从复制</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/22</span>
+            <a class="archive-post-title" href="/2024/09/22/Redis-Sentinel/">Redis哨兵模式</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/19</span>
+            <a class="archive-post-title" href="/2024/09/19/Redis-Transactions/">Redis事务</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/19</span>
+            <a class="archive-post-title" href="/2024/09/19/Redis-Install/">Redis部署与参数</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/19</span>
+            <a class="archive-post-title" href="/2024/09/19/Redis-Persistence/">Redis持久化</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/19</span>
+            <a class="archive-post-title" href="/2024/09/19/Redis-Type/">Redis数据类型与常用操作</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/18</span>
+            <a class="archive-post-title" href="/2024/09/18/Zabbix-Custom-Monitor-2/">zabbix自定义报警——mysql主从复制状态检查</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/17</span>
+            <a class="archive-post-title" href="/2024/09/17/Zabbix-Proxy/">Zabbix-Proxy</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/17</span>
+            <a class="archive-post-title" href="/2024/09/17/Zabbix-Auto-Registration/">Zabbix自动注册</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/16</span>
+            <a class="archive-post-title" href="/2024/09/16/Zabbix-Auto-Discovery/">Zabbix自动发现</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/16</span>
+            <a class="archive-post-title" href="/2024/09/16/Zabbix-JMX/">zabbix监控——JMX客户端</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/14</span>
+            <a class="archive-post-title" href="/2024/09/14/Zabbix-Weixin/">Zabbix企业微信报警</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/13</span>
+            <a class="archive-post-title" href="/2024/09/13/Zabbix-Mail-Alert/">Zabbix邮件报警</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/12</span>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/12</span>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/12</span>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Install/">Zabbix5.0安装与部署</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/10</span>
+            <a class="archive-post-title" href="/2024/09/10/MySQL-Mycat-HA/">Mycat与keepalived高可用</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/10</span>
+            <a class="archive-post-title" href="/2024/09/10/MySQL-Mycat/">Mycat部署与读写分离</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/08</span>
+            <a class="archive-post-title" href="/2024/09/08/MySQL-MHA/">MySQL高可用之MHA</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/05</span>
+            <a class="archive-post-title" href="/2024/09/05/MySQL-Replication/">MySQL高可用之主从复制(已更新)</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/04</span>
+            <a class="archive-post-title" href="/2024/09/04/MySQL-Dual-Master/">MySQL高可用之双主+keepalived</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/03</span>
+            <a class="archive-post-title" href="/2024/09/03/MySQL-HA/">MySQL高可用方案介绍</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/03</span>
+            <a class="archive-post-title" href="/2024/09/03/MySQL-Metadata/">MySQL元数据与information_schema</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/02</span>
+            <a class="archive-post-title" href="/2024/09/02/MySQL-SQL/">SQL语句详解</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/31</span>
+            <a class="archive-post-title" href="/2024/08/31/MySQL-Multi-Instances/">MySQL多实例</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/27</span>
+            <a class="archive-post-title" href="/2024/08/27/Shell-Project/">Shell实战</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/23</span>
+            <a class="archive-post-title" href="/2024/08/23/Tomcat-Project/">Tomcat综合案例</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/21</span>
+            <a class="archive-post-title" href="/2024/08/21/Tomcat-Base/">Tomcat基础知识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/18</span>
+            <a class="archive-post-title" href="/2024/08/18/Nginx-Project/">Nginx综合案例</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/15</span>
+            <a class="archive-post-title" href="/2024/08/15/LNMP/">lnmp搭建笔记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/14</span>
+            <a class="archive-post-title" href="/2024/08/14/Nginx-Example/">Nginx案例</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/13</span>
+            <a class="archive-post-title" href="/2024/08/13/Linux-logrotate/">logrotate服务</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/13</span>
+            <a class="archive-post-title" href="/2024/08/13/Mailx/">使用mailx发送到企业邮箱</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/11</span>
+            <a class="archive-post-title" href="/2024/08/11/Rsync/">Rsync数据备份工具</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">08/09</span>
+            <a class="archive-post-title" href="/2024/08/09/Linux-Firewall/">Linux系统Firewalld使用</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/26</span>
+            <a class="archive-post-title" href="/2024/07/26/MySQL-Backup/">Mysql备份</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/26</span>
+            <a class="archive-post-title" href="/2024/07/26/MySQL-Federate/">Mysql-Federate远程链接数据库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/24</span>
+            <a class="archive-post-title" href="/2024/07/24/MySQL-Audit/">mysql安全审计之Mcafee Mysql-Audit</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/22</span>
+            <a class="archive-post-title" href="/2024/07/22/MySQL-Auth/">Mysql用户权限与密码管理、角色管理</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/22</span>
+            <a class="archive-post-title" href="/2024/07/22/MySQL-Install/">Mysql-Linux环境部署</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/18</span>
+            <a class="archive-post-title" href="/2024/07/18/MySQL-InnoDB/">Mysql-InnoDB存储引擎、InnoDB事务</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/15</span>
+            <a class="archive-post-title" href="/2024/07/15/Shell/">Shell零碎知识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/28</span>
+            <a class="archive-post-title" href="/2024/06/28/Linux-Iptables/">Iptables使用</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/28</span>
+            <a class="archive-post-title" href="/2024/06/28/Linux-Tune/">Linux环境初始化</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/28</span>
+            <a class="archive-post-title" href="/2024/06/28/Linux-based/">Linux零碎常识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/28</span>
+            <a class="archive-post-title" href="/2024/06/28/Linux-error/">Linux常见报错记录</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/28</span>
+            <a class="archive-post-title" href="/2024/06/28/Nginx/">Nginx详解</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/23</span>
+            <a class="archive-post-title" href="/2024/06/23/Virtualization/">虚拟化基础知识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/18</span>
+            <a class="archive-post-title" href="/2024/06/18/Docker-compose/">Docker-compose部署lnmp</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/18</span>
+            <a class="archive-post-title" href="/2024/06/18/Ephemeralcontainers/">临时容器ephemeralcontainers</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/13</span>
+            <a class="archive-post-title" href="/2024/06/13/Kuboard/">k8s可视化UI界面Kuboard</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/13</span>
+            <a class="archive-post-title" href="/2024/06/13/Mongo-k8s/">k8s部署MongoDB主从集群</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/12</span>
+            <a class="archive-post-title" href="/2024/06/12/K8s-redis-cluster/">k8s部署Redis高可用集群</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/04</span>
+            <a class="archive-post-title" href="/2024/06/04/Playbook/">Playbook实战案例</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/04</span>
+            <a class="archive-post-title" href="/2024/06/04/Rook/">Rook部署ceph</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/02</span>
+            <a class="archive-post-title" href="/2024/06/02/EFK/">EFK日志处理平台-2</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/K8s-Autoscaler/">k8s自动扩缩容HPA VPA KPA</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/Python-k8s/">Python代码封装至k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">06/01</span>
+            <a class="archive-post-title" href="/2024/06/01/SpringCloud-k8s/">将SpringCloud项目迁移至k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/17</span>
+            <a class="archive-post-title" href="/2024/05/17/EFK-k8s/">EFK日志处理平台</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/15</span>
+            <a class="archive-post-title" href="/2024/05/15/Linux-Monitor/">Linux单机监控</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/14</span>
+            <a class="archive-post-title" href="/2024/05/14/Docker/">Docker管理</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/tmux/">linux screen与tmux</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/DevOps/">DevOps工具链</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Helm/">Helm</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Istio/">Istio微服务网格</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Prometheus/">Prometheus普罗米修斯</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/06</span>
+            <a class="archive-post-title" href="/2024/05/06/Rancher/">k8s可视化UI界面Rancher</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Gitlab/">Gitlab</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Ceph-K8s/">ceph对接k8s</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Git/">Git代码管理工具</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/Go-k8s/">go代码封装到k8s中运行</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">05/01</span>
+            <a class="archive-post-title" href="/2024/05/01/VMware-I2I/">VMware I2I迁移至PVE 小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/ESXi/">ESXi物理机安装踩坑汇总</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/26</span>
+            <a class="archive-post-title" href="/2024/04/26/Ansible/">Ansible笔记集合</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/23</span>
+            <a class="archive-post-title" href="/2024/04/23/root-extend/">根分区扩容小记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/16</span>
+            <a class="archive-post-title" href="/2024/03/16/Ceph/">CEPH分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/Harbor/">本地部署harbor私有镜像仓库</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/27</span>
+            <a class="archive-post-title" href="/2024/02/27/K8s/">k8s基础知识</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/Python/">Python学习笔记</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/06</span>
+            <a class="archive-post-title" href="/2024/02/06/PVE/">虚拟化系统PVE物理机快速安装指南</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">02/02</span>
+            <a class="archive-post-title" href="/2024/02/02/Hexo/">使用1panel搭建Hexo博客</a>
+        </li>
+    
+        
+            
+            
+                
+                </ul>
+            
+            <div class="archive-year"> 2023 </div>
+            <ul class="year-list">
+            
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/24</span>
+            <a class="archive-post-title" href="/2023/12/24/PXE/">PXE安装</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">12/14</span>
+            <a class="archive-post-title" href="/2023/12/14/Nginx+keepalived/">Nginx+keepalived</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">11/12</span>
+            <a class="archive-post-title" href="/2023/11/12/DEBD/">DRBD单活分布式存储</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">10/27</span>
+            <a class="archive-post-title" href="/2023/10/27/Linux-Raid/">基于mdadm创建与管理软raid</a>
+        </li>
+    
+    </div>
+</div>
+
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+        
+            <span class="sidebar-tag-name" data-tags="Linux">
+                <span class="iconfont-archer">&#xe606;</span>
+                Linux
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云原生">
+                <span class="iconfont-archer">&#xe606;</span>
+                云原生
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云计算">
+                <span class="iconfont-archer">&#xe606;</span>
+                云计算
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="开发">
+                <span class="iconfont-archer">&#xe606;</span>
+                开发
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="mysql">
+                <span class="iconfont-archer">&#xe606;</span>
+                mysql
+            </span>
+        
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+        缺失模块，请参考主题文档进行安装配置：https://github.com/fi3ework/hexo-theme-archer#%E5%AE%89%E8%A3%85%E4%B8%BB%E9%A2%98
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+
+    </div>
+</div>
+
+        <!-- site-meta -->
+        <script>
+    var siteMetaRoot = "/"
+    if (siteMetaRoot === "undefined") {
+        siteMetaRoot = '/'
+    }
+    var siteMeta = {
+        url: "https://akemi.zj.cn",
+        root: siteMetaRoot,
+        author: "王盛"
+    }
+</script>
+
+        <!-- import experimental options here -->
+        <!-- Custom Font -->
+
+
+        <!-- main func -->
+        <script src="/scripts/main.js?v=20211217"></script>
+        <!-- dark mode -->
+        <script src="/scripts/dark.js?v=20211217"></script>
+        <!-- fancybox -->
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" defer></script>
+        <!-- algolia -->
+        
+        <!-- busuanzi -->
+        
+            <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+        
+        <!-- CNZZ -->
+        
+        <!-- async load share.js -->
+        
+            <script src="/scripts/share.js?v=20211217" async></script>
+        
+        <!-- mermaid -->
+        
+    </body>
+</html>
