@@ -19,22 +19,35 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="&#x2F;proc文件系统&#x2F;proc 是 Linux 系统中的一个特殊目录，被称为 虚拟文件系统（Virtual File System）。它不占用物理磁盘空间，而是由内核动态生成，用于提供 系统运行时信息 和 内核参数配置 的接口  动态系统信息：实时反映硬件状态（如 CPU、内存、设备）、进程状态、内核行为等。 内核参数调整：通过修改 &#x2F;proc&#x2F;sys 下的文件，动态调整内核行为">
+    <meta name="description" content="迁移（非集群特性）VCSA的高级特性，但不是集群的特性，但是迁移是DRS和HA的基础 可以针对计算资源、存储资源做单独的迁移 提供四种形式的迁移 1.仅更改计算资源 2.仅更改存储 3.更改计算与存储 4.跨域迁移 添加vMotion网络（迁移网络）在生产环境中，需要使用单独网卡作为迁移网络，测试环境中也可以使用任意VMkernel来作为vMotion网络  仅更改存储我这个tinycore原本是">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux内核参数与模块调整">
-<meta property="og:url" content="https://akemi.zj.cn/2025/04/24/Linux-Module/index.html">
+<meta property="og:title" content="VCSA-Cluster集群特性">
+<meta property="og:url" content="https://akemi.zj.cn/2025/06/16/ESXi-VCSA-HA/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="&#x2F;proc文件系统&#x2F;proc 是 Linux 系统中的一个特殊目录，被称为 虚拟文件系统（Virtual File System）。它不占用物理磁盘空间，而是由内核动态生成，用于提供 系统运行时信息 和 内核参数配置 的接口  动态系统信息：实时反映硬件状态（如 CPU、内存、设备）、进程状态、内核行为等。 内核参数调整：通过修改 &#x2F;proc&#x2F;sys 下的文件，动态调整内核行为">
+<meta property="og:description" content="迁移（非集群特性）VCSA的高级特性，但不是集群的特性，但是迁移是DRS和HA的基础 可以针对计算资源、存储资源做单独的迁移 提供四种形式的迁移 1.仅更改计算资源 2.仅更改存储 3.更改计算与存储 4.跨域迁移 添加vMotion网络（迁移网络）在生产环境中，需要使用单独网卡作为迁移网络，测试环境中也可以使用任意VMkernel来作为vMotion网络  仅更改存储我这个tinycore原本是">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-04-24T03:26:53.000Z">
-<meta property="article:modified_time" content="2025-04-24T04:49:12.144Z">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613175402175.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250612210710873.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250612210754786.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/e56c9999-5512-429c-8df3-c571270df57c.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613193100152.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613193236194.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616170523293.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616170705366.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616141035142.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616142412822.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616152315683.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616154347184.png">
+<meta property="article:published_time" content="2025-06-16T10:27:44.000Z">
+<meta property="article:modified_time" content="2025-06-16T10:29:31.012Z">
 <meta property="article:author" content="王盛">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613175402175.png">
     <meta http-equiv="Cache-control" content="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link rel="icon" href="/assets/akemi.ico">
     
-    <title>Linux内核参数与模块调整 · Akemi</title>
+    <title>VCSA-Cluster集群特性 · Akemi</title>
     <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
 /* This file is meant as a standalone workflow for
 - testing support for link[rel=preload]
@@ -259,7 +272,7 @@
                 <a href="/">Akemi</a>
             </div>
             <div class="post-title header-element">
-                <a href="#" class="post-name">Linux内核参数与模块调整</a>
+                <a href="#" class="post-name">VCSA-Cluster集群特性</a>
             </div>
         </div>
     
@@ -305,7 +318,7 @@
         <h1 class="intro-title">
             <!-- 主页  -->
             
-                Linux内核参数与模块调整
+                VCSA-Cluster集群特性
             <!-- 404 -->
             
         </h1>
@@ -333,7 +346,7 @@
                 <div class="post-intro-meta">
                     <!-- 撰写日期 -->
                     <span class="iconfont-archer post-intro-calander">&#xe676;</span>
-                    <span class="post-intro-time">2025/04/24</span>
+                    <span class="post-intro-time">2025/06/16</span>
                     <!-- busuanzi -->
                     
                         <span id="busuanzi_container_page_pv" class="busuanzi-pv">
@@ -488,154 +501,49 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <h2 id="proc文件系统"><a href="#proc文件系统" class="headerlink" title="&#x2F;proc文件系统"></a>&#x2F;proc文件系统</h2><p>&#x2F;proc 是 Linux 系统中的一个特殊目录，被称为 <strong>虚拟文件系统</strong>（Virtual File System）。它不占用物理磁盘空间，而是由内核动态生成，用于提供 <strong>系统运行时信息</strong> 和 <strong>内核参数配置</strong> 的接口</p>
-<ul>
-<li><strong>动态系统信息</strong>：实时反映硬件状态（如 CPU、内存、设备）、进程状态、内核行为等。</li>
-<li><strong>内核参数调整</strong>：通过修改 <code>/proc/sys</code> 下的文件，动态调整内核行为（如网络、文件系统、内存管理）。</li>
-<li><strong>调试与监控</strong>：开发者和管理员可直接读取文件或工具（如 <code>top</code>、<code>ps</code>）间接使用 <code>/proc</code> 数据。</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">(1) 系统全局信息</span><br><span class="line">/proc/cpuinfo	CPU 详细信息（型号、核心数、缓存、频率等）</span><br><span class="line">/proc/meminfo	内存使用情况（总内存、空闲、缓存、Swap 等）</span><br><span class="line">/proc/version	内核版本、编译信息（GCC 版本、编译时间）</span><br><span class="line">/proc/loadavg	系统负载（1/5/15 分钟平均负载，运行队列任务数）</span><br><span class="line">/proc/mounts	已挂载文件系统的列表（等价于 mount 命令输出）</span><br><span class="line">/proc/devices	已注册的块设备和字符设备列表</span><br><span class="line">/proc/interrupts	中断请求（IRQ）的统计信息（每个 CPU 的中断次数）</span><br><span class="line">/proc/modules	已加载的内核模块列表（等价于 lsmod 命令）</span><br><span class="line"></span><br><span class="line">(2) 进程信息(/proc/[PID]/)</span><br><span class="line">/proc/[PID]/status	进程状态（UID、内存占用、信号状态等）</span><br><span class="line">/proc/[PID]/cmdline	启动进程的命令行参数（以 \0 分隔）</span><br><span class="line">/proc/[PID]/exe	进程可执行文件的符号链接（可直接执行，如 /proc/1234/exe）</span><br><span class="line">/proc/[PID]/fd/	进程打开的文件描述符（每个文件对应一个符号链接）</span><br><span class="line">/proc/[PID]/cwd	进程当前工作目录的符号链接</span><br><span class="line">/proc/[PID]/maps	进程内存映射（加载的共享库、堆栈地址等）</span><br></pre></td></tr></table></figure>
+        <h2 id="迁移（非集群特性）"><a href="#迁移（非集群特性）" class="headerlink" title="迁移（非集群特性）"></a>迁移（非集群特性）</h2><p>VCSA的高级特性，但不是集群的特性，但是迁移是DRS和HA的基础</p>
+<p>可以针对计算资源、存储资源做单独的迁移</p>
+<p>提供四种形式的迁移</p>
+<p><strong>1.仅更改计算资源</strong></p>
+<p><strong>2.仅更改存储</strong></p>
+<p><strong>3.更改计算与存储</strong></p>
+<p><strong>4.跨域迁移</strong></p>
+<h3 id="添加vMotion网络（迁移网络）"><a href="#添加vMotion网络（迁移网络）" class="headerlink" title="添加vMotion网络（迁移网络）"></a>添加vMotion网络<strong>（迁移网络）</strong></h3><p>在生产环境中，需要使用单独网卡作为迁移网络，测试环境中也可以使用任意VMkernel来作为vMotion网络</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613175402175.png"></p>
+<h3 id="仅更改存储"><a href="#仅更改存储" class="headerlink" title="仅更改存储"></a>仅更改存储</h3><p>我这个tinycore原本是本地存储的，将其迁移至iscsi</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250612210710873.png"><br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250612210754786.png"></p>
+<h3 id="仅更改计算资源"><a href="#仅更改计算资源" class="headerlink" title="仅更改计算资源"></a>仅更改计算资源</h3><p>只有两台ESXi具有<strong>共享存储，且vm也位于共享存储的情况下</strong>，并且<strong>配置vMotion网络</strong>，才可以使用只更改计算资源，不然就会报兼容性问题</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/e56c9999-5512-429c-8df3-c571270df57c.png"></p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613193100152.png"></p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250613193236194.png"></p>
+<p>迁移完成</p>
+<h3 id="维护模式"><a href="#维护模式" class="headerlink" title="维护模式"></a>维护模式</h3><p>如果VCSA关机了，DVS的功能依然可以使用，因为DVS本身使用的就是ESXI中vSwitch的功能，只不过ESXi无法进行管理。</p>
+<p>如果要删除ESXI，需要解绑其所有资源，比如DVS，但解绑之后可能就无法访问到了</p>
+<p>所以就需要先进入维护模式，解除ESXi与DVS的关联，然后才能移除ESXi</p>
+<h2 id="DRS动态资源调配"><a href="#DRS动态资源调配" class="headerlink" title="DRS动态资源调配"></a>DRS动态资源调配</h2><p>根据ESXi主机资源，动态调整vm的位置在不同ESXi上</p>
+<p><strong>克隆点vm模拟环境</strong></p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616170523293.png"></p>
+<p><strong>打开DRS功能</strong></p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616170705366.png"></p>
+<p>这里是由于我是eve-ng做的实验，没有开启主板的Monitor&#x2F;MWAIT参数，导致的vCLS的集群虚机没法正常部署，导致DRS功能受影响</p>
+<p>寄，不重要，很多时候都不会开这个选项的</p>
+<h2 id="HA"><a href="#HA" class="headerlink" title="HA"></a>HA</h2><p><strong>开启HA功能</strong></p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616141035142.png"><br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616142412822.png"></p>
+<h3 id="测试HA"><a href="#测试HA" class="headerlink" title="测试HA"></a><strong>测试HA</strong></h3><p>需要注意的是需要移动的HA需要这些VM都在共享存储中，实际上是一种高级的迁移</p>
+<p>关闭其中一台ESXi来测试</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616152315683.png"></p>
+<p>可以看到断联后，两台vm都迁移到了109上</p>
+<h3 id="再次测试HA"><a href="#再次测试HA" class="headerlink" title="再次测试HA"></a>再次测试HA</h3><p>现在关闭109，查看108上两台vm能否正常起来</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250616154347184.png"></p>
 
-<h2 id="proc-sys-实时内核调优"><a href="#proc-sys-实时内核调优" class="headerlink" title="&#x2F;proc&#x2F;sys&#x2F;实时内核调优"></a>&#x2F;proc&#x2F;sys&#x2F;实时内核调优</h2><p><code>/proc/sys/</code> 是 Linux 系统中 <strong>动态调整内核参数</strong> 的核心接口目录，它允许用户或管理员在运行时直接修改内核的行为（如<strong>网络、内存、文件系统</strong>等模块的配置）</p>
-<table>
-<thead>
-<tr>
-<th>名称</th>
-<th>默认值</th>
-<th>备注</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>net.ipv4.ip_forward</td>
-<td><code>0</code></td>
-<td>控制是否启用 IPv4 数据包转发（路由器&#x2F;NAT 需设为 <code>1</code>）。</td>
-</tr>
-<tr>
-<td>net.ipv4.tcp_syncookies</td>
-<td><code>1</code></td>
-<td>防御 SYN Flood 攻击（<code>1</code> 启用）。</td>
-</tr>
-<tr>
-<td>net.ipv4.icmp_echo_ignore_all</td>
-<td><code>0</code></td>
-<td>忽略所有 ICMP Echo 请求（<code>1</code> 启用后禁 ping）。</td>
-</tr>
-<tr>
-<td>net.core.somaxconn</td>
-<td><code>128</code></td>
-<td>TCP 连接队列的最大长度（高并发服务建议调大，如 <code>2048</code>）。</td>
-</tr>
-<tr>
-<td>vm.swappiness</td>
-<td><code>60</code></td>
-<td><code>0</code> 尽量用物理内存，<code>100</code> 尽量用 Swap（redis相关）</td>
-</tr>
-<tr>
-<td>vm.overcommit_memory</td>
-<td><code>0</code></td>
-<td>内存分配策略：</td>
-</tr>
-<tr>
-<td><code>0</code> – 启发式超分配；</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>2</code> – 禁止超分配（严格模式）。</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>vm.drop_caches</td>
-<td>-</td>
-<td>用以手动清理缓存</td>
-</tr>
-<tr>
-<td><code>1</code> 清页缓存</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>2</code> 清目录项和 inode</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>3</code> 清全部</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>fs.file-max</td>
-<td>-</td>
-<td>系统全局最大文件句柄数（限制所有进程打开文件总数）</td>
-</tr>
-<tr>
-<td>fs.inotify.max_user_watches</td>
-<td><code>8192</code></td>
-<td>单个用户可监控的文件&#x2F;目录数量（用于 <code>inotify</code> 机制）。</td>
-</tr>
-<tr>
-<td>kernel.panic</td>
-<td><code>0</code></td>
-<td>系统崩溃后自动重启的等待时间</td>
-</tr>
-<tr>
-<td>（秒，<code>0</code> 禁用自动重启）。</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>kernel.pid_max</td>
-<td><code>32768</code></td>
-<td>系统允许的最大进程 PID 值</td>
-</tr>
-<tr>
-<td>PID 耗尽会导致新进程无法创建。</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>vm.dirty_ratio</td>
-<td><code>20</code></td>
-<td>内存中脏页占比超过此值时，强制同步写入磁盘。</td>
-</tr>
-<tr>
-<td>调整可平衡 I&#x2F;O 性能与数据安全</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>vm.dirty_expire_centisecs</td>
-<td><code>3000</code></td>
-<td>脏页在内存中保留的最长时间（单位：百分之一秒，<code>3000</code>&#x3D;30秒）。</td>
-</tr>
-</tbody></table>
-<h2 id="修改内核参数sysctl"><a href="#修改内核参数sysctl" class="headerlink" title="修改内核参数sysctl"></a>修改内核参数sysctl</h2><p><strong>命令行修改</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前值</span></span><br><span class="line"><span class="built_in">cat</span> /proc/sys/net/ipv4/ip_forward  <span class="comment"># 查看 IPv4 转发状态</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 临时修改参数</span></span><br><span class="line"><span class="built_in">echo</span> 1 &gt; /proc/sys/net/ipv4/ip_forward  <span class="comment"># 启用 IPv4 转发</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用sysctl--非交互式</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有</span></span><br><span class="line">sysctl -a</span><br><span class="line"></span><br><span class="line"><span class="comment"># 临时生效</span></span><br><span class="line">sysctl -w net.ipv4.ip_forward=1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 永久生效</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;net.ipv4.ip_forward=1&quot;</span> &gt;&gt; /etc/sysctl.conf</span><br><span class="line">sysctl -p  <span class="comment"># 重新加载配置</span></span><br></pre></td></tr></table></figure>
-
-<p><strong>子配置文件修改方式（推荐）</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">子配置文件推荐放在三个目录下,优先级从高到低</span><br><span class="line">一般推荐在/etc下</span><br><span class="line">/etc/sysctl.d/*.conf</span><br><span class="line">/run/sysctl.d/*.conf</span><br><span class="line">/var/lib/sysctl.d/*.conf</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;net.ipv4.ip_forward=1&quot;</span> &gt;&gt; /etc/sysctl.d/net.conf</span><br><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
-
-<h2 id="sys文件系统"><a href="#sys文件系统" class="headerlink" title="&#x2F;sys文件系统"></a>&#x2F;sys文件系统</h2><p>是一个分离出来的文件目录，一般用来做内核模块的调整</p>
-<h2 id="加载内核模块modprobe"><a href="#加载内核模块modprobe" class="headerlink" title="加载内核模块modprobe"></a>加载内核模块modprobe</h2><p>在一些第三方软件中，需要加载第三方的内核模块来支持软件运行</p>
-<p><strong>mod查看</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前mod</span></span><br><span class="line">lsmod</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看模块信息</span></span><br><span class="line">modinfo ip_tables</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看模块参数</span></span><br><span class="line">modinfo -p loop</span><br><span class="line">max_loop:Maximum number of loop devices</span><br><span class="line">max_part:Maximum number of partitions per loop device (int)</span><br><span class="line">hw_queue_depth:Queue depth <span class="keyword">for</span> each hardware queue. Default: 128</span><br></pre></td></tr></table></figure>
-
-<p><strong>mod加载</strong></p>
-<p>这个loop是一个不会预先加载的模块，只会在需要时自动加载，在lsmod也找不到，现在尝试提前加载它</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 临时加载模块</span></span><br><span class="line">modprobe loop</span><br><span class="line"></span><br><span class="line">就可以查看到了</span><br><span class="line">lsmod | grep loop</span><br><span class="line">loop                   40960  0</span><br><span class="line"><span class="built_in">ls</span> /sys/module/loop/</span><br><span class="line">coresize  initsize   notes       refcnt       sections    taint</span><br><span class="line">holders   initstate  parameters  rhelversion  srcversion  uevent</span><br><span class="line"></span><br><span class="line"><span class="comment"># 永久加载</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;options loop max_loop=16&quot;</span> &gt;&gt; /etc/modprobe.d/loop.conf</span><br><span class="line">modprobe loop</span><br><span class="line"></span><br><span class="line"><span class="comment"># 卸载模块</span></span><br><span class="line">modprobe -r loop <span class="comment"># 推荐</span></span><br><span class="line">rmmod loop</span><br></pre></td></tr></table></figure>
-
-<p><strong>mod参数调整</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">1.在子配置文件中直接修改然后重新加载</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;options loop max_loop=8&quot;</span> &gt;&gt; /etc/modprobe.d/loop.conf</span><br><span class="line">rmmod loop</span><br><span class="line">modprobe loop</span><br><span class="line"></span><br><span class="line">2.修改/sys/module中的参数（临时）</span><br><span class="line"><span class="built_in">cat</span> /sys/module/loop/parameters/max_loop</span><br><span class="line">8</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;1&quot;</span> &gt; /sys/module/loop/parameters/max_loop</span><br><span class="line"></span><br><span class="line">3.加载模块时直接指定（临时）</span><br><span class="line">rmmod loop</span><br><span class="line">modprobe loop max_loop=5</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
         <div class="license-wrapper">
             <p>原文作者：<a href="https://akemi.zj.cn">王盛</a>
-            <p>原文链接：<a href="https://akemi.zj.cn/2025/04/24/Linux-Module/">https://akemi.zj.cn/2025/04/24/Linux-Module/</a>
-            <p>发表日期：<a href="https://akemi.zj.cn/2025/04/24/Linux-Module/">April 24th 2025, 11:26:53 am</a>
-            <p>更新日期：<a href="https://akemi.zj.cn/2025/04/24/Linux-Module/">April 24th 2025, 12:49:12 pm</a>
+            <p>原文链接：<a href="https://akemi.zj.cn/2025/06/16/ESXi-VCSA-HA/">https://akemi.zj.cn/2025/06/16/ESXi-VCSA-HA/</a>
+            <p>发表日期：<a href="https://akemi.zj.cn/2025/06/16/ESXi-VCSA-HA/">June 16th 2025, 6:27:44 pm</a>
+            <p>更新日期：<a href="https://akemi.zj.cn/2025/06/16/ESXi-VCSA-HA/">June 16th 2025, 6:29:31 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -643,17 +551,12 @@
     <ul class="post-paginator">
         <li class="next">
             
-                <div class="nextSlogan">Next Post</div>
-                <a href="/2025/04/25/Linux-cgroup/" title="资源限制ulimit/systemd-cgroupv1/v2">
-                    <div class="nextTitle">资源限制ulimit/systemd-cgroupv1/v2</div>
-                </a>
-            
         </li>
         <li class="previous">
             
                 <div class="prevSlogan">Previous Post</div>
-                <a href="/2025/04/23/Monitor-dmesg/" title="内核监控dmesg/lstopo/lshw">
-                    <div class="prevTitle">内核监控dmesg/lstopo/lshw</div>
+                <a href="/2025/06/13/Helm-template-bug/" title="Helm渲染顺序bug">
+                    <div class="prevTitle">Helm渲染顺序bug</div>
                 </a>
             
         </li>
@@ -772,7 +675,7 @@
                 <div class="toc-catalog">
                     <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
                 </div>
-                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#proc%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-number">1.</span> <span class="toc-text">&#x2F;proc文件系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#proc-sys-%E5%AE%9E%E6%97%B6%E5%86%85%E6%A0%B8%E8%B0%83%E4%BC%98"><span class="toc-number">2.</span> <span class="toc-text">&#x2F;proc&#x2F;sys&#x2F;实时内核调优</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8F%82%E6%95%B0sysctl"><span class="toc-number">3.</span> <span class="toc-text">修改内核参数sysctl</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sys%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-number">4.</span> <span class="toc-text">&#x2F;sys文件系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A0%E8%BD%BD%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97modprobe"><span class="toc-number">5.</span> <span class="toc-text">加载内核模块modprobe</span></a></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%81%E7%A7%BB%EF%BC%88%E9%9D%9E%E9%9B%86%E7%BE%A4%E7%89%B9%E6%80%A7%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">迁移（非集群特性）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0vMotion%E7%BD%91%E7%BB%9C%EF%BC%88%E8%BF%81%E7%A7%BB%E7%BD%91%E7%BB%9C%EF%BC%89"><span class="toc-number">1.1.</span> <span class="toc-text">添加vMotion网络（迁移网络）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%85%E6%9B%B4%E6%94%B9%E5%AD%98%E5%82%A8"><span class="toc-number">1.2.</span> <span class="toc-text">仅更改存储</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%85%E6%9B%B4%E6%94%B9%E8%AE%A1%E7%AE%97%E8%B5%84%E6%BA%90"><span class="toc-number">1.3.</span> <span class="toc-text">仅更改计算资源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%B4%E6%8A%A4%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.4.</span> <span class="toc-text">维护模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DRS%E5%8A%A8%E6%80%81%E8%B5%84%E6%BA%90%E8%B0%83%E9%85%8D"><span class="toc-number">2.</span> <span class="toc-text">DRS动态资源调配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HA"><span class="toc-number">3.</span> <span class="toc-text">HA</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95HA"><span class="toc-number">3.1.</span> <span class="toc-text">测试HA</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%8D%E6%AC%A1%E6%B5%8B%E8%AF%95HA"><span class="toc-number">3.2.</span> <span class="toc-text">再次测试HA</span></a></li></ol></li></ol>
             </div>
         
         <!-- sidebar -->
