@@ -19,24 +19,27 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="其实之前已经学过ceph了，但是很多都忘了，现在学红帽ceph，再对原本的笔记做一下精简与补充 ceph关键组件 Monitor（MON）Ceph Monitors是维护集群映射的守护进程。集群映射是五个映射的集合，其中包含关于集群状态及其配置的信息 Monitor需要奇数个Monitor来配置ceph集群，因为会需要仲裁 Ceph Object Storage Devices（OSD）OSD是C">
+    <meta name="description" content="Ceph通过CRUSH放置算法，来计算哪些OSD应该保存哪些对象，对象是放到PG中，而CRUSH决定这些PG应该放在哪些OSD中， CRUSH算法与对象放置策略CRUSH算法CRUSH算法使Ceph客户端可以直接与OSD通信：Ceph客户端与osd使用CRUSH算法来有效计算关于对象位置的信息，而不是依赖于中央查找表，避免了单点故障和性能瓶颈 作用：在对象存储中均匀分布数据、管理复制、响应系统增长">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ceph组件">
-<meta property="og:url" content="https://akemi.zj.cn/2025/06/23/Ceph-RHCA-Component/index.html">
+<meta property="og:title" content="管理Ceph的StorageMap--CRUSH MAP与OSD MAP">
+<meta property="og:url" content="https://akemi.zj.cn/2025/07/04/Ceph-StorageMap/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="其实之前已经学过ceph了，但是很多都忘了，现在学红帽ceph，再对原本的笔记做一下精简与补充 ceph关键组件 Monitor（MON）Ceph Monitors是维护集群映射的守护进程。集群映射是五个映射的集合，其中包含关于集群状态及其配置的信息 Monitor需要奇数个Monitor来配置ceph集群，因为会需要仲裁 Ceph Object Storage Devices（OSD）OSD是C">
+<meta property="og:description" content="Ceph通过CRUSH放置算法，来计算哪些OSD应该保存哪些对象，对象是放到PG中，而CRUSH决定这些PG应该放在哪些OSD中， CRUSH算法与对象放置策略CRUSH算法CRUSH算法使Ceph客户端可以直接与OSD通信：Ceph客户端与osd使用CRUSH算法来有效计算关于对象位置的信息，而不是依赖于中央查找表，避免了单点故障和性能瓶颈 作用：在对象存储中均匀分布数据、管理复制、响应系统增长">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250617182523184.png">
-<meta property="article:published_time" content="2025-06-23T12:35:29.000Z">
-<meta property="article:modified_time" content="2025-06-23T12:36:24.889Z">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132355504.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132412240.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132523343.png">
+<meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132535755.png">
+<meta property="article:published_time" content="2025-07-04T11:00:38.000Z">
+<meta property="article:modified_time" content="2025-07-04T11:05:35.937Z">
 <meta property="article:author" content="王盛">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250617182523184.png">
+<meta name="twitter:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132355504.png">
     <meta http-equiv="Cache-control" content="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link rel="icon" href="/assets/akemi.ico">
     
-    <title>Ceph组件 · Akemi</title>
+    <title>管理Ceph的StorageMap--CRUSH MAP与OSD MAP · Akemi</title>
     <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
 /* This file is meant as a standalone workflow for
 - testing support for link[rel=preload]
@@ -261,7 +264,7 @@
                 <a href="/">Akemi</a>
             </div>
             <div class="post-title header-element">
-                <a href="#" class="post-name">Ceph组件</a>
+                <a href="#" class="post-name">管理Ceph的StorageMap--CRUSH MAP与OSD MAP</a>
             </div>
         </div>
     
@@ -307,7 +310,7 @@
         <h1 class="intro-title">
             <!-- 主页  -->
             
-                Ceph组件
+                管理Ceph的StorageMap--CRUSH MAP与OSD MAP
             <!-- 404 -->
             
         </h1>
@@ -335,7 +338,7 @@
                 <div class="post-intro-meta">
                     <!-- 撰写日期 -->
                     <span class="iconfont-archer post-intro-calander">&#xe676;</span>
-                    <span class="post-intro-time">2025/06/23</span>
+                    <span class="post-intro-time">2025/07/04</span>
                     <!-- busuanzi -->
                     
                         <span id="busuanzi_container_page_pv" class="busuanzi-pv">
@@ -490,60 +493,68 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <p>其实之前已经学过ceph了，但是很多都忘了，现在学红帽ceph，再对原本的笔记做一下精简与补充</p>
-<h2 id="ceph关键组件"><a href="#ceph关键组件" class="headerlink" title="ceph关键组件"></a>ceph关键组件</h2><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250617182523184.png"></p>
-<h3 id="Monitor（MON）"><a href="#Monitor（MON）" class="headerlink" title="Monitor（MON）"></a>Monitor（MON）</h3><p>Ceph Monitors是<strong>维护集群映射</strong>的守护进程。集群映射是五个映射的集合，其中包含关于集群状态及<br>其配置的信息</p>
-<p>Monitor需要奇数个Monitor来配置ceph集群，因为会需要仲裁</p>
-<h3 id="Ceph-Object-Storage-Devices（OSD）"><a href="#Ceph-Object-Storage-Devices（OSD）" class="headerlink" title="Ceph Object Storage Devices（OSD）"></a>Ceph Object Storage Devices（OSD）</h3><p>OSD是Ceph存储集群的<strong>底层块设备</strong>，一般认为一块磁盘就是一个OSD，比如sda sdb sdc。</p>
-<p>Ceph客户端和OSD守护进程都使用了<strong>CRUSH算法</strong>来高效地计算对象位置信息，而不是依赖于中央查找表。</p>
-<p>OSD也分Primary OSD与Secondary OSD，ceph客户端读写数据时，联系的都是主OSD，而Secondary OSD确保集群发生故障时能够正常恢复数据</p>
-<h3 id="CRUSH-Map"><a href="#CRUSH-Map" class="headerlink" title="CRUSH Map"></a>CRUSH Map</h3><p>将每个对象分配给了一个Placement Group <strong>PG。</strong>PG是对象和OSD的抽象层，对象在逻辑层面上存放在PG中，实际上是在OSD中</p>
-<p>CRUSH MAP使用伪随机算法将对象分布到PG中，并使用规则确定PG到OSD的映射，如果发生故障，ceph将PG重新映射到不同的OSD，并同步其内容</p>
-<h3 id="Ceph-Managers（MGR）"><a href="#Ceph-Managers（MGR）" class="headerlink" title="Ceph Managers（MGR）"></a>Ceph Managers（MGR）</h3><p>提供一组集群的统计信息，其实就是一个web界面，并且支持API来暴露ceph的信息 </p>
-<h3 id="Ceph-Metadata-Server（MDS）"><a href="#Ceph-Metadata-Server（MDS）" class="headerlink" title="Ceph Metadata Server（MDS）"></a>Ceph Metadata Server（MDS）</h3><p>元数据服务器，只有cephfs用这玩意，因为ceph底层是对象存储，MDS就负责让ceph对象存储与cephfs客户端之间的通信</p>
-<h3 id="Ceph-Cluster-Map集群映射"><a href="#Ceph-Cluster-Map集群映射" class="headerlink" title="Ceph Cluster Map集群映射"></a>Ceph Cluster Map集群映射</h3><p>MON负责维护集群信息，这其中就包含了五个map</p>
-<ul>
-<li><strong>Monitor Map</strong></li>
-</ul>
-<p>包含了集群ID，每个Monitor的位置、地址、端口，映射时间戳。fsid是唯一自动生成的UUID，用来标识Ceph集群<br>使用Ceph mon dump可以查看Monitor Map</p>
-<ul>
-<li><strong>OSD map</strong></li>
-</ul>
-<p>包含集群fsid，pool列表，replica大小，PG数量，OSD列表和状态，map时间戳</p>
-<p>使用ceph osd dump可以查看</p>
-<ul>
-<li><strong>PG map</strong></li>
-</ul>
-<p>包含PG版本，完整比率，PG的ID，up Set，Acting Set，PG状态，每个pool使用情况信息，map时间戳</p>
-<p>使用ceph pg dump可以查看</p>
-<ul>
-<li><strong>CRUSH Map</strong></li>
-</ul>
-<p>包含存储设备的列表，故障域层次结构列表</p>
-<p>使用ceph osd crush dump可以查看</p>
-<ul>
-<li>MDS Map</li>
-</ul>
-<p>包含存储元数据的pool，MDS列表和时间戳</p>
-<p>使用ceph fs dump查看MDS map</p>
-<h2 id="ceph访问方式"><a href="#ceph访问方式" class="headerlink" title="ceph访问方式"></a>ceph访问方式</h2><p>ceph本质上是对象存储，但是它做底层做了开发，使其可以提供多种存储</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">ceph提供了多种方式访问ceph集群：</span><br><span class="line">1.Ceph Native API(librados)</span><br><span class="line">一般都是做了二次开发，直接访问librados的方式来提供存储</span><br><span class="line">librados是一个原生C库，允许应用程序直接使用RADOS访问Ceph集群存储的对象</span><br><span class="line"></span><br><span class="line">2.Ceph Block Device(RBD)</span><br><span class="line">块存储</span><br><span class="line">支持linux挂载，QEMU、KVM等虚拟技术支持</span><br><span class="line"></span><br><span class="line">3.Ceph Object Gateway(librgw)</span><br><span class="line">ceph对象存储网关</span><br><span class="line">主要用于镜像存储、备份服务、文件存储和共享</span><br><span class="line"></span><br><span class="line">4.Ceph File System(CephFS)</span><br><span class="line">提供可伸缩的的共享磁盘</span><br><span class="line">需要MDS来管理和存储cephfs中相关的元数据</span><br></pre></td></tr></table></figure>
+        <p>Ceph通过CRUSH放置算法，来计算哪些OSD应该保存哪些对象，对象是放到PG中，而CRUSH决定这些PG应该放在哪些OSD中，</p>
+<h1 id="CRUSH算法与对象放置策略"><a href="#CRUSH算法与对象放置策略" class="headerlink" title="CRUSH算法与对象放置策略"></a>CRUSH算法与对象放置策略</h1><h2 id="CRUSH算法"><a href="#CRUSH算法" class="headerlink" title="CRUSH算法"></a>CRUSH算法</h2><p>CRUSH算法使Ceph客户端可以直接与OSD通信：Ceph客户端与osd使用CRUSH算法来有效计算关于对象位置的信息，而不是依赖于中央查找表，避免了单点故障和性能瓶颈</p>
+<p>作用：在对象存储中均匀分布数据、管理复制、响应系统增长和硬件故障</p>
+<p>当新增OSD或已有OSD或OSD主机故障时，Ceph使用CRUSH来重新平衡集群中活动OSDs之间的对象。</p>
+<h2 id="CRUSH映射组件"><a href="#CRUSH映射组件" class="headerlink" title="CRUSH映射组件"></a>CRUSH映射组件</h2><p>一个CRUSH映射包含两个组件，整个集群只有一份CRUSH Map，不同pool可以使用不同Rule</p>
+<p><strong>CRUSH hierarchy层次结构</strong></p>
+<p>通常用于表示osd位置</p>
+<p>列出了所有可用的osd，并将它们组织成树状的桶结构</p>
+<p>默认情况下有一个根桶代表整个层次结构，下面每个主机对应一个主机桶</p>
+<p><strong>At least one CRUSH rule至少一个CRUSH规则</strong></p>
+<p>CRUSH规则决定了如何从这些桶中为PG分配osd，决定了PG的对象存储在哪里。不同的池可能使用不同的CRUSH规则</p>
+<p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132355504.png"><br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132412240.png"><br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132523343.png"><br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250704132535755.png"></p>
+<h2 id="CRUSH-桶类型"><a href="#CRUSH-桶类型" class="headerlink" title="CRUSH 桶类型"></a>CRUSH 桶类型</h2><p>对于大规模的安装，可以创建一个特定的层次结构来描述存储基础设施<br>比如：数据中心—机架—主机—OSD设备</p>
+<p>桶是CRUSH层次结构中的容器或分支。设备是osd，是CRUSH层次结构中的叶子。</p>
+<p><strong>桶属性</strong></p>
+<p><strong>1.桶ID为负数，便于和存储设备区分ID</strong></p>
+<p><strong>2.桶名称</strong></p>
+<p><strong>3.桶类型<br>默认的映射定义了几种类型。比如：根root、区域region、数据中心dc、房间、pod、pdu、行、机架、机箱、主机<br>也可以添加自定义类型</strong></p>
+<p><strong>4.算法<br>当PG副本映射到osd时，ceph用来选择桶内项目的算法。有几种可用的算法：uniform、list、tree、straw2，默认为straw2</strong></p>
+<h2 id="自定义故障域与性能域"><a href="#自定义故障域与性能域" class="headerlink" title="自定义故障域与性能域"></a>自定义故障域与性能域</h2><p>CRUSH映射是CRUSH算法的中心配置机制，可以通过编辑此映射来影响数据放置和自定义CRUSH算法</p>
+<p><strong>创建独立的故障域</strong>允许OSD和集群节点在不发生数据丢失的情况下发生故障，集群会进入降级状态下运行，直到问题解决</p>
+<p><strong>创建独立的性能域</strong>可以减少ceph客户端和应用程序的性能瓶颈</p>
+<p>定制CRUSH映射的一个经典用例是针对硬件故障做额外的保护：缺省情况下，CRUSH算法将复制的对象放在不同主机的OSD上</p>
+<h1 id="自定义OSD-CRUSH设置"><a href="#自定义OSD-CRUSH设置" class="headerlink" title="自定义OSD CRUSH设置"></a>自定义OSD CRUSH设置</h1><p>CRUSH映射包含了存储设备的列表，对每个存储设备，可获取的信息包括：<br><strong>1.存储设备ID<br>2.存储设备<br>3.存储设备的权重，通常以TB为单位，比如4TB的权重约为4.0。以确保对象的均匀分布</strong></p>
+<p><code>ceph OSD crush reweight</code>可以设置OSD的权重，但不推荐修改</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">class反应了设备的类型，比如hdd,ssd,NVMe ssd等</span><br><span class="line"></span><br><span class="line">查看当前crush层级</span><br><span class="line">ceph osd crush tree</span><br><span class="line">ID  CLASS  WEIGHT   TYPE NAME</span><br><span class="line">-1         0.52734  root default</span><br><span class="line">-5         0.17578      host cephadm-1</span><br><span class="line"> 4    hdd  0.05859          osd.4</span><br><span class="line"> 6    hdd  0.05859          osd.6</span><br><span class="line"> 8    hdd  0.05859          osd.8</span><br><span class="line">-7         0.17578      host cephadm-2</span><br><span class="line"> 3    hdd  0.05859          osd.3</span><br><span class="line"> 5    hdd  0.05859          osd.5</span><br><span class="line"> 7    hdd  0.05859          osd.7</span><br><span class="line">-3         0.17578      host cephadm-3</span><br><span class="line"> 0    hdd  0.05859          osd.0</span><br><span class="line"> 1    hdd  0.05859          osd.1</span><br><span class="line"> 2    hdd  0.05859          osd.2</span><br></pre></td></tr></table></figure>
 
-<h2 id="ceph数据分发组件"><a href="#ceph数据分发组件" class="headerlink" title="ceph数据分发组件"></a>ceph数据分发组件</h2><h3 id="Pool存储池"><a href="#Pool存储池" class="headerlink" title="Pool存储池"></a>Pool存储池</h3><p>osd是用来存放数据的，pool是Ceph存储集群中用于存储对象的逻辑分区</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">属性：</span><br><span class="line">1.唯一且无法更改的ID</span><br><span class="line">2.名字</span><br><span class="line">3.分发对象到OSD的PG数量</span><br><span class="line">4.确定pool的PG的CRUSH规则</span><br><span class="line">5.保护类型(replicated副本/erasure coding纠错码)</span><br><span class="line">6.保护类型相关参数</span><br><span class="line">7.其他集群参数</span><br></pre></td></tr></table></figure>
+<h2 id="使用CRUSH-RULE规则"><a href="#使用CRUSH-RULE规则" class="headerlink" title="使用CRUSH RULE规则"></a>使用CRUSH RULE规则</h2><p>CRUSH Map包含多个CRUSH Rule（规则集），决定了如何将PG映射到OSD中存储对象副本</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">ceph osd crush rule <span class="built_in">ls</span></span><br><span class="line">replicated_rule</span><br><span class="line">ceph osd crush rule dump replicated_rule <span class="comment"># 详细信息</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;rule_id&quot;</span>: 0,</span><br><span class="line">    <span class="string">&quot;rule_name&quot;</span>: <span class="string">&quot;replicated_rule&quot;</span>,</span><br><span class="line">    <span class="string">&quot;type&quot;</span>: 1,</span><br><span class="line">    <span class="string">&quot;steps&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;op&quot;</span>: <span class="string">&quot;take&quot;</span>,</span><br><span class="line">            <span class="string">&quot;item&quot;</span>: -1,</span><br><span class="line">            <span class="string">&quot;item_name&quot;</span>: <span class="string">&quot;default&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;op&quot;</span>: <span class="string">&quot;chooseleaf_firstn&quot;</span>,</span><br><span class="line">            <span class="string">&quot;num&quot;</span>: 0,</span><br><span class="line">            <span class="string">&quot;type&quot;</span>: <span class="string">&quot;host&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;op&quot;</span>: <span class="string">&quot;emit&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">或者</span><br><span class="line">ceph osd getcurshmap -o ./map.bin</span><br><span class="line">crushtool -d ./map.bin -o ./map.txt</span><br><span class="line"><span class="built_in">cat</span> map.txt</span><br><span class="line">...</span><br><span class="line"><span class="comment"># rules</span></span><br><span class="line">rule replicated_rule &#123;</span><br><span class="line">        <span class="built_in">id</span> 0</span><br><span class="line">        <span class="built_in">type</span> replicated</span><br><span class="line">        step take default</span><br><span class="line">        step chooseleaf firstn 0 <span class="built_in">type</span> host</span><br><span class="line">        step emit</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h3><p>数据在逻辑上存放的位置，PG记录了数据实际上存放在OSD上的映射<br>略</p>
-<h3 id="集群映射Cluster-Map"><a href="#集群映射Cluster-Map" class="headerlink" title="集群映射Cluster Map"></a>集群映射Cluster Map</h3><p>ceph客户端从MON获取最新的Cluster Map副本，Cluster Map为客户端提供了所有集群中MON OSD和MDS的信息，但不提供访问对象的位置<br>Ceph客户端使用CRUSH算法确定哪些osd负责PG</p>
-<h3 id="数据保护"><a href="#数据保护" class="headerlink" title="数据保护"></a>数据保护</h3><p>提供两种数据保护方式，一种就是副本，一种是与RAID相同的纠错码<br>一般来说3副本，略</p>
+<p><strong>CRUSH规则的属性</strong></p>
+<p><strong>1.rule_name规则的名称，使用ceph osd pool create时，会指定规则的名称<br>2.rule_id规则的ID，有些命令会使用规则的ID而不是名称<br>3.min_size如果生成的副本少于这个数，则CRUSH不选择此规则<br>4.max_size如果生产的副本多于这个数，则CRUSH不选择此规则<br>5.step take从这个桶开始迭代，这里是default，一般不会设定为根桶<br>6.step chooseleaf以这个桶作为最小单位来划分，这里是host主机桶<br>(1)如果三副本的池，那就需要3个主机桶，这三个主机桶中分别找三个OSD<br>(2)如果firstn后是0，则池中有多少副本就选多少桶<br>(3)如果firstn大于0且小于副本数，那就需要额外的步骤来定义规则，来存放多出来的副本</strong></p>
+<h2 id="使用CRUSH-MAP映射"><a href="#使用CRUSH-MAP映射" class="headerlink" title="使用CRUSH MAP映射"></a>使用CRUSH MAP映射</h2><p><strong>使用ceph命令自定义CRUSH MAP</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">创建桶的命令格式:</span><br><span class="line">ceph osd crush add-bucket &lt;name&gt; &lt;<span class="built_in">type</span>&gt;</span><br><span class="line">name名字</span><br><span class="line"><span class="built_in">type</span>桶类型</span><br><span class="line"></span><br><span class="line">创建三个桶，一个dc类型的，两个rack类型的</span><br><span class="line">ceph osd crush add-bucket DC1 datacenter</span><br><span class="line">ceph osd crush add-bucket rackA1 rack</span><br><span class="line">ceph osd crush add-bucket rackB1 rack</span><br><span class="line"></span><br><span class="line">重新组织树的命令格式：</span><br><span class="line">ceph osd crush move &lt;name&gt; &lt;<span class="built_in">type</span>&gt;=&lt;上级桶的名称&gt;</span><br><span class="line"></span><br><span class="line">两个机架桶挂载到数据中心桶上，并将数据中心桶挂载到default根桶上</span><br><span class="line">ceph osd crush move rackA1 datacenter=DC1</span><br><span class="line">ceph osd crush move rackB1 datacenter=DC1</span><br><span class="line">ceph osd crush move DC1 root=default</span><br></pre></td></tr></table></figure>
 
+<p><strong>设置OSD位置</strong></p>
+<p>自定义了层次结构之后，就要加入OSD作为leaf来存放数据</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">OSD的位置是一个字符串，记录了从根开始完整的路径</span><br><span class="line">和linux的绝对路径差不多</span><br><span class="line">root=default datacenter=DC1 rack=rackA1</span><br><span class="line"></span><br><span class="line">当Ceph启动时，使用Ceph-crush-location utility自动验证每个OSD</span><br><span class="line">是否在正确的crush位置，如果不在映射中的预期位置，会自动移动到默认的</span><br><span class="line">root=default host=hostname下</span><br><span class="line"></span><br><span class="line">命令行配置crush_location参数（推荐）</span><br><span class="line">ceph orch daemon reconfig osd.0 --crush-location <span class="string">&#x27;root=default,datacenter=DC1&#x27;</span></span><br><span class="line">或者</span><br><span class="line">ceph osd crush <span class="built_in">set</span> osd.0 1.0 root=default datacenter=DC1 rack=rackA1 host=&lt;主机名&gt;</span><br><span class="line"></span><br><span class="line">/etc/ceph/ceph.conf配置文件中，配置crush_location参数（不推荐）</span><br><span class="line">[osd.0]</span><br><span class="line">crush_location = root=default datacenter=DC1 rack=rackA1</span><br><span class="line">[osd.1]</span><br><span class="line">crush_location = root=default datacenter=DC1 rack=rackB1</span><br></pre></td></tr></table></figure>
+
+<h2 id="给CRUSH-MAP添加规则"><a href="#给CRUSH-MAP添加规则" class="headerlink" title="给CRUSH MAP添加规则"></a><strong>给CRUSH MAP添加规则</strong></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">创建新的CRUSH规则</span><br><span class="line">ceph osd crush rule create-replicated &lt;rule-name&gt; &lt;root&gt; \</span><br><span class="line">&lt;failure-domain-type&gt; [class]</span><br><span class="line"></span><br><span class="line">rule-name规则名称</span><br><span class="line">root起始桶</span><br><span class="line">failure-domain-type故障域类型（确保副本分布在不同故障域中）</span><br><span class="line">class要使用的设备的类，可选，如hdd ssd</span><br><span class="line"></span><br><span class="line">ceph osd crush rule create-replicated inDC2 DC2 rack</span><br><span class="line">ceph osd crush rule <span class="built_in">ls</span></span><br><span class="line">表示</span><br><span class="line"></span><br><span class="line">使用新的CRUSH规则</span><br><span class="line">ceph osd pool create mypool 128 128 inDC2</span><br></pre></td></tr></table></figure>
+
+<h1 id="PG优化"><a href="#PG优化" class="headerlink" title="PG优化"></a>PG优化</h1><p><strong>一般不会做</strong></p>
+<p>在集群生命周期中，pg的数量必须随着集群布局的变化而调整。CRUSH尝试确保池中osd之间的对象均匀分布，但是存在pg变得不平衡的情况。</p>
+<p>数量或者体积大的对象，都会导致PG对象分布不平衡</p>
+<p>红帽建议每个OSD中创建100~200个PG</p>
+<p><strong>PG数量计算</strong></p>
+<p>对于单池的集群，可以使用以下公式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">120个OSD，3副本池，目标每个OSD承载100个PG</span><br><span class="line"></span><br><span class="line">(120 OSD × 100 PG/OSD) / 3 副本 = 4000</span><br></pre></td></tr></table></figure>
+
+<h1 id="管理OSD-MAP"><a href="#管理OSD-MAP" class="headerlink" title="管理OSD MAP"></a>管理OSD MAP</h1><p>集群OSD映射中包含了每个OSD的地址、状态、池列表和详细信息，以及OSD临近容量限制信息等</p>
+<p>每次OSD加入或退出集群时，ceph都会更新OSD映射，OSD退出集群的原因包括<strong>OSD故障或者硬件故障</strong></p>
+<p>不使用leader，OSD之间互相传播映射，标记他们与OSD map epoch交换的每个消息，当检测到自己落后时，就会进行更新</p>
+<p>使用epoch标记与更新OSD信息，与ceph客户端连接时，也会给ceph客户端进行更新增量</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">ceph osd dump</span><br><span class="line">ompat_client luminous</span><br><span class="line">require_osd_release quincy</span><br><span class="line">stretch_mode_enabled <span class="literal">false</span></span><br><span class="line">pool 1 <span class="string">&#x27;.rgw.root&#x27;</span> replicated size 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 51 lfor 0/0/23 flags hashpspool stripe_width 0 application rgw</span><br><span class="line">pool 2 <span class="string">&#x27;default.rgw.log&#x27;</span> replicated size 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 51 lfor 0/0/23 flags hashpspool stripe_width 0 application rgw</span><br><span class="line">pool 3 <span class="string">&#x27;.mgr&#x27;</span> replicated size 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 1 pgp_num 1 autoscale_mode on last_change 20 flags hashpspool stripe_width 0 pg_num_max 32 pg_num_min 1 application mgr</span><br><span class="line">pool 4 <span class="string">&#x27;default.rgw.control&#x27;</span> replicated size 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 57 lfor 0/0/54 flags hashpspool stripe_width 0 application rgw</span><br><span class="line">pool 5 <span class="string">&#x27;default.rgw.meta&#x27;</span> replicated si</span><br><span class="line">min_cze 3 min_size 2 crush_rule 0 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 57 lfor 0/0/55 flags hashpspool stripe_width 0 pg_autoscale_bias 4 application rgw</span><br><span class="line">max_osd 9</span><br><span class="line">osd.0 up   <span class="keyword">in</span>  weight 1 up_from 12 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.143:6800/2523430589,v1:192.168.10.143:6801/2523430589] [v2:192.168.10.143:6802/2523430589,v1:192.168.10.143:6803/2523430589] exists,up f6177fb9-920a-4fe3-a739-4d607bd567de</span><br><span class="line">osd.1 up   <span class="keyword">in</span>  weight 1 up_from 14 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.143:6808/1943165126,v1:192.168.10.143:6809/1943165126] [v2:192.168.10.143:6810/1943165126,v1:192.168.10.143:6811/1943165126] exists,up aa74b56a-0307-458b-8016-d98563f08798</span><br><span class="line">osd.2 up   <span class="keyword">in</span>  weight 1 up_from 16 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.143:6816/1907316690,v1:192.168.10.143:6817/1907316690] [v2:192.168.10.143:6818/1907316690,v1:192.168.10.143:6819/1907316690] exists,up 20144dcf-136a-49e6-ba1b-b6e10975024b</span><br><span class="line">osd.3 up   <span class="keyword">in</span>  weight 1 up_from 37 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.142:6800/3086155865,v1:192.168.10.142:6801/3086155865] [v2:192.168.10.142:6802/3086155865,v1:192.168.10.142:6803/3086155865] exists,up af6bed47-8287-43a8-a7ba-8e927bda1e58</span><br><span class="line">osd.4 up   <span class="keyword">in</span>  weight 1 up_from 37 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.141:6800/352319272,v1:192.168.10.141:6801/352319272] [v2:192.168.10.141:6802/352319272,v1:192.168.10.141:6803/352319272] exists,up 155a4723-e4ce-4e5a-9791-85f8d84a3a3c</span><br><span class="line">osd.5 up   <span class="keyword">in</span>  weight 1 up_from 40 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.142:6808/1669659193,v1:192.168.10.142:6809/1669659193] [v2:192.168.10.142:6810/1669659193,v1:192.168.10.142:6811/1669659193] exists,up 0b74231f-8c31-40c7-92fe-51b995a82446</span><br><span class="line">osd.6 up   <span class="keyword">in</span>  weight 1 up_from 40 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.141:6808/2374217427,v1:192.168.10.141:6809/2374217427] [v2:192.168.10.141:6810/2374217427,v1:192.168.10.141:6811/2374217427] exists,up cd382a85-1b85-406c-a792-8a2bf1b29b3a</span><br><span class="line">osd.7 up   <span class="keyword">in</span>  weight 1 up_from 43 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.142:6816/2034759112,v1:192.168.10.142:6817/2034759112] [v2:192.168.10.142:6818/2034759112,v1:192.168.10.142:6819/2034759112] exists,up 7417a159-b3a0-4995-b39b-4fd0648c33ee</span><br><span class="line">osd.8 up   <span class="keyword">in</span>  weight 1 up_from 43 up_thru 116 down_at 0 last_clean_interval [0,0) [v2:192.168.10.141:6816/3067034779,v1:192.168.10.141:6817/3067034779] [v2:192.168.10.141:6818/3067034779,v1:192.168.10.141:6819/3067034779] exists,up 1cfdad67-9201-462f-9fb4-3e0665d4a059</span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
         <div class="license-wrapper">
             <p>原文作者：<a href="https://akemi.zj.cn">王盛</a>
-            <p>原文链接：<a href="https://akemi.zj.cn/2025/06/23/Ceph-RHCA-Component/">https://akemi.zj.cn/2025/06/23/Ceph-RHCA-Component/</a>
-            <p>发表日期：<a href="https://akemi.zj.cn/2025/06/23/Ceph-RHCA-Component/">June 23rd 2025, 8:35:29 pm</a>
-            <p>更新日期：<a href="https://akemi.zj.cn/2025/06/23/Ceph-RHCA-Component/">June 23rd 2025, 8:36:24 pm</a>
+            <p>原文链接：<a href="https://akemi.zj.cn/2025/07/04/Ceph-StorageMap/">https://akemi.zj.cn/2025/07/04/Ceph-StorageMap/</a>
+            <p>发表日期：<a href="https://akemi.zj.cn/2025/07/04/Ceph-StorageMap/">July 4th 2025, 7:00:38 pm</a>
+            <p>更新日期：<a href="https://akemi.zj.cn/2025/07/04/Ceph-StorageMap/">July 4th 2025, 7:05:35 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -551,17 +562,12 @@
     <ul class="post-paginator">
         <li class="next">
             
-                <div class="nextSlogan">Next Post</div>
-                <a href="/2025/06/25/Helm-lables-bug/" title="Helm labels渲染bug">
-                    <div class="nextTitle">Helm labels渲染bug</div>
-                </a>
-            
         </li>
         <li class="previous">
             
                 <div class="prevSlogan">Previous Post</div>
-                <a href="/2025/06/20/K8s-IPchange-Single/" title="使用kubeadm的k8s IP地址改变-单主节点集群">
-                    <div class="prevTitle">使用kubeadm的k8s IP地址改变-单主节点集群</div>
+                <a href="/2025/07/03/Ceph-Auth/" title="Ceph用户认证">
+                    <div class="prevTitle">Ceph用户认证</div>
                 </a>
             
         </li>
@@ -680,7 +686,7 @@
                 <div class="toc-catalog">
                     <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
                 </div>
-                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph%E5%85%B3%E9%94%AE%E7%BB%84%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">ceph关键组件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Monitor%EF%BC%88MON%EF%BC%89"><span class="toc-number">1.1.</span> <span class="toc-text">Monitor（MON）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ceph-Object-Storage-Devices%EF%BC%88OSD%EF%BC%89"><span class="toc-number">1.2.</span> <span class="toc-text">Ceph Object Storage Devices（OSD）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CRUSH-Map"><span class="toc-number">1.3.</span> <span class="toc-text">CRUSH Map</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ceph-Managers%EF%BC%88MGR%EF%BC%89"><span class="toc-number">1.4.</span> <span class="toc-text">Ceph Managers（MGR）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ceph-Metadata-Server%EF%BC%88MDS%EF%BC%89"><span class="toc-number">1.5.</span> <span class="toc-text">Ceph Metadata Server（MDS）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ceph-Cluster-Map%E9%9B%86%E7%BE%A4%E6%98%A0%E5%B0%84"><span class="toc-number">1.6.</span> <span class="toc-text">Ceph Cluster Map集群映射</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">ceph访问方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ceph%E6%95%B0%E6%8D%AE%E5%88%86%E5%8F%91%E7%BB%84%E4%BB%B6"><span class="toc-number">3.</span> <span class="toc-text">ceph数据分发组件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Pool%E5%AD%98%E5%82%A8%E6%B1%A0"><span class="toc-number">3.1.</span> <span class="toc-text">Pool存储池</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#PG"><span class="toc-number">3.2.</span> <span class="toc-text">PG</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E6%98%A0%E5%B0%84Cluster-Map"><span class="toc-number">3.3.</span> <span class="toc-text">集群映射Cluster Map</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BF%9D%E6%8A%A4"><span class="toc-number">3.4.</span> <span class="toc-text">数据保护</span></a></li></ol></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CRUSH%E7%AE%97%E6%B3%95%E4%B8%8E%E5%AF%B9%E8%B1%A1%E6%94%BE%E7%BD%AE%E7%AD%96%E7%95%A5"><span class="toc-number">1.</span> <span class="toc-text">CRUSH算法与对象放置策略</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CRUSH%E7%AE%97%E6%B3%95"><span class="toc-number">1.1.</span> <span class="toc-text">CRUSH算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CRUSH%E6%98%A0%E5%B0%84%E7%BB%84%E4%BB%B6"><span class="toc-number">1.2.</span> <span class="toc-text">CRUSH映射组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CRUSH-%E6%A1%B6%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.3.</span> <span class="toc-text">CRUSH 桶类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%95%85%E9%9A%9C%E5%9F%9F%E4%B8%8E%E6%80%A7%E8%83%BD%E5%9F%9F"><span class="toc-number">1.4.</span> <span class="toc-text">自定义故障域与性能域</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89OSD-CRUSH%E8%AE%BE%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">自定义OSD CRUSH设置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8CRUSH-RULE%E8%A7%84%E5%88%99"><span class="toc-number">2.1.</span> <span class="toc-text">使用CRUSH RULE规则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8CRUSH-MAP%E6%98%A0%E5%B0%84"><span class="toc-number">2.2.</span> <span class="toc-text">使用CRUSH MAP映射</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%99CRUSH-MAP%E6%B7%BB%E5%8A%A0%E8%A7%84%E5%88%99"><span class="toc-number">2.3.</span> <span class="toc-text">给CRUSH MAP添加规则</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PG%E4%BC%98%E5%8C%96"><span class="toc-number">3.</span> <span class="toc-text">PG优化</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%A1%E7%90%86OSD-MAP"><span class="toc-number">4.</span> <span class="toc-text">管理OSD MAP</span></a></li></ol>
             </div>
         
         <!-- sidebar -->
@@ -1879,7 +1885,32 @@
         
         
         
+        
+        
+        
+        
+        
     
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -4898,7 +4929,7 @@
     
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 237
+        Total : 238
         </div>
         <!-- search  -->
         
@@ -4912,6 +4943,12 @@
             <div class="archive-year"> 2025 </div>
             <ul class="year-list">
             
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">07/04</span>
+            <a class="archive-post-title" href="/2025/07/04/Ceph-StorageMap/">管理Ceph的StorageMap--CRUSH MAP与OSD MAP</a>
+        </li>
+    
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/03</span>
@@ -4975,7 +5012,7 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">06/23</span>
-            <a class="archive-post-title" href="/2025/06/23/Ceph-RHCA-Component/">Ceph组件</a>
+            <a class="archive-post-title" href="/2025/06/23/Ceph-Component/">Ceph组件</a>
         </li>
     
         
@@ -5908,13 +5945,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
@@ -5926,13 +5963,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/10</span>
-            <a class="archive-post-title" href="/2024/09/10/MySQL-Mycat-HA/">Mycat与keepalived高可用</a>
+            <a class="archive-post-title" href="/2024/09/10/MySQL-Mycat/">Mycat部署与读写分离</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/10</span>
-            <a class="archive-post-title" href="/2024/09/10/MySQL-Mycat/">Mycat部署与读写分离</a>
+            <a class="archive-post-title" href="/2024/09/10/MySQL-Mycat-HA/">Mycat与keepalived高可用</a>
         </li>
     
         
