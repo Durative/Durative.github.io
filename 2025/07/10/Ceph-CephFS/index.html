@@ -21,20 +21,20 @@
     <meta name="description" content="">
     <meta name="description" content="ceph中强制要求data与metadata分开，创建CephFS需要一个data池与一个MDS元数据池 元数据服务器MDS为ceph客户端管理元数据 cephfs客户端访问osd的流程 1.cephfs客户端联系MON，验证和检索集群映射2.cephfs客户端向主MDS查询文件元数据3.cephfs客户端使用元数据直接与osd通信来访问对象 MDS特性 1.MDS ranks等级MDS级别定义了">
 <meta property="og:type" content="article">
-<meta property="og:title" content="部署CephFS与使用NFS-Ganesha挂载">
+<meta property="og:title" content="部署CephFS与挂载">
 <meta property="og:url" content="https://akemi.zj.cn/2025/07/10/Ceph-CephFS/index.html">
 <meta property="og:site_name" content="Akemi">
 <meta property="og:description" content="ceph中强制要求data与metadata分开，创建CephFS需要一个data池与一个MDS元数据池 元数据服务器MDS为ceph客户端管理元数据 cephfs客户端访问osd的流程 1.cephfs客户端联系MON，验证和检索集群映射2.cephfs客户端向主MDS查询文件元数据3.cephfs客户端使用元数据直接与osd通信来访问对象 MDS特性 1.MDS ranks等级MDS级别定义了">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-07-10T09:52:50.000Z">
-<meta property="article:modified_time" content="2025-07-10T09:54:01.195Z">
+<meta property="article:modified_time" content="2025-08-06T07:50:09.664Z">
 <meta property="article:author" content="王盛">
 <meta name="twitter:card" content="summary">
     <meta http-equiv="Cache-control" content="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link rel="icon" href="/assets/akemi.ico">
     
-    <title>部署CephFS与使用NFS-Ganesha挂载 · Akemi</title>
+    <title>部署CephFS与挂载 · Akemi</title>
     <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
 /* This file is meant as a standalone workflow for
 - testing support for link[rel=preload]
@@ -259,7 +259,7 @@
                 <a href="/">Akemi</a>
             </div>
             <div class="post-title header-element">
-                <a href="#" class="post-name">部署CephFS与使用NFS-Ganesha挂载</a>
+                <a href="#" class="post-name">部署CephFS与挂载</a>
             </div>
         </div>
     
@@ -305,7 +305,7 @@
         <h1 class="intro-title">
             <!-- 主页  -->
             
-                部署CephFS与使用NFS-Ganesha挂载
+                部署CephFS与挂载
             <!-- 404 -->
             
         </h1>
@@ -513,8 +513,6 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">命令格式</span><br><span class="line">mount -t ceph &lt;monitor_addresses&gt;:&lt;fs_path&gt; &lt;mount_point&gt; -o &lt;options&gt;</span><br><span class="line"></span><br><span class="line">-t ceph 声明文件系统类型</span><br><span class="line">monitor_addresses mon地址+端口，可写多个</span><br><span class="line">fs_path ceph文件系统路径</span><br><span class="line">mount_point 挂载本地路径</span><br><span class="line"></span><br><span class="line">可选options:</span><br><span class="line">name=name</span><br><span class="line">fs=fs-name</span><br><span class="line">secret=secret_value 即密钥</span><br><span class="line">secretfile=secret_key_file 即keyring文件</span><br><span class="line">rsize=bytes 最大可读字节</span><br><span class="line">wsize=bytes 最大可写字节</span><br><span class="line"></span><br><span class="line">1.创建cephfs的新用户</span><br><span class="line">格式:</span><br><span class="line">ceph fs authorize &lt;fs-name&gt; &lt;keyring-name&gt; &lt;path&gt; &lt;permission&gt;</span><br><span class="line"></span><br><span class="line">ceph fs authorize ws-cephfs client.cephfs / rwps</span><br><span class="line">[client.cephfs]</span><br><span class="line">        key = AQCoXG5o6SzNARAAY51PjUORXStYTrlFbE7VpA==</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;AQCoXG5o6SzNARAAY51PjUORXStYTrlFbE7VpA==&quot;</span> &gt; /etc/ceph/ceph.client.cephfs.keyring</span><br><span class="line"><span class="built_in">chmod</span> 600 /etc/ceph/ceph.client.cephfs.keyring</span><br><span class="line"></span><br><span class="line">2.进行挂载</span><br><span class="line"><span class="built_in">mkdir</span> /mnt/cephfs-data</span><br><span class="line">mount -t ceph \</span><br><span class="line">  cephadm-1:6789,cephadm-2:6789,cephadm-3:6789:/ \</span><br><span class="line">  /mnt/cephfs-data \</span><br><span class="line">  -o name=cephfs,secretfile=/etc/ceph/ceph.client.cephfs.keyring,_netdev,fs=ws-cephfs</span><br><span class="line">  </span><br><span class="line">3.验证</span><br><span class="line"><span class="built_in">df</span> -Th | grep ceph</span><br><span class="line">192.168.10.141:6789,192.168.10.142:6789,192.168.10.143:6789:/ ceph      169G     0  169G   0% /mnt/cephfs-data</span><br><span class="line"></span><br><span class="line">4.持久化挂载</span><br><span class="line">vim /etc/fstab</span><br><span class="line">cephadm-1,cephadm-2,cephadm-3:/ /mnt/cephfs-data ceph name=cephfs,secretfile=/etc/ceph/ceph.client.cephfs.keyring,_netdev 0 0</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">卸载之前挂载的</span><br><span class="line">umount /mnt/cephfs-data</span><br><span class="line">mount -a</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th</span><br><span class="line">192.168.10.141,192.168.10.142,192.168.10.143:/ ceph      169G     0  169G   0% /mnt/cephfs-data</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h2 id="删除cephFS"><a href="#删除cephFS" class="headerlink" title="删除cephFS"></a>删除cephFS</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">如果需要，你可以删除一个cephfs文件系统</span><br><span class="line">首先要备份所有数据，删除cephfs文件系统会破坏所有数据</span><br><span class="line"></span><br><span class="line">删除cephfs的步骤是首先将其标记为down</span><br><span class="line">ceph fs <span class="built_in">set</span> fs-name down <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">然后，你可以用下面的命令删除它</span><br><span class="line">ceph fs <span class="built_in">rm</span> fs-name --yes-i-really-mean-it</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用NFS-Ganesha挂载cephFS"><a href="#使用NFS-Ganesha挂载cephFS" class="headerlink" title="使用NFS-Ganesha挂载cephFS"></a>使用NFS-Ganesha挂载cephFS</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line">创建身份验证</span><br><span class="line">ceph auth get-or-create client.nfs-ganesha \</span><br><span class="line">  mon <span class="string">&#x27;allow r&#x27;</span> \</span><br><span class="line">  osd <span class="string">&#x27;allow rw&#x27;</span> \</span><br><span class="line">  mds <span class="string">&#x27;allow rw fsname=ws-cephfs&#x27;</span> \</span><br><span class="line">  -o /etc/ceph/ceph.client.nfs-ganesha.keyring</span><br><span class="line"></span><br><span class="line">创建nfs的配置池</span><br><span class="line">ceph osd pool create nfs-ganesha-config 16 16</span><br><span class="line"></span><br><span class="line">开启nfs特性</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> nfs-ganesha-config nfs</span><br><span class="line"></span><br><span class="line">部署nfs cluster</span><br><span class="line">ceph nfs cluster create cephfs-nfs <span class="string">&quot;cephadm-1,cephadm-2,cephadm-3&quot;</span></span><br><span class="line"></span><br><span class="line">验证</span><br><span class="line">ceph orch <span class="built_in">ls</span> |grep nfs</span><br><span class="line">nfs.cephfs-nfs           ?:2049           3/3  100s ago   35m  cephadm-1;cephadm-2;cephadm-3        </span><br><span class="line"></span><br><span class="line">ceph nfs cluster info cephfs-nfs</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;cephfs-nfs&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;virtual_ip&quot;</span>: null,</span><br><span class="line">        <span class="string">&quot;backend&quot;</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">&quot;hostname&quot;</span>: <span class="string">&quot;cephadm-1&quot;</span>,</span><br><span class="line">                <span class="string">&quot;ip&quot;</span>: <span class="string">&quot;192.168.10.141&quot;</span>,</span><br><span class="line">                <span class="string">&quot;port&quot;</span>: 2049</span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">&quot;hostname&quot;</span>: <span class="string">&quot;cephadm-2&quot;</span>,</span><br><span class="line">                <span class="string">&quot;ip&quot;</span>: <span class="string">&quot;192.168.10.142&quot;</span>,</span><br><span class="line">                <span class="string">&quot;port&quot;</span>: 2049</span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">&quot;hostname&quot;</span>: <span class="string">&quot;cephadm-3&quot;</span>,</span><br><span class="line">                <span class="string">&quot;ip&quot;</span>: <span class="string">&quot;192.168.10.143&quot;</span>,</span><br><span class="line">                <span class="string">&quot;port&quot;</span>: 2049</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">应用导出配置</span><br><span class="line">nfs <span class="built_in">export</span> create cephfs &lt;cluster_id&gt; &lt;pseudo_path&gt; &lt;fsname&gt; [&lt;path&gt;] [--<span class="built_in">readonly</span>] [--client_addr &lt;value&gt;...] [--squash &lt;value&gt;] [--sectype &lt;value&gt;...]</span><br><span class="line"></span><br><span class="line">ceph nfs <span class="built_in">export</span> create cephfs cephfs-nfs /mnt/cephfs-nfs ws-cephfs</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;bind&quot;</span>: <span class="string">&quot;/mnt/cephfs-nfs&quot;</span>,</span><br><span class="line">    <span class="string">&quot;fs&quot;</span>: <span class="string">&quot;ws-cephfs&quot;</span>,</span><br><span class="line">    <span class="string">&quot;path&quot;</span>: <span class="string">&quot;/&quot;</span>,</span><br><span class="line">    <span class="string">&quot;cluster&quot;</span>: <span class="string">&quot;cephfs-nfs&quot;</span>,</span><br><span class="line">    <span class="string">&quot;mode&quot;</span>: <span class="string">&quot;RW&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">验证导出</span><br><span class="line">ceph nfs <span class="built_in">export</span> <span class="built_in">ls</span> cephfs-nfs</span><br><span class="line">[</span><br><span class="line">  <span class="string">&quot;/mnt/cephfs-nfs&quot;</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"> </span><br><span class="line">测试挂载</span><br><span class="line"><span class="built_in">mkdir</span> -p /mnt/ceph-nfs</span><br><span class="line">使用任一后端挂载，也可以使用VIP挂载</span><br><span class="line">mount -t nfs 192.168.10.141:/mnt/cephfs-nfs /mnt/ceph-nfs</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th | grep ceph</span><br><span class="line">192.168.10.141:/mnt/cephfs-nfs nfs4      168G     0  168G   0% /mnt/ceph-nfs</span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -522,7 +520,7 @@
             <p>原文作者：<a href="https://akemi.zj.cn">王盛</a>
             <p>原文链接：<a href="https://akemi.zj.cn/2025/07/10/Ceph-CephFS/">https://akemi.zj.cn/2025/07/10/Ceph-CephFS/</a>
             <p>发表日期：<a href="https://akemi.zj.cn/2025/07/10/Ceph-CephFS/">July 10th 2025, 5:52:50 pm</a>
-            <p>更新日期：<a href="https://akemi.zj.cn/2025/07/10/Ceph-CephFS/">July 10th 2025, 5:54:01 pm</a>
+            <p>更新日期：<a href="https://akemi.zj.cn/2025/07/10/Ceph-CephFS/">August 6th 2025, 3:50:09 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -659,7 +657,7 @@
                 <div class="toc-catalog">
                     <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
                 </div>
-                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%83%E6%95%B0%E6%8D%AE%E6%9C%8D%E5%8A%A1%E5%99%A8MDS"><span class="toc-number">1.</span> <span class="toc-text">元数据服务器MDS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2cephFS"><span class="toc-number">2.</span> <span class="toc-text">部署cephFS</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8volume%E6%96%B9%E5%BC%8F%E5%88%9B%E5%BB%BAcephfs"><span class="toc-number">2.1.</span> <span class="toc-text">使用volume方式创建cephfs</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%89%8B%E5%8A%A8%E5%88%9B%E5%BB%BA%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.2.</span> <span class="toc-text">使用手动创建（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%9C%8D%E5%8A%A1%E8%A7%84%E8%8C%83%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA"><span class="toc-number">2.3.</span> <span class="toc-text">使用服务规范文件创建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%82%E8%BD%BDCephFS"><span class="toc-number">3.</span> <span class="toc-text">挂载CephFS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A0%E9%99%A4cephFS"><span class="toc-number">4.</span> <span class="toc-text">删除cephFS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8NFS-Ganesha%E6%8C%82%E8%BD%BDcephFS"><span class="toc-number">5.</span> <span class="toc-text">使用NFS-Ganesha挂载cephFS</span></a></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%83%E6%95%B0%E6%8D%AE%E6%9C%8D%E5%8A%A1%E5%99%A8MDS"><span class="toc-number">1.</span> <span class="toc-text">元数据服务器MDS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2cephFS"><span class="toc-number">2.</span> <span class="toc-text">部署cephFS</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8volume%E6%96%B9%E5%BC%8F%E5%88%9B%E5%BB%BAcephfs"><span class="toc-number">2.1.</span> <span class="toc-text">使用volume方式创建cephfs</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%89%8B%E5%8A%A8%E5%88%9B%E5%BB%BA%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.2.</span> <span class="toc-text">使用手动创建（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%9C%8D%E5%8A%A1%E8%A7%84%E8%8C%83%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA"><span class="toc-number">2.3.</span> <span class="toc-text">使用服务规范文件创建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%82%E8%BD%BDCephFS"><span class="toc-number">3.</span> <span class="toc-text">挂载CephFS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A0%E9%99%A4cephFS"><span class="toc-number">4.</span> <span class="toc-text">删除cephFS</span></a></li></ol>
             </div>
         
         <!-- sidebar -->
@@ -1913,17 +1911,12 @@
         
         
         
+        
+        
+        
+        
+        
     
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
         
         
@@ -5128,7 +5121,7 @@
     
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 248
+        Total : 249
         </div>
         <!-- search  -->
         
@@ -5144,6 +5137,12 @@
             
         
         <li class="archive-post-item">
+            <span class="archive-post-date">08/06</span>
+            <a class="archive-post-title" href="/2025/08/06/Ceph-Cephfs-NFS/">使用NFS-Ganesha挂载cephFS</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
             <span class="archive-post-date">07/28</span>
             <a class="archive-post-title" href="/2025/07/28/Helm-backup-mysql/">Helm集成Cronjob备份mysql</a>
         </li>
@@ -5157,19 +5156,19 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
-        </li>
-    
-        
-        <li class="archive-post-item">
-            <span class="archive-post-date">07/14</span>
             <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
         <li class="archive-post-item">
+            <span class="archive-post-date">07/14</span>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
             <span class="archive-post-date">07/10</span>
-            <a class="archive-post-title" href="/2025/07/10/Ceph-CephFS/">部署CephFS与使用NFS-Ganesha挂载</a>
+            <a class="archive-post-title" href="/2025/07/10/Ceph-CephFS/">部署CephFS与挂载</a>
         </li>
     
         
@@ -5553,13 +5552,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
         </li>
     
         
@@ -6060,13 +6059,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">10/08</span>
-            <a class="archive-post-title" href="/2024/10/08/Jenkins-Master-Slave/">Jenkins主从架构</a>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Install/">Jenkins yum部署与k8s容器化部署</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">10/08</span>
-            <a class="archive-post-title" href="/2024/10/08/Jenkins-Install/">Jenkins yum部署与k8s容器化部署</a>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Master-Slave/">Jenkins主从架构</a>
         </li>
     
         
