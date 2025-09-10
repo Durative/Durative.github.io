@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250908173308310.png">
 <meta property="article:published_time" content="2025-09-10T08:28:50.000Z">
-<meta property="article:modified_time" content="2025-09-10T08:38:45.083Z">
+<meta property="article:modified_time" content="2025-09-10T12:25:10.727Z">
 <meta property="article:author" content="王盛">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250908173308310.png">
@@ -496,6 +496,9 @@
 <p><a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/kubespray#supported-linux-distributions">kubernetes-sigs&#x2F;kubespray: Deploy a Production Ready Kubernetes Cluster</a></p>
 <p>其中2.20版本支持k8s v1.24.6的安装，并且支持Centos7</p>
 <p>每个版本在对应分支中都可以查看其支持的版本</p>
+<p><strong>加速相关</strong><br>如果你试过用kubeadm部署k8s，那就一定知道有好几个镜像是需要从gcr上下载的，也就是需要魔法下载的。</p>
+<p>就算配置了阿里云的谷歌镜像仓库，也没法下载，所以在国内使用ansible安装k8s，最大的一个挑战就是加速问题，如果没有代理，将寸步难行</p>
+<p>另外一种方法，是手动配置registry，自己拉好镜像之后放到私有仓库中，随后配置ansible的变量</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250908173308310.png"></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Centos8.5.2111</span><br><span class="line">Kubespray 2.23.0</span><br><span class="line">k8s 1.27.5</span><br><span class="line">10.163.2.100 ansible (CentOS9-Stream)</span><br><span class="line">10.163.2.106 master1</span><br><span class="line">10.163.2.102 master2</span><br><span class="line">10.163.2.101 master3</span><br><span class="line">10.163.2.109 worker1</span><br><span class="line">10.163.2.108 worker2</span><br><span class="line">10.163.2.131 worker3</span><br></pre></td></tr></table></figure>
 
@@ -513,7 +516,7 @@
 <h2 id="加速相关ansible变量与部署"><a href="#加速相关ansible变量与部署" class="headerlink" title="加速相关ansible变量与部署"></a>加速相关ansible变量与部署</h2><p>如果你试过用kubeadm部署k8s，那就一定知道有好几个镜像是需要从gcr上下载的，也就是需要魔法下载的。</p>
 <p>就算配置了阿里云的谷歌镜像仓库，也没法下载，所以在国内使用ansible安装k8s，最大的一个挑战就是加速问题，如果没有代理，将寸步难行</p>
 <p>另外一种方法，是手动配置registry，自己拉好镜像之后放到私有仓库中，随后配置ansible的变量</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 调整主机组变量,代理相关(推荐使用)</span></span><br><span class="line">vim inventory/sample/group_vars/all/all.yml</span><br><span class="line">http_proxy: <span class="string">&quot;http://192.168.1.7:7897&quot;</span></span><br><span class="line">https_proxy: <span class="string">&quot;http://192.168.1.7:7897&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整主机组变量，提权相关，我这里直接用root</span></span><br><span class="line">vim inventory/sample/group_vars/all/all.yml</span><br><span class="line">ansible_become_pass: <span class="string">&quot;1&quot;</span> <span class="comment"># root密码</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整主机组变量，docker镜像源</span></span><br><span class="line">vim inventory/sample/group_vars/all/docker.yml</span><br><span class="line">docker_registry_mirrors:</span><br><span class="line">  - https://registry.docker-cn.com</span><br><span class="line">  - https://mirror.aliyuncs.com</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 二进制与镜像加速（可选）</span></span><br><span class="line">vim inventory/sample/group_vars/k8s_cluster/k8s-cluster.yml</span><br><span class="line">添加变量</span><br><span class="line"><span class="comment">#gcr_image_repo: &quot;gcr.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#kube_image_repo: &quot;k8s.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#docker_image_repo: &quot;docker.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#quay_image_repo: &quot;quay.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#github_image_repo: &quot;ghcr.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#files_repo: &quot;https://files.m.daocloud.io&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建密钥</span></span><br><span class="line">ssh-keygen -N <span class="string">&#x27;&#x27;</span> -f ~/.ssh/id_rsa</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可以先执行一句ad-hoc，把防火墙都关一下，不然etcd连不上会报错</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m shell -a <span class="string">&quot;systemctl disable firewalld.service --now&quot;</span> all</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进行k8s集群部署，大约会花费20~30分钟</span></span><br><span class="line">ansible-playbook -i inventory/sample/inventory.ini cluster.yml -v -u root --private-key=~/.ssh/id_rsa</span><br><span class="line"></span><br><span class="line">部署完成</span><br><span class="line">PLAY RECAP ****************************************************************************************</span><br><span class="line">localhost                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0</span><br><span class="line">master1                    : ok=758  changed=72   unreachable=0    failed=0    skipped=1288 rescued=0    ignored=7</span><br><span class="line">master2                    : ok=653  changed=60   unreachable=0    failed=0    skipped=1133 rescued=0    ignored=2</span><br><span class="line">master3                    : ok=655  changed=61   unreachable=0    failed=0    skipped=1131 rescued=0    ignored=2</span><br><span class="line">worker1                    : ok=508  changed=34   unreachable=0    failed=0    skipped=771  rescued=0    ignored=1</span><br><span class="line">worker2                    : ok=508  changed=34   unreachable=0    failed=0    skipped=771  rescued=0    ignored=1</span><br><span class="line">worker3                    : ok=508  changed=34   unreachable=0    failed=0    skipped=771  rescued=0    ignored=1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证集群状态</span></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME      STATUS   ROLES           AGE   VERSION</span><br><span class="line">master1   Ready    control-plane   17h   v1.27.5</span><br><span class="line">master2   Ready    control-plane   17h   v1.27.5</span><br><span class="line">master3   Ready    control-plane   17h   v1.27.5</span><br><span class="line">worker1   Ready    &lt;none&gt;          17h   v1.27.5</span><br><span class="line">worker2   Ready    &lt;none&gt;          17h   v1.27.5</span><br><span class="line">worker3   Ready    &lt;none&gt;          17h   v1.27.5</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 调整主机组变量,代理相关(推荐使用)</span></span><br><span class="line">vim inventory/sample/group_vars/all/all.yml</span><br><span class="line">http_proxy: <span class="string">&quot;http://192.168.1.7:7897&quot;</span></span><br><span class="line">https_proxy: <span class="string">&quot;http://192.168.1.7:7897&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整主机组变量，提权相关，我这里直接用root</span></span><br><span class="line">vim inventory/sample/group_vars/all/all.yml</span><br><span class="line">ansible_become_pass: <span class="string">&quot;1&quot;</span> <span class="comment"># root密码</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整主机组变量，docker镜像源</span></span><br><span class="line">vim inventory/sample/group_vars/all/docker.yml</span><br><span class="line">docker_registry_mirrors:</span><br><span class="line">  - https://registry.docker-cn.com</span><br><span class="line">  - https://mirror.aliyuncs.com</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 二进制与镜像加速（可选）</span></span><br><span class="line">vim inventory/sample/group_vars/k8s_cluster/k8s-cluster.yml</span><br><span class="line">添加变量</span><br><span class="line"><span class="comment">#gcr_image_repo: &quot;gcr.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#kube_image_repo: &quot;k8s.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#docker_image_repo: &quot;docker.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#quay_image_repo: &quot;quay.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#github_image_repo: &quot;ghcr.m.daocloud.io&quot;</span></span><br><span class="line"><span class="comment">#files_repo: &quot;https://files.m.daocloud.io&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 注释掉bug代码</span></span><br><span class="line">extra_playbooks/roles/kubernetes/preinstall/tasks/0040-verify-settings.yml</span><br><span class="line">这个剧本的第一个task</span><br><span class="line"><span class="comment">#- name: Stop if either kube_control_plane or kube_node group is empty</span></span><br><span class="line"><span class="comment">#  assert:</span></span><br><span class="line"><span class="comment">#    that: &quot;groups.get(&#x27;&#123;&#123; item &#125;&#125;&#x27;)&quot;</span></span><br><span class="line"><span class="comment">#  with_items:</span></span><br><span class="line"><span class="comment">#    - kube_control_plane</span></span><br><span class="line"><span class="comment">#    - kube_node</span></span><br><span class="line"><span class="comment">#  run_once: true</span></span><br><span class="line"><span class="comment">#  when: not ignore_assert_errors</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建密钥</span></span><br><span class="line">ssh-keygen -N <span class="string">&#x27;&#x27;</span> -f ~/.ssh/id_rsa</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可以先执行一句ad-hoc，把防火墙都关一下，不然etcd连不上会报错</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m shell -a <span class="string">&quot;systemctl disable firewalld.service --now&quot;</span> all</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进行k8s集群部署，大约会花费20~30分钟</span></span><br><span class="line">ansible-playbook -i inventory/sample/inventory.ini cluster.yml -v -u root --private-key=~/.ssh/id_rsa</span><br><span class="line"></span><br><span class="line">部署完成</span><br><span class="line">PLAY RECAP ****************************************************************************************</span><br><span class="line">localhost                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0</span><br><span class="line">master1                    : ok=758  changed=72   unreachable=0    failed=0    skipped=1288 rescued=0    ignored=7</span><br><span class="line">master2                    : ok=653  changed=60   unreachable=0    failed=0    skipped=1133 rescued=0    ignored=2</span><br><span class="line">master3                    : ok=655  changed=61   unreachable=0    failed=0    skipped=1131 rescued=0    ignored=2</span><br><span class="line">worker1                    : ok=508  changed=34   unreachable=0    failed=0    skipped=771  rescued=0    ignored=1</span><br><span class="line">worker2                    : ok=508  changed=34   unreachable=0    failed=0    skipped=771  rescued=0    ignored=1</span><br><span class="line">worker3                    : ok=508  changed=34   unreachable=0    failed=0    skipped=771  rescued=0    ignored=1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证集群状态</span></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME      STATUS   ROLES           AGE   VERSION</span><br><span class="line">master1   Ready    control-plane   17h   v1.27.5</span><br><span class="line">master2   Ready    control-plane   17h   v1.27.5</span><br><span class="line">master3   Ready    control-plane   17h   v1.27.5</span><br><span class="line">worker1   Ready    &lt;none&gt;          17h   v1.27.5</span><br><span class="line">worker2   Ready    &lt;none&gt;          17h   v1.27.5</span><br><span class="line">worker3   Ready    &lt;none&gt;          17h   v1.27.5</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -521,7 +524,7 @@
             <p>原文作者：<a href="https://akemi.zj.cn">王盛</a>
             <p>原文链接：<a href="https://akemi.zj.cn/2025/09/10/Kubespray-install/">https://akemi.zj.cn/2025/09/10/Kubespray-install/</a>
             <p>发表日期：<a href="https://akemi.zj.cn/2025/09/10/Kubespray-install/">September 10th 2025, 4:28:50 pm</a>
-            <p>更新日期：<a href="https://akemi.zj.cn/2025/09/10/Kubespray-install/">September 10th 2025, 4:38:45 pm</a>
+            <p>更新日期：<a href="https://akemi.zj.cn/2025/09/10/Kubespray-install/">September 10th 2025, 8:25:10 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -5403,6 +5406,52 @@
         
         
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
     
     
@@ -5552,13 +5601,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/08</span>
-            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD-snap/">RBD镜像快照与克隆--COW/COR</a>
+            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD/">RADOS提供块存储RBD</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/08</span>
-            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD/">RADOS提供块存储RBD</a>
+            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD-snap/">RBD镜像快照与克隆--COW/COR</a>
         </li>
     
         
@@ -5588,13 +5637,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
         </li>
     
         
@@ -5834,13 +5883,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/15</span>
-            <a class="archive-post-title" href="/2025/04/15/SMB-linux/">SMB文件共享协议--在linux上通过SMB实现共享</a>
+            <a class="archive-post-title" href="/2025/04/15/SMB-windows/">SMB文件共享协议--在windows上通过SMB实现共享</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/15</span>
-            <a class="archive-post-title" href="/2025/04/15/SMB-windows/">SMB文件共享协议--在windows上通过SMB实现共享</a>
+            <a class="archive-post-title" href="/2025/04/15/SMB-linux/">SMB文件共享协议--在linux上通过SMB实现共享</a>
         </li>
     
         
@@ -6419,13 +6468,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">10/08</span>
-            <a class="archive-post-title" href="/2024/10/08/Jenkins-Master-Slave/">Jenkins主从架构</a>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Install/">Jenkins yum部署与k8s容器化部署</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">10/08</span>
-            <a class="archive-post-title" href="/2024/10/08/Jenkins-Install/">Jenkins yum部署与k8s容器化部署</a>
+            <a class="archive-post-title" href="/2024/10/08/Jenkins-Master-Slave/">Jenkins主从架构</a>
         </li>
     
         
@@ -6695,13 +6744,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/26</span>
-            <a class="archive-post-title" href="/2024/07/26/MySQL-Federate/">Mysql-Federate远程链接数据库</a>
+            <a class="archive-post-title" href="/2024/07/26/MySQL-Backup/">Mysql备份</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/26</span>
-            <a class="archive-post-title" href="/2024/07/26/MySQL-Backup/">Mysql备份</a>
+            <a class="archive-post-title" href="/2024/07/26/MySQL-Federate/">Mysql-Federate远程链接数据库</a>
         </li>
     
         
