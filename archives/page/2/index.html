@@ -428,6 +428,71 @@
             
         
         <article class="index-post">
+            <a class="abstract-title" href="/2025/09/03/LVM-Shared/">
+                
+                <span class="abstract-title-text">ISCSI+共享LVM搭建GFS2提供httpd</span>
+            </a>
+            <div class="abstract-content">
+                
+
+锁与集群管理层：dlm (Distributed Lock Manager) 和 lvm2-lockd 是基石。它们为上层（LVM和GFS2）提供跨节点的分布式锁机制，确保在多个节点同时操作共享存储时数据的一致性。
+共享存储层：iSCSI 提供共享块设备，multipath确保路径高可用，共享模式的LVM使得所有节点都能看到统一的物理和逻辑卷视图。
+集群文件系统层：GFS2是关键。它利用底层的DLM，使得 /var/www/html 可以被三个节点同时挂载、读写，而不会导致文件系统损坏。
+资源管理调度层：Pacemaker 负责管理所有资源（DLM、LVM、Filesystem、HT...
+            </div>
+            <!-- read more -->
+            
+            <div class="abstract-post-meta">
+                <!-- date -->
+                <div class="abstract-date" title="Last updated: 2025/09/03">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/09/03</span>
+                </div>
+                <!-- tags -->
+                
+            </div>
+        </article>
+        <div class="index-post-divider"></div>
+    
+        
+        
+        
+        
+            
+        
+        <article class="index-post">
+            <a class="abstract-title" href="/2025/08/29/Delete-dir/">
+                
+                <span class="abstract-title-text">百T目录并行删除</span>
+            </a>
+            <div class="abstract-content">
+                正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有archived开头的目录
+这是一个超大nfs挂载，使用的是阿里云的NAS，其中有500T数据被占用，有多大呢，连输入ls都会卡住
+12df -Th | grep mntxxx[.cn-hangzhou.nas.aliyuncs.com:/ nfs        10P  502T  9.6P    5% /mnt2
+
+解决思路find与xargs
+首先肯定是find，因为我们要的是archived开头的目录，它可以很快帮我们找出哪些目录需要删除
+123456789101112131415...
+            </div>
+            <!-- read more -->
+            
+            <div class="abstract-post-meta">
+                <!-- date -->
+                <div class="abstract-date" title="Last updated: 2025/08/29">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/08/29</span>
+                </div>
+                <!-- tags -->
+                
+            </div>
+        </article>
+        <div class="index-post-divider"></div>
+    
+        
+        
+        
+        
+            
+        
+        <article class="index-post">
             <a class="abstract-title" href="/2025/08/27/Ubuntu-network/">
                 
                 <span class="abstract-title-text">Ubuntu管理网络的不同方式</span>
@@ -669,89 +734,6 @@ Pacemaker架构硬件架构1.集群节点
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2025/08/07">
                     <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/08/07</span>
-                </div>
-                <!-- tags -->
-                
-            </div>
-        </article>
-        <div class="index-post-divider"></div>
-    
-        
-        
-        
-        
-            
-        
-        <article class="index-post">
-            <a class="abstract-title" href="/2025/08/06/Ceph-Cephfs-NFS/">
-                
-                <span class="abstract-title-text">使用NFS-Ganesha挂载cephFS</span>
-            </a>
-            <div class="abstract-content">
-                
-NFS-Ganesha 本质是协议转换层，牺牲少量性能换取最大兼容性；
-普通挂载是性能最优路径，但受限于 Linux 生态；
-
-
-
-
-维度
-NFS-Ganesha 挂载 CephFS
-普通挂载（内核&#x2F;FUSE）
-
-
-
-协议兼容性
-✅ 提供 标准 NFSv3&#x2F;v4 协议，兼容所有支持 NFS 的系统（Windows、旧版Linux、IoT设备等）
-❌ 仅支持原生 CephFS 客户端（Linux 内核 ≥4.0 或 FUSE）
-
-
-客户端要求
-客户端无需安装 Ceph 组件
-客户端需部署 ceph-common 和密钥
-
-
-跨平台能力
-⭐ 支持非 Linux 系统（如...
-            </div>
-            <!-- read more -->
-            
-            <div class="abstract-post-meta">
-                <!-- date -->
-                <div class="abstract-date" title="Last updated: 2025/08/06">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/08/06</span>
-                </div>
-                <!-- tags -->
-                
-            </div>
-        </article>
-        <div class="index-post-divider"></div>
-    
-        
-        
-        
-        
-            
-        
-        <article class="index-post">
-            <a class="abstract-title" href="/2025/07/28/Helm-backup-mysql/">
-                
-                <span class="abstract-title-text">Helm集成Cronjob备份mysql</span>
-            </a>
-            <div class="abstract-content">
-                计算备份数据量先进行一手全量备份，看看占用空间咋样
-12mysqldump --single-transaction --routines --triggers --events \  -u root -pPassword --all-databases &gt; full_backup.sql
-
-一个full备份的sql出来57M，相当于备份一次只需要57M的空间
-那么如果每天备份，一个月测试恢复一次，那就需要至少1.7G的空间，考虑到以后可能还会涨，最后搞个30G的pvc
-创建需求PVC123456789101112131415161718&#123;&#123;- if .Valu...
-            </div>
-            <!-- read more -->
-            
-            <div class="abstract-post-meta">
-                <!-- date -->
-                <div class="abstract-date" title="Last updated: 2025/07/28">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/07/28</span>
                 </div>
                 <!-- tags -->
                 
@@ -2180,7 +2162,43 @@ NFS-Ganesha 挂载 CephFS
         
         
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -5729,7 +5747,7 @@ NFS-Ganesha 挂载 CephFS
     
     <div class="total-and-search">
         <div class="total-archive">
-        Total : 267
+        Total : 269
         </div>
         <!-- search  -->
         
@@ -5743,6 +5761,18 @@ NFS-Ganesha 挂载 CephFS
             <div class="archive-year"> 2025 </div>
             <ul class="year-list">
             
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/22</span>
+            <a class="archive-post-title" href="/2025/09/22/Salt-grains/">Salt静态信息grains</a>
+        </li>
+    
+        
+        <li class="archive-post-item">
+            <span class="archive-post-date">09/19</span>
+            <a class="archive-post-title" href="/2025/09/19/Salt-State/">Salt状态管理</a>
+        </li>
+    
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/18</span>
@@ -5908,13 +5938,13 @@ NFS-Ganesha 挂载 CephFS
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/08</span>
-            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD/">RADOS提供块存储RBD</a>
+            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD-snap/">RBD镜像快照与克隆--COW/COR</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/08</span>
-            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD-snap/">RBD镜像快照与克隆--COW/COR</a>
+            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD/">RADOS提供块存储RBD</a>
         </li>
     
         
@@ -6328,13 +6358,13 @@ NFS-Ganesha 挂载 CephFS
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/28</span>
-            <a class="archive-post-title" href="/2025/02/28/Apache-config/">Apache配置文件详解与性能调优</a>
+            <a class="archive-post-title" href="/2025/02/28/Apache-file-server/">使用Apache搭建能够传输大文件的web文件服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/28</span>
-            <a class="archive-post-title" href="/2025/02/28/Apache-file-server/">使用Apache搭建能够传输大文件的web文件服务器</a>
+            <a class="archive-post-title" href="/2025/02/28/Apache-config/">Apache配置文件详解与性能调优</a>
         </li>
     
         
