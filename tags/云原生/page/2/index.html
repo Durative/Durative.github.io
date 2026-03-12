@@ -426,31 +426,33 @@
         
         
             
-            
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/12/08/Mongodb-Kubernetes-Operator/">
+            <a class="abstract-title" href="/2025/06/12/Kubeadm-make/">
                 
-                <span class="abstract-title-text">使用Mongodb-Kubernetes-Operator部署mongodb集群</span>
+                <span class="abstract-title-text">编译安装kubeadm—修改初始证书时长</span>
             </a>
             <div class="abstract-content">
-                本质上是一种CRD，本文介绍了使用kubectl与使用helm进行部署Operator的方式
+                环境说明
+k8s版本:1.28docker版本:26.1.3, build b72abbblinux版本:Rocky Linux release 8.10 (Green Obsidian)需求镜像:registry.k8s.io&#x2F;build-image&#x2F;kube-cross:v1.28.0-go1.22.8-bullseye.0
+1.下载k8s的github官方源码
+123456git clone https://github.com/kubernetes/kubernetes.git如果因为网络问题导致无法clone也可以选择挂梯子在网页端下载，然后上传unzip ...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/12/08</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/06/12</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -468,31 +470,31 @@
             
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/12/01/K8s-skopeo/">
+            <a class="abstract-title" href="/2025/04/22/Harbor-Secret/">
                 
-                <span class="abstract-title-text">镜像管理工具skopeo部署与实战</span>
+                <span class="abstract-title-text">将镜像仓库信息保存到Secret与反向解密</span>
             </a>
             <div class="abstract-content">
-                能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移
-也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源
-也可以用来做主备的harbor，可以说相当有用
-下载1234567#linux系统，x86适用wget https://github.com/lework/skopeo-binary/releases/download/v1.17.0/skopeo-linux-amd64sudo mv skopeo-linux-amd64 /usr/bin/skopeosudo chmod +x /usr/bin/skopeo skopeo --version#skopeo vers...
+                在k8s集群中，往往需要方便的拉取服务所需镜像，但镜像仓库账密铁铁是机密，肯定不能明文存储
+那么如何将镜像仓库账号密码，以dockerconfigjson形式存储在Secret中，使服务可以使用imagePullSecrets的形式方便的进行引用呢？
+创建Secret
+12345678910111213141516171819202122232425262728kubectl create secret docker-registry &lt;secret-name&gt; \  --docker-server=&lt;registry-url&gt; \  --docker-usern...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/12/01</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/04/22</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -510,29 +512,34 @@
             
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/12/01/K8s-ubuntu-1-23/">
+            <a class="abstract-title" href="/2025/04/08/K8s-resource/">
                 
-                <span class="abstract-title-text">ubuntu20.04桌面版快速部署单点k8s</span>
+                <span class="abstract-title-text">k8s剩余资源计算脚本</span>
             </a>
             <div class="abstract-content">
-                办公电脑装ubuntu了，搞个k8s当测试环境
-环境初始化12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455# 关闭swapsudo swapoff -asudo sed -i &#x27;$ s/^/#/&#x27; /etc/fstab# 修改内核，允许路由转发sudo modprobe br_netfiltersudo tee &gt; /etc/sysctl.d/k8s.conf &lt;&lt; &#x27;EOF&#x27;n...
+                现在在某一环境中要新增一些服务，如何计算k8s集群节点资源是否充足呢？
+通过--show-labels先筛选出想要的查看的节点
+通过describe node，查看allocatable总可用资源
+查看Allocated resources字段中request部分，这一部分是qos设定的即k8s调度器的视角，只要request没超过总可用资源，那么就可以源源不断的调度
+查看Allocated resources字段中limits部分，这一部分是qos设定的节点上所有服务的limits不应超过总可用资源，不然就会存在OOM的风险
+limits一般设定为request的1.5倍，也可以相同
+...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/12/01</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/04/08</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -550,28 +557,34 @@
             
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/11/16/Python-Module-kubernetes-2/">
+            <a class="abstract-title" href="/2025/03/22/Cronjob-k8s-check/">
                 
-                <span class="abstract-title-text">Python-kubernetes模块案例—根据不同ns更新pod副本数</span>
+                <span class="abstract-title-text">使用cronjob自动化巡检k8s告警</span>
             </a>
             <div class="abstract-content">
-                根据不同ns更新pod副本数123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566from kubernetes import config,clientconfig.load_kube_config(config_file=&#x27;config&#x27;)client_apps=client.AppsV1Api()# 定义有效ns名列表namespaces_list=[&#x27;qates...
+                需求：实时监测线上K8s集群xx命名空间下的异常事件—OCI创建失败，将巡检日志持久化，并输出报警
+工具链：helm+k8s+cronjob+shell+飞书机器人告警
+其中，shell使用configmap来挂载，和cronjob一样创建模板，接受helm的纳管
+Helm部分Helm结构采用的是父子Chart的结构，为了方便理解，我只展示相关的部分
+这个是自己写的，没根据helm的标准化来，helm的最佳实践如果要做这一个功能，什么_helper.tql导出都要加相关的字段，一个cronjob而已没有必要，以后又不会迁移它
+template
+1234567891011121314151...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/11/16</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/03/22</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -589,32 +602,117 @@
             
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/11/16/Python-Module-kubernetes-1/">
+            <a class="abstract-title" href="/2025/03/07/CKS/">
                 
-                <span class="abstract-title-text">Python-kubernetes模块—k8s集群资源管理方法</span>
+                <span class="abstract-title-text">CKS认证题目与解法（2025版）</span>
             </a>
             <div class="abstract-content">
-                pip3 install kubernetes
-和其他API一样，python访问k8s也需要API授权，也就是~&#x2F;.kube&#x2F;config文件，也可以自己写一个专门用来给python访问的config文件
-我为了方便就直接用管理员权限的config了
-使用read方法获取的资源信息的对象，格式上和kubectl get pod harbor-test -o yaml 这样返回是一样的，写的时候可以在第二终端打开来进行参考
-查看k8s资源123456789101112131415161718192021222324#coding=utf-8from kubernete...
+                kube-bench测试准入针对kubeadm创建的cluster运行CIS基准测试工具时，发现了多个必须解决的问题。
+通过配置修复所有问题并重新启动受影响的组件以确保新设置生效。修复针对kubelet发现的所有以下违规行为
+Ensure  that the  anonymous-auth argument  is set to falseEnsure  that the  -authorization-mode argument  is  not set to AlwaysAllow
+尽可能使用Webhook 身份验证&#x2F;授权
+修复针对etcd发现的以下违规行为：Ensure ...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/11/16</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/03/07</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
+        <a class="post-tag" href="javascript:void(0);" data-tags="Kubernetes认证">Kubernetes认证</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
+    
+</div>
+
+                
+            </div>
+        </article>
+        <div class="index-post-divider"></div>
+    
+        
+        
+        
+        
+            
+        
+        <article class="index-post">
+            <a class="abstract-title" href="/2025/03/07/CKA/">
+                
+                <span class="abstract-title-text">CKA认证题目与解法（2024版）</span>
+            </a>
+            <div class="abstract-content">
+                RBAC使用 RBAC 鉴权 | Kubernetes
+（拖到网页最下面有命令行操作的范例）
+Context：为部署流水线创建一个新的ClusterRole并将其绑定到范围为特定的 namespace 的特定ServiceAccount。
+Task创建一个名为deployment-clusterrole的clusterrole，该clusterrole只允许对Deployment、Daemonset、Statefulset具有create权限，在现有的 namespace app-team1中创建一个名为cicd-token的新 ServiceAccount。限于 namespace a...
+            </div>
+            <!-- read more -->
+            
+            <div class="abstract-post-meta">
+                <!-- date -->
+                <div class="abstract-date" title="Last updated: 2026/03/12">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/03/07</span>
+                </div>
+                <!-- tags -->
+                
+                    <div class= abstract-tags >
+    
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="Kubernetes认证">Kubernetes认证</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
+    
+</div>
+
+                
+            </div>
+        </article>
+        <div class="index-post-divider"></div>
+    
+        
+        
+        
+        
+            
+        
+        <article class="index-post">
+            <a class="abstract-title" href="/2025/02/06/K8s-Kind/">
+                
+                <span class="abstract-title-text">使用kind快速部署多节点k8s</span>
+            </a>
+            <div class="abstract-content">
+                kind可以用以部署多个集群，适用于本地多集群测试与CI&#x2F;CD测试支持多集群共享镜像缓存缺点：只适用于内核版本比较高的系统，像是almalinux等像是centos7.9就会因为内核版本落后，无法使用cgroup进行容器的资源隔离，启动时会报错
+初始化内容（略过）包括安装docker，kubectl等
+安装kind123curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64chmod +x ./kindsudo mv ./kind /usr/local/bin/kind
+
+创建单节点集群12345...
+            </div>
+            <!-- read more -->
+            
+            <div class="abstract-post-meta">
+                <!-- date -->
+                <div class="abstract-date" title="Last updated: 2026/03/12">
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/02/06</span>
+                </div>
+                <!-- tags -->
+                
+                    <div class= abstract-tags >
+    
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -632,35 +730,32 @@
             
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/10/15/Jenkins-Pipeline-k8s/">
+            <a class="abstract-title" href="/2025/02/06/K8s-Minikube/">
                 
-                <span class="abstract-title-text">jenkins构建pipeline项目到k8s</span>
+                <span class="abstract-title-text">使用Minikube快速部署k8s</span>
             </a>
             <div class="abstract-content">
-                jenkins与k8s的对接有多种方法：
-jenkins与k8s的插件对接说明
-使用clouds插件对接在jenkins执行构建时，k8s上会运行一个jnlp节点，本质上是一种jenkins主从架构的slave节点
-jnlp节点通过调用k8s的API，在k8s中创建资源
-这种方法比较复杂，因为很多时候jnlp镜像都是需要自己装docker、maven和jdk环境的，还要调整jenkins的设置
-jenkins与k8s的脚本对接说明
-在k8s的master节点上创建jenkins的工作目录，将其作为jenkins-slave使用，写入脚本创建资源
-流程说明：添加jenkins-slave→...
+                Minikube是一个开源的“本地Kubernetes引擎”，它可以在macOS、Linux和Windows平台上实现本地化的Kubernetes集群部署。
+
+轻量级：Minikube使用虚拟化技术在本地创建一个单节点的Kubernetes集群，占用的资源相对较少，方便技术人员进行学习、实践和日常的项目开发。
+多平台支持：Minikube可以在Windows、macOS和Linux等多个操作系统上运行，为不同平台的用户提供了本地化的Kubernetes开发环境。
+简单易用：Minikube提供了一个简单的命令行界面，使得创建和管理本地Kubernetes集群变得非常容易。用户可以通过命令...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/10/15</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/02/06</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -678,32 +773,30 @@ jenkins与k8s的脚本对接说明
             
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/10/13/K8s-Binary-installation/">
+            <a class="abstract-title" href="/2025/02/05/K8s-crt/">
                 
-                <span class="abstract-title-text">K8s二进制安装</span>
+                <span class="abstract-title-text">k8s证书延长有效期</span>
             </a>
             <div class="abstract-content">
-                k8s的安装方式选择
-官方提供了三种方式
-minikube：快速在本地运行一个单点的k8s，主要提供给开发测试使用kubeadm：推荐，提供kubeadm init和kubeadm join，快速部署Kubernetes，这种方式会把组件自动化部署在pod中二进制：从官方下载二进制包，手动部署每个组件，能够更清晰了解k8s各个组件之间的关系
-环境说明
-123456789101112CentOS Linux release 7.9.20094C4G 50G精简置备etcd 3.3.10k8s 1.13docker 18flannel 0.10控制节点	192.168.10.144	k8s-...
+                使用kubeadm使用kubeadm安装k8s时，证书有效期默认为一年
+一年到了就需要进行有效期的延长
+查看k8s集群的证书有效期1234567891011121314151617181920212223242526（k8s 1.21之前）kubeadm alpha certs check-expiration（k8s 1.21之后）kubeadm certs check-expiration可以看到还有32天就过期了[check-expiration] Reading configuration from the cluster...[check-expiration] FYI: Yo...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/10/13</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/02/05</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -719,111 +812,38 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
         
         
             
-            
         
         <article class="index-post">
-            <a class="abstract-title" href="/2024/06/13/Mongo-k8s/">
+            <a class="abstract-title" href="/2025/01/15/Gitlab-Jenkins-argo-k8s/">
                 
-                <span class="abstract-title-text">k8s部署MongoDB主从集群</span>
+                <span class="abstract-title-text">Gitlab+Jenkins+argo+k8s CICD</span>
             </a>
             <div class="abstract-content">
-                MongoDB是一款为web应用程序和互联网基础设施设计的数据库管理系统。是NoSQL类型的数据库。
+                项目概述场景概述公有云gitlab存放dockerfile，公有云jenkins现在要求公有gitlab更新时，自动构建dockerfile镜像并部署到公有、私有两套k8s
+现有条件
+允许创建新git仓库jenkins现有shell项目，拉取git代码后构建，使用容器ssh部署到公有环境
+主要问题
+不允许打vpn可以用jenkins webhook感知gitlab更新，但jenkins无法连接私有k8s即私有k8s无法感知gitlab更新
+解决方案
+创建新的B git，根据容器要求创建helm chart存放在B中
+构建声明式jenkinsfile
+当gitlab更新时，触发jenkin...
             </div>
             <!-- read more -->
             
             <div class="abstract-post-meta">
                 <!-- date -->
                 <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/06/13</span>
+                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2025/01/15</span>
                 </div>
                 <!-- tags -->
                 
                     <div class= abstract-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
-    
-</div>
-
-                
-            </div>
-        </article>
-        <div class="index-post-divider"></div>
-    
-        
-        
-        
-        
-            
-            
-        
-        <article class="index-post">
-            <a class="abstract-title" href="/2024/06/12/K8s-redis-cluster/">
-                
-                <span class="abstract-title-text">k8s部署Redis高可用集群</span>
-            </a>
-            <div class="abstract-content">
-                Redis是一个高性能的key-value数据库。本文介绍了Redis数据库与其集群模式，以及在k8s集群中部署
-            </div>
-            <!-- read more -->
-            
-            <div class="abstract-post-meta">
-                <!-- date -->
-                <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/06/12</span>
-                </div>
-                <!-- tags -->
-                
-                    <div class= abstract-tags >
-    
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
-    
-</div>
-
-                
-            </div>
-        </article>
-        <div class="index-post-divider"></div>
-    
-        
-        
-        
-        
-            
-            
-        
-        <article class="index-post">
-            <a class="abstract-title" href="/2024/06/01/K8s-Autoscaler/">
-                
-                <span class="abstract-title-text">k8s自动扩缩容HPA VPA KPA</span>
-            </a>
-            <div class="abstract-content">
-                弹性伸缩是根据用户的业务需求和策略，自动“调整”其“弹性资源”的管理服务。通过弹性伸缩功能，用户可设置定时、周期或监控策略，恰到好处地增加或减少“弹性资源”，并完成实例配置，保证业务平稳健康运行
-            </div>
-            <!-- read more -->
-            
-            <div class="abstract-post-meta">
-                <!-- date -->
-                <div class="abstract-date" title="Last updated: 2026/03/12">
-                    <span class="abstract-calander iconfont-archer">&#xe676;</span><span class="abstract-time">2024/06/01</span>
-                </div>
-                <!-- tags -->
-                
-                    <div class= abstract-tags >
-    
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags="云原生">云原生</a>
-    
-        <a class="post-tag" href="javascript:void(0);" data-tags="容器编排">容器编排</a>
     
         <a class="post-tag" href="javascript:void(0);" data-tags="容器技术">容器技术</a>
     
@@ -837,7 +857,7 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
     <!-- paginator  -->
     
         <nav class="page-nav">
-            <a class="extend prev" rel="prev" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">&lt; PREV</a><a class="page-number" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">1</a><span class="page-number current">2</span><a class="page-number" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/page/3/">3</a><a class="extend next" rel="next" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/page/3/">NEXT &gt;</a>
+            <a class="extend prev" rel="prev" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">&lt; PREV</a><a class="page-number" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">1</a><span class="page-number current">2</span><a class="page-number" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/page/3/">3</a><a class="page-number" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/page/4/">4</a><a class="page-number" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/page/5/">5</a><a class="extend next" rel="next" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/page/3/">NEXT &gt;</a>
         </nav>
     
 </main>
@@ -6825,6 +6845,8 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
         
         
         
+        
+        
     
     
     
@@ -7319,13 +7341,13 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/08</span>
-            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD-snap/">RBD镜像快照与克隆--COW/COR</a>
+            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD/">RADOS提供块存储RBD</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/08</span>
-            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD/">RADOS提供块存储RBD</a>
+            <a class="archive-post-title" href="/2025/07/08/Ceph-RBD-snap/">RBD镜像快照与克隆--COW/COR</a>
         </li>
     
         
@@ -8132,13 +8154,13 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
         
         <li class="archive-post-item">
             <span class="archive-post-date">11/01</span>
-            <a class="archive-post-title" href="/2024/11/01/MySQL-Locked-2/">面对锁表，他的选择是……监控锁状态与查看死锁</a>
+            <a class="archive-post-title" href="/2024/11/01/MySQL-Locked-1/">面对锁表，他的选择是……查询锁源</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">11/01</span>
-            <a class="archive-post-title" href="/2024/11/01/MySQL-Locked-1/">面对锁表，他的选择是……查询锁源</a>
+            <a class="archive-post-title" href="/2024/11/01/MySQL-Locked-2/">面对锁表，他的选择是……监控锁状态与查看死锁</a>
         </li>
     
         
@@ -8794,14 +8816,34 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
                 Web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="教程">
+            <span class="sidebar-tag-name" data-tags="CICD">
                 <span class="iconfont-archer">&#xe606;</span>
-                教程
+                CICD
             </span>
         
-            <span class="sidebar-tag-name" data-tags="技术">
+            <span class="sidebar-tag-name" data-tags="持续部署">
                 <span class="iconfont-archer">&#xe606;</span>
-                技术
+                持续部署
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="GitOps">
+                <span class="iconfont-archer">&#xe606;</span>
+                GitOps
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="技术教程">
+                <span class="iconfont-archer">&#xe606;</span>
+                技术教程
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="学习指南">
+                <span class="iconfont-archer">&#xe606;</span>
+                学习指南
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="知识分享">
+                <span class="iconfont-archer">&#xe606;</span>
+                知识分享
             </span>
         
             <span class="sidebar-tag-name" data-tags="云计算">
@@ -8814,6 +8856,56 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
                 云服务
             </span>
         
+            <span class="sidebar-tag-name" data-tags="Kubernetes认证">
+                <span class="iconfont-archer">&#xe606;</span>
+                Kubernetes认证
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="容器编排">
+                <span class="iconfont-archer">&#xe606;</span>
+                容器编排
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="云原生">
+                <span class="iconfont-archer">&#xe606;</span>
+                云原生
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="容器技术">
+                <span class="iconfont-archer">&#xe606;</span>
+                容器技术
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端开发">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端开发
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Web开发">
+                <span class="iconfont-archer">&#xe606;</span>
+                Web开发
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="编程语言">
+                <span class="iconfont-archer">&#xe606;</span>
+                编程语言
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="安装部署">
+                <span class="iconfont-archer">&#xe606;</span>
+                安装部署
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="系统配置">
+                <span class="iconfont-archer">&#xe606;</span>
+                系统配置
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="实战">
+                <span class="iconfont-archer">&#xe606;</span>
+                实战
+            </span>
+        
             <span class="sidebar-tag-name" data-tags="数据存储">
                 <span class="iconfont-archer">&#xe606;</span>
                 数据存储
@@ -8822,26 +8914,6 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
             <span class="sidebar-tag-name" data-tags="存储技术">
                 <span class="iconfont-archer">&#xe606;</span>
                 存储技术
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="云原生">
-                <span class="iconfont-archer">&#xe606;</span>
-                云原生
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="容器编排">
-                <span class="iconfont-archer">&#xe606;</span>
-                容器编排
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="容器技术">
-                <span class="iconfont-archer">&#xe606;</span>
-                容器技术
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="系统配置">
-                <span class="iconfont-archer">&#xe606;</span>
-                系统配置
             </span>
         
             <span class="sidebar-tag-name" data-tags="网络技术">
@@ -8874,9 +8946,14 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
                 开发
             </span>
         
-            <span class="sidebar-tag-name" data-tags="编程语言">
+            <span class="sidebar-tag-name" data-tags="安全">
                 <span class="iconfont-archer">&#xe606;</span>
-                编程语言
+                安全
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="防火墙">
+                <span class="iconfont-archer">&#xe606;</span>
+                防火墙
             </span>
         
             <span class="sidebar-tag-name" data-tags="人工智能">
@@ -8887,16 +8964,6 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
             <span class="sidebar-tag-name" data-tags="AI应用">
                 <span class="iconfont-archer">&#xe606;</span>
                 AI应用
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="防火墙">
-                <span class="iconfont-archer">&#xe606;</span>
-                防火墙
             </span>
         
             <span class="sidebar-tag-name" data-tags="软件开发">
@@ -8934,6 +9001,21 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
                 日志管理
             </span>
         
+            <span class="sidebar-tag-name" data-tags="监控系统">
+                <span class="iconfont-archer">&#xe606;</span>
+                监控系统
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="运维工具">
+                <span class="iconfont-archer">&#xe606;</span>
+                运维工具
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="系统管理">
+                <span class="iconfont-archer">&#xe606;</span>
+                系统管理
+            </span>
+        
             <span class="sidebar-tag-name" data-tags="数据库">
                 <span class="iconfont-archer">&#xe606;</span>
                 数据库
@@ -8969,19 +9051,14 @@ minikube：快速在本地运行一个单点的k8s，主要提供给开发测试
                 问题解决
             </span>
         
-            <span class="sidebar-tag-name" data-tags="实战">
-                <span class="iconfont-archer">&#xe606;</span>
-                实战
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="运维">
                 <span class="iconfont-archer">&#xe606;</span>
                 运维
             </span>
         
-            <span class="sidebar-tag-name" data-tags="监控系统">
+            <span class="sidebar-tag-name" data-tags="自动化脚本">
                 <span class="iconfont-archer">&#xe606;</span>
-                监控系统
+                自动化脚本
             </span>
         
     </div>
