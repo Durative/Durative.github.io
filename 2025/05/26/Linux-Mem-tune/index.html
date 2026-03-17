@@ -499,11 +499,28 @@
 <p><strong>虚拟内存空间很大，但只有其中一部分映射到了物理内存中</strong></p>
 <p>ps和top等工具区分了两种统计数据：<br>VIRT&#x2F;VSZ，进程请求的虚拟内存总量（不重要）<br>RES&#x2F;RSS，进程映射到<strong>物理内存的量</strong>（重要）</p>
 <p><strong>使用cgroup限制内存使用</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Service]</span><br><span class="line">MemroyLimit=20M</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>Service<span class="token punctuation">]</span>
+<span class="token assign-left variable">MemroyLimit</span><span class="token operator">=</span>20M<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <h2 id="页面错误"><a href="#页面错误" class="headerlink" title="页面错误"></a>页面错误</h2><p>当进程访问一个系统还没有映射到表中的物理页帧的页面时，内核会生成一个页错误事件(page fault)，这是常见的，当进程在分配后第一次访问页面时，发生该事件。在这种情况下，内核会生成一个**小页面错误(minor page fault)**，并从RAM中分配一个新的物理页面帧。</p>
 <p><strong>比如内存不足</strong>，如果缺少物理页帧，并且系统从磁盘检索该内存页，就会产生<strong>重大页错误，</strong>此时内核需要从磁盘加载页面，如果成百上千就说明非常多了</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ps -o pid,minflt,majflt,<span class="built_in">comm</span> -C nginx</span><br><span class="line">    PID MINFLT MAJFLT COMMAND</span><br><span class="line">  64589     46      0 nginx</span><br><span class="line">  64590    365      0 nginx</span><br><span class="line">  64591    601      0 nginx</span><br><span class="line"></span><br><span class="line">perf <span class="built_in">stat</span> -e minor-faults,major-faults nginx</span><br><span class="line"> Performance counter stats <span class="keyword">for</span> <span class="string">&#x27;nginx&#x27;</span>:</span><br><span class="line"></span><br><span class="line">               880      minor-faults</span><br><span class="line">                 7      major-faults</span><br><span class="line"></span><br><span class="line">       2.568397750 seconds time elapsed</span><br><span class="line"></span><br><span class="line">       0.014267000 seconds user</span><br><span class="line">       0.011288000 seconds sys</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ps</span> <span class="token parameter variable">-o</span> pid,minflt,majflt,comm <span class="token parameter variable">-C</span> nginx
+    PID MINFLT MAJFLT COMMAND
+  <span class="token number">64589</span>     <span class="token number">46</span>      <span class="token number">0</span> nginx
+  <span class="token number">64590</span>    <span class="token number">365</span>      <span class="token number">0</span> nginx
+  <span class="token number">64591</span>    <span class="token number">601</span>      <span class="token number">0</span> nginx
+
+perf <span class="token function">stat</span> <span class="token parameter variable">-e</span> minor-faults,major-faults nginx
+ Performance counter stats <span class="token keyword">for</span> <span class="token string">'nginx'</span><span class="token builtin class-name">:</span>
+
+               <span class="token number">880</span>      minor-faults
+                 <span class="token number">7</span>      major-faults
+
+       <span class="token number">2.568397750</span> seconds <span class="token function">time</span> elapsed
+
+       <span class="token number">0.014267000</span> seconds user
+       <span class="token number">0.011288000</span> seconds sys
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="页表与TLB"><a href="#页表与TLB" class="headerlink" title="页表与TLB"></a>页表与TLB</h2><p><strong>页表分页</strong></p>
 <p>页表采用分层结构（多级页表）的核心目的是为了解决 虚拟地址空间规模庞大导致单级页表内存占用过高 的问题，同时兼顾 灵活的内存管理 和 硬件实现效率</p>
@@ -521,22 +538,57 @@
 <p>针对大页内存，每个TLB就可以寻找到2Mib的页面，这样TLB命中率就会更高</p>
 <p>上下文切换时， TLB会被重新填充。</p>
 <p>可以通过内核参数vm.nr_hugepages来设置大内存页的总数</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">sysctl -w vm.nr_hugepages=40</span><br><span class="line">或</span><br><span class="line"><span class="built_in">cat</span> <span class="string">&quot;vm.nr_hugepages=40&quot;</span> &gt;&gt; /etc/sysctl.conf</span><br><span class="line">sysctl -p</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /proc/meminfo  | grep -i huge</span><br><span class="line">AnonHugePages:     49152 kB</span><br><span class="line">ShmemHugePages:        0 kB</span><br><span class="line">FileHugePages:         0 kB</span><br><span class="line">HugePages_Total:       0</span><br><span class="line">HugePages_Free:        0</span><br><span class="line">HugePages_Rsvd:        0</span><br><span class="line">HugePages_Surp:        0</span><br><span class="line">Hugepagesize:       2048 kB</span><br><span class="line">Hugetlb:               0 kB</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sysctl</span> <span class="token parameter variable">-w</span> <span class="token assign-left variable">vm.nr_hugepages</span><span class="token operator">=</span><span class="token number">40</span>
+或
+<span class="token function">cat</span> <span class="token string">"vm.nr_hugepages=40"</span> <span class="token operator">>></span> /etc/sysctl.conf
+<span class="token function">sysctl</span> <span class="token parameter variable">-p</span>
+
+<span class="token function">cat</span> /proc/meminfo  <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> huge
+AnonHugePages:     <span class="token number">49152</span> kB
+ShmemHugePages:        <span class="token number">0</span> kB
+FileHugePages:         <span class="token number">0</span> kB
+HugePages_Total:       <span class="token number">0</span>
+HugePages_Free:        <span class="token number">0</span>
+HugePages_Rsvd:        <span class="token number">0</span>
+HugePages_Surp:        <span class="token number">0</span>
+Hugepagesize:       <span class="token number">2048</span> kB
+Hugetlb:               <span class="token number">0</span> kB<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>通过将内存分配为大页面，只有支持大页面的应用程序才能使用这些内存。内核从一般可用的系统内存中移除巨大的页面内存，大多数进程都不能使用它。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">针对NUMA系统的大页分配</span><br><span class="line"><span class="built_in">echo</span> 20 &gt; /sys/devices/system/node/node2/hugepages/hugepages-2048kB/nr_hugepages</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">针对NUMA系统的大页分配
+<span class="token builtin class-name">echo</span> <span class="token number">20</span> <span class="token operator">></span> /sys/devices/system/node/node2/hugepages/hugepages-2048kB/nr_hugepages<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>透明大页THP</strong></p>
 <p>从红帽6.2开始，内核<strong>默认开启</strong>透明大页技术</p>
 <p>透明大页（Transparent Huge Pages, THP） 是 Linux 内核提供的一种<strong>自动化内存管理技术</strong>，旨在通过动态调整2Mib和1Gib内存页的数量，来提升性能</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前状态</span></span><br><span class="line"><span class="built_in">cat</span> /sys/kernel/mm/transparent_hugepage/enabled</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启用THP（可选模式：always, madvise, never）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;always&quot;</span> &gt; /sys/kernel/mm/transparent_hugepage/enabled</span><br><span class="line">always表示开启</span><br><span class="line">never表示关闭</span><br><span class="line">madvise关闭自动THP分配，需要使用madvise()系统调用</span><br><span class="line"></span><br><span class="line"><span class="comment"># 禁用THP</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;never&quot;</span> &gt; /sys/kernel/mm/transparent_hugepage/enabled</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看当前状态</span>
+<span class="token function">cat</span> /sys/kernel/mm/transparent_hugepage/enabled
+
+<span class="token comment"># 启用THP（可选模式：always, madvise, never）</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"always"</span> <span class="token operator">></span> /sys/kernel/mm/transparent_hugepage/enabled
+always表示开启
+never表示关闭
+madvise关闭自动THP分配，需要使用madvise<span class="token punctuation">(</span><span class="token punctuation">)</span>系统调用
+
+<span class="token comment"># 禁用THP</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"never"</span> <span class="token operator">></span> /sys/kernel/mm/transparent_hugepage/enabled<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="内存分页、回收与swap"><a href="#内存分页、回收与swap" class="headerlink" title="内存分页、回收与swap"></a>内存分页、回收与swap</h2><p><strong>页缓存</strong></p>
 <p>内核使用大部分未分配的内存，作为缓存来存储从磁盘读取或写入的数据</p>
 <p><strong>匿名页</strong></p>
 <p>用以进程分配和存储工作数据的页，可以通过cat &#x2F;proc&#x2F;meminfo | grep -i anon查看</p>
 <p>这两个都算在buff&#x2F;cache中</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">MemAvailable ≈ MemFree + Cached + Buffers + SReclaimable - 保留内存</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /proc/meminfo | grep -E <span class="string">&quot;MemFree|Cached|Buffers|SReclaimable|MemAvailable&quot;</span></span><br><span class="line">MemFree:         123456 kB</span><br><span class="line">Cached:          789012 kB</span><br><span class="line">Buffers:          12345 kB</span><br><span class="line">SReclaimable:     67890 kB</span><br><span class="line">MemAvailable:    987654 kB</span><br><span class="line"></span><br><span class="line">Approx_Available = MemFree + Cached + Buffers + SReclaimable</span><br><span class="line">                = 123456 + 789012 + 12345 + 67890 = 992703 kB</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">MemAvailable ≈ MemFree + Cached + Buffers + SReclaimable - 保留内存
+
+<span class="token function">cat</span> /proc/meminfo <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-E</span> <span class="token string">"MemFree|Cached|Buffers|SReclaimable|MemAvailable"</span>
+MemFree:         <span class="token number">123456</span> kB
+Cached:          <span class="token number">789012</span> kB
+Buffers:          <span class="token number">12345</span> kB
+SReclaimable:     <span class="token number">67890</span> kB
+MemAvailable:    <span class="token number">987654</span> kB
+
+Approx_Available <span class="token operator">=</span> MemFree + Cached + Buffers + SReclaimable
+                <span class="token operator">=</span> <span class="token number">123456</span> + <span class="token number">789012</span> + <span class="token number">12345</span> + <span class="token number">67890</span> <span class="token operator">=</span> <span class="token number">992703</span> kB<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>匿名页的回收</strong></p>
 <p>当系统处于内存使用压力时，内核可以选择回收匿名页或从页缓存中回收页。不受文件支持的匿名页被移到swap区。</p>
@@ -549,17 +601,48 @@
 <h2 id="脏页面清理与调优"><a href="#脏页面清理与调优" class="headerlink" title="脏页面清理与调优"></a>脏页面清理与调优</h2><p>一个物理页可以处于不同状态：</p>
 <p>Free-可以立即分配<br>Active-正在被使用，不可被释放<br>Inactive clean-没有被积极使用，且内容与磁盘一致<br>Inactive dirty-没有被积极使用，且内容与磁盘不一致，脏页</p>
 <p><strong>脏页</strong><br>当进程进行写操作时，操作的数据正好在缓存中，就会产生脏页，会以一定周期进行写入磁盘</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/meminfo | grep -i dirty</span><br><span class="line">Dirty:               416 kB</span><br><span class="line"></span><br><span class="line"><span class="comment"># 手动写回</span></span><br><span class="line"><span class="built_in">sync</span></span><br><span class="line"><span class="built_in">cat</span> /proc/meminfo | grep -i dirty</span><br><span class="line">Dirty:                 4 kB</span><br><span class="line"></span><br><span class="line"><span class="comment"># 脏页写回调优参数</span></span><br><span class="line">vm.dirty_expire_centisecs    写回前等待时间</span><br><span class="line">vm.dirty_writeback_centisecs 写回间隔时间</span><br><span class="line">vm.dirty_background_ratio    脏页占内存总量的百分比(异步)</span><br><span class="line">vm.dirty_ratio             脏页的最大内存量,到达则全部写入,同时阻塞所有IO</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> /proc/meminfo <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> dirty
+Dirty:               <span class="token number">416</span> kB
+
+<span class="token comment"># 手动写回</span>
+<span class="token function">sync</span>
+<span class="token function">cat</span> /proc/meminfo <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> dirty
+Dirty:                 <span class="token number">4</span> kB
+
+<span class="token comment"># 脏页写回调优参数</span>
+vm.dirty_expire_centisecs    写回前等待时间
+vm.dirty_writeback_centisecs 写回间隔时间
+vm.dirty_background_ratio    脏页占内存总量的百分比<span class="token punctuation">(</span>异步<span class="token punctuation">)</span>
+vm.dirty_ratio             脏页的最大内存量,到达则全部写入,同时阻塞所有IO<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="OOM与优先级（不良评分"><a href="#OOM与优先级（不良评分" class="headerlink" title="OOM与优先级（不良评分"></a>OOM与优先级（不良评分</h2><p>一旦系统达到了内存不足的情况，就没有太多合理的恢复选项。关闭进程以释放内存或放弃并关闭系统都是可能的选择</p>
 <p>每个进程都有一个不良评分，可以在&#x2F;proc&#x2F;PID&#x2F;oom_score文件中查看，使用它来确定哪个进程应该被OOM杀死。分数越高，OOM杀手就越有可能杀死这个过程</p>
 <p>如果进程在cgroup中限制了内存，也会触发OOM<br>如果NUMA系统中节点没有多余内存，也会触发OOM</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">不良评分的影响因素</span><br><span class="line">1.虚拟内存大小。</span><br><span class="line">2.进程所有子进程的累积虚拟内存。</span><br><span class="line">3.<span class="built_in">nice</span>值，正<span class="built_in">nice</span>的值会得到更高的分数。</span><br><span class="line">4.总运行时间，较长的总运行时间会降低分数。</span><br><span class="line">5.运行用户、根用户进程得到轻微保护。</span><br><span class="line">6.直接硬件访问的进程会降低分数。</span><br><span class="line"></span><br><span class="line">/proc/PID/oom_score_adj可调项手动调整分数，范围-1000~1000</span><br><span class="line">或在[Service]下定义OOMScoreAdjust参数</span><br><span class="line"></span><br><span class="line">vm.panic_on_oom=1 →系统会停止进程而不是杀死进程</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">不良评分的影响因素
+<span class="token number">1</span>.虚拟内存大小。
+<span class="token number">2</span>.进程所有子进程的累积虚拟内存。
+<span class="token number">3</span>.nice值，正nice的值会得到更高的分数。
+<span class="token number">4</span>.总运行时间，较长的总运行时间会降低分数。
+<span class="token number">5</span>.运行用户、根用户进程得到轻微保护。
+<span class="token number">6</span>.直接硬件访问的进程会降低分数。
+
+/proc/PID/oom_score_adj可调项手动调整分数，范围-1000~1000
+或在<span class="token punctuation">[</span>Service<span class="token punctuation">]</span>下定义OOMScoreAdjust参数
+
+<span class="token assign-left variable">vm.panic_on_oom</span><span class="token operator">=</span><span class="token number">1</span> →系统会停止进程而不是杀死进程<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="内存过量分配"><a href="#内存过量分配" class="headerlink" title="内存过量分配"></a>内存过量分配</h2><p>进程请求内存的时候，只保留虚拟内存记录，并不实际分配内存，所以就会可能过度使用内存</p>
 <p>虚机与容器也是主机上的一组进程</p>
 <p>如果空闲RAM快用完，系统会按照通常的方式回收页面:从页面缓存中回收，或者将不活动的匿名页面换出到交换区。当机器处于内存过度分配的情况下，现在必须交付比可能的更多的内存时，内核调用OOM杀死器杀死一些进程。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vm.overcommit_memory可调项控制系统的内存过度分配策略</span><br><span class="line">0：检查内存，如果有足够的可用内存，内存申请允许；否则失败（默认）</span><br><span class="line">1：允许分配所有的物理内存</span><br><span class="line">2：不允许超过 CommitLimit 值</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /proc/meminfo | grep Commit</span><br><span class="line">CommitLimit:      862876 kB  <span class="comment"># 系统允许的虚拟内存上限</span></span><br><span class="line">Committed_AS:     500176 kB  <span class="comment"># 当前已承诺的虚拟内存总量</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vm.overcommit_memory可调项控制系统的内存过度分配策略
+<span class="token number">0</span>：检查内存，如果有足够的可用内存，内存申请允许；否则失败（默认）
+<span class="token number">1</span>：允许分配所有的物理内存
+<span class="token number">2</span>：不允许超过 CommitLimit 值
+
+<span class="token function">cat</span> /proc/meminfo <span class="token operator">|</span> <span class="token function">grep</span> Commit
+CommitLimit:      <span class="token number">862876</span> kB  <span class="token comment"># 系统允许的虚拟内存上限</span>
+Committed_AS:     <span class="token number">500176</span> kB  <span class="token comment"># 当前已承诺的虚拟内存总量</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6618,36 +6701,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7112,13 +7165,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8159,13 +8212,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8618,14 +8671,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8633,14 +8686,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

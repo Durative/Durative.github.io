@@ -522,7 +522,21 @@
 <p>BlueStore存储后端具有以下<strong>特性：</strong><br>1.允许对数据、块数据库和预写日志(WAL)使用不同的设备。<br>2.支持使用HDD、SSD和NVMe设备的几乎任何组合。<br>3.在原始设备或分区上操作，消除了对存储设备的双重写入，提高了元数据效率。<br>4.用校验和写入所有数据和元数据。在返回到客户端之前，所有读操作都使用相应的校验和进行验证。</p>
 <p>默认情况下会将这三个放在同一个设备上，但BlueStore的性能优势主要来源于WAL和DB，可以通过将WAL和DB放在SSD设备上来提高性能</p>
 <h2 id="使用服务配置特定文件"><a href="#使用服务配置特定文件" class="headerlink" title="使用服务配置特定文件"></a><strong>使用服务配置特定文件</strong></h2><p>可以使用服务配置特定文件来定义WAL、DB和Data的位置，如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">service_type: osd</span><br><span class="line">service_id: osd_example</span><br><span class="line">placement:</span><br><span class="line">	host_pattern: <span class="string">&#x27;*&#x27;</span></span><br><span class="line">data_devices:</span><br><span class="line">	paths:</span><br><span class="line">		- /dev/vda</span><br><span class="line">db_devices:</span><br><span class="line">	paths:</span><br><span class="line">		- /dev/nvme0</span><br><span class="line">wal_devices:</span><br><span class="line">	paths:</span><br><span class="line">		- /dev/nvme1</span><br><span class="line"></span><br><span class="line">默认情况下，BlueStore是自调优的，但如果需要，你可以手动调优BlueStore参数</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">service_type: osd
+service_id: osd_example
+placement:
+	host_pattern: <span class="token string">'*'</span>
+data_devices:
+	paths:
+		- /dev/vda
+db_devices:
+	paths:
+		- /dev/nvme0
+wal_devices:
+	paths:
+		- /dev/nvme1
+
+默认情况下，BlueStore是自调优的，但如果需要，你可以手动调优BlueStore参数<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="BlueStore数据库分片"><a href="#BlueStore数据库分片" class="headerlink" title="BlueStore数据库分片"></a>BlueStore数据库分片</h2><p>BlueStore可以限制存储在RocksDB中的大型omap对象的大小，并将它们分布到多个位置上，这个过程被称为分片（sharding）。在使用分片时，集群将具有相似访问和修改频率的键分组，以提高性能和节省磁盘空间。</p>
 <p>分片可以减轻RocksDB压缩的影响。在压缩数据库之前，RocksDB必须达到一定的已用空间，这可能会影响OSD性能。有了分片，这些操作独立于所使用的空间级别，允许更精确的压缩并最小化对OSD性能的影响。</p>
@@ -534,14 +548,213 @@
 <h3 id="编排器生成"><a href="#编排器生成" class="headerlink" title="编排器生成"></a>编排器生成</h3><p><code>ceph orch apply osd --all-available-devices</code><br>自动检测并部署集群中所有主机上所有可用且符合条件的存储设备作为 OSD 数据盘<br>这条命令会创建一个叫做osd.all-available-devices的OSD服务并且开启编排服务来管理所有的OSD生成</p>
 <p>这个服务会使用<code>ceph orch device zap</code>来准备设备</p>
 <h3 id="使用orch守护进程生成（推荐）"><a href="#使用orch守护进程生成（推荐）" class="headerlink" title="使用orch守护进程生成（推荐）"></a>使用orch守护进程生成（推荐）</h3><p>通过指定的设备和主机创建OSD进程</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ================================================</span></span><br><span class="line"><span class="comment"># OSD 管理命令集 (cephadm Orchestrator)</span></span><br><span class="line"><span class="comment"># 适用版本: Ceph Quincy (v17.2+) 或更高</span></span><br><span class="line"><span class="comment"># ================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 列出所有 OSD 及其状态</span></span><br><span class="line">ceph orch ps --daemon-type osd  <span class="comment"># 显示所有 OSD 守护进程状态（主机/容器/状态）</span></span><br><span class="line">ceph osd tree                  <span class="comment"># 显示 OSD 在 CRUSH 中的层级位置</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 添加 OSD</span></span><br><span class="line"><span class="comment"># 基本格式: ceph orch daemon add osd &lt;节点&gt;:&lt;设备路径&gt;</span></span><br><span class="line">ceph orch daemon add osd node1:/dev/sdb   <span class="comment"># 在 node1 上使用 /dev/sdb 创建新 OSD</span></span><br><span class="line">ceph orch daemon add osd node2:/dev/nvme0n1  <span class="comment"># 使用 NVMe 设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 批量添加（所有可用设备）</span></span><br><span class="line">ceph orch apply osd --all-available-devices  <span class="comment"># 在所有主机上添加未使用的磁盘</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 安全移除 OSD 流程（必须按顺序执行）</span></span><br><span class="line"><span class="comment"># 步骤 1: 停止 OSD 守护进程</span></span><br><span class="line">ceph orch daemon stop osd.12    <span class="comment"># 安全停止 osd.12 服务</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 2: 检查是否可安全移除</span></span><br><span class="line">ceph osd safe-to-destroy osd.12 <span class="comment"># 确认 PG 已迁移完成（必须返回 safe to destroy）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 3: 移除守护进程</span></span><br><span class="line">ceph orch daemon <span class="built_in">rm</span> osd.12      <span class="comment"># 删除守护进程（清理 systemd 服务和容器）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 4: 从集群删除记录</span></span><br><span class="line">ceph osd purge 12 --yes-i-really-mean-it  <span class="comment"># 从集群元数据彻底删除 OSD (推荐)</span></span><br><span class="line"><span class="comment"># 或传统两步法:</span></span><br><span class="line"><span class="comment">#   ceph osd rm 12              # 删除 OSD ID</span></span><br><span class="line"><span class="comment">#   ceph auth del osd.12        # 删除认证密钥</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 5: 清理磁盘数据 (可选)</span></span><br><span class="line">ssh node1 ceph-volume lvm zap /dev/sdb --destroy  <span class="comment"># 擦除磁盘数据</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 替换 OSD（保留相同 ID）</span></span><br><span class="line">ceph orch osd <span class="built_in">rm</span> 12 --replace   <span class="comment"># 安全移除并自动用新磁盘重建相同 OSD ID</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. OSD 配置管理</span></span><br><span class="line">ceph orch daemon reconfig osd.12  <span class="comment"># 重新加载 OSD.12 的配置（无需重启）</span></span><br><span class="line">ceph orch redeploy osd.12        <span class="comment"># 强制重建 OSD 容器（修复损坏的守护进程）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 批量操作</span></span><br><span class="line">ceph orch osd <span class="built_in">rm</span> 12 13 14        <span class="comment"># 批量移除多个 OSD</span></span><br><span class="line">ceph orch device zap node1 /dev/sdb /dev/sdc --force  <span class="comment"># 擦除多个磁盘</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 7. 高级部署</span></span><br><span class="line"><span class="comment"># 使用特定设备类型（SSG/HDD）部署</span></span><br><span class="line">ceph orch apply osd --all-available-devices \</span><br><span class="line">  --filter=<span class="string">&#x27;vendor=INTEL model=SSD&#x27;</span>  <span class="comment"># 仅使用 Intel SSD 创建 OSD</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 8. 查看设备清单</span></span><br><span class="line">ceph orch device <span class="built_in">ls</span>               <span class="comment"># 列出所有节点上的可用设备</span></span><br><span class="line">ceph orch device <span class="built_in">ls</span> --host node1  <span class="comment"># 查看特定节点的设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 9. OSD 服务状态操作</span></span><br><span class="line">ceph orch daemon start osd.12     <span class="comment"># 启动已停止的 OSD</span></span><br><span class="line">ceph orch daemon restart osd.12   <span class="comment"># 重启 OSD 守护进程</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ================================================</span></span><br><span class="line"><span class="comment"># 关键注意事项:</span></span><br><span class="line"><span class="comment"># 1. 移除 OSD 前必须确认 safe-to-destroy</span></span><br><span class="line"><span class="comment"># 2. 生产环境操作前建议先 --dry-run 测试</span></span><br><span class="line"><span class="comment"># 3. 磁盘操作需要物理权限（尤其 SSD/NVMe）</span></span><br><span class="line"><span class="comment"># ================================================</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ================================================</span>
+<span class="token comment"># OSD 管理命令集 (cephadm Orchestrator)</span>
+<span class="token comment"># 适用版本: Ceph Quincy (v17.2+) 或更高</span>
+<span class="token comment"># ================================================</span>
+
+<span class="token comment"># 1. 列出所有 OSD 及其状态</span>
+ceph orch <span class="token function">ps</span> --daemon-type osd  <span class="token comment"># 显示所有 OSD 守护进程状态（主机/容器/状态）</span>
+ceph osd tree                  <span class="token comment"># 显示 OSD 在 CRUSH 中的层级位置</span>
+
+<span class="token comment"># 2. 添加 OSD</span>
+<span class="token comment"># 基本格式: ceph orch daemon add osd &lt;节点>:&lt;设备路径></span>
+ceph orch daemon <span class="token function">add</span> osd node1:/dev/sdb   <span class="token comment"># 在 node1 上使用 /dev/sdb 创建新 OSD</span>
+ceph orch daemon <span class="token function">add</span> osd node2:/dev/nvme0n1  <span class="token comment"># 使用 NVMe 设备</span>
+
+<span class="token comment"># 批量添加（所有可用设备）</span>
+ceph orch apply osd --all-available-devices  <span class="token comment"># 在所有主机上添加未使用的磁盘</span>
+
+<span class="token comment"># 3. 安全移除 OSD 流程（必须按顺序执行）</span>
+<span class="token comment"># 步骤 1: 停止 OSD 守护进程</span>
+ceph orch daemon stop osd.12    <span class="token comment"># 安全停止 osd.12 服务</span>
+
+<span class="token comment"># 步骤 2: 检查是否可安全移除</span>
+ceph osd safe-to-destroy osd.12 <span class="token comment"># 确认 PG 已迁移完成（必须返回 safe to destroy）</span>
+
+<span class="token comment"># 步骤 3: 移除守护进程</span>
+ceph orch daemon <span class="token function">rm</span> osd.12      <span class="token comment"># 删除守护进程（清理 systemd 服务和容器）</span>
+
+<span class="token comment"># 步骤 4: 从集群删除记录</span>
+ceph osd purge <span class="token number">12</span> --yes-i-really-mean-it  <span class="token comment"># 从集群元数据彻底删除 OSD (推荐)</span>
+<span class="token comment"># 或传统两步法:</span>
+<span class="token comment">#   ceph osd rm 12              # 删除 OSD ID</span>
+<span class="token comment">#   ceph auth del osd.12        # 删除认证密钥</span>
+
+<span class="token comment"># 步骤 5: 清理磁盘数据 (可选)</span>
+<span class="token function">ssh</span> node1 ceph-volume lvm zap /dev/sdb <span class="token parameter variable">--destroy</span>  <span class="token comment"># 擦除磁盘数据</span>
+
+<span class="token comment"># 4. 替换 OSD（保留相同 ID）</span>
+ceph orch osd <span class="token function">rm</span> <span class="token number">12</span> <span class="token parameter variable">--replace</span>   <span class="token comment"># 安全移除并自动用新磁盘重建相同 OSD ID</span>
+
+<span class="token comment"># 5. OSD 配置管理</span>
+ceph orch daemon reconfig osd.12  <span class="token comment"># 重新加载 OSD.12 的配置（无需重启）</span>
+ceph orch redeploy osd.12        <span class="token comment"># 强制重建 OSD 容器（修复损坏的守护进程）</span>
+
+<span class="token comment"># 6. 批量操作</span>
+ceph orch osd <span class="token function">rm</span> <span class="token number">12</span> <span class="token number">13</span> <span class="token number">14</span>        <span class="token comment"># 批量移除多个 OSD</span>
+ceph orch device zap node1 /dev/sdb /dev/sdc <span class="token parameter variable">--force</span>  <span class="token comment"># 擦除多个磁盘</span>
+
+<span class="token comment"># 7. 高级部署</span>
+<span class="token comment"># 使用特定设备类型（SSG/HDD）部署</span>
+ceph orch apply osd --all-available-devices <span class="token punctuation">\</span>
+  <span class="token parameter variable">--filter</span><span class="token operator">=</span><span class="token string">'vendor=INTEL model=SSD'</span>  <span class="token comment"># 仅使用 Intel SSD 创建 OSD</span>
+
+<span class="token comment"># 8. 查看设备清单</span>
+ceph orch device <span class="token function">ls</span>               <span class="token comment"># 列出所有节点上的可用设备</span>
+ceph orch device <span class="token function">ls</span> <span class="token parameter variable">--host</span> node1  <span class="token comment"># 查看特定节点的设备</span>
+
+<span class="token comment"># 9. OSD 服务状态操作</span>
+ceph orch daemon start osd.12     <span class="token comment"># 启动已停止的 OSD</span>
+ceph orch daemon restart osd.12   <span class="token comment"># 重启 OSD 守护进程</span>
+
+<span class="token comment"># ================================================</span>
+<span class="token comment"># 关键注意事项:</span>
+<span class="token comment"># 1. 移除 OSD 前必须确认 safe-to-destroy</span>
+<span class="token comment"># 2. 生产环境操作前建议先 --dry-run 测试</span>
+<span class="token comment"># 3. 磁盘操作需要物理权限（尤其 SSD/NVMe）</span>
+<span class="token comment"># ================================================</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="服务规范文件生成（推荐）"><a href="#服务规范文件生成（推荐）" class="headerlink" title="服务规范文件生成（推荐）"></a>服务规范文件生成（推荐）</h3><p>通过服务规范文件来描述OSD服务的集群布局</p>
 <p>一个osd_size_and_model类型的服务，一个osd_host_and_path类型的服务</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">service_type: osd</span><br><span class="line">service_id: osd_size_and_model</span><br><span class="line">placement:</span><br><span class="line">	host_pattern: <span class="string">&#x27;*&#x27;</span></span><br><span class="line">data_devices:</span><br><span class="line">	size: <span class="string">&#x27;100G:&#x27;</span></span><br><span class="line">db_devices:</span><br><span class="line">	model: My-Disk</span><br><span class="line">wal_devices:</span><br><span class="line">	size: <span class="string">&#x27;10G:20G&#x27;</span></span><br><span class="line">unmanaged: <span class="literal">true</span></span><br><span class="line">---</span><br><span class="line">service_type: osd</span><br><span class="line">service_id: osd_host_and_path</span><br><span class="line">placement:</span><br><span class="line">	host_pattern: <span class="string">&#x27;node[6-10]&#x27;</span></span><br><span class="line">data_devices:</span><br><span class="line">	paths:</span><br><span class="line">		- /dev/sdb</span><br><span class="line">db_devices:</span><br><span class="line">	paths:</span><br><span class="line">		- /dev/sdc</span><br><span class="line">wal_devices:</span><br><span class="line">	paths:</span><br><span class="line">		- /dev/sdd</span><br><span class="line">encrypted: <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">ceph orch apply -i service_spec.yaml</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">service_type: osd
+service_id: osd_size_and_model
+placement:
+	host_pattern: <span class="token string">'*'</span>
+data_devices:
+	size: <span class="token string">'100G:'</span>
+db_devices:
+	model: My-Disk
+wal_devices:
+	size: <span class="token string">'10G:20G'</span>
+unmanaged: <span class="token boolean">true</span>
+---
+service_type: osd
+service_id: osd_host_and_path
+placement:
+	host_pattern: <span class="token string">'node[6-10]'</span>
+data_devices:
+	paths:
+		- /dev/sdb
+db_devices:
+	paths:
+		- /dev/sdc
+wal_devices:
+	paths:
+		- /dev/sdd
+encrypted: <span class="token boolean">true</span>
+
+ceph orch apply <span class="token parameter variable">-i</span> service_spec.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="通过ceph-volume命令行生成（传统方式）"><a href="#通过ceph-volume命令行生成（传统方式）" class="headerlink" title="通过ceph-volume命令行生成（传统方式）"></a>通过ceph-volume命令行生成（传统方式）</h3><p>ceph-volume是Ceph中专门用于管理 OSD 物理设备的命令行工具，<strong>取代了旧的ceph-disk工具</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 🛠️ OSD 创建与部署</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建基础 OSD (使用单个设备)</span></span><br><span class="line">ceph-volume lvm create --data /dev/sdb  <span class="comment"># 在 /dev/sdb 上创建 BlueStore OSD</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建高级 OSD (分离 WAL/DB 设备)</span></span><br><span class="line">ceph-volume lvm create --data /dev/sdd \         <span class="comment"># 主数据设备</span></span><br><span class="line">    --block.wal /dev/nvme0n1p1 \                 <span class="comment"># WAL 设备 (高性能日志)</span></span><br><span class="line">    --block.db /dev/nvme0n1p2                    <span class="comment"># DB 设备 (元数据存储)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建加密 OSD</span></span><br><span class="line">ceph-volume lvm create --data /dev/sdb --dmcrypt  <span class="comment"># 使用 dm-crypt 加密设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 批量创建 OSD (脚本示例)</span></span><br><span class="line"><span class="keyword">for</span> disk <span class="keyword">in</span> /dev/sd&#123;b,c,d&#125;; <span class="keyword">do</span></span><br><span class="line">    ceph-volume lvm create --data <span class="variable">$disk</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 🔍 OSD 发现与信息查询</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有基于 LVM 的 OSD</span></span><br><span class="line">ceph-volume lvm list  <span class="comment"># 显示所有 OSD 及其关联设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出特定主机上的设备</span></span><br><span class="line">ceph-volume inventory --hostname node1  <span class="comment"># 显示 node1 上的所有存储设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查单个设备详细信息</span></span><br><span class="line">ceph-volume inventory --device /dev/sdb  <span class="comment"># 查看 /dev/sdb 的详细规格和可用性</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有 OSD FSID</span></span><br><span class="line">ceph-volume lvm list --format json | jq <span class="string">&#x27;.[] | .[0].tags.&quot;ceph.osd_fsid&quot;&#x27;</span>  <span class="comment"># 提取所有 OSD 的 FSID</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># ⚙️ OSD 激活与启动管理</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活单个 OSD</span></span><br><span class="line">ceph-volume lvm activate 0 abc123-456-789  <span class="comment"># 激活 osd.0 (需提供 OSD ID 和 FSID)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活所有检测到的 OSD</span></span><br><span class="line">ceph-volume lvm activate --all  <span class="comment"># 激活所有未运行的 OSD</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成 systemd 服务文件但不激活</span></span><br><span class="line">ceph-volume lvm activate 0 abc123-456-789 --no-start  <span class="comment"># 仅生成服务文件</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 🗑️ OSD 销毁与清理</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安全销毁 OSD (保留日志)</span></span><br><span class="line">ceph-volume lvm destroy --osd-id 0  <span class="comment"># 销毁 osd.0 但保留设备结构</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 完全清理设备 (危险!)</span></span><br><span class="line">ceph-volume lvm zap /dev/sdb --destroy  <span class="comment"># 彻底擦除设备并移除所有 Ceph 痕迹</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 批量清理多个设备</span></span><br><span class="line">ceph-volume lvm zap /dev/sdb /dev/sdc /dev/sdd  <span class="comment"># 同时清理多个设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 🔄 迁移与调整</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 迁移 OSD 到新设备</span></span><br><span class="line">ceph-volume lvm migrate --osd-id 0 --from /dev/sdb --to /dev/sdc  <span class="comment"># 将 osd.0 从 sdb 迁移到 sdc</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整 BlueStore 大小</span></span><br><span class="line">ceph-volume lvm bluefs-bdev-expand --osd-id 0  <span class="comment"># 扩展 osd.0 的 BlueFS 空间</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 🛡️ 加密管理</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备加密设备但不创建 OSD</span></span><br><span class="line">ceph-volume lvm prepare --data /dev/sdb --dmcrypt  <span class="comment"># 仅准备加密设备</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活加密 OSD</span></span><br><span class="line">ceph-volume lvm activate --dmcrypt 0 abc123-456-789  <span class="comment"># 激活加密的 osd.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 🔧 故障排查与调试</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 详细日志输出</span></span><br><span class="line">ceph-volume --log-level debug lvm list  <span class="comment"># 开启调试级别日志</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 模拟执行 (dry-run)</span></span><br><span class="line">ceph-volume lvm create --data /dev/sdb --dry-run  <span class="comment"># 显示操作步骤但不实际执行</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查 LVM 元数据</span></span><br><span class="line">vgdisplay -v ceph-$(ceph-volume lvm list --format json | jq -r <span class="string">&#x27;.[0][0].tags.&quot;ceph.vg_uuid&quot;&#x27;</span>)  <span class="comment"># 检查 OSD 的 LVM 卷组</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"><span class="comment"># 📊 设备报告与信息提取</span></span><br><span class="line"><span class="comment"># ======================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># JSON 格式输出</span></span><br><span class="line">ceph-volume lvm list --format json  <span class="comment"># 机器可读的输出格式</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 仅显示设备路径</span></span><br><span class="line">ceph-volume inventory | jq -r <span class="string">&#x27;.[] | select(.available) | .path&#x27;</span>  <span class="comment"># 列出所有可用设备路径</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查设备是否被 Ceph 使用</span></span><br><span class="line">ceph-volume inventory --device /dev/sdb | jq <span class="string">&#x27;.[].ceph_device&#x27;</span>  <span class="comment"># 返回 true/false</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ======================================================</span>
+<span class="token comment"># 🛠️ OSD 创建与部署</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 创建基础 OSD (使用单个设备)</span>
+ceph-volume lvm create <span class="token parameter variable">--data</span> /dev/sdb  <span class="token comment"># 在 /dev/sdb 上创建 BlueStore OSD</span>
+
+<span class="token comment"># 创建高级 OSD (分离 WAL/DB 设备)</span>
+ceph-volume lvm create <span class="token parameter variable">--data</span> /dev/sdd <span class="token punctuation">\</span>         <span class="token comment"># 主数据设备</span>
+    <span class="token parameter variable">--block.wal</span> /dev/nvme0n1p1 <span class="token punctuation">\</span>                 <span class="token comment"># WAL 设备 (高性能日志)</span>
+    <span class="token parameter variable">--block.db</span> /dev/nvme0n1p2                    <span class="token comment"># DB 设备 (元数据存储)</span>
+
+<span class="token comment"># 创建加密 OSD</span>
+ceph-volume lvm create <span class="token parameter variable">--data</span> /dev/sdb <span class="token parameter variable">--dmcrypt</span>  <span class="token comment"># 使用 dm-crypt 加密设备</span>
+
+<span class="token comment"># 批量创建 OSD (脚本示例)</span>
+<span class="token keyword">for</span> <span class="token for-or-select variable">disk</span> <span class="token keyword">in</span> /dev/sd<span class="token punctuation">&#123;</span>b,c,d<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> <span class="token keyword">do</span>
+    ceph-volume lvm create <span class="token parameter variable">--data</span> <span class="token variable">$disk</span>
+<span class="token keyword">done</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># 🔍 OSD 发现与信息查询</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 列出所有基于 LVM 的 OSD</span>
+ceph-volume lvm list  <span class="token comment"># 显示所有 OSD 及其关联设备</span>
+
+<span class="token comment"># 列出特定主机上的设备</span>
+ceph-volume inventory <span class="token parameter variable">--hostname</span> node1  <span class="token comment"># 显示 node1 上的所有存储设备</span>
+
+<span class="token comment"># 检查单个设备详细信息</span>
+ceph-volume inventory <span class="token parameter variable">--device</span> /dev/sdb  <span class="token comment"># 查看 /dev/sdb 的详细规格和可用性</span>
+
+<span class="token comment"># 列出所有 OSD FSID</span>
+ceph-volume lvm list <span class="token parameter variable">--format</span> json <span class="token operator">|</span> jq <span class="token string">'.[] | .[0].tags."ceph.osd_fsid"'</span>  <span class="token comment"># 提取所有 OSD 的 FSID</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># ⚙️ OSD 激活与启动管理</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 激活单个 OSD</span>
+ceph-volume lvm activate <span class="token number">0</span> abc123-456-789  <span class="token comment"># 激活 osd.0 (需提供 OSD ID 和 FSID)</span>
+
+<span class="token comment"># 激活所有检测到的 OSD</span>
+ceph-volume lvm activate <span class="token parameter variable">--all</span>  <span class="token comment"># 激活所有未运行的 OSD</span>
+
+<span class="token comment"># 生成 systemd 服务文件但不激活</span>
+ceph-volume lvm activate <span class="token number">0</span> abc123-456-789 --no-start  <span class="token comment"># 仅生成服务文件</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># 🗑️ OSD 销毁与清理</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 安全销毁 OSD (保留日志)</span>
+ceph-volume lvm destroy --osd-id <span class="token number">0</span>  <span class="token comment"># 销毁 osd.0 但保留设备结构</span>
+
+<span class="token comment"># 完全清理设备 (危险!)</span>
+ceph-volume lvm zap /dev/sdb <span class="token parameter variable">--destroy</span>  <span class="token comment"># 彻底擦除设备并移除所有 Ceph 痕迹</span>
+
+<span class="token comment"># 批量清理多个设备</span>
+ceph-volume lvm zap /dev/sdb /dev/sdc /dev/sdd  <span class="token comment"># 同时清理多个设备</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># 🔄 迁移与调整</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 迁移 OSD 到新设备</span>
+ceph-volume lvm migrate --osd-id <span class="token number">0</span> <span class="token parameter variable">--from</span> /dev/sdb <span class="token parameter variable">--to</span> /dev/sdc  <span class="token comment"># 将 osd.0 从 sdb 迁移到 sdc</span>
+
+<span class="token comment"># 调整 BlueStore 大小</span>
+ceph-volume lvm bluefs-bdev-expand --osd-id <span class="token number">0</span>  <span class="token comment"># 扩展 osd.0 的 BlueFS 空间</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># 🛡️ 加密管理</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 准备加密设备但不创建 OSD</span>
+ceph-volume lvm prepare <span class="token parameter variable">--data</span> /dev/sdb <span class="token parameter variable">--dmcrypt</span>  <span class="token comment"># 仅准备加密设备</span>
+
+<span class="token comment"># 激活加密 OSD</span>
+ceph-volume lvm activate <span class="token parameter variable">--dmcrypt</span> <span class="token number">0</span> abc123-456-789  <span class="token comment"># 激活加密的 osd.0</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># 🔧 故障排查与调试</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># 详细日志输出</span>
+ceph-volume --log-level debug lvm list  <span class="token comment"># 开启调试级别日志</span>
+
+<span class="token comment"># 模拟执行 (dry-run)</span>
+ceph-volume lvm create <span class="token parameter variable">--data</span> /dev/sdb --dry-run  <span class="token comment"># 显示操作步骤但不实际执行</span>
+
+<span class="token comment"># 检查 LVM 元数据</span>
+vgdisplay <span class="token parameter variable">-v</span> ceph-<span class="token variable"><span class="token variable">$(</span>ceph-volume lvm list <span class="token parameter variable">--format</span> json <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">'.[0][0].tags."ceph.vg_uuid"'</span><span class="token variable">)</span></span>  <span class="token comment"># 检查 OSD 的 LVM 卷组</span>
+
+<span class="token comment"># ======================================================</span>
+<span class="token comment"># 📊 设备报告与信息提取</span>
+<span class="token comment"># ======================================================</span>
+
+<span class="token comment"># JSON 格式输出</span>
+ceph-volume lvm list <span class="token parameter variable">--format</span> json  <span class="token comment"># 机器可读的输出格式</span>
+
+<span class="token comment"># 仅显示设备路径</span>
+ceph-volume inventory <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">'.[] | select(.available) | .path'</span>  <span class="token comment"># 列出所有可用设备路径</span>
+
+<span class="token comment"># 检查设备是否被 Ceph 使用</span>
+ceph-volume inventory <span class="token parameter variable">--device</span> /dev/sdb <span class="token operator">|</span> jq <span class="token string">'.[].ceph_device'</span>  <span class="token comment"># 返回 true/false</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6600,36 +6813,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7094,13 +7277,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8141,13 +8324,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8600,14 +8783,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8615,14 +8798,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

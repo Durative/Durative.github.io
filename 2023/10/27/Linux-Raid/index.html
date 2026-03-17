@@ -496,32 +496,201 @@
         <p><strong>如果出现无法载图的情况，请检查与github的连通性</strong></p>
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>VMware workstation 17pro<br>CentOS Linux release 7.9.2009 (Core)<br>——内存8G，16vCPU<br>——硬盘系统盘100G（自动分区）<br>——四块20G硬盘，均为SCSI类型</p>
 <p>#在没有操作系统的情况下，可以在装系统时将磁盘做软raid，然后使用软raid作为系统盘<br>#在重构时，软raid会大大增加CPU的负担，在实际生产环境中不建议使用<br>#同一块盘的不同分区也可以进行软raid</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看当前磁盘状态</span></span><br><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda               8:0    0  100G  0 disk </span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0   99G  0 part </span><br><span class="line">  ├─centos-root 253:0    0   50G  0 lvm  /</span><br><span class="line">  ├─centos-swap 253:1    0  3.9G  0 lvm  [SWAP]</span><br><span class="line">  └─centos-home 253:2    0 45.1G  0 lvm  /home</span><br><span class="line">sdb               8:16   0   20G  0 disk </span><br><span class="line">sdc               8:32   0   20G  0 disk </span><br><span class="line">sdd               8:48   0   20G  0 disk </span><br><span class="line">sde               8:64   0   20G  0 disk </span><br><span class="line">sr0              11:0    1  4.5G  0 rom  /run/media/root/CentOS 7 x86_64</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#查看当前磁盘状态</span>
+lsblk
+NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda               <span class="token number">8</span>:0    <span class="token number">0</span>  100G  <span class="token number">0</span> disk 
+├─sda1            <span class="token number">8</span>:1    <span class="token number">0</span>    1G  <span class="token number">0</span> part /boot
+└─sda2            <span class="token number">8</span>:2    <span class="token number">0</span>   99G  <span class="token number">0</span> part 
+  ├─centos-root <span class="token number">253</span>:0    <span class="token number">0</span>   50G  <span class="token number">0</span> lvm  /
+  ├─centos-swap <span class="token number">253</span>:1    <span class="token number">0</span>  <span class="token number">3</span>.9G  <span class="token number">0</span> lvm  <span class="token punctuation">[</span>SWAP<span class="token punctuation">]</span>
+  └─centos-home <span class="token number">253</span>:2    <span class="token number">0</span> <span class="token number">45</span>.1G  <span class="token number">0</span> lvm  /home
+sdb               <span class="token number">8</span>:16   <span class="token number">0</span>   20G  <span class="token number">0</span> disk 
+sdc               <span class="token number">8</span>:32   <span class="token number">0</span>   20G  <span class="token number">0</span> disk 
+sdd               <span class="token number">8</span>:48   <span class="token number">0</span>   20G  <span class="token number">0</span> disk 
+sde               <span class="token number">8</span>:64   <span class="token number">0</span>   20G  <span class="token number">0</span> disk 
+sr0              <span class="token number">11</span>:0    <span class="token number">1</span>  <span class="token number">4</span>.5G  <span class="token number">0</span> rom  /run/media/root/CentOS <span class="token number">7</span> x86_64
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="1-安装mdadm"><a href="#1-安装mdadm" class="headerlink" title="1.安装mdadm"></a>1.安装mdadm</h1><p>yum -y install mdadm</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看系统集成的mod，能看到支持</span></span><br><span class="line">lsmod | grep raid</span><br><span class="line">raid456               151196  1 </span><br><span class="line">async_raid6_recov      17288  1 raid456</span><br><span class="line">async_memcpy           12768  2 raid456,async_raid6_recov</span><br><span class="line">async_pq               13332  2 raid456,async_raid6_recov</span><br><span class="line">raid6_pq              102527  3 async_pq,raid456,async_raid6_recov</span><br><span class="line">async_xor              13127  3 async_pq,raid456,async_raid6_recov</span><br><span class="line">async_tx               13509  5 async_pq,raid456,async_xor,async_memcpy,async_raid6_recov</span><br><span class="line">raid1                  44113  0 </span><br><span class="line">raid0                  18164  0 </span><br><span class="line">libcrc32c              12644  4 xfs,raid456,nf_nat,nf_conntrack</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#查看系统集成的mod，能看到支持</span>
+lsmod <span class="token operator">|</span> <span class="token function">grep</span> raid
+raid456               <span class="token number">151196</span>  <span class="token number">1</span> 
+async_raid6_recov      <span class="token number">17288</span>  <span class="token number">1</span> raid456
+async_memcpy           <span class="token number">12768</span>  <span class="token number">2</span> raid456,async_raid6_recov
+async_pq               <span class="token number">13332</span>  <span class="token number">2</span> raid456,async_raid6_recov
+raid6_pq              <span class="token number">102527</span>  <span class="token number">3</span> async_pq,raid456,async_raid6_recov
+async_xor              <span class="token number">13127</span>  <span class="token number">3</span> async_pq,raid456,async_raid6_recov
+async_tx               <span class="token number">13509</span>  <span class="token number">5</span> async_pq,raid456,async_xor,async_memcpy,async_raid6_recov
+raid1                  <span class="token number">44113</span>  <span class="token number">0</span> 
+raid0                  <span class="token number">18164</span>  <span class="token number">0</span> 
+libcrc32c              <span class="token number">12644</span>  <span class="token number">4</span> xfs,raid456,nf_nat,nf_conntrack<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h1 id="2-创建raid"><a href="#2-创建raid" class="headerlink" title="2.创建raid"></a>2.创建raid</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建raid名为/dev/md0，选另外名字可能报错 使用mdadm -C亦可</span></span><br><span class="line">mdadm --create /dev/md0 \</span><br><span class="line">-a <span class="built_in">yes</span> \ <span class="comment">#自动创建raid设备</span></span><br><span class="line">-l 0 \ <span class="comment">#设定raid类型为raid0</span></span><br><span class="line">-n 2 /dev/sdb /dev/sdc <span class="comment">#指定2块硬盘，sdb与sdc</span></span><br><span class="line"><span class="comment">#mdadm: Defaulting to version 1.2 metadata</span></span><br><span class="line"><span class="comment">#mdadm: array /dev/md0 started.</span></span><br><span class="line">mdadm --create /dev/md1 -a <span class="built_in">yes</span> -l 1 -n 2 /dev/sdd /dev/sde</span><br><span class="line"><span class="comment">#输入yes忽略提示</span></span><br><span class="line"><span class="comment">#mdadm: Defaulting to version 1.2 metadata</span></span><br><span class="line"><span class="comment">#mdadm: array /dev/md1 started.</span></span><br></pre></td></tr></table></figure>
+<h1 id="2-创建raid"><a href="#2-创建raid" class="headerlink" title="2.创建raid"></a>2.创建raid</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#创建raid名为/dev/md0，选另外名字可能报错 使用mdadm -C亦可</span>
+<span class="token function">mdadm</span> <span class="token parameter variable">--create</span> /dev/md0 <span class="token punctuation">\</span>
+<span class="token parameter variable">-a</span> <span class="token function">yes</span> <span class="token punctuation">\</span> <span class="token comment">#自动创建raid设备</span>
+<span class="token parameter variable">-l</span> <span class="token number">0</span> <span class="token punctuation">\</span> <span class="token comment">#设定raid类型为raid0</span>
+<span class="token parameter variable">-n</span> <span class="token number">2</span> /dev/sdb /dev/sdc <span class="token comment">#指定2块硬盘，sdb与sdc</span>
+<span class="token comment">#mdadm: Defaulting to version 1.2 metadata</span>
+<span class="token comment">#mdadm: array /dev/md0 started.</span>
+<span class="token function">mdadm</span> <span class="token parameter variable">--create</span> /dev/md1 <span class="token parameter variable">-a</span> <span class="token function">yes</span> <span class="token parameter variable">-l</span> <span class="token number">1</span> <span class="token parameter variable">-n</span> <span class="token number">2</span> /dev/sdd /dev/sde
+<span class="token comment">#输入yes忽略提示</span>
+<span class="token comment">#mdadm: Defaulting to version 1.2 metadata</span>
+<span class="token comment">#mdadm: array /dev/md1 started.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="查看软raid信息与状态"><a href="#查看软raid信息与状态" class="headerlink" title="查看软raid信息与状态"></a>查看软raid信息与状态</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT</span><br><span class="line">sda               8:0    0  100G  0 disk  </span><br><span class="line">├─sda1            8:1    0    1G  0 part  /boot</span><br><span class="line">└─sda2            8:2    0   99G  0 part  </span><br><span class="line">  ├─centos-root 253:0    0   50G  0 lvm   /</span><br><span class="line">  ├─centos-swap 253:1    0  3.9G  0 lvm   [SWAP]</span><br><span class="line">  └─centos-home 253:2    0 45.1G  0 lvm   /home</span><br><span class="line">sdb               8:16   0   20G  0 disk  </span><br><span class="line">└─md0             9:0    0   40G  0 raid0 </span><br><span class="line">sdc               8:32   0   20G  0 disk  </span><br><span class="line">└─md0             9:0    0   40G  0 raid0 </span><br><span class="line">sdd               8:48   0   20G  0 disk  </span><br><span class="line">└─md1             9:1    0   20G  0 raid1 </span><br><span class="line">sde               8:64   0   20G  0 disk  </span><br><span class="line">└─md1             9:1    0   20G  0 raid1 </span><br><span class="line">sr0              11:0    1  4.5G  0 rom   /run/media/root/CentOS 7 x86_64</span><br><span class="line"></span><br><span class="line">mdadm --detail /dev/md0</span><br><span class="line"><span class="comment">#mdadm -D /dev/md0亦可</span></span><br><span class="line">/dev/md0:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Tue Dec 12 05:41:07 2023</span><br><span class="line">        Raid Level : raid0</span><br><span class="line">        Array Size : 41908224 (39.97 GiB 42.91 GB)</span><br><span class="line">      Raid Devices : 2</span><br><span class="line">     Total Devices : 2</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Tue Dec 12 05:41:07 2023 </span><br><span class="line">             State : clean</span><br><span class="line">    Active Devices : 2</span><br><span class="line">   Working Devices : 2</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 0</span><br><span class="line"></span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : none</span><br><span class="line"></span><br><span class="line">              Name : 192.168.8.151:0  (<span class="built_in">local</span> to host 192.168.8.151)</span><br><span class="line">              UUID : cb7e5ace:f809e250:75079d40:21413521</span><br><span class="line">            Events : 0</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       16        0      active <span class="built_in">sync</span>   /dev/sdb</span><br><span class="line">       1       8       32        1      active <span class="built_in">sync</span>   /dev/sdc</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看raid状态</span></span><br><span class="line"><span class="built_in">cat</span> /proc/mdstat </span><br><span class="line">Personalities : [raid0] [raid1] </span><br><span class="line">md1 : active raid1 sde[1] sdd[0]</span><br><span class="line">      20954112 blocks super 1.2 [2/2] [UU]</span><br><span class="line">      </span><br><span class="line">md0 : active raid0 sdc[1] sdb[0]</span><br><span class="line">      41908224 blocks super 1.2 512k chunks</span><br></pre></td></tr></table></figure>
+<h2 id="查看软raid信息与状态"><a href="#查看软raid信息与状态" class="headerlink" title="查看软raid信息与状态"></a>查看软raid信息与状态</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">lsblk
+NAME            MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda               <span class="token number">8</span>:0    <span class="token number">0</span>  100G  <span class="token number">0</span> disk  
+├─sda1            <span class="token number">8</span>:1    <span class="token number">0</span>    1G  <span class="token number">0</span> part  /boot
+└─sda2            <span class="token number">8</span>:2    <span class="token number">0</span>   99G  <span class="token number">0</span> part  
+  ├─centos-root <span class="token number">253</span>:0    <span class="token number">0</span>   50G  <span class="token number">0</span> lvm   /
+  ├─centos-swap <span class="token number">253</span>:1    <span class="token number">0</span>  <span class="token number">3</span>.9G  <span class="token number">0</span> lvm   <span class="token punctuation">[</span>SWAP<span class="token punctuation">]</span>
+  └─centos-home <span class="token number">253</span>:2    <span class="token number">0</span> <span class="token number">45</span>.1G  <span class="token number">0</span> lvm   /home
+sdb               <span class="token number">8</span>:16   <span class="token number">0</span>   20G  <span class="token number">0</span> disk  
+└─md0             <span class="token number">9</span>:0    <span class="token number">0</span>   40G  <span class="token number">0</span> raid0 
+sdc               <span class="token number">8</span>:32   <span class="token number">0</span>   20G  <span class="token number">0</span> disk  
+└─md0             <span class="token number">9</span>:0    <span class="token number">0</span>   40G  <span class="token number">0</span> raid0 
+sdd               <span class="token number">8</span>:48   <span class="token number">0</span>   20G  <span class="token number">0</span> disk  
+└─md1             <span class="token number">9</span>:1    <span class="token number">0</span>   20G  <span class="token number">0</span> raid1 
+sde               <span class="token number">8</span>:64   <span class="token number">0</span>   20G  <span class="token number">0</span> disk  
+└─md1             <span class="token number">9</span>:1    <span class="token number">0</span>   20G  <span class="token number">0</span> raid1 
+sr0              <span class="token number">11</span>:0    <span class="token number">1</span>  <span class="token number">4</span>.5G  <span class="token number">0</span> rom   /run/media/root/CentOS <span class="token number">7</span> x86_64
+
+<span class="token function">mdadm</span> <span class="token parameter variable">--detail</span> /dev/md0
+<span class="token comment">#mdadm -D /dev/md0亦可</span>
+/dev/md0:
+           Version <span class="token builtin class-name">:</span> <span class="token number">1.2</span>
+     Creation Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 05:41:07 <span class="token number">2023</span>
+        Raid Level <span class="token builtin class-name">:</span> raid0
+        Array Size <span class="token builtin class-name">:</span> <span class="token number">41908224</span> <span class="token punctuation">(</span><span class="token number">39.97</span> GiB <span class="token number">42.91</span> GB<span class="token punctuation">)</span>
+      Raid Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+     Total Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+       Persistence <span class="token builtin class-name">:</span> Superblock is persistent
+
+       Update Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 05:41:07 <span class="token number">2023</span> 
+             State <span class="token builtin class-name">:</span> clean
+    Active Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+   Working Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+    Failed Devices <span class="token builtin class-name">:</span> <span class="token number">0</span>
+     Spare Devices <span class="token builtin class-name">:</span> <span class="token number">0</span>
+
+        Chunk Size <span class="token builtin class-name">:</span> 512K
+
+Consistency Policy <span class="token builtin class-name">:</span> none
+
+              Name <span class="token builtin class-name">:</span> <span class="token number">192.168</span>.8.151:0  <span class="token punctuation">(</span>local to <span class="token function">host</span> <span class="token number">192.168</span>.8.151<span class="token punctuation">)</span>
+              UUID <span class="token builtin class-name">:</span> cb7e5ace:f809e250:75079d40:21413521
+            Events <span class="token builtin class-name">:</span> <span class="token number">0</span>
+
+    Number   Major   Minor   RaidDevice State
+       <span class="token number">0</span>       <span class="token number">8</span>       <span class="token number">16</span>        <span class="token number">0</span>      active <span class="token function">sync</span>   /dev/sdb
+       <span class="token number">1</span>       <span class="token number">8</span>       <span class="token number">32</span>        <span class="token number">1</span>      active <span class="token function">sync</span>   /dev/sdc
+
+<span class="token comment">#查看raid状态</span>
+<span class="token function">cat</span> /proc/mdstat 
+Personalities <span class="token builtin class-name">:</span> <span class="token punctuation">[</span>raid0<span class="token punctuation">]</span> <span class="token punctuation">[</span>raid1<span class="token punctuation">]</span> 
+md1 <span class="token builtin class-name">:</span> active raid1 sde<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> sdd<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+      <span class="token number">20954112</span> blocks super <span class="token number">1.2</span> <span class="token punctuation">[</span><span class="token number">2</span>/2<span class="token punctuation">]</span> <span class="token punctuation">[</span>UU<span class="token punctuation">]</span>
+      
+md0 <span class="token builtin class-name">:</span> active raid0 sdc<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> sdb<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+      <span class="token number">41908224</span> blocks super <span class="token number">1.2</span> 512k chunks<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="模拟故障"><a href="#模拟故障" class="headerlink" title="模拟故障"></a>模拟故障</h1><p>停止阵列<br>mdadm –stop &#x2F;dev&#x2F;md0<br>mdadm –stop &#x2F;dev&#x2F;md1</p>
 <p>重新启动阵列<br>mdadm -A &#x2F;dev&#x2F;md1</p>
 <p>清除使用后的raid超级块信息<br>mdadm –misc –zero-superblock &#x2F;dev&#x2F;sdb &#x2F;dev&#x2F;sdc<br>将信息彻底清除后，使其可以再被用于创建新阵列</p>
 <p>模拟磁盘故障<br>mdadm &#x2F;dev&#x2F;md1 -f &#x2F;dev&#x2F;sdd</p>
 <p>查看信息，此时可用为1块，1块失败</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/mdstat </span><br><span class="line">Personalities : [raid0] [raid1] </span><br><span class="line">md1 : active raid1 sde[1] sdd[0](F)</span><br><span class="line">      20954112 blocks super 1.2 [2/1] [_U]</span><br><span class="line">mdadm -D /dev/md1 </span><br><span class="line">/dev/md1:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Tue Dec 12 06:43:12 2023</span><br><span class="line">        Raid Level : raid1</span><br><span class="line">        Array Size : 20954112 (19.98 GiB 21.46 GB)</span><br><span class="line">     Used Dev Size : 20954112 (19.98 GiB 21.46 GB)</span><br><span class="line">      Raid Devices : 2</span><br><span class="line">     Total Devices : 2</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Tue Dec 12 06:47:50 2023</span><br><span class="line">             State : clean, degraded </span><br><span class="line">    Active Devices : 1</span><br><span class="line">   Working Devices : 1</span><br><span class="line">    Failed Devices : 1</span><br><span class="line">     Spare Devices : 0</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> /proc/mdstat 
+Personalities <span class="token builtin class-name">:</span> <span class="token punctuation">[</span>raid0<span class="token punctuation">]</span> <span class="token punctuation">[</span>raid1<span class="token punctuation">]</span> 
+md1 <span class="token builtin class-name">:</span> active raid1 sde<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> sdd<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">(</span>F<span class="token punctuation">)</span>
+      <span class="token number">20954112</span> blocks super <span class="token number">1.2</span> <span class="token punctuation">[</span><span class="token number">2</span>/1<span class="token punctuation">]</span> <span class="token punctuation">[</span>_U<span class="token punctuation">]</span>
+<span class="token function">mdadm</span> <span class="token parameter variable">-D</span> /dev/md1 
+/dev/md1:
+           Version <span class="token builtin class-name">:</span> <span class="token number">1.2</span>
+     Creation Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 06:43:12 <span class="token number">2023</span>
+        Raid Level <span class="token builtin class-name">:</span> raid1
+        Array Size <span class="token builtin class-name">:</span> <span class="token number">20954112</span> <span class="token punctuation">(</span><span class="token number">19.98</span> GiB <span class="token number">21.46</span> GB<span class="token punctuation">)</span>
+     Used Dev Size <span class="token builtin class-name">:</span> <span class="token number">20954112</span> <span class="token punctuation">(</span><span class="token number">19.98</span> GiB <span class="token number">21.46</span> GB<span class="token punctuation">)</span>
+      Raid Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+     Total Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+       Persistence <span class="token builtin class-name">:</span> Superblock is persistent
+
+       Update Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 06:47:50 <span class="token number">2023</span>
+             State <span class="token builtin class-name">:</span> clean, degraded 
+    Active Devices <span class="token builtin class-name">:</span> <span class="token number">1</span>
+   Working Devices <span class="token builtin class-name">:</span> <span class="token number">1</span>
+    Failed Devices <span class="token builtin class-name">:</span> <span class="token number">1</span>
+     Spare Devices <span class="token builtin class-name">:</span> <span class="token number">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>移除故障的磁盘<br>mdadm –manage &#x2F;dev&#x2F;md1 –remove &#x2F;dev&#x2F;sdd</p>
 <p>此时再查看就只剩一块盘了</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">mdadm -D /dev/md1</span><br><span class="line">/dev/md1:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Tue Dec 12 06:43:12 2023</span><br><span class="line">        Raid Level : raid1</span><br><span class="line">        Array Size : 20954112 (19.98 GiB 21.46 GB)</span><br><span class="line">     Used Dev Size : 20954112 (19.98 GiB 21.46 GB)</span><br><span class="line">      Raid Devices : 2</span><br><span class="line">     Total Devices : 1</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Tue Dec 12 06:50:27 2023</span><br><span class="line">             State : clean, degraded </span><br><span class="line">    Active Devices : 1</span><br><span class="line">   Working Devices : 1</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 0</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mdadm</span> <span class="token parameter variable">-D</span> /dev/md1
+/dev/md1:
+           Version <span class="token builtin class-name">:</span> <span class="token number">1.2</span>
+     Creation Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 06:43:12 <span class="token number">2023</span>
+        Raid Level <span class="token builtin class-name">:</span> raid1
+        Array Size <span class="token builtin class-name">:</span> <span class="token number">20954112</span> <span class="token punctuation">(</span><span class="token number">19.98</span> GiB <span class="token number">21.46</span> GB<span class="token punctuation">)</span>
+     Used Dev Size <span class="token builtin class-name">:</span> <span class="token number">20954112</span> <span class="token punctuation">(</span><span class="token number">19.98</span> GiB <span class="token number">21.46</span> GB<span class="token punctuation">)</span>
+      Raid Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+     Total Devices <span class="token builtin class-name">:</span> <span class="token number">1</span>
+       Persistence <span class="token builtin class-name">:</span> Superblock is persistent
+
+       Update Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 06:50:27 <span class="token number">2023</span>
+             State <span class="token builtin class-name">:</span> clean, degraded 
+    Active Devices <span class="token builtin class-name">:</span> <span class="token number">1</span>
+   Working Devices <span class="token builtin class-name">:</span> <span class="token number">1</span>
+    Failed Devices <span class="token builtin class-name">:</span> <span class="token number">0</span>
+     Spare Devices <span class="token builtin class-name">:</span> <span class="token number">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>再添加一块好的盘进去<br>mdadm –manage &#x2F;dev&#x2F;md1 –add &#x2F;dev&#x2F;sdc</p>
 <p>此时再查看mdstat状态，可以看到硬盘正在重构</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/mdstat </span><br><span class="line">Personalities : [raid0] [raid1] </span><br><span class="line">md1 : active raid1 sdc[2] sde[1]</span><br><span class="line">      20954112 blocks super 1.2 [2/1] [_U]</span><br><span class="line">      [=&gt;...................]  recovery =  8.5% (1800192/20954112) finish=1.4min speed=225024K/sec</span><br><span class="line"></span><br><span class="line"><span class="comment">#重构完重新查看</span></span><br><span class="line">mdadm -D /dev/md1 </span><br><span class="line">/dev/md1:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Tue Dec 12 06:43:12 2023</span><br><span class="line">        Raid Level : raid1</span><br><span class="line">        Array Size : 20954112 (19.98 GiB 21.46 GB)</span><br><span class="line">     Used Dev Size : 20954112 (19.98 GiB 21.46 GB)</span><br><span class="line">      Raid Devices : 2</span><br><span class="line">     Total Devices : 2</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Tue Dec 12 06:56:35 2023</span><br><span class="line">             State : clean </span><br><span class="line">    Active Devices : 2</span><br><span class="line">   Working Devices : 2</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 0</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line"><span class="comment">#清理环境</span></span><br><span class="line">mdadm --stop /dev/md1</span><br><span class="line">mdadm --misc --zero-superblock /dev/sdc /dev/sde</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> /proc/mdstat 
+Personalities <span class="token builtin class-name">:</span> <span class="token punctuation">[</span>raid0<span class="token punctuation">]</span> <span class="token punctuation">[</span>raid1<span class="token punctuation">]</span> 
+md1 <span class="token builtin class-name">:</span> active raid1 sdc<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> sde<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+      <span class="token number">20954112</span> blocks super <span class="token number">1.2</span> <span class="token punctuation">[</span><span class="token number">2</span>/1<span class="token punctuation">]</span> <span class="token punctuation">[</span>_U<span class="token punctuation">]</span>
+      <span class="token punctuation">[</span><span class="token operator">=</span><span class="token operator">></span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span><span class="token punctuation">..</span>.<span class="token punctuation">]</span>  recovery <span class="token operator">=</span>  <span class="token number">8.5</span>% <span class="token punctuation">(</span><span class="token number">1800192</span>/20954112<span class="token punctuation">)</span> <span class="token assign-left variable">finish</span><span class="token operator">=</span><span class="token number">1</span>.4min <span class="token assign-left variable">speed</span><span class="token operator">=</span>225024K/sec
+
+<span class="token comment">#重构完重新查看</span>
+<span class="token function">mdadm</span> <span class="token parameter variable">-D</span> /dev/md1 
+/dev/md1:
+           Version <span class="token builtin class-name">:</span> <span class="token number">1.2</span>
+     Creation Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 06:43:12 <span class="token number">2023</span>
+        Raid Level <span class="token builtin class-name">:</span> raid1
+        Array Size <span class="token builtin class-name">:</span> <span class="token number">20954112</span> <span class="token punctuation">(</span><span class="token number">19.98</span> GiB <span class="token number">21.46</span> GB<span class="token punctuation">)</span>
+     Used Dev Size <span class="token builtin class-name">:</span> <span class="token number">20954112</span> <span class="token punctuation">(</span><span class="token number">19.98</span> GiB <span class="token number">21.46</span> GB<span class="token punctuation">)</span>
+      Raid Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+     Total Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+       Persistence <span class="token builtin class-name">:</span> Superblock is persistent
+
+       Update Time <span class="token builtin class-name">:</span> Tue Dec <span class="token number">12</span> 06:56:35 <span class="token number">2023</span>
+             State <span class="token builtin class-name">:</span> clean 
+    Active Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+   Working Devices <span class="token builtin class-name">:</span> <span class="token number">2</span>
+    Failed Devices <span class="token builtin class-name">:</span> <span class="token number">0</span>
+     Spare Devices <span class="token builtin class-name">:</span> <span class="token number">0</span>
+
+Consistency Policy <span class="token builtin class-name">:</span> resync
+
+<span class="token comment">#清理环境</span>
+<span class="token function">mdadm</span> <span class="token parameter variable">--stop</span> /dev/md1
+<span class="token function">mdadm</span> <span class="token parameter variable">--misc</span> --zero-superblock /dev/sdc /dev/sde<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 
-<h1 id="fio磁盘性能测试工具"><a href="#fio磁盘性能测试工具" class="headerlink" title="fio磁盘性能测试工具"></a>fio磁盘性能测试工具</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">顺序读：</span><br><span class="line"></span><br><span class="line">fio -filename=/dev/sdb -direct=1 -iodepth 1 -thread -rw=<span class="built_in">read</span> -ioengine=psync -bs=16k -size=2G -numjobs=10 -runtime=30 -group_reporting -name=mytest</span><br><span class="line"></span><br><span class="line">随机写：</span><br><span class="line"></span><br><span class="line">fio -filename=/dev/sdb -direct=1 -iodepth 1 -thread -rw=r andwrite -ioengine=psync -bs=16k -size=2G -numjobs=10 -runtime=30 -group_reporting -name=mytest</span><br><span class="line"></span><br><span class="line">顺序写：</span><br><span class="line"></span><br><span class="line">fio -filename=/dev/sdb -direct=1 -iodepth 1 -thread -rw=write -ioengine=psync -bs=16k -size=2G -numjobs=10 -runtime=30 -group_reporting -name=mytest</span><br><span class="line"></span><br><span class="line">混合随机读写：</span><br><span class="line"></span><br><span class="line">fio -filename=/dev/sdb -direct=1 -iodepth 1 -thread -rw=randrw -rwmixread=70 -ioengine=psync -bs=16k size=2G -numjobs=10 -runtime=30 -group_reporting -name=mytest -ioscheduler=noop</span><br></pre></td></tr></table></figure>
+<h1 id="fio磁盘性能测试工具"><a href="#fio磁盘性能测试工具" class="headerlink" title="fio磁盘性能测试工具"></a>fio磁盘性能测试工具</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">顺序读：
+
+fio <span class="token parameter variable">-filename</span><span class="token operator">=</span>/dev/sdb <span class="token parameter variable">-direct</span><span class="token operator">=</span><span class="token number">1</span> <span class="token parameter variable">-iodepth</span> <span class="token number">1</span> <span class="token parameter variable">-thread</span> <span class="token parameter variable">-rw</span><span class="token operator">=</span>read <span class="token parameter variable">-ioengine</span><span class="token operator">=</span>psync <span class="token parameter variable">-bs</span><span class="token operator">=</span>16k <span class="token parameter variable">-size</span><span class="token operator">=</span>2G <span class="token parameter variable">-numjobs</span><span class="token operator">=</span><span class="token number">10</span> <span class="token parameter variable">-runtime</span><span class="token operator">=</span><span class="token number">30</span> <span class="token parameter variable">-group_reporting</span> <span class="token parameter variable">-name</span><span class="token operator">=</span>mytest
+
+随机写：
+
+fio <span class="token parameter variable">-filename</span><span class="token operator">=</span>/dev/sdb <span class="token parameter variable">-direct</span><span class="token operator">=</span><span class="token number">1</span> <span class="token parameter variable">-iodepth</span> <span class="token number">1</span> <span class="token parameter variable">-thread</span> <span class="token parameter variable">-rw</span><span class="token operator">=</span>r andwrite <span class="token parameter variable">-ioengine</span><span class="token operator">=</span>psync <span class="token parameter variable">-bs</span><span class="token operator">=</span>16k <span class="token parameter variable">-size</span><span class="token operator">=</span>2G <span class="token parameter variable">-numjobs</span><span class="token operator">=</span><span class="token number">10</span> <span class="token parameter variable">-runtime</span><span class="token operator">=</span><span class="token number">30</span> <span class="token parameter variable">-group_reporting</span> <span class="token parameter variable">-name</span><span class="token operator">=</span>mytest
+
+顺序写：
+
+fio <span class="token parameter variable">-filename</span><span class="token operator">=</span>/dev/sdb <span class="token parameter variable">-direct</span><span class="token operator">=</span><span class="token number">1</span> <span class="token parameter variable">-iodepth</span> <span class="token number">1</span> <span class="token parameter variable">-thread</span> <span class="token parameter variable">-rw</span><span class="token operator">=</span>write <span class="token parameter variable">-ioengine</span><span class="token operator">=</span>psync <span class="token parameter variable">-bs</span><span class="token operator">=</span>16k <span class="token parameter variable">-size</span><span class="token operator">=</span>2G <span class="token parameter variable">-numjobs</span><span class="token operator">=</span><span class="token number">10</span> <span class="token parameter variable">-runtime</span><span class="token operator">=</span><span class="token number">30</span> <span class="token parameter variable">-group_reporting</span> <span class="token parameter variable">-name</span><span class="token operator">=</span>mytest
+
+混合随机读写：
+
+fio <span class="token parameter variable">-filename</span><span class="token operator">=</span>/dev/sdb <span class="token parameter variable">-direct</span><span class="token operator">=</span><span class="token number">1</span> <span class="token parameter variable">-iodepth</span> <span class="token number">1</span> <span class="token parameter variable">-thread</span> <span class="token parameter variable">-rw</span><span class="token operator">=</span>randrw <span class="token parameter variable">-rwmixread</span><span class="token operator">=</span><span class="token number">70</span> <span class="token parameter variable">-ioengine</span><span class="token operator">=</span>psync <span class="token parameter variable">-bs</span><span class="token operator">=</span>16k <span class="token assign-left variable">size</span><span class="token operator">=</span>2G <span class="token parameter variable">-numjobs</span><span class="token operator">=</span><span class="token number">10</span> <span class="token parameter variable">-runtime</span><span class="token operator">=</span><span class="token number">30</span> <span class="token parameter variable">-group_reporting</span> <span class="token parameter variable">-name</span><span class="token operator">=</span>mytest <span class="token parameter variable">-ioscheduler</span><span class="token operator">=</span>noop<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6575,36 +6744,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7069,13 +7208,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8116,13 +8255,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8575,14 +8714,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8590,14 +8729,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

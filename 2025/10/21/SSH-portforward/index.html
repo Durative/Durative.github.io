@@ -546,23 +546,81 @@
 <li>绕过防火墙限制，访问只允许内网IP访问的服务。</li>
 </ul>
 <p><strong>比如目标服务器上开了一个服务80端口，但绑定的是localhost，即只有自己能访问自己。此时在本地上打ssh隧道，转发到目标服务器的80端口，就可以在本地主机上访问目标的80端口</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">ssh -N -f -L [localip:]localport:target-host:target-port tunnel-host</span><br><span class="line">ssh -L [本地IP:]本地端口:目标主机:目标端口 SSH服务器</span><br><span class="line"></span><br><span class="line">-L 转发本地端口</span><br><span class="line">-N 只建立连接，不发生命令，不会打开shell</span><br><span class="line">-f 后台连接</span><br><span class="line"></span><br><span class="line">我在192.168.10.102:80有一个服务</span><br><span class="line">使用192.168.10.100的2345端口去访问它</span><br><span class="line"></span><br><span class="line"><span class="comment"># 要访问的目标和ssh服务器是同一台服务器</span></span><br><span class="line">ssh -N -f -L 2345:192.168.10.102:80 192.168.10.102</span><br><span class="line"></span><br><span class="line">ss -tunlp | grep ssh</span><br><span class="line">tcp   LISTEN 0      128                            127.0.0.1:2345       0.0.0.0:*    <span class="built_in">users</span>:((&quot;ssh&quot;,pid=<span class="number">2446875</span>,fd=<span class="number">5</span>))</span><br><span class="line"></span><br><span class="line">curl 127.0.0.1:2345</span><br><span class="line">ws <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ssh</span> <span class="token parameter variable">-N</span> <span class="token parameter variable">-f</span> <span class="token parameter variable">-L</span> <span class="token punctuation">[</span>localip:<span class="token punctuation">]</span>localport:target-host:target-port tunnel-host
+<span class="token function">ssh</span> <span class="token parameter variable">-L</span> <span class="token punctuation">[</span>本地IP:<span class="token punctuation">]</span>本地端口:目标主机:目标端口 SSH服务器
+
+<span class="token parameter variable">-L</span> 转发本地端口
+<span class="token parameter variable">-N</span> 只建立连接，不发生命令，不会打开shell
+<span class="token parameter variable">-f</span> 后台连接
+
+我在192.168.10.102:80有一个服务
+使用192.168.10.100的2345端口去访问它
+
+<span class="token comment"># 要访问的目标和ssh服务器是同一台服务器</span>
+<span class="token function">ssh</span> <span class="token parameter variable">-N</span> <span class="token parameter variable">-f</span> <span class="token parameter variable">-L</span> <span class="token number">2345</span>:192.168.10.102:80 <span class="token number">192.168</span>.10.102
+
+ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token function">ssh</span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">128</span>                            <span class="token number">127.0</span>.0.1:2345       <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ssh"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">2446875</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">))</span></span>
+
+<span class="token function">curl</span> <span class="token number">127.0</span>.0.1:2345
+ws <span class="token builtin class-name">test</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="远程端口转发"><a href="#远程端口转发" class="headerlink" title="远程端口转发"></a>远程端口转发</h2><p>在远程SSH服务器建立的转发规则</p>
 <p>与本地端口转发相反，远程转发是通过远程ssh服务器访问本地计算机</p>
 <p><strong>访问公网服务器，使其开一个端口，使其他主机通过这个端口来访问本地环境</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">ssh -N -f -R [remote-ip:]remote-port:target-host:target-port remotehost</span><br><span class="line">-R 使用远程端口转发</span><br><span class="line">一般来说远端服务器和ssh服务器就是同一个</span><br><span class="line"></span><br><span class="line">我在本地192.168.10.100:8082有一个web服务</span><br><span class="line">使用公有云主机ip为114.55.64.10作为远程服务器，使用其2345端口</span><br><span class="line"></span><br><span class="line">先修改下公有云sshd配置</span><br><span class="line">vim /etc/ssh/sshd_config</span><br><span class="line">GatewayPorts <span class="built_in">yes</span></span><br><span class="line">systemctl restart sshd</span><br><span class="line"></span><br><span class="line">ssh -f -N -R 2345:127.0.0.1:8082 git@114.55.64.10</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看公有云主机</span></span><br><span class="line">netstat -tlnp | grep 2345</span><br><span class="line">tcp        0      0 0.0.0.0:2345            0.0.0.0:*               LISTEN      12014/sshd: git</span><br><span class="line">tcp6       0      0 :::2345                 :::*                    LISTEN      12014/sshd: git</span><br><span class="line"></span><br><span class="line"><span class="comment"># 从本地进行curl测试</span></span><br><span class="line">curl localhost:8082</span><br><span class="line">ws is very pool</span><br><span class="line">curl http://114.55.64.10:2345</span><br><span class="line">ws is very pool</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ssh</span> <span class="token parameter variable">-N</span> <span class="token parameter variable">-f</span> <span class="token parameter variable">-R</span> <span class="token punctuation">[</span>remote-ip:<span class="token punctuation">]</span>remote-port:target-host:target-port remotehost
+<span class="token parameter variable">-R</span> 使用远程端口转发
+一般来说远端服务器和ssh服务器就是同一个
+
+我在本地192.168.10.100:8082有一个web服务
+使用公有云主机ip为114.55.64.10作为远程服务器，使用其2345端口
+
+先修改下公有云sshd配置
+<span class="token function">vim</span> /etc/ssh/sshd_config
+GatewayPorts <span class="token function">yes</span>
+systemctl restart sshd
+
+<span class="token function">ssh</span> <span class="token parameter variable">-f</span> <span class="token parameter variable">-N</span> <span class="token parameter variable">-R</span> <span class="token number">2345</span>:127.0.0.1:8082 git@114.55.64.10
+
+<span class="token comment"># 查看公有云主机</span>
+<span class="token function">netstat</span> <span class="token parameter variable">-tlnp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">2345</span>
+tcp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:2345            <span class="token number">0.0</span>.0.0:*               LISTEN      <span class="token number">12014</span>/sshd: <span class="token function">git</span>
+tcp6       <span class="token number">0</span>      <span class="token number">0</span> :::2345                 :::*                    LISTEN      <span class="token number">12014</span>/sshd: <span class="token function">git</span>
+
+<span class="token comment"># 从本地进行curl测试</span>
+<span class="token function">curl</span> localhost:8082
+ws is very pool
+<span class="token function">curl</span> http://114.55.64.10:2345
+ws is very pool
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="ssh动态端口转发"><a href="#ssh动态端口转发" class="headerlink" title="ssh动态端口转发"></a>ssh动态端口转发</h2><p>ssh动态端口转发指的是本机与ssh服务器之间建立了加密连接，本机内部针对某个端口的通信，都通过加密连接进行转发。</p>
 <p>动态转发需要把本地端口绑定到ssh服务器，至于ssh服务器要去访问哪里完全动态</p>
 <p><strong>实现与代理服务器类似的功能</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">例:</span><br><span class="line">ssh -N -f -D 2111 remote-host</span><br><span class="line">curl +x socks5://localhost:2111 remote-host</span><br><span class="line"></span><br><span class="line">也就是localhost的2111端口可以代理流量，将流量转发到www.example.com</span><br><span class="line">那么只要www.example.com能访问到的资源，本地与代理的流量也可以访问到</span><br><span class="line"></span><br><span class="line">但现在使用socks5代理已经会被识别了，所以无法使用这种方式来科学上网</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">例:
+<span class="token function">ssh</span> <span class="token parameter variable">-N</span> <span class="token parameter variable">-f</span> <span class="token parameter variable">-D</span> <span class="token number">2111</span> remote-host
+<span class="token function">curl</span> +x socks5://localhost:2111 remote-host
+
+也就是localhost的2111端口可以代理流量，将流量转发到www.example.com
+那么只要www.example.com能访问到的资源，本地与代理的流量也可以访问到
+
+但现在使用socks5代理已经会被识别了，所以无法使用这种方式来科学上网<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>用于复杂网络环境的跳板</strong></p>
 <p>ssh服务器为跳板机的情况下，如果使用本地端口转发，那一个本地端口只能转发到一个对端服务</p>
 <p>但内网服务很多的情况下，本地端口转发就不合适了。而动态端口转发之于本地端口转发，就类似于NAPT之于NAT的关系</p>
 <p>外部客户端只需要访问其中一台的端口，就可以通过ssh转发到内网的服务</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">本机192.168.10.100，使用12222端口</span><br><span class="line">将流量转发到192.168.10.102</span><br><span class="line">ssh -f -N -D *:12222 root@192.168.10.102</span><br><span class="line"></span><br><span class="line">ss -tunlp | grep 12222</span><br><span class="line">tcp   LISTEN 0      128                              0.0.0.0:12222      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ssh&quot;,pid=<span class="number">2467211</span>,fd=<span class="number">4</span>))                                                                                   </span><br><span class="line">tcp   LISTEN 0      128                                 [::]:12222         [::]:*    <span class="built_in">users</span>:((&quot;ssh&quot;,pid=<span class="number">2467211</span>,fd=<span class="number">5</span>))                                                                                   </span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试，在我的windows电脑上</span></span><br><span class="line">curl --socks5 192.168.10.100:12222 http://192.168.10.102</span><br><span class="line">ws <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">本机192.168.10.100，使用12222端口
+将流量转发到192.168.10.102
+<span class="token function">ssh</span> <span class="token parameter variable">-f</span> <span class="token parameter variable">-N</span> <span class="token parameter variable">-D</span> *:12222 root@192.168.10.102
+
+ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">12222</span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">128</span>                              <span class="token number">0.0</span>.0.0:12222      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ssh"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">2467211</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">))</span></span>                                                                                   
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">128</span>                                 <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:12222         <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:*    users:<span class="token variable"><span class="token punctuation">((</span>"ssh"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">2467211</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">))</span></span>                                                                                   
+
+<span class="token comment"># 测试，在我的windows电脑上</span>
+<span class="token function">curl</span> <span class="token parameter variable">--socks5</span> <span class="token number">192.168</span>.10.100:12222 http://192.168.10.102
+ws <span class="token builtin class-name">test</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>需要AllowTcpForwarding yes允许端口转发</strong></p>
 
@@ -6624,36 +6682,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7118,13 +7146,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8165,13 +8193,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8624,14 +8652,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8639,14 +8667,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

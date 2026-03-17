@@ -495,12 +495,60 @@
 <p>因为</p>
 <p>同样的，也有一些类RHEL的系统就算不使用systemd-resolved，也会使用NetworkManager来管理dns解析</p>
 <p>所以这篇就记录下如何修改dns，使其可以适应k8s的dns</p>
-<h2 id="systemd-resolved"><a href="#systemd-resolved" class="headerlink" title="systemd-resolved"></a>systemd-resolved</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /etc/resolv.conf </span><br><span class="line"><span class="comment"># This file is managed by man:systemd-resolved(8). Do not edit.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># This is a dynamic resolv.conf file for connecting local clients to the</span></span><br><span class="line"><span class="comment"># internal DNS stub resolver of systemd-resolved. This file lists all</span></span><br><span class="line"><span class="comment"># configured search domains.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Run &quot;resolvectl status&quot; to see details about the uplink DNS servers</span></span><br><span class="line"><span class="comment"># currently in use.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Third party programs must not access this file directly, but only through the</span></span><br><span class="line"><span class="comment"># symlink at /etc/resolv.conf. To manage man:resolv.conf(5) in a different way,</span></span><br><span class="line"><span class="comment"># replace this symlink by a static file or a different symlink.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># See man:systemd-resolved.service(8) for details about the supported modes of</span></span><br><span class="line"><span class="comment"># operation for /etc/resolv.conf.</span></span><br><span class="line"></span><br><span class="line">nameserver 127.0.0.53</span><br><span class="line">options edns0 trust-ad</span><br></pre></td></tr></table></figure>
+<h2 id="systemd-resolved"><a href="#systemd-resolved" class="headerlink" title="systemd-resolved"></a>systemd-resolved</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> /etc/resolv.conf 
+<span class="token comment"># This file is managed by man:systemd-resolved(8). Do not edit.</span>
+<span class="token comment">#</span>
+<span class="token comment"># This is a dynamic resolv.conf file for connecting local clients to the</span>
+<span class="token comment"># internal DNS stub resolver of systemd-resolved. This file lists all</span>
+<span class="token comment"># configured search domains.</span>
+<span class="token comment">#</span>
+<span class="token comment"># Run "resolvectl status" to see details about the uplink DNS servers</span>
+<span class="token comment"># currently in use.</span>
+<span class="token comment">#</span>
+<span class="token comment"># Third party programs must not access this file directly, but only through the</span>
+<span class="token comment"># symlink at /etc/resolv.conf. To manage man:resolv.conf(5) in a different way,</span>
+<span class="token comment"># replace this symlink by a static file or a different symlink.</span>
+<span class="token comment">#</span>
+<span class="token comment"># See man:systemd-resolved.service(8) for details about the supported modes of</span>
+<span class="token comment"># operation for /etc/resolv.conf.</span>
+
+nameserver <span class="token number">127.0</span>.0.53
+options edns0 trust-ad<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>修改dns</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">kubectl get svc -n kube-system kube-dns</span><br><span class="line">一般是10.96.0.10</span><br><span class="line"></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /etc/systemd/resolved.conf.d/</span><br><span class="line">sudo <span class="built_in">tee</span> /etc/systemd/resolved.conf.d/k8s.conf &gt; /dev/null &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Resolve]</span></span><br><span class="line"><span class="string">DNS=10.96.0.10</span></span><br><span class="line"><span class="string">Domains=~cluster.local</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">sudo systemctl restart systemd-resolved</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get svc <span class="token parameter variable">-n</span> kube-system kube-dns
+一般是10.96.0.10
 
-<h2 id="NetworkManager"><a href="#NetworkManager" class="headerlink" title="NetworkManager"></a>NetworkManager</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 启用并启动 systemd-resolved</span></span><br><span class="line">sudo systemctl <span class="built_in">enable</span> systemd-resolved</span><br><span class="line">sudo systemctl start systemd-resolved</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 配置 NetworkManager 使用 systemd-resolved</span></span><br><span class="line">sudo <span class="built_in">tee</span> /etc/NetworkManager/conf.d/k8s-resolved.conf &gt; /dev/null &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[main]</span></span><br><span class="line"><span class="string">dns=systemd-resolved</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 配置 systemd-resolved 的 DNS 转发</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /etc/systemd/resolved.conf.d/</span><br><span class="line">sudo <span class="built_in">tee</span> /etc/systemd/resolved.conf.d/k8s.conf &gt; /dev/null &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Resolve]</span></span><br><span class="line"><span class="string">DNS=10.96.0.10</span></span><br><span class="line"><span class="string">Domains=cluster.local svc.cluster.local default.svc.cluster.local</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 重启服务</span></span><br><span class="line">sudo systemctl restart systemd-resolved</span><br><span class="line">sudo systemctl restart NetworkManager</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /etc/systemd/resolved.conf.d/
+<span class="token function">sudo</span> <span class="token function">tee</span> /etc/systemd/resolved.conf.d/k8s.conf <span class="token operator">></span> /dev/null <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Resolve]
+DNS=10.96.0.10
+Domains=~cluster.local
+EOF</span>
+<span class="token function">sudo</span> systemctl restart systemd-resolved<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="NetworkManager"><a href="#NetworkManager" class="headerlink" title="NetworkManager"></a>NetworkManager</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 1. 启用并启动 systemd-resolved</span>
+<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> systemd-resolved
+<span class="token function">sudo</span> systemctl start systemd-resolved
+
+<span class="token comment"># 2. 配置 NetworkManager 使用 systemd-resolved</span>
+<span class="token function">sudo</span> <span class="token function">tee</span> /etc/NetworkManager/conf.d/k8s-resolved.conf <span class="token operator">></span> /dev/null <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[main]
+dns=systemd-resolved
+EOF</span>
+
+<span class="token comment"># 3. 配置 systemd-resolved 的 DNS 转发</span>
+<span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /etc/systemd/resolved.conf.d/
+<span class="token function">sudo</span> <span class="token function">tee</span> /etc/systemd/resolved.conf.d/k8s.conf <span class="token operator">></span> /dev/null <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Resolve]
+DNS=10.96.0.10
+Domains=cluster.local svc.cluster.local default.svc.cluster.local
+EOF</span>
+
+<span class="token comment"># 4. 重启服务</span>
+<span class="token function">sudo</span> systemctl restart systemd-resolved
+<span class="token function">sudo</span> systemctl restart NetworkManager
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6559,36 +6607,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7053,13 +7071,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8100,13 +8118,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8559,14 +8577,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8574,14 +8592,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

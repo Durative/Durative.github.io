@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="logrotate服务logrotate适合大多数系统日志和应用日志，支持按“大小、时间、个数”配置规则 通过cron(systemd-timer)定时执行，自动检测并执行所有预设轮转机制 配置文件 12345678910111213141516171819202122232425&#x2F;etc&#x2F;logrotate.conf&#x2F;etc&#x2F;logrotate.d&#x2F;echo &quot;&#x2F;var&#x2F;log&#x2F;fir">
+    <meta name="description" content="logrotate服务logrotate适合大多数系统日志和应用日志，支持按“大小、时间、个数”配置规则 通过cron(systemd-timer)定时执行，自动检测并执行所有预设轮转机制 配置文件 &#x2F;etc&#x2F;logrotate.conf &#x2F;etc&#x2F;logrotate.d&#x2F;  echo &quot; &#x2F;var&#x2F;log&#x2F;firewalld_deny.log &#123;     daily     missi">
 <meta property="og:type" content="article">
 <meta property="og:title" content="日志轮转logrotate与即时清理truncate">
 <meta property="og:url" content="https://akemi.zj.cn/2026/03/04/LinuxLog-logrotate/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="logrotate服务logrotate适合大多数系统日志和应用日志，支持按“大小、时间、个数”配置规则 通过cron(systemd-timer)定时执行，自动检测并执行所有预设轮转机制 配置文件 12345678910111213141516171819202122232425&#x2F;etc&#x2F;logrotate.conf&#x2F;etc&#x2F;logrotate.d&#x2F;echo &quot;&#x2F;var&#x2F;log&#x2F;fir">
+<meta property="og:description" content="logrotate服务logrotate适合大多数系统日志和应用日志，支持按“大小、时间、个数”配置规则 通过cron(systemd-timer)定时执行，自动检测并执行所有预设轮转机制 配置文件 &#x2F;etc&#x2F;logrotate.conf &#x2F;etc&#x2F;logrotate.d&#x2F;  echo &quot; &#x2F;var&#x2F;log&#x2F;firewalld_deny.log &#123;     daily     missi">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-03-04T07:57:13.000Z">
 <meta property="article:modified_time" content="2026-03-17T13:11:50.119Z">
@@ -493,7 +493,31 @@
         <h2 id="logrotate服务"><a href="#logrotate服务" class="headerlink" title="logrotate服务"></a>logrotate服务</h2><p>logrotate适合大多数系统日志和应用日志，支持按“大小、时间、个数”配置规则</p>
 <p>通过cron(systemd-timer)定时执行，自动检测并执行所有预设轮转机制</p>
 <p><strong>配置文件</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">/etc/logrotate.conf</span><br><span class="line">/etc/logrotate.d/</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">/var/log/firewalld_deny.log &#123;</span></span><br><span class="line"><span class="string">    daily</span></span><br><span class="line"><span class="string">    missingok</span></span><br><span class="line"><span class="string">    rotate 7</span></span><br><span class="line"><span class="string">    copytruncate</span></span><br><span class="line"><span class="string">    minsize 1M</span></span><br><span class="line"><span class="string">    create 0600 root root</span></span><br><span class="line"><span class="string">    postrotate</span></span><br><span class="line"><span class="string">      systemctl reload rsyslog &gt; /dev/null 2&gt;&amp;1</span></span><br><span class="line"><span class="string">    endscript</span></span><br><span class="line"><span class="string">&#125;&quot;</span> &gt;&gt; /etc/logrotate.d/firewalld</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查配置语法是否正确</span></span><br><span class="line">logrotate -d /etc/logrotate.d/firewalld</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行 logrotate（-f 强制执行，-v 显示详细信息）</span></span><br><span class="line">logrotate -fv /etc/logrotate.d/firewalld</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看原日志，已经切割了</span></span><br><span class="line"><span class="built_in">ls</span> /var/log/firewalld_deny.log*</span><br><span class="line">/var/log/firewalld_deny.log  /var/log/firewalld_deny.log.1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">/etc/logrotate.conf
+/etc/logrotate.d/
+
+<span class="token builtin class-name">echo</span> <span class="token string">"
+/var/log/firewalld_deny.log &#123;
+    daily
+    missingok
+    rotate 7
+    copytruncate
+    minsize 1M
+    create 0600 root root
+    postrotate
+      systemctl reload rsyslog > /dev/null 2>&amp;1
+    endscript
+&#125;"</span> <span class="token operator">>></span> /etc/logrotate.d/firewalld
+
+<span class="token comment"># 检查配置语法是否正确</span>
+<span class="token function">logrotate</span> <span class="token parameter variable">-d</span> /etc/logrotate.d/firewalld
+
+<span class="token comment"># 执行 logrotate（-f 强制执行，-v 显示详细信息）</span>
+<span class="token function">logrotate</span> <span class="token parameter variable">-fv</span> /etc/logrotate.d/firewalld
+
+<span class="token comment"># 查看原日志，已经切割了</span>
+<span class="token function">ls</span> /var/log/firewalld_deny.log*
+/var/log/firewalld_deny.log  /var/log/firewalld_deny.log.1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>配置参数</strong></p>
 <table>
@@ -6796,36 +6820,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7290,13 +7284,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8337,13 +8331,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8796,14 +8790,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8811,14 +8805,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

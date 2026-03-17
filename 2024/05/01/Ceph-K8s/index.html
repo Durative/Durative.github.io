@@ -500,33 +500,482 @@
 <p>192.168.10.121 ws-k8s-master1<br>192.168.10.122 ws-k8s-master2<br>192.168.10.123 ws-k8s-master3<br>192.168.10.130 harbor<br>192.168.10.131 ws-k8s-node1<br>192.168.10.132 ws-k8s-node2<br>192.168.10.133 ws-k8s-node3<br>192.168.10.141 ceph-node1<br>192.168.10.142 ceph-node2<br>192.168.10.143 ceph-node3</p>
 <h1 id="rbd作为块存储直接给k8s主机使用"><a href="#rbd作为块存储直接给k8s主机使用" class="headerlink" title="rbd作为块存储直接给k8s主机使用"></a>rbd作为块存储直接给k8s主机使用</h1><p>云超融合节点做ceph后生成rbd，将rbd作为磁盘提供给k8s节点<br>这种方案相对简单，而且我没有这个硬件条件，就不演示了</p>
 <h1 id="k8s直接对接ceph-rbd"><a href="#k8s直接对接ceph-rbd" class="headerlink" title="k8s直接对接ceph-rbd"></a>k8s直接对接ceph-rbd</h1><p>注：如果rbd被一个pod挂载，就无法被另外pod挂载；<br>如果用deployment，那么只有其中一个pod能挂载</p>
-<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">1.k8s节点要安装ceph-common</span><br><span class="line">把ceph.repo复制到各个节点，然后yum安装</span><br><span class="line">scp /etc/yum.repos.d/ceph.repo ws-k8s-master1:/etc/yum.repos.d/</span><br><span class="line">...</span><br><span class="line">yum -y install ceph-common</span><br><span class="line">2.将ceph-node1的ceph配置文件复制到各节点</span><br><span class="line">scp /etc/ceph/* ws-k8s-master1:/etc/ceph/</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">3.创建一个ceph的rbd池</span><br><span class="line">ceph osd pool create k8s-rbd 128</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> k8s-rbd rbd</span><br><span class="line">4.基于rbd池创建卷</span><br><span class="line">rbd create k8s-rbd/disk1 --size 10G</span><br><span class="line">rbd feature <span class="built_in">disable</span> k8s-rbd/disk1 object-map fast-diff deep-flatten</span><br><span class="line"><span class="comment">#卷名称为disk1</span></span><br></pre></td></tr></table></figure>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.k8s节点要安装ceph-common
+把ceph.repo复制到各个节点，然后yum安装
+<span class="token function">scp</span> /etc/yum.repos.d/ceph.repo ws-k8s-master1:/etc/yum.repos.d/
+<span class="token punctuation">..</span>.
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> ceph-common
+<span class="token number">2</span>.将ceph-node1的ceph配置文件复制到各节点
+<span class="token function">scp</span> /etc/ceph/* ws-k8s-master1:/etc/ceph/
+<span class="token punctuation">..</span>.
 
-<h2 id="进行挂载"><a href="#进行挂载" class="headerlink" title="进行挂载"></a>进行挂载</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#k8s-master节点</span></span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line"><span class="built_in">mkdir</span> ceph</span><br><span class="line"><span class="built_in">cd</span> ceph</span><br><span class="line"></span><br><span class="line">写一个pod用来挂载rbd</span><br><span class="line"><span class="built_in">cat</span> &gt; test-rbd.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Pod</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: test-rbd</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  containers:</span></span><br><span class="line"><span class="string">    - image: 192.168.10.130/wangsheng/solo:1.0</span></span><br><span class="line"><span class="string">      imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">      name: test-rbd</span></span><br><span class="line"><span class="string">      volumeMounts:</span></span><br><span class="line"><span class="string">        - name: rbd</span></span><br><span class="line"><span class="string">          mountPath: /mnt</span></span><br><span class="line"><span class="string">  volumes:</span></span><br><span class="line"><span class="string">    - name: rbd</span></span><br><span class="line"><span class="string">      rbd:</span></span><br><span class="line"><span class="string">        monitors:</span></span><br><span class="line"><span class="string">          - &#x27;192.168.10.141:6789&#x27;</span></span><br><span class="line"><span class="string">          - &#x27;192.168.10.142:6789&#x27;</span></span><br><span class="line"><span class="string">          - &#x27;192.168.10.143:6789&#x27;</span></span><br><span class="line"><span class="string">        pool: k8s-rbd</span></span><br><span class="line"><span class="string">        image: disk1</span></span><br><span class="line"><span class="string">        fsType: xfs</span></span><br><span class="line"><span class="string">        readOnly: false</span></span><br><span class="line"><span class="string">        user: admin</span></span><br><span class="line"><span class="string">        keyring: /etc/ceph/ceph.client.admin.keyring</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f test-rbd.yaml</span><br><span class="line"></span><br><span class="line">kubectl describe pod test-rbd | grep -i volumes -A 10</span><br><span class="line">Volumes:</span><br><span class="line">  rbd:</span><br><span class="line">    Type:          RBD (a Rados Block Device mount on the host that shares a pod<span class="string">&#x27;s lifetime)</span></span><br><span class="line"><span class="string">    CephMonitors:  [192.168.10.141:6789 192.168.10.142:6789 192.168.10.143:6789]</span></span><br><span class="line"><span class="string">    RBDImage:      disk1</span></span><br><span class="line"><span class="string">    FSType:        xfs</span></span><br><span class="line"><span class="string">    RBDPool:       k8s-rbd</span></span><br><span class="line"><span class="string">    RadosUser:     admin</span></span><br><span class="line"><span class="string">    Keyring:       /etc/ceph/ceph.client.admin.keyring</span></span><br><span class="line"><span class="string">    SecretRef:     nil</span></span><br><span class="line"><span class="string">    ReadOnly:      false</span></span><br><span class="line"><span class="string"></span></span><br></pre></td></tr></table></figure>
+<span class="token number">3</span>.创建一个ceph的rbd池
+ceph osd pool create k8s-rbd <span class="token number">128</span>
+ceph osd pool application <span class="token builtin class-name">enable</span> k8s-rbd rbd
+<span class="token number">4</span>.基于rbd池创建卷
+rbd create k8s-rbd/disk1 <span class="token parameter variable">--size</span> 10G
+rbd feature disable k8s-rbd/disk1 object-map fast-diff deep-flatten
+<span class="token comment">#卷名称为disk1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="进行挂载"><a href="#进行挂载" class="headerlink" title="进行挂载"></a>进行挂载</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#k8s-master节点</span>
+<span class="token builtin class-name">cd</span> ~
+<span class="token function">mkdir</span> ceph
+<span class="token builtin class-name">cd</span> ceph
+
+写一个pod用来挂载rbd
+<span class="token function">cat</span> <span class="token operator">></span> test-rbd.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-rbd
+spec:
+  containers:
+    - image: 192.168.10.130/wangsheng/solo:1.0
+      imagePullPolicy: IfNotPresent
+      name: test-rbd
+      volumeMounts:
+        - name: rbd
+          mountPath: /mnt
+  volumes:
+    - name: rbd
+      rbd:
+        monitors:
+          - '192.168.10.141:6789'
+          - '192.168.10.142:6789'
+          - '192.168.10.143:6789'
+        pool: k8s-rbd
+        image: disk1
+        fsType: xfs
+        readOnly: false
+        user: admin
+        keyring: /etc/ceph/ceph.client.admin.keyring
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> test-rbd.yaml
+
+kubectl describe pod test-rbd <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> volumes <span class="token parameter variable">-A</span> <span class="token number">10</span>
+Volumes:
+  rbd:
+    Type:          RBD <span class="token punctuation">(</span>a Rados Block Device <span class="token function">mount</span> on the <span class="token function">host</span> that shares a pod's lifetime<span class="token punctuation">)</span>
+    CephMonitors:  <span class="token punctuation">[</span><span class="token number">192.168</span>.10.141:6789 <span class="token number">192.168</span>.10.142:6789 <span class="token number">192.168</span>.10.143:6789<span class="token punctuation">]</span>
+    RBDImage:      disk1
+    FSType:        xfs
+    RBDPool:       k8s-rbd
+    RadosUser:     admin
+    Keyring:       /etc/ceph/ceph.client.admin.keyring
+    SecretRef:     nil
+    ReadOnly:      <span class="token boolean">false</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="基于ceph-rbd手动生成pv"><a href="#基于ceph-rbd手动生成pv" class="headerlink" title="基于ceph-rbd手动生成pv"></a>基于ceph-rbd手动生成pv</h1><p>解决rbd卷只能被单个pod挂载的问题。</p>
 <p>基于ceph-rbd生成pv可以让多个pod对rbd上的空间进行挂载</p>
 <p>但是，也存在rbd无法跨节点挂载的问题，仅对于同一个node下的pod有效，如果node挂了，pod迁移到另外的node上就会无法正常挂载。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line">1.k8s节点安装ceph</span><br><span class="line"></span><br><span class="line">2.获取ceph client.admin的keyring值，将其存储到</span><br><span class="line">ceph auth get-key client.admin | <span class="built_in">base64</span></span><br><span class="line">QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==</span><br><span class="line"></span><br><span class="line">3.创建secret对象ceph-secret，这个secret对象用于k8s volume插件访问ceph集群</span><br><span class="line"><span class="built_in">cat</span> &gt; ceph-secret.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Secret</span></span><br><span class="line"><span class="string">metadata:	</span></span><br><span class="line"><span class="string">  name: ceph-secret</span></span><br><span class="line"><span class="string">data:</span></span><br><span class="line"><span class="string">  key: QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f ceph-secret.yaml </span><br><span class="line"></span><br><span class="line">4.从存储池中再创建一个卷disk2</span><br><span class="line"><span class="comment">#ceph节点，创建k8s-rbd/disk2</span></span><br><span class="line">rbd create k8s-rbd/disk2 --size 10G</span><br><span class="line">rbd feature <span class="built_in">disable</span> k8s-rbd/disk2 object-map fast-diff deep-flatten</span><br><span class="line"></span><br><span class="line">5.创建pv,指定使用disk2</span><br><span class="line"><span class="built_in">cat</span> &gt; ceph-pv.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: PersistentVolume</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: ceph-pv  # 持久卷的名称</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  capacity:</span></span><br><span class="line"><span class="string">    storage: 10Gi  # 卷的存储容量为10GiB</span></span><br><span class="line"><span class="string">  accessModes:</span></span><br><span class="line"><span class="string">  rbd:</span></span><br><span class="line"><span class="string">    monitors:</span></span><br><span class="line"><span class="string">    - &#x27;192.168.10.141:6789&#x27;  # RBD监视器的地址</span></span><br><span class="line"><span class="string">    - &#x27;192.168.10.142:6789&#x27;</span></span><br><span class="line"><span class="string">    - &#x27;192.168.10.143:6789&#x27;</span></span><br><span class="line"><span class="string">    pool: k8s-rbd  # RBD池的名称</span></span><br><span class="line"><span class="string">    image: disk2  # RBD镜像的名称</span></span><br><span class="line"><span class="string">    user: admin  # 用户名</span></span><br><span class="line"><span class="string">    secretRef:</span></span><br><span class="line"><span class="string">      name: ceph-secret  # 密钥的名称（引用的Secret对象）</span></span><br><span class="line"><span class="string">    fsType: xfs  # 文件系统类型为XFS</span></span><br><span class="line"><span class="string">    readOnly: false  # 是否只读</span></span><br><span class="line"><span class="string">  persistentVolumeReclaimPolicy: Recycle  # 持久卷的回收策略为Recycle（废弃策略）</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f ceph-pv.yaml</span><br><span class="line">kubectl get pv</span><br><span class="line">NAME        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM               STORAGECLASS   REASON   AGE</span><br><span class="line">ceph-pv     10Gi       RWO            Recycle          Available                                               3m14s</span><br><span class="line"></span><br><span class="line">6.创建pvc</span><br><span class="line"><span class="built_in">cat</span> &gt; ceph-pvc.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">kind: PersistentVolumeClaim </span></span><br><span class="line"><span class="string">apiVersion: v1 </span></span><br><span class="line"><span class="string">metadata:   </span></span><br><span class="line"><span class="string">  name: ceph-pvc </span></span><br><span class="line"><span class="string">spec:   </span></span><br><span class="line"><span class="string">  accessModes:     </span></span><br><span class="line"><span class="string">  resources:</span></span><br><span class="line"><span class="string">   requests:</span></span><br><span class="line"><span class="string">    storage: 10Gi</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f ceph-pvc.yaml</span><br><span class="line">kubectl get pvc</span><br><span class="line">NAME        STATUS   VOLUME      CAPACITY   ACCESS MODES   STORAGECLASS   AGE</span><br><span class="line">ceph-pvc    Bound    ceph-pv     10Gi       RWO                           6s</span><br><span class="line"></span><br><span class="line">7.测试pod挂载pvc</span><br><span class="line"><span class="built_in">cat</span> &gt; pod-pvc.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: apps/v1</span></span><br><span class="line"><span class="string">kind: Deployment</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: ceph-pvc-test</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">    matchLabels:</span></span><br><span class="line"><span class="string">      app: solo</span></span><br><span class="line"><span class="string">  replicas: 2</span></span><br><span class="line"><span class="string">  template:</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      labels:</span></span><br><span class="line"><span class="string">        app: solo</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">      - name: solo</span></span><br><span class="line"><span class="string">        image: 192.168.10.130/wangsheng/solo:1.0</span></span><br><span class="line"><span class="string">        imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">        ports:</span></span><br><span class="line"><span class="string">        - containerPort: 8080</span></span><br><span class="line"><span class="string">        volumeMounts:</span></span><br><span class="line"><span class="string">        - mountPath: &quot;/ceph-data&quot;</span></span><br><span class="line"><span class="string">          name: ceph-data</span></span><br><span class="line"><span class="string">      volumes:</span></span><br><span class="line"><span class="string">      - name: ceph-data</span></span><br><span class="line"><span class="string">        persistentVolumeClaim:</span></span><br><span class="line"><span class="string">          claimName: ceph-pvc</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f pod-pvc.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pods  | grep pvc</span><br><span class="line">ceph-pvc-test-76c79b74d9-m9vw6   1/1     Running   0          116s</span><br><span class="line">ceph-pvc-test-76c79b74d9-qkkzd   1/1     Running   0          116s</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.k8s节点安装ceph
+
+<span class="token number">2</span>.获取ceph client.admin的keyring值，将其存储到
+ceph auth get-key client.admin <span class="token operator">|</span> base64
+<span class="token assign-left variable">QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ</span><span class="token operator">==</span>
+
+<span class="token number">3</span>.创建secret对象ceph-secret，这个secret对象用于k8s volume插件访问ceph集群
+<span class="token function">cat</span> <span class="token operator">></span> ceph-secret.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Secret
+metadata:	
+  name: ceph-secret
+data:
+  key: QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> ceph-secret.yaml 
+
+<span class="token number">4</span>.从存储池中再创建一个卷disk2
+<span class="token comment">#ceph节点，创建k8s-rbd/disk2</span>
+rbd create k8s-rbd/disk2 <span class="token parameter variable">--size</span> 10G
+rbd feature disable k8s-rbd/disk2 object-map fast-diff deep-flatten
+
+<span class="token number">5</span>.创建pv,指定使用disk2
+<span class="token function">cat</span> <span class="token operator">></span> ceph-pv.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ceph-pv  # 持久卷的名称
+spec:
+  capacity:
+    storage: 10Gi  # 卷的存储容量为10GiB
+  accessModes:
+  rbd:
+    monitors:
+    - '192.168.10.141:6789'  # RBD监视器的地址
+    - '192.168.10.142:6789'
+    - '192.168.10.143:6789'
+    pool: k8s-rbd  # RBD池的名称
+    image: disk2  # RBD镜像的名称
+    user: admin  # 用户名
+    secretRef:
+      name: ceph-secret  # 密钥的名称（引用的Secret对象）
+    fsType: xfs  # 文件系统类型为XFS
+    readOnly: false  # 是否只读
+  persistentVolumeReclaimPolicy: Recycle  # 持久卷的回收策略为Recycle（废弃策略）
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> ceph-pv.yaml
+kubectl get <span class="token function">pv</span>
+NAME        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM               STORAGECLASS   REASON   AGE
+ceph-pv     10Gi       RWO            Recycle          Available                                               3m14s
+
+<span class="token number">6</span>.创建pvc
+<span class="token function">cat</span> <span class="token operator">></span> ceph-pvc.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+kind: PersistentVolumeClaim 
+apiVersion: v1 
+metadata:   
+  name: ceph-pvc 
+spec:   
+  accessModes:     
+  resources:
+   requests:
+    storage: 10Gi
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> ceph-pvc.yaml
+kubectl get pvc
+NAME        STATUS   VOLUME      CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+ceph-pvc    Bound    ceph-pv     10Gi       RWO                           6s
+
+<span class="token number">7</span>.测试pod挂载pvc
+<span class="token function">cat</span> <span class="token operator">></span> pod-pvc.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ceph-pvc-test
+spec:
+  selector:
+    matchLabels:
+      app: solo
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: solo
+    spec:
+      containers:
+      - name: solo
+        image: 192.168.10.130/wangsheng/solo:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - mountPath: "/ceph-data"
+          name: ceph-data
+      volumes:
+      - name: ceph-data
+        persistentVolumeClaim:
+          claimName: ceph-pvc
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> pod-pvc.yaml
+
+kubectl get pods  <span class="token operator">|</span> <span class="token function">grep</span> pvc
+ceph-pvc-test-76c79b74d9-m9vw6   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          116s
+ceph-pvc-test-76c79b74d9-qkkzd   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          116s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="基于storageclass自动生成pv"><a href="#基于storageclass自动生成pv" class="headerlink" title="基于storageclass自动生成pv"></a>基于storageclass自动生成pv</h1><p><strong>注： 本实验无法使用k8s1.24及以上版本，因为在1.24之后，RemoveSelfLink选项被锁定为true无法修改</strong></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/5416781854478a50363c085d8368ae9.jpg"></p>
-<h2 id="准备工作-1"><a href="#准备工作-1" class="headerlink" title="准备工作"></a>准备工作</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">使ceph节点和k8s节点的/etc/ceph具有满权限</span><br><span class="line">创建/root/.ceph目录，将/etc/ceph内文件复制过去</span><br><span class="line"><span class="built_in">chmod</span> 777 -R /etc/ceph/*</span><br><span class="line">ssh ws-k8s-master2 <span class="string">&quot;chmod 777 -R /etc/ceph/* &amp;&amp; mkdir /root/.ceph &amp;&amp; cp -ar /etc/ceph/ /root/.ceph/&quot;</span></span><br><span class="line">ssh ceph-node1 <span class="string">&quot;chmod 777 -R /etc/ceph/* &amp;&amp; mkdir /root/.ceph &amp;&amp; cp -ar /etc/ceph/ /root/.ceph/&quot;</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="准备工作-1"><a href="#准备工作-1" class="headerlink" title="准备工作"></a>准备工作</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">使ceph节点和k8s节点的/etc/ceph具有满权限
+创建/root/.ceph目录，将/etc/ceph内文件复制过去
+<span class="token function">chmod</span> <span class="token number">777</span> <span class="token parameter variable">-R</span> /etc/ceph/*
+<span class="token function">ssh</span> ws-k8s-master2 <span class="token string">"chmod 777 -R /etc/ceph/* &amp;&amp; mkdir /root/.ceph &amp;&amp; cp -ar /etc/ceph/ /root/.ceph/"</span>
+<span class="token function">ssh</span> ceph-node1 <span class="token string">"chmod 777 -R /etc/ceph/* &amp;&amp; mkdir /root/.ceph &amp;&amp; cp -ar /etc/ceph/ /root/.ceph/"</span>
+<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="开始安装"><a href="#开始安装" class="headerlink" title="开始安装"></a>开始安装</h2><p>创建rbd供应商provisioner</p>
-<h3 id="1-创建供应商"><a href="#1-创建供应商" class="headerlink" title="1.创建供应商"></a>1.创建供应商</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">kind: ClusterRole</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">metadata:</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">rules:</span><br><span class="line">    resources: [<span class="string">&quot;persistentvolumes&quot;</span>]</span><br><span class="line">    verbs: [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;create&quot;</span>, <span class="string">&quot;delete&quot;</span>]</span><br><span class="line">    resources: [<span class="string">&quot;persistentvolumeclaims&quot;</span>]</span><br><span class="line">    verbs: [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;update&quot;</span>]</span><br><span class="line">    resources: [<span class="string">&quot;storageclasses&quot;</span>]</span><br><span class="line">    verbs: [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>]</span><br><span class="line">    resources: [<span class="string">&quot;events&quot;</span>]</span><br><span class="line">    verbs: [<span class="string">&quot;create&quot;</span>, <span class="string">&quot;update&quot;</span>, <span class="string">&quot;patch&quot;</span>]</span><br><span class="line">    resources: [<span class="string">&quot;services&quot;</span>]</span><br><span class="line">    resourceNames: [<span class="string">&quot;kube-dns&quot;</span>,<span class="string">&quot;coredns&quot;</span>]</span><br><span class="line">    verbs: [<span class="string">&quot;list&quot;</span>, <span class="string">&quot;get&quot;</span>]</span><br><span class="line">---</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">metadata:</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">subjects:</span><br><span class="line">    name: rbd-provisioner</span><br><span class="line">    namespace: default</span><br><span class="line">roleRef:</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: Role</span><br><span class="line">metadata:</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">rules:</span><br><span class="line">- apiGroups: [<span class="string">&quot;&quot;</span>]</span><br><span class="line">  resources: [<span class="string">&quot;secrets&quot;</span>]</span><br><span class="line">  verbs: [<span class="string">&quot;get&quot;</span>]</span><br><span class="line">- apiGroups: [<span class="string">&quot;&quot;</span>]</span><br><span class="line">  resources: [<span class="string">&quot;endpoints&quot;</span>]</span><br><span class="line">  verbs: [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;create&quot;</span>, <span class="string">&quot;update&quot;</span>, <span class="string">&quot;patch&quot;</span>]</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: RoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: Role</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">  namespace: default</span><br><span class="line">---</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: rbd-provisioner</span><br><span class="line">  replicas: 1</span><br><span class="line">  strategy:</span><br><span class="line">    <span class="built_in">type</span>: Recreate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: rbd-provisioner</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: rbd-provisioner</span><br><span class="line">        image: quay.io/xianchao/external_storage/rbd-provisioner:v1</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        <span class="built_in">env</span>:</span><br><span class="line">        - name: PROVISIONER_NAME</span><br><span class="line">          value: ceph.com/rbd</span><br><span class="line">      serviceAccount: rbd-provisioner</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  name: rbd-provisioner</span><br><span class="line"></span><br><span class="line">kubectl apply -f rbd-provisioner.yaml</span><br><span class="line"><span class="comment">#clusterrole.rbac.authorization.k8s.io/rbd-provisioner created</span></span><br><span class="line"><span class="comment">#clusterrolebinding.rbac.authorization.k8s.io/rbd-provisioner created</span></span><br><span class="line"><span class="comment">#role.rbac.authorization.k8s.io/rbd-provisioner created</span></span><br><span class="line"><span class="comment">#rolebinding.rbac.authorization.k8s.io/rbd-provisioner created</span></span><br><span class="line"><span class="comment">#deployment.apps/rbd-provisioner created</span></span><br><span class="line"><span class="comment">#serviceaccount/rbd-provisioner created</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="1-创建供应商"><a href="#1-创建供应商" class="headerlink" title="1.创建供应商"></a>1.创建供应商</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rbd-provisioner
+rules:
+    resources: <span class="token punctuation">[</span><span class="token string">"persistentvolumes"</span><span class="token punctuation">]</span>
+    verbs: <span class="token punctuation">[</span><span class="token string">"get"</span>, <span class="token string">"list"</span>, <span class="token string">"watch"</span>, <span class="token string">"create"</span>, <span class="token string">"delete"</span><span class="token punctuation">]</span>
+    resources: <span class="token punctuation">[</span><span class="token string">"persistentvolumeclaims"</span><span class="token punctuation">]</span>
+    verbs: <span class="token punctuation">[</span><span class="token string">"get"</span>, <span class="token string">"list"</span>, <span class="token string">"watch"</span>, <span class="token string">"update"</span><span class="token punctuation">]</span>
+    resources: <span class="token punctuation">[</span><span class="token string">"storageclasses"</span><span class="token punctuation">]</span>
+    verbs: <span class="token punctuation">[</span><span class="token string">"get"</span>, <span class="token string">"list"</span>, <span class="token string">"watch"</span><span class="token punctuation">]</span>
+    resources: <span class="token punctuation">[</span><span class="token string">"events"</span><span class="token punctuation">]</span>
+    verbs: <span class="token punctuation">[</span><span class="token string">"create"</span>, <span class="token string">"update"</span>, <span class="token string">"patch"</span><span class="token punctuation">]</span>
+    resources: <span class="token punctuation">[</span><span class="token string">"services"</span><span class="token punctuation">]</span>
+    resourceNames: <span class="token punctuation">[</span><span class="token string">"kube-dns"</span>,<span class="token string">"coredns"</span><span class="token punctuation">]</span>
+    verbs: <span class="token punctuation">[</span><span class="token string">"list"</span>, <span class="token string">"get"</span><span class="token punctuation">]</span>
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rbd-provisioner
+subjects:
+    name: rbd-provisioner
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: rbd-provisioner
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rbd-provisioner
+rules:
+- apiGroups: <span class="token punctuation">[</span><span class="token string">""</span><span class="token punctuation">]</span>
+  resources: <span class="token punctuation">[</span><span class="token string">"secrets"</span><span class="token punctuation">]</span>
+  verbs: <span class="token punctuation">[</span><span class="token string">"get"</span><span class="token punctuation">]</span>
+- apiGroups: <span class="token punctuation">[</span><span class="token string">""</span><span class="token punctuation">]</span>
+  resources: <span class="token punctuation">[</span><span class="token string">"endpoints"</span><span class="token punctuation">]</span>
+  verbs: <span class="token punctuation">[</span><span class="token string">"get"</span>, <span class="token string">"list"</span>, <span class="token string">"watch"</span>, <span class="token string">"create"</span>, <span class="token string">"update"</span>, <span class="token string">"patch"</span><span class="token punctuation">]</span>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rbd-provisioner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rbd-provisioner
+subjects:
+- kind: ServiceAccount
+  name: rbd-provisioner
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rbd-provisioner
+spec:
+  selector:
+    matchLabels:
+      app: rbd-provisioner
+  replicas: <span class="token number">1</span>
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: rbd-provisioner
+    spec:
+      containers:
+      - name: rbd-provisioner
+        image: quay.io/xianchao/external_storage/rbd-provisioner:v1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: PROVISIONER_NAME
+          value: ceph.com/rbd
+      serviceAccount: rbd-provisioner
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rbd-provisioner
 
-<h3 id="2-ceph直接创建一个pool池用来给k8s调用"><a href="#2-ceph直接创建一个pool池用来给k8s调用" class="headerlink" title="2.ceph直接创建一个pool池用来给k8s调用"></a>2.ceph直接创建一个pool池用来给k8s调用</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ceph osd pool create k8s-storageclass 128</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> k8s-storageclass rbd</span><br></pre></td></tr></table></figure>
+kubectl apply <span class="token parameter variable">-f</span> rbd-provisioner.yaml
+<span class="token comment">#clusterrole.rbac.authorization.k8s.io/rbd-provisioner created</span>
+<span class="token comment">#clusterrolebinding.rbac.authorization.k8s.io/rbd-provisioner created</span>
+<span class="token comment">#role.rbac.authorization.k8s.io/rbd-provisioner created</span>
+<span class="token comment">#rolebinding.rbac.authorization.k8s.io/rbd-provisioner created</span>
+<span class="token comment">#deployment.apps/rbd-provisioner created</span>
+<span class="token comment">#serviceaccount/rbd-provisioner created</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="3-创建k8s的ceph-secret"><a href="#3-创建k8s的ceph-secret" class="headerlink" title="3.创建k8s的ceph-secret"></a>3.创建k8s的ceph-secret</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/ceph/storageclass</span><br><span class="line"><span class="built_in">cd</span> ~/ceph/storageclass</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">&quot;AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ==&quot;</span> | <span class="built_in">base64</span></span><br><span class="line">QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==</span><br></pre></td></tr></table></figure>
+<h3 id="2-ceph直接创建一个pool池用来给k8s调用"><a href="#2-ceph直接创建一个pool池用来给k8s调用" class="headerlink" title="2.ceph直接创建一个pool池用来给k8s调用"></a>2.ceph直接创建一个pool池用来给k8s调用</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph osd pool create k8s-storageclass <span class="token number">128</span>
+ceph osd pool application <span class="token builtin class-name">enable</span> k8s-storageclass rbd<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<h3 id="4-创建k8s的ceph-secret"><a href="#4-创建k8s的ceph-secret" class="headerlink" title="4.创建k8s的ceph-secret"></a>4.创建k8s的ceph-secret</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/ceph/storageclass</span><br><span class="line"><span class="built_in">cd</span> ~/ceph/storageclass</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">&quot;AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ==&quot;</span> | <span class="built_in">base64</span></span><br><span class="line">QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; ceph-secret.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Secret</span></span><br><span class="line"><span class="string">metadata:	</span></span><br><span class="line"><span class="string">  name: ceph-storageclass-secret</span></span><br><span class="line"><span class="string">type: &quot;ceph.com/rbd&quot;   #供应商名称</span></span><br><span class="line"><span class="string">data:</span></span><br><span class="line"><span class="string">  key: QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f ceph-secret.yaml </span><br><span class="line"></span><br><span class="line">kubectl get secret</span><br><span class="line">NAME                       TYPE                DATA   AGE</span><br><span class="line">ceph-storageclass-secret   ceph.com/rbd        1      4m46s</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="3-创建k8s的ceph-secret"><a href="#3-创建k8s的ceph-secret" class="headerlink" title="3.创建k8s的ceph-secret"></a>3.创建k8s的ceph-secret</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> <span class="token parameter variable">-p</span> ~/ceph/storageclass
+<span class="token builtin class-name">cd</span> ~/ceph/storageclass
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">"AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ=="</span> <span class="token operator">|</span> base64
+<span class="token assign-left variable">QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ</span><span class="token operator">==</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="5-创建storageclass"><a href="#5-创建storageclass" class="headerlink" title="5.创建storageclass"></a>5.创建storageclass</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt; storageclass.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: storage.k8s.io/v1</span></span><br><span class="line"><span class="string">kind: StorageClass</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: k8s-rbd</span></span><br><span class="line"><span class="string">provisioner: ceph.com/rbd   #供应商名</span></span><br><span class="line"><span class="string">parameters:</span></span><br><span class="line"><span class="string">  monitors: 192.168.10.141:6789,192.168.10.142:6789,192.168.10.143:6789   # 指定Ceph监视器的地址和端口</span></span><br><span class="line"><span class="string">  adminId: admin   # Ceph管理员的标识符</span></span><br><span class="line"><span class="string">  adminSecretName: ceph-storageclass-secret   # 存储Ceph管理员凭据的Kubernetes Secret的名称</span></span><br><span class="line"><span class="string">  pool: k8s-storageclass   # Ceph存储池的名称</span></span><br><span class="line"><span class="string">  userId: admin   # Ceph用户的标识符</span></span><br><span class="line"><span class="string">  userSecretName: ceph-storageclass-secret   # 存储Ceph用户凭据的Kubernetes Secret的名称</span></span><br><span class="line"><span class="string">  fsType: xfs   # 指定要在存储中使用的文件系统类型</span></span><br><span class="line"><span class="string">  imageFormat: &quot;2&quot;   # 指定Ceph RBD映像的格式</span></span><br><span class="line"><span class="string">  imageFeatures: &quot;layering&quot;   # 指定Ceph RBD映像的特性</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kubectl apply -f storageclass.yaml</span><br><span class="line">storageclass.storage.k8s.io/k8s-rbd created</span><br><span class="line"></span><br><span class="line">kubectl get storageclass</span><br><span class="line">NAME      PROVISIONER    RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE</span><br><span class="line">k8s-rbd   ceph.com/rbd   Delete          Immediate           <span class="literal">false</span>     </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="4-创建k8s的ceph-secret"><a href="#4-创建k8s的ceph-secret" class="headerlink" title="4.创建k8s的ceph-secret"></a>4.创建k8s的ceph-secret</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> <span class="token parameter variable">-p</span> ~/ceph/storageclass
+<span class="token builtin class-name">cd</span> ~/ceph/storageclass
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">"AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ=="</span> <span class="token operator">|</span> base64
+<span class="token assign-left variable">QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ</span><span class="token operator">==</span>
 
-<h3 id="6-用storageclass创建pvc"><a href="#6-用storageclass创建pvc" class="headerlink" title="6.用storageclass创建pvc"></a>6.用storageclass创建pvc</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt; storageclass-pvc.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">kind: PersistentVolumeClaim</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: rbd-pvc</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  accessModes:</span></span><br><span class="line"><span class="string">    - ReadWriteOnce</span></span><br><span class="line"><span class="string">  volumeMode: Filesystem</span></span><br><span class="line"><span class="string">  resources:</span></span><br><span class="line"><span class="string">    requests:</span></span><br><span class="line"><span class="string">      storage: 1Gi</span></span><br><span class="line"><span class="string">  storageClassName: k8s-rbd</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f storageclass-pvc.yaml</span><br><span class="line">如果pvc从storageclass存储类中找到供应商，从供应商对应的pool中取得空间做成pv</span><br><span class="line">那么说明供应商是没有问题的</span><br></pre></td></tr></table></figure>
+<span class="token function">cat</span> <span class="token operator">></span> ceph-secret.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Secret
+metadata:	
+  name: ceph-storageclass-secret
+type: "ceph.com/rbd"   #供应商名称
+data:
+  key: QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ==
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> ceph-secret.yaml 
 
-<h1 id="k8s挂载cephfs"><a href="#k8s挂载cephfs" class="headerlink" title="k8s挂载cephfs"></a>k8s挂载cephfs</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><span class="line">1.找到ceph的admin用户的key</span><br><span class="line"><span class="built_in">cat</span> /etc/ceph/ceph.client.admin.keyring</span><br><span class="line">AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ==</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">&#x27;AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ==&#x27;</span> &gt;&gt; /etc/ceph/admin.secret</span><br><span class="line"></span><br><span class="line">2.通过这个key将ceph节点挂载到本机/data/ceph</span><br><span class="line"><span class="built_in">mkdir</span> -p /data/ceph</span><br><span class="line">mount -t ceph 192.168.10.141:6789:/ /data/ceph -o name=admin,secretfile=/etc/ceph/admin.secret</span><br><span class="line"></span><br><span class="line">查看文件系统状态</span><br><span class="line"><span class="built_in">df</span> -Th | grep ceph</span><br><span class="line">192.168.10.141:6789:/   ceph      282G     0  282G   0% /data/ceph</span><br><span class="line"></span><br><span class="line">3.创建secret</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">&#x27;AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ==&#x27;</span> | <span class="built_in">base64</span></span><br><span class="line">**QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ**==</span><br><span class="line"></span><br><span class="line">创建cephfs-secret.yaml文件</span><br><span class="line"><span class="built_in">cat</span> &gt; cephfs-secret.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Secret</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: cephfs-secret</span></span><br><span class="line"><span class="string">data:</span></span><br><span class="line"><span class="string">  key: **QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ**==</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f cephfs-secret.yaml</span><br><span class="line"><span class="comment"># secret/cephfs-secret created</span></span><br><span class="line"></span><br><span class="line">4.创建pv和pvc，挂载到挂载进来的目录</span><br><span class="line"><span class="built_in">cd</span> /data/ceph/</span><br><span class="line"><span class="built_in">mkdir</span> -p wangsheng &amp;&amp; <span class="built_in">chmod</span> 0777 wangsheng</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; pv-pvc.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">kind: PersistentVolumeClaim</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: cephfs-pvc</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  accessModes:</span></span><br><span class="line"><span class="string">    - ReadWriteMany</span></span><br><span class="line"><span class="string">  volumeName: cephfs-pv</span></span><br><span class="line"><span class="string">  resources:</span></span><br><span class="line"><span class="string">    requests:</span></span><br><span class="line"><span class="string">      storage: 10Gi</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: PersistentVolume</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: cephfs-pv</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  capacity:</span></span><br><span class="line"><span class="string">    storage: 10Gi</span></span><br><span class="line"><span class="string">  accessModes:</span></span><br><span class="line"><span class="string">    - ReadWriteMany</span></span><br><span class="line"><span class="string">  cephfs:</span></span><br><span class="line"><span class="string">    monitors:</span></span><br><span class="line"><span class="string">      - 192.168.10.141:6789</span></span><br><span class="line"><span class="string">      - 192.168.10.142:6789</span></span><br><span class="line"><span class="string">      - 192.168.10.143:6789</span></span><br><span class="line"><span class="string">    path: /wangsheng</span></span><br><span class="line"><span class="string">    user: admin</span></span><br><span class="line"><span class="string">    readOnly: false</span></span><br><span class="line"><span class="string">    secretRef:</span></span><br><span class="line"><span class="string">        name: cephfs-secret</span></span><br><span class="line"><span class="string">  persistentVolumeReclaimPolicy: Recycle</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f pv-pvc.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pv | grep ceph</span><br><span class="line">cephfs-pv    10Gi       RWX      Recycle      Bound    default/cephfs-pvc                                           117s</span><br><span class="line"></span><br><span class="line">5.测试</span><br><span class="line">创建两个pod</span><br><span class="line"><span class="built_in">cat</span> &gt; pod-test.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Pod</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: cephfs-pod-1</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  containers:</span></span><br><span class="line"><span class="string">    - image: nginx</span></span><br><span class="line"><span class="string">      name: nginx</span></span><br><span class="line"><span class="string">      imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">      volumeMounts:</span></span><br><span class="line"><span class="string">      - name: test-v1</span></span><br><span class="line"><span class="string">        mountPath: /mnt</span></span><br><span class="line"><span class="string">  volumes:</span></span><br><span class="line"><span class="string">    persistentVolumeClaim:</span></span><br><span class="line"><span class="string">      claimName: cephfs-pvc</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Pod</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: cephfs-pod-2</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  containers:</span></span><br><span class="line"><span class="string">    - image: nginx</span></span><br><span class="line"><span class="string">      name: nginx</span></span><br><span class="line"><span class="string">      imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">      volumeMounts:</span></span><br><span class="line"><span class="string">      - name: test-v1</span></span><br><span class="line"><span class="string">        mountPath: /mnt</span></span><br><span class="line"><span class="string">  volumes:</span></span><br><span class="line"><span class="string">    persistentVolumeClaim:</span></span><br><span class="line"><span class="string">      claimName: cephfs-pvc</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f pod-test.yaml</span><br><span class="line">kubectl get pods</span><br><span class="line"><span class="comment">#NAME                              READY   STATUS    RESTARTS      AGE</span></span><br><span class="line"><span class="comment">#cephfs-pod-1                      1/1     Running   0             7s</span></span><br><span class="line"><span class="comment">#cephfs-pod-2                      1/1     Running   0             7s</span></span><br><span class="line"></span><br><span class="line">在两个pod都创建文件</span><br><span class="line">kubectl <span class="built_in">exec</span> -it cephfs-pod-1 -- /bin/sh</span><br><span class="line"><span class="built_in">cd</span> /mnt         </span><br><span class="line"><span class="built_in">touch</span> 1</span><br><span class="line"></span><br><span class="line">kubectl <span class="built_in">exec</span> -it cephfs-pod-2 -- /bin/sh</span><br><span class="line"><span class="built_in">cd</span> /mnt         </span><br><span class="line"><span class="built_in">touch</span> 2</span><br><span class="line"></span><br><span class="line">查看，两个pod已经共享了一个pvc</span><br><span class="line"><span class="built_in">ls</span> /data/ceph/wangsheng/</span><br><span class="line">1  2</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+kubectl get secret
+NAME                       TYPE                DATA   AGE
+ceph-storageclass-secret   ceph.com/rbd        <span class="token number">1</span>      4m46s
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="5-创建storageclass"><a href="#5-创建storageclass" class="headerlink" title="5.创建storageclass"></a>5.创建storageclass</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> <span class="token operator">></span> storageclass.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: k8s-rbd
+provisioner: ceph.com/rbd   #供应商名
+parameters:
+  monitors: 192.168.10.141:6789,192.168.10.142:6789,192.168.10.143:6789   # 指定Ceph监视器的地址和端口
+  adminId: admin   # Ceph管理员的标识符
+  adminSecretName: ceph-storageclass-secret   # 存储Ceph管理员凭据的Kubernetes Secret的名称
+  pool: k8s-storageclass   # Ceph存储池的名称
+  userId: admin   # Ceph用户的标识符
+  userSecretName: ceph-storageclass-secret   # 存储Ceph用户凭据的Kubernetes Secret的名称
+  fsType: xfs   # 指定要在存储中使用的文件系统类型
+  imageFormat: "2"   # 指定Ceph RBD映像的格式
+  imageFeatures: "layering"   # 指定Ceph RBD映像的特性
+EOF</span>
+
+kubectl apply <span class="token parameter variable">-f</span> storageclass.yaml
+storageclass.storage.k8s.io/k8s-rbd created
+
+kubectl get storageclass
+NAME      PROVISIONER    RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+k8s-rbd   ceph.com/rbd   Delete          Immediate           <span class="token boolean">false</span>     
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="6-用storageclass创建pvc"><a href="#6-用storageclass创建pvc" class="headerlink" title="6.用storageclass创建pvc"></a>6.用storageclass创建pvc</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> <span class="token operator">></span> storageclass-pvc.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: rbd-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: k8s-rbd
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> storageclass-pvc.yaml
+如果pvc从storageclass存储类中找到供应商，从供应商对应的pool中取得空间做成pv
+那么说明供应商是没有问题的<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="k8s挂载cephfs"><a href="#k8s挂载cephfs" class="headerlink" title="k8s挂载cephfs"></a>k8s挂载cephfs</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.找到ceph的admin用户的key
+<span class="token function">cat</span> /etc/ceph/ceph.client.admin.keyring
+<span class="token assign-left variable">AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ</span><span class="token operator">==</span>
+
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">'AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ=='</span> <span class="token operator">>></span> /etc/ceph/admin.secret
+
+<span class="token number">2</span>.通过这个key将ceph节点挂载到本机/data/ceph
+<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /data/ceph
+<span class="token function">mount</span> <span class="token parameter variable">-t</span> ceph <span class="token number">192.168</span>.10.141:6789:/ /data/ceph <span class="token parameter variable">-o</span> <span class="token assign-left variable">name</span><span class="token operator">=</span>admin,secretfile<span class="token operator">=</span>/etc/ceph/admin.secret
+
+查看文件系统状态
+<span class="token function">df</span> <span class="token parameter variable">-Th</span> <span class="token operator">|</span> <span class="token function">grep</span> ceph
+<span class="token number">192.168</span>.10.141:6789:/   ceph      282G     <span class="token number">0</span>  282G   <span class="token number">0</span>% /data/ceph
+
+<span class="token number">3</span>.创建secret
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">'AQCLKfdlDHszCRAAggEyYxthw2rcxmoVsLUOoQ=='</span> <span class="token operator">|</span> base64
+**QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ**<span class="token operator">==</span>
+
+创建cephfs-secret.yaml文件
+<span class="token function">cat</span> <span class="token operator">></span> cephfs-secret.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cephfs-secret
+data:
+  key: **QVFDTEtmZGxESHN6Q1JBQWdnRXlZeHRodzJyY3htb1ZzTFVPb1E9PQ**==
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> cephfs-secret.yaml
+<span class="token comment"># secret/cephfs-secret created</span>
+
+<span class="token number">4</span>.创建pv和pvc，挂载到挂载进来的目录
+<span class="token builtin class-name">cd</span> /data/ceph/
+<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> wangsheng <span class="token operator">&amp;&amp;</span> <span class="token function">chmod</span> 0777 wangsheng
+
+<span class="token function">cat</span> <span class="token operator">></span> pv-pvc.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: cephfs-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeName: cephfs-pv
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cephfs-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  cephfs:
+    monitors:
+      - 192.168.10.141:6789
+      - 192.168.10.142:6789
+      - 192.168.10.143:6789
+    path: /wangsheng
+    user: admin
+    readOnly: false
+    secretRef:
+        name: cephfs-secret
+  persistentVolumeReclaimPolicy: Recycle
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> pv-pvc.yaml
+
+kubectl get <span class="token function">pv</span> <span class="token operator">|</span> <span class="token function">grep</span> ceph
+cephfs-pv    10Gi       RWX      Recycle      Bound    default/cephfs-pvc                                           117s
+
+<span class="token number">5</span>.测试
+创建两个pod
+<span class="token function">cat</span> <span class="token operator">></span> pod-test.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cephfs-pod-1
+spec:
+  containers:
+    - image: nginx
+      name: nginx
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+      - name: test-v1
+        mountPath: /mnt
+  volumes:
+    persistentVolumeClaim:
+      claimName: cephfs-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cephfs-pod-2
+spec:
+  containers:
+    - image: nginx
+      name: nginx
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+      - name: test-v1
+        mountPath: /mnt
+  volumes:
+    persistentVolumeClaim:
+      claimName: cephfs-pvc
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> pod-test.yaml
+kubectl get pods
+<span class="token comment">#NAME                              READY   STATUS    RESTARTS      AGE</span>
+<span class="token comment">#cephfs-pod-1                      1/1     Running   0             7s</span>
+<span class="token comment">#cephfs-pod-2                      1/1     Running   0             7s</span>
+
+在两个pod都创建文件
+kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> cephfs-pod-1 -- /bin/sh
+<span class="token builtin class-name">cd</span> /mnt         
+<span class="token function">touch</span> <span class="token number">1</span>
+
+kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> cephfs-pod-2 -- /bin/sh
+<span class="token builtin class-name">cd</span> /mnt         
+<span class="token function">touch</span> <span class="token number">2</span>
+
+查看，两个pod已经共享了一个pvc
+<span class="token function">ls</span> /data/ceph/wangsheng/
+<span class="token number">1</span>  <span class="token number">2</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
     </article>
     <!-- license -->
@@ -6586,36 +7035,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7080,13 +7499,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8127,13 +8546,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8586,14 +9005,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8601,14 +9020,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

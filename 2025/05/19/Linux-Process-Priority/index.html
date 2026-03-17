@@ -494,19 +494,52 @@
 <h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><p><strong>静态优先级</strong><br>静态优先级是在新进程创建时设置的默认优先级，<strong>不能更改</strong>。使用”实时策略”的进程优先级的值在1(最低)到99(最高)之间，被称为”实时优先级”。调度程序在一个自平衡的二叉搜索树中维护一个可运行进程列表。要确定哪些进程下一个获得CPU时间，调度器查找具有最高静态优先级或实时优先级的进程。调度策略只确定具有相同静态优先级的进程在运行队列中的顺序。使用非实时策略的进程不使用静态优先级，静态优先级设置为0。</p>
 <p><strong>动态优先级</strong><br><strong>当CPU不足时，进程优先级会被重置</strong>，因为优先级更高的进程会被优先调度。在此场景中，调度器提高CPU等待时间最长的进程的优先级。用户还可以使用nice或renice命令修改进程优先级。进程优先级可以在进程生命周期内增加或减少，这被称为动态优先级。</p>
 <p>用于确定哪个非实时进程抢占其他非实时进程的值称为<strong>nice值</strong>。由于非实时进程的静态优先级设置为0，因此nice优先级值决定了非实时进程的相对调度。进程的权重控制进程获得的CPU数量，而nice值将衡量进程的权重。例如，在系统CPU饱和的情况下，nice值为10的进程获得的CPU时间是nice值为5的进程的两倍。当系统负载未达到CPU饱和时，每个进程将获得公平的CPU时间份额。nice的取值范围最高为-20，最低为19。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">ps命令能列出进程的优先级</span><br><span class="line">ps axo pid,pri,rtprio,ni,cls,<span class="built_in">comm</span></span><br><span class="line">    PID PRI RTPRIO  NI CLS COMMAND</span><br><span class="line">      1  19      -   0  TS systemd</span><br><span class="line">      2  19      -   0  TS kthreadd</span><br><span class="line">      3  39      - -20  TS rcu_gp</span><br><span class="line">      4  39      - -20  TS rcu_par_gp</span><br><span class="line">      5  39      - -20  TS slub_flushwq</span><br><span class="line">      7  39      - -20  TS kworker/0:0H-events_highpri</span><br><span class="line">      9  39      - -20  TS mm_percpu_wq</span><br><span class="line">     10  19      -   0  TS rcu_tasks_rude_</span><br><span class="line">     11  19      -   0  TS rcu_tasks_trace</span><br><span class="line"></span><br><span class="line">pri参数列出静态优先级</span><br><span class="line">rtprio参数列出实时优先级</span><br><span class="line">ni参数列出<span class="built_in">nice</span>值</span><br><span class="line">cls参数列出调度策略</span><br><span class="line">- TS表示时间共享,non-real-time策略</span><br><span class="line">- FF表示FIFO,real-time策略</span><br><span class="line">cputime 占用的CPU时间</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ps命令能列出进程的优先级
+<span class="token function">ps</span> axo pid,pri,rtprio,ni,cls,comm
+    PID PRI RTPRIO  NI CLS COMMAND
+      <span class="token number">1</span>  <span class="token number">19</span>      -   <span class="token number">0</span>  TS systemd
+      <span class="token number">2</span>  <span class="token number">19</span>      -   <span class="token number">0</span>  TS kthreadd
+      <span class="token number">3</span>  <span class="token number">39</span>      - <span class="token parameter variable">-20</span>  TS rcu_gp
+      <span class="token number">4</span>  <span class="token number">39</span>      - <span class="token parameter variable">-20</span>  TS rcu_par_gp
+      <span class="token number">5</span>  <span class="token number">39</span>      - <span class="token parameter variable">-20</span>  TS slub_flushwq
+      <span class="token number">7</span>  <span class="token number">39</span>      - <span class="token parameter variable">-20</span>  TS kworker/0:0H-events_highpri
+      <span class="token number">9</span>  <span class="token number">39</span>      - <span class="token parameter variable">-20</span>  TS mm_percpu_wq
+     <span class="token number">10</span>  <span class="token number">19</span>      -   <span class="token number">0</span>  TS rcu_tasks_rude_
+     <span class="token number">11</span>  <span class="token number">19</span>      -   <span class="token number">0</span>  TS rcu_tasks_trace
+
+pri参数列出静态优先级
+rtprio参数列出实时优先级
+ni参数列出nice值
+cls参数列出调度策略
+- TS表示时间共享,non-real-time策略
+- FF表示FIFO,real-time策略
+cputime 占用的CPU时间<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>在任何给定的CPU上，在特定的时间只能运行一个进程。因此，进程在完成执行之前通常会停止和启动几次。默认情况下，内核分配一组处理时间给进程，称为<strong>时间片</strong>。</p>
 <p>一个进程将它的时间片分成几个部分，而不是一次运行所有的部分。当某个进程的时间片耗尽，或者该进程正在等待某个事件时，该进程可以主动将CPU时间让给其他进程。当进程”非自愿”将CPU时间让给更高优先级的进程时，这称为”<strong>抢占</strong>“。抢占会损害应用程序的整体性能。</p>
 <p>在进程之间切换时，内核存储前一个进程和下一个进程的信息。每次进程释放处理器时，内核都会<br>存储有关其当前操作状态的信息，以便  在再次调度它在处理器上运行时，它可以从相同的位置恢复<br>操作。这种操作状态数据称为<strong>上下文</strong>（context），它由CPU寄存器和程序计数器的内容组成。进<br>程对CPU时间的切换称为<strong>上下文切换</strong>(context switching)</p>
 <p><strong>改变进程的优先级可以帮助减少进程的上下文切换</strong></p>
 <h2 id="调度策略分类"><a href="#调度策略分类" class="headerlink" title="调度策略分类"></a>调度策略分类</h2><p>调度策略分为非实时策略组和实时策略组</p>
-<h3 id="实时调度策略"><a href="#实时调度策略" class="headerlink" title="实时调度策略"></a>实时调度策略</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1.SCHED_FIFO “FF”</span><br><span class="line">先进先出。直到IO阻塞或者被强占前都一直运行</span><br><span class="line"></span><br><span class="line">2.SCHED_RR 轮询</span><br><span class="line">round-robin 每个进程都将保持运行直到耗尽了提前分配的时间片，同优先级进程使用rr调度策略</span><br></pre></td></tr></table></figure>
+<h3 id="实时调度策略"><a href="#实时调度策略" class="headerlink" title="实时调度策略"></a>实时调度策略</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.SCHED_FIFO “FF”
+先进先出。直到IO阻塞或者被强占前都一直运行
+
+<span class="token number">2</span>.SCHED_RR 轮询
+round-robin 每个进程都将保持运行直到耗尽了提前分配的时间片，同优先级进程使用rr调度策略<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这两种都是固定的实时优先级了，内核不会为实时任务计算动态优先级值。固定的实时优先级确保具有给定优先级的实时进程<strong>总是抢占</strong>较低优先级的进程。当系统过载时，会丢弃低优先级的任务</p>
 <p>当使用SCHED_FIFO运行的高优先级进程时，系统的总体性能会降低。例如，执行密集计算的进程(例如对大矩阵求逆)永远不能使用SCHED_FIFO运行。</p>
 <p><strong>大多数内核线程使用SCHED_FIFO来避免用户级应用程序抢占。</strong></p>
-<h3 id="非实时调度策略"><a href="#非实时调度策略" class="headerlink" title="非实时调度策略"></a>非实时调度策略</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">1.SCHED_NORMAL(SCHED_OTHER)</span><br><span class="line">该策略定义了round-robin风格的**时间共享**策略。该策略是Linux上大多数进程使用的**默认时间共</span><br><span class="line">享策略。（<span class="string">&quot;TS&quot;</span>）**</span><br><span class="line"></span><br><span class="line">2.SCHED_BATCH</span><br><span class="line">该策略有利于面向批处理的工作负载。它不像SCHED_NORMAL那样频繁抢占，因此任务运行时间更</span><br><span class="line">长，可以更好地利用缓存。（<span class="string">&quot;B&quot;</span>）</span><br><span class="line"></span><br><span class="line">3.SCHED_IDLE</span><br><span class="line">该策略有利于运行低优先级的应用程序。使用SCHED_IDLE运行的进程的优先级低于使用19的<span class="built_in">nice</span></span><br><span class="line">值运行的进程。（<span class="string">&quot;IDLE&quot;</span>）</span><br></pre></td></tr></table></figure>
+<h3 id="非实时调度策略"><a href="#非实时调度策略" class="headerlink" title="非实时调度策略"></a>非实时调度策略</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.SCHED_NORMAL<span class="token punctuation">(</span>SCHED_OTHER<span class="token punctuation">)</span>
+该策略定义了round-robin风格的**时间共享**策略。该策略是Linux上大多数进程使用的**默认时间共
+享策略。（<span class="token string">"TS"</span>）**
+
+<span class="token number">2</span>.SCHED_BATCH
+该策略有利于面向批处理的工作负载。它不像SCHED_NORMAL那样频繁抢占，因此任务运行时间更
+长，可以更好地利用缓存。（<span class="token string">"B"</span>）
+
+<span class="token number">3</span>.SCHED_IDLE
+该策略有利于运行低优先级的应用程序。使用SCHED_IDLE运行的进程的优先级低于使用19的nice
+值运行的进程。（<span class="token string">"IDLE"</span>）<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>除非特定应用需要使用固定优先级(fixed-priority)的调度策略，否则应用必须使用默认的调度策略。</p>
 <h2 id="调度器分类"><a href="#调度器分类" class="headerlink" title="调度器分类"></a>调度器分类</h2><h3 id="RT实时调度器"><a href="#RT实时调度器" class="headerlink" title="RT实时调度器"></a>RT实时调度器</h3><p><strong>实时调度类（RT Scheduler）</strong> 是内核中优先级仅次于 Deadline 调度类的高性能调度机制，专门用于处理对实时性要求极高的任务。它的核心目标是确保高优先级进程能够以<strong>最低延迟抢占 CPU</strong>，并提供确定性的响应时间。</p>
@@ -527,23 +560,117 @@
 </ul>
 </li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看可调整项</span></span><br><span class="line"><span class="built_in">ls</span> /proc/sys/kernel/sched_</span><br><span class="line">sched_autogroup_enabled       sched_energy_aware            sched_rt_period_us</span><br><span class="line">sched_cfs_bandwidth_slice_us  sched_latency_ns              sched_rt_runtime_us</span><br><span class="line">sched_child_runs_first        sched_migration_cost_ns       sched_schedstats</span><br><span class="line">sched_deadline_period_max_us  sched_min_granularity_ns      sched_tunable_scaling</span><br><span class="line">sched_deadline_period_min_us  sched_nr_migrate              sched_wakeup_granularity_ns</span><br><span class="line">sched_domain/                 sched_rr_timeslice_ms</span><br><span class="line"></span><br><span class="line">sched_latency_ns 目标抢占延迟</span><br><span class="line"></span><br><span class="line">sched_min_granularity_ns 定义进程在被抢占前的最短准备时间，必须小于sched_latency_ns</span><br><span class="line">如果任务运行数量&gt;sched_latency_ns/sched_min_granularity_ns </span><br><span class="line"></span><br><span class="line">sched_migration_cost_ns 进程最后一次执行后，迁移到另一个CPU所需的事件</span><br><span class="line">增加这个值可以减少跨CPU进程迁移</span><br><span class="line"></span><br><span class="line">sched_rt_period_us 定义了一个时间窗口（周期），在此周期内实时任务的总运行时间被限制</span><br><span class="line">默认值1s</span><br><span class="line"></span><br><span class="line">sched_rt_runtime_us 定义在周期内，实时任务最多可以占用CPU的时间。默认0.95s</span><br><span class="line">0：实时任务完全禁止运行</span><br><span class="line">-1：取消实时任务的CPU时间限制（可能导致非实时任务被饿死）</span><br><span class="line"></span><br><span class="line">默认占比：950000/1000000 = 95%，即实时任务最多占用95%的CPU时间</span><br><span class="line">它们共同定义了实时任务在全局CPU时间配额中的限制规则，目的是防止实时任务完全独占CPU</span><br><span class="line"></span><br><span class="line">sched_rr_timeslice_ms RR进程灾备抢占并放在CPU绑定队列末尾前，允许运行的时间片</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#查看可调整项</span>
+<span class="token function">ls</span> /proc/sys/kernel/sched_
+sched_autogroup_enabled       sched_energy_aware            sched_rt_period_us
+sched_cfs_bandwidth_slice_us  sched_latency_ns              sched_rt_runtime_us
+sched_child_runs_first        sched_migration_cost_ns       sched_schedstats
+sched_deadline_period_max_us  sched_min_granularity_ns      sched_tunable_scaling
+sched_deadline_period_min_us  sched_nr_migrate              sched_wakeup_granularity_ns
+sched_domain/                 sched_rr_timeslice_ms
+
+sched_latency_ns 目标抢占延迟
+
+sched_min_granularity_ns 定义进程在被抢占前的最短准备时间，必须小于sched_latency_ns
+如果任务运行数量<span class="token operator">></span>sched_latency_ns/sched_min_granularity_ns 
+
+sched_migration_cost_ns 进程最后一次执行后，迁移到另一个CPU所需的事件
+增加这个值可以减少跨CPU进程迁移
+
+sched_rt_period_us 定义了一个时间窗口（周期），在此周期内实时任务的总运行时间被限制
+默认值1s
+
+sched_rt_runtime_us 定义在周期内，实时任务最多可以占用CPU的时间。默认0.95s
+<span class="token number">0</span>：实时任务完全禁止运行
+-1：取消实时任务的CPU时间限制（可能导致非实时任务被饿死）
+
+默认占比：950000/1000000 <span class="token operator">=</span> <span class="token number">95</span>%，即实时任务最多占用95%的CPU时间
+它们共同定义了实时任务在全局CPU时间配额中的限制规则，目的是防止实时任务完全独占CPU
+
+sched_rr_timeslice_ms RR进程灾备抢占并放在CPU绑定队列末尾前，允许运行的时间片<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="Deadline调度器"><a href="#Deadline调度器" class="headerlink" title="Deadline调度器"></a>Deadline调度器</h3><p><strong>实时系统必须在最后期限内响应请求</strong></p>
 <p>如果系统未能在deadline前作出响应，则认为系统未能交付结果。deadline调度程序根据流程截止日期调度任务，并优先调度截止日期最早的流程</p>
 <p>deadline调度程序使用三个参数:<strong>周期、截止日期和运行时</strong>以纳秒为单位定义任务</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">chrt -d --sched-runtime 5000000 --sched-deadline 10000000 \ </span><br><span class="line">--sched-period 1666666 0 simplte_task</span><br><span class="line"></span><br><span class="line">chrt命令</span><br><span class="line">--sched-runtime 定义运行时</span><br><span class="line">--sched-deadline 定义相对截止时间</span><br><span class="line">--sched-period 定义周期</span><br><span class="line">单位为纳秒。-d选项使用SCHED_DEADLINE调度策略对任务进行调度。</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
+chrt <span class="token parameter variable">-d</span> --sched-runtime <span class="token number">5000000</span> --sched-deadline <span class="token number">10000000</span> <span class="token punctuation">\</span> 
+--sched-period <span class="token number">1666666</span> <span class="token number">0</span> simplte_task
+
+chrt命令
+--sched-runtime 定义运行时
+--sched-deadline 定义相对截止时间
+--sched-period 定义周期
+单位为纳秒。-d选项使用SCHED_DEADLINE调度策略对任务进行调度。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="为进程设置调度器与实时优先级"><a href="#为进程设置调度器与实时优先级" class="headerlink" title="为进程设置调度器与实时优先级"></a>为进程设置调度器与实时优先级</h2><p>Linux提供了一系列用于管理调度器参数的系统调用，这些调用允许操作进程优先级、调度策略和处理器关联，从而将处理器交付给其他任务。</p>
 <p>应用程序以编程方式<strong>使用</strong>sched_setscheduler()和sched_getscheduler()<strong>系统调用来设置和获取给定的调度策略和进程的实时优先级</strong></p>
-<h3 id="chrt命令行"><a href="#chrt命令行" class="headerlink" title="chrt命令行"></a>chrt命令行</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看调度策略与优先级</span></span><br><span class="line">chrt -p 1</span><br><span class="line">pid 1<span class="string">&#x27;s current scheduling policy: SCHED_OTHER</span></span><br><span class="line"><span class="string">pid 1&#x27;</span>s current scheduling priority: 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改已运行进程的调度器与优先级（只有实时调度策略才需要优先级）</span></span><br><span class="line">-b：设置调度策略为SCHED_BATCH</span><br><span class="line">-f：设置调度策略为SCHED_FIFO</span><br><span class="line">-i：设置调度策略为SCHED_IDLE</span><br><span class="line">-o：设置调度策略为SCHED_NORMAL或者SCHED_OTHER</span><br><span class="line">-r：设置调度策略为SCHED_RR</span><br><span class="line">-d：设置调度策略为SCHED_DEADLI</span><br><span class="line"></span><br><span class="line">chrt -f -p 90 5735</span><br><span class="line">chrt -p 5735</span><br><span class="line">pid 5735<span class="string">&#x27;s current scheduling policy: SCHED_FIFO</span></span><br><span class="line"><span class="string">pid 5735&#x27;</span>s current scheduling priority: 90</span><br><span class="line"></span><br><span class="line">chrt -o -p 0 5735</span><br><span class="line">chrt -p 5735</span><br><span class="line">pid 5735<span class="string">&#x27;s current scheduling policy: SCHED_OTHER</span></span><br><span class="line"><span class="string">pid 5735&#x27;</span>s current scheduling priority: 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用chrt启动进程</span></span><br><span class="line">sudo chrt -f 90 ./my_realtime_program</span><br><span class="line">sudo chrt -d --sched-runtime 10000000 \</span><br><span class="line">           --sched-deadline 20000000 \</span><br><span class="line">           --sched-period 30000000 \</span><br><span class="line">           ./my_deadline_program</span><br></pre></td></tr></table></figure>
+<h3 id="chrt命令行"><a href="#chrt命令行" class="headerlink" title="chrt命令行"></a>chrt命令行</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看调度策略与优先级</span>
+chrt <span class="token parameter variable">-p</span> <span class="token number">1</span>
+pid <span class="token number">1</span><span class="token string">'s current scheduling policy: SCHED_OTHER
+pid 1'</span>s current scheduling priority: <span class="token number">0</span>
 
-<h3 id="tuna"><a href="#tuna" class="headerlink" title="tuna"></a>tuna</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看线程</span></span><br><span class="line">tuna --show_threads</span><br><span class="line">                      thread       ctxt_switches</span><br><span class="line">    pid SCHED_ rtpri affinity voluntary nonvoluntary             cmd</span><br><span class="line">  1      OTHER     0      0,1     28604         4275         systemd</span><br><span class="line">  2      OTHER     0      0,1      3926            0        kthreadd</span><br><span class="line">  3      OTHER     0      0,1         2            0          rcu_gp</span><br><span class="line">  4      OTHER     0      0,1         2            0      rcu_par_gp</span><br><span class="line">  5      OTHER     0      0,1         2            0    slub_flushwq</span><br><span class="line">  7      OTHER     0        0         4            0 kworker/0:0H-events_highpri</span><br><span class="line">  9      OTHER     0      0,1    200038           19 kworker/u4:0-events_unbound</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">将 PID 1000 的调度策略改为 SCHED_FIFO，优先级 90</span></span><br><span class="line">sudo tuna --threads=1000 --sched=FIFO --priority=90 --run</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">将进程名包含 <span class="string">&quot;realtime&quot;</span> 的线程设为 SCHED_RR，优先级 80</span></span><br><span class="line">sudo tuna --threads=&quot;*realtime*&quot; --sched=RR --priority=80 --run</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 修改已运行进程的调度器与优先级（只有实时调度策略才需要优先级）</span>
+-b：设置调度策略为SCHED_BATCH
+-f：设置调度策略为SCHED_FIFO
+-i：设置调度策略为SCHED_IDLE
+-o：设置调度策略为SCHED_NORMAL或者SCHED_OTHER
+-r：设置调度策略为SCHED_RR
+-d：设置调度策略为SCHED_DEADLI
+
+chrt <span class="token parameter variable">-f</span> <span class="token parameter variable">-p</span> <span class="token number">90</span> <span class="token number">5735</span>
+chrt <span class="token parameter variable">-p</span> <span class="token number">5735</span>
+pid <span class="token number">5735</span><span class="token string">'s current scheduling policy: SCHED_FIFO
+pid 5735'</span>s current scheduling priority: <span class="token number">90</span>
+
+chrt <span class="token parameter variable">-o</span> <span class="token parameter variable">-p</span> <span class="token number">0</span> <span class="token number">5735</span>
+chrt <span class="token parameter variable">-p</span> <span class="token number">5735</span>
+pid <span class="token number">5735</span><span class="token string">'s current scheduling policy: SCHED_OTHER
+pid 5735'</span>s current scheduling priority: <span class="token number">0</span>
+
+<span class="token comment"># 使用chrt启动进程</span>
+<span class="token function">sudo</span> chrt <span class="token parameter variable">-f</span> <span class="token number">90</span> ./my_realtime_program
+<span class="token function">sudo</span> chrt <span class="token parameter variable">-d</span> --sched-runtime <span class="token number">10000000</span> <span class="token punctuation">\</span>
+           --sched-deadline <span class="token number">20000000</span> <span class="token punctuation">\</span>
+           --sched-period <span class="token number">30000000</span> <span class="token punctuation">\</span>
+           ./my_deadline_program<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="tuna"><a href="#tuna" class="headerlink" title="tuna"></a>tuna</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看线程</span>
+tuna <span class="token parameter variable">--show_threads</span>
+                      thread       ctxt_switches
+    pid SCHED_ rtpri affinity voluntary nonvoluntary             cmd
+  <span class="token number">1</span>      OTHER     <span class="token number">0</span>      <span class="token number">0,1</span>     <span class="token number">28604</span>         <span class="token number">4275</span>         systemd
+  <span class="token number">2</span>      OTHER     <span class="token number">0</span>      <span class="token number">0,1</span>      <span class="token number">3926</span>            <span class="token number">0</span>        kthreadd
+  <span class="token number">3</span>      OTHER     <span class="token number">0</span>      <span class="token number">0,1</span>         <span class="token number">2</span>            <span class="token number">0</span>          rcu_gp
+  <span class="token number">4</span>      OTHER     <span class="token number">0</span>      <span class="token number">0,1</span>         <span class="token number">2</span>            <span class="token number">0</span>      rcu_par_gp
+  <span class="token number">5</span>      OTHER     <span class="token number">0</span>      <span class="token number">0,1</span>         <span class="token number">2</span>            <span class="token number">0</span>    slub_flushwq
+  <span class="token number">7</span>      OTHER     <span class="token number">0</span>        <span class="token number">0</span>         <span class="token number">4</span>            <span class="token number">0</span> kworker/0:0H-events_highpri
+  <span class="token number">9</span>      OTHER     <span class="token number">0</span>      <span class="token number">0,1</span>    <span class="token number">200038</span>           <span class="token number">19</span> kworker/u4:0-events_unbound
+
+<span class="token comment"># 将 PID 1000 的调度策略改为 SCHED_FIFO，优先级 90</span>
+<span class="token function">sudo</span> tuna <span class="token parameter variable">--threads</span><span class="token operator">=</span><span class="token number">1000</span> <span class="token parameter variable">--sched</span><span class="token operator">=</span>FIFO <span class="token parameter variable">--priority</span><span class="token operator">=</span><span class="token number">90</span> <span class="token parameter variable">--run</span>
+
+<span class="token comment"># 将进程名包含 "realtime" 的线程设为 SCHED_RR，优先级 80</span>
+<span class="token function">sudo</span> tuna <span class="token parameter variable">--threads</span><span class="token operator">=</span><span class="token string">"*realtime*"</span> <span class="token parameter variable">--sched</span><span class="token operator">=</span>RR <span class="token parameter variable">--priority</span><span class="token operator">=</span><span class="token number">80</span> <span class="token parameter variable">--run</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="systemd"><a href="#systemd" class="headerlink" title="systemd"></a>systemd</h3><ul>
 <li>**CPUSchedulingPolicy&#x3D;**：设置调度策略（可选值：other&#x2F;batch&#x2F;idle&#x2F;fifo&#x2F;rr）。</li>
 </ul>
-<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="comment"># CPUSchedulingPolicy=：设置调度策略</span></span><br><span class="line"><span class="comment"># 可选值：other/batch/idle/fifo/rr</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定调度策略为 SCHED_FIFO，优先级为 90</span></span><br><span class="line"><span class="attr">CPUSchedulingPolicy</span>=fifo</span><br><span class="line"><span class="attr">CPUSchedulingPriority</span>=<span class="number">90</span></span><br><span class="line"><span class="comment"># 绑定到 CPU 核心 0 和 1</span></span><br><span class="line"><span class="attr">CPUAffinity</span>=<span class="number">0</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整静态优先级（范围 -20 到 19，仅对 SCHED_OTHER/SCHED_BATCH 有效）。</span></span><br><span class="line"><span class="attr">Nice</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart xxx</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"><span class="token section"><span class="token punctuation">[</span><span class="token section-name selector">Service</span><span class="token punctuation">]</span></span>
+<span class="token comment"># CPUSchedulingPolicy=：设置调度策略</span>
+<span class="token comment"># 可选值：other/batch/idle/fifo/rr</span>
+
+<span class="token comment"># 指定调度策略为 SCHED_FIFO，优先级为 90</span>
+<span class="token key attr-name">CPUSchedulingPolicy</span><span class="token punctuation">=</span><span class="token value attr-value">fifo</span>
+<span class="token key attr-name">CPUSchedulingPriority</span><span class="token punctuation">=</span><span class="token value attr-value">90</span>
+<span class="token comment"># 绑定到 CPU 核心 0 和 1</span>
+<span class="token key attr-name">CPUAffinity</span><span class="token punctuation">=</span><span class="token value attr-value">0 1</span>
+
+<span class="token comment"># 调整静态优先级（范围 -20 到 19，仅对 SCHED_OTHER/SCHED_BATCH 有效）。</span>
+<span class="token key attr-name">Nice</span><span class="token punctuation">=</span><span class="token value attr-value">0</span>
+
+systemctl daemon-reload
+systemctl restart xxx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6602,36 +6729,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7096,13 +7193,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8143,13 +8240,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8602,14 +8699,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8617,14 +8714,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -495,21 +495,175 @@
         <p>rsync数据镜像备份工具，能将本地系统数据通过网络备份到远程主机<br>特点：可以镜像保存目录树和文件系统、<strong>增量同步</strong>、保持原有属性、加密传输<br>模式：c&#x2F;s模式，c&#x2F;c模式<br>并且两端都需要安装rsync否则无法使用</p>
 <h2 id="client-server模式"><a href="#client-server模式" class="headerlink" title="client&#x2F;server模式"></a>client&#x2F;server模式</h2><p>要在server端启动一个服务端口，通过客户端来连接端口</p>
 <p>服务器端有两种方式来连接客户端，一种是使用守护进程(模块)，在rsyncd.conf文件中定义secrets file，然后输入密码；一种是做ssh互信不需要输入密码</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">/etc/rsyncd.conf</span><br><span class="line"># 系统配置</span><br><span class="line">uid 指定守护进程的用户id 默认nobody</span><br><span class="line">gid 指定守护进程的用户组id 默认nobody</span><br><span class="line">max connections 最大客户端连接数</span><br><span class="line">pid file 服务端的pid文件路径</span><br><span class="line">lock file 服务端的锁文件路径</span><br><span class="line">log file 服务器端的日志文件位置</span><br><span class="line">fake super 虚拟用户伪装管理员</span><br><span class="line">use chroot 是否修改根目录</span><br><span class="line">timeout 超时时间</span><br><span class="line"></span><br><span class="line">[ixdba] # 模块名</span><br><span class="line">path 服务端目录（备份的目录）</span><br><span class="line">comment 描述</span><br><span class="line">list 查看时，是否列出该模块true/false</span><br><span class="line">auth users 定义可连接的用户名 如backup</span><br><span class="line">secrets file 需要一个k/v的文件，用户名使用auth users；需要和client的secrets file对应</span><br><span class="line">	比如： echo &#x27;backup:123456&#x27; &gt;&gt; /etc/server.pass</span><br><span class="line"></span><br><span class="line">#客户端拉取</span><br><span class="line">rsync -vzrtopg --delete --progress backup@ip::ixdba /data --password-file=/etc/server.pass</span><br><span class="line">-v 详细输出 -z 压缩处理</span><br><span class="line">-p 保持文件权限 -r 递归复制 -t 保持文件时间信息 -o 保持文件属主信息</span><br><span class="line">--delete 保证完全一致</span><br><span class="line">-progress 显示同步过程</span><br><span class="line">:: 表示指定模块</span><br><span class="line">ixdba 前面的模块名</span><br><span class="line">/data 存放路径</span><br><span class="line">backup 前面的auth users的用户名</span><br><span class="line"></span><br><span class="line">--password-file客户端的密码文件，内容应与服务端一致</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;etc&#x2F;rsyncd.conf
+# 系统配置
+uid 指定守护进程的用户id 默认nobody
+gid 指定守护进程的用户组id 默认nobody
+max connections 最大客户端连接数
+pid file 服务端的pid文件路径
+lock file 服务端的锁文件路径
+log file 服务器端的日志文件位置
+fake super 虚拟用户伪装管理员
+use chroot 是否修改根目录
+timeout 超时时间
+
+[ixdba] # 模块名
+path 服务端目录（备份的目录）
+comment 描述
+list 查看时，是否列出该模块true&#x2F;false
+auth users 定义可连接的用户名 如backup
+secrets file 需要一个k&#x2F;v的文件，用户名使用auth users；需要和client的secrets file对应
+	比如： echo &#39;backup:123456&#39; &gt;&gt; &#x2F;etc&#x2F;server.pass
+
+#客户端拉取
+rsync -vzrtopg --delete --progress backup@ip::ixdba &#x2F;data --password-file&#x3D;&#x2F;etc&#x2F;server.pass
+-v 详细输出 -z 压缩处理
+-p 保持文件权限 -r 递归复制 -t 保持文件时间信息 -o 保持文件属主信息
+--delete 保证完全一致
+-progress 显示同步过程
+:: 表示指定模块
+ixdba 前面的模块名
+&#x2F;data 存放路径
+backup 前面的auth users的用户名
+
+--password-file客户端的密码文件，内容应与服务端一致<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用client-client模式"><a href="#使用client-client模式" class="headerlink" title="使用client&#x2F;client模式"></a>使用client&#x2F;client模式</h2><p>默认使用ssh 22端口<br><code>rsync -vzrtopg --delete --progress filename root@xxx:/opt</code> 推送模式<br><code>rsync -vzrtopg --delete --progress root@xxx:/opt/filename /opt</code>拉取模式<br>如果ssh非默认22端口：<br><code>rsync -vzrtopg --delete --progress -e &#39;ssh -p 9090&#39; root@xxx:/opt/filename /opt</code></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">参数含义：</span><br><span class="line">如果只是简单的复制，这些参数可以一个都不加</span><br><span class="line">rsync test.txt root@192.168.10.100:~/test</span><br><span class="line"></span><br><span class="line">-v verbose详细信息</span><br><span class="line">-z zip压缩</span><br><span class="line">-r 递归复制</span><br><span class="line">-D 保持设备文件的信息</span><br><span class="line"></span><br><span class="line">-t time保持修改时间</span><br><span class="line">-o owner保持属主信息</span><br><span class="line">-p perm保持权限</span><br><span class="line">-g group保持组信息</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">参数含义：
+如果只是简单的复制，这些参数可以一个都不加
+rsync test.txt root@192.168.10.100:~&#x2F;test
+
+-v verbose详细信息
+-z zip压缩
+-r 递归复制
+-D 保持设备文件的信息
+
+-t time保持修改时间
+-o owner保持属主信息
+-p perm保持权限
+-g group保持组信息
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用client-server模式"><a href="#使用client-server模式" class="headerlink" title="使用client&#x2F;server模式"></a>使用client&#x2F;server模式</h2><p>1.服务器端编辑配置文件&#x2F;etc&#x2F;rsync.conf与server.pass文件</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[ixdba]</span><br><span class="line">path = /opt/test</span><br><span class="line">commit = test</span><br><span class="line">read only = true</span><br><span class="line">list = false</span><br><span class="line">auth users = backup</span><br><span class="line">uid = root</span><br><span class="line">gid = root</span><br><span class="line">secrets file = /etc/server.pass</span><br><span class="line">——————————</span><br><span class="line">backup:123456</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">[ixdba]
+path &#x3D; &#x2F;opt&#x2F;test
+commit &#x3D; test
+read only &#x3D; true
+list &#x3D; false
+auth users &#x3D; backup
+uid &#x3D; root
+gid &#x3D; root
+secrets file &#x3D; &#x2F;etc&#x2F;server.pass
+——————————
+backup:123456<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>2.rsync作为进程运行<br><code>rsync --daemon</code><br>查看rsync的端口<br><code>ss -tunlp | grep rsync</code></p>
 <p>3.客户端创建一个server.pass<br><code>rsync -vzrtopg --delete --progress backup@ip::ixdba /data --password-file=/etc/server.pass</code></p>
-<h2 id="企业中的Rsync备份案例"><a href="#企业中的Rsync备份案例" class="headerlink" title="企业中的Rsync备份案例"></a>企业中的Rsync备份案例</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">SSH互信</span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id -i 192.168.10.102</span><br><span class="line"></span><br><span class="line">服务端配置文件</span><br><span class="line">uid=rsync</span><br><span class="line">gid=rsync</span><br><span class="line">fake super=<span class="built_in">yes</span></span><br><span class="line">max connections = 100</span><br><span class="line"><span class="built_in">timeout</span>=300</span><br><span class="line">pid file=/var/run/rsyncd.pid</span><br><span class="line">lock file=/var/run/rsync.lock</span><br><span class="line"><span class="built_in">log</span> file=/var/log/rsyncd.log</span><br><span class="line">ignore errors</span><br><span class="line"><span class="built_in">read</span> only=<span class="literal">false</span></span><br><span class="line">hosts allow=192.168.10.0/24</span><br><span class="line">auth <span class="built_in">users</span>=backup</span><br><span class="line">secrets file=/var/rsync.password</span><br><span class="line">[mysql]</span><br><span class="line">path=/backup</span><br><span class="line"></span><br><span class="line">服务器端准备用户与目录、权限相关</span><br><span class="line">useradd rsync -M -s /sbin/nologin</span><br><span class="line"><span class="built_in">echo</span> backup:123456 &gt; /var/rsync.password</span><br><span class="line"><span class="built_in">chmod</span> 600 /var/rsync.password</span><br><span class="line"><span class="built_in">chmod</span> 600 /etc/rsyncd.conf</span><br><span class="line"><span class="built_in">mkdir</span> /backup</span><br><span class="line"><span class="built_in">chown</span> -R rsync:rsync /backup/</span><br><span class="line"></span><br><span class="line">安全相关设置，或者全关了也行</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/g&#x27;</span> /etc/selinux/config</span><br><span class="line">iptables -I INPUT -p tcp --dport 873 -j ACCEPT</span><br><span class="line">firewall-cmd --zone=public --add-port=873/tcp --permanent</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> rsyncd --now</span><br><span class="line">systemctl restart rsyncd</span><br><span class="line"></span><br><span class="line">客户端配置</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;123456&quot;</span> &gt; /var/rsync.password</span><br><span class="line"><span class="built_in">chmod</span> 600 /var/rsync.password</span><br><span class="line"></span><br><span class="line">工作方式1（守护模式）：</span><br><span class="line">拉取并输入密码</span><br><span class="line">rsync -avz backup@192.168.10.125::wangsheng</span><br><span class="line">拉取并指定密码文件</span><br><span class="line">rsync -avz backup@192.168.10.125::wangsheng --password-file=/var/rsync.password</span><br><span class="line"></span><br><span class="line">推送并输入密码</span><br><span class="line">rsync -avz ~/backup/mysql20240726 backup@192.168.10.125::wangsheng</span><br><span class="line">推送并指定密码文件</span><br><span class="line">rsync -avz ~/backup/mysql20240726 backup@192.168.10.125::wangsheng --password-file=/var/rsync.password</span><br><span class="line"></span><br><span class="line">工作方式2（SSH模式）</span><br><span class="line">需要做SSH互信，不需要虚拟账户的密码</span><br><span class="line">与scp相似</span><br><span class="line">rsync -avz /backup 192.168.10.102:/root</span><br></pre></td></tr></table></figure>
+<h2 id="企业中的Rsync备份案例"><a href="#企业中的Rsync备份案例" class="headerlink" title="企业中的Rsync备份案例"></a>企业中的Rsync备份案例</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">SSH互信
+ssh-keygen
+ssh-copy-id <span class="token parameter variable">-i</span> <span class="token number">192.168</span>.10.102
+
+服务端配置文件
+<span class="token assign-left variable">uid</span><span class="token operator">=</span>rsync
+<span class="token assign-left variable">gid</span><span class="token operator">=</span>rsync
+fake <span class="token assign-left variable">super</span><span class="token operator">=</span>yes
+max connections <span class="token operator">=</span> <span class="token number">100</span>
+<span class="token assign-left variable">timeout</span><span class="token operator">=</span><span class="token number">300</span>
+pid <span class="token assign-left variable">file</span><span class="token operator">=</span>/var/run/rsyncd.pid
+lock <span class="token assign-left variable">file</span><span class="token operator">=</span>/var/run/rsync.lock
+log <span class="token assign-left variable">file</span><span class="token operator">=</span>/var/log/rsyncd.log
+ignore errors
+<span class="token builtin class-name">read</span> <span class="token assign-left variable">only</span><span class="token operator">=</span>false
+hosts <span class="token assign-left variable">allow</span><span class="token operator">=</span><span class="token number">192.168</span>.10.0/24
+auth <span class="token assign-left variable">users</span><span class="token operator">=</span>backup
+secrets <span class="token assign-left variable">file</span><span class="token operator">=</span>/var/rsync.password
+<span class="token punctuation">[</span>mysql<span class="token punctuation">]</span>
+<span class="token assign-left variable">path</span><span class="token operator">=</span>/backup
+
+服务器端准备用户与目录、权限相关
+<span class="token function">useradd</span> <span class="token function">rsync</span> <span class="token parameter variable">-M</span> <span class="token parameter variable">-s</span> /sbin/nologin
+<span class="token builtin class-name">echo</span> backup:123456 <span class="token operator">></span> /var/rsync.password
+<span class="token function">chmod</span> <span class="token number">600</span> /var/rsync.password
+<span class="token function">chmod</span> <span class="token number">600</span> /etc/rsyncd.conf
+<span class="token function">mkdir</span> /backup
+<span class="token function">chown</span> <span class="token parameter variable">-R</span> rsync:rsync /backup/
+
+安全相关设置，或者全关了也行
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=disabled/g'</span> /etc/selinux/config
+iptables <span class="token parameter variable">-I</span> INPUT <span class="token parameter variable">-p</span> tcp <span class="token parameter variable">--dport</span> <span class="token number">873</span> <span class="token parameter variable">-j</span> ACCEPT
+firewall-cmd <span class="token parameter variable">--zone</span><span class="token operator">=</span>public --add-port<span class="token operator">=</span><span class="token number">873</span>/tcp <span class="token parameter variable">--permanent</span>
+firewall-cmd <span class="token parameter variable">--reload</span>
+
+systemctl <span class="token builtin class-name">enable</span> rsyncd <span class="token parameter variable">--now</span>
+systemctl restart rsyncd
+
+客户端配置
+<span class="token builtin class-name">echo</span> <span class="token string">"123456"</span> <span class="token operator">></span> /var/rsync.password
+<span class="token function">chmod</span> <span class="token number">600</span> /var/rsync.password
+
+工作方式1（守护模式）：
+拉取并输入密码
+<span class="token function">rsync</span> <span class="token parameter variable">-avz</span> backup@192.168.10.125::wangsheng
+拉取并指定密码文件
+<span class="token function">rsync</span> <span class="token parameter variable">-avz</span> backup@192.168.10.125::wangsheng --password-file<span class="token operator">=</span>/var/rsync.password
+
+推送并输入密码
+<span class="token function">rsync</span> <span class="token parameter variable">-avz</span> ~/backup/mysql20240726 backup@192.168.10.125::wangsheng
+推送并指定密码文件
+<span class="token function">rsync</span> <span class="token parameter variable">-avz</span> ~/backup/mysql20240726 backup@192.168.10.125::wangsheng --password-file<span class="token operator">=</span>/var/rsync.password
+
+工作方式2（SSH模式）
+需要做SSH互信，不需要虚拟账户的密码
+与scp相似
+<span class="token function">rsync</span> <span class="token parameter variable">-avz</span> /backup <span class="token number">192.168</span>.10.102:/root<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="rsync-inotify实现数据实时备份"><a href="#rsync-inotify实现数据实时备份" class="headerlink" title="rsync+inotify实现数据实时备份"></a>rsync+inotify实现数据实时备份</h3><p>先做SSH互信</p>
 <p>inotify-tools是用来监控文件和文件夹变动的工具</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">下载inotify-tools插件与编译安装</span><br><span class="line">wget https://github.com/inotify-tools/inotify-tools/archive/refs/tags/3.22.6.0.tar.gz</span><br><span class="line">tar -xf 3.22.6.0.tar.gz</span><br><span class="line"><span class="built_in">cd</span> inotify-tools-3.22.6.0/</span><br><span class="line">yum -y install autoconf automake libtool</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --prefix=/usr/local/inotify</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line"></span><br><span class="line"><span class="built_in">ls</span> /usr/local/inotify/bin</span><br><span class="line">inotifywait 能监控文件和目录设置，并设置触发器</span><br><span class="line">inotifywatch 收集被监控的文件系统的统计数据</span><br><span class="line"></span><br><span class="line">inotifywait参数</span><br><span class="line">-m monitor保持监听状态</span><br><span class="line">-r recursive递归</span><br><span class="line">-q quiet安静模式</span><br><span class="line">-e event 指定要监控的事件、包括modify修改、delete删除、create创建、attrib修改属性</span><br><span class="line"></span><br><span class="line">脚本</span><br><span class="line"><span class="built_in">cp</span> -f /usr/local/inotify/bin/* /bin/</span><br><span class="line"><span class="built_in">cat</span> &gt;&gt; rsync.sh &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">#!/bin/bash</span></span><br><span class="line"><span class="string">inotifywait -mrq --format &#x27;%w%f&#x27; -e create,delete,close_write /usr/local/mysql/data|while read file</span></span><br><span class="line"><span class="string"># 监控，并且将有变化的文件作为变量输入给file</span></span><br><span class="line"><span class="string">do</span></span><br><span class="line"><span class="string">rsync -az /usr/local/mysql/data --delete backup@192.168.10.102::wangsheng --password-file=/var/rsync.password</span></span><br><span class="line"><span class="string">#或使用ssh模式rsync -az /uar/local/mysql/data --delete root@192.168.10.102:/backup</span></span><br><span class="line"><span class="string">echo &quot;$&#123;file&#125; is rsynced&quot; &gt;&gt; /var/log/rsyncd.log 2&gt;&amp;1</span></span><br><span class="line"><span class="string">done</span></span><br><span class="line"><span class="string">#如果有变化(create,delete,close_write)，使用rsync将</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="built_in">chmod</span> +x rsync.sh</span><br><span class="line">./rsync.sh</span><br><span class="line"></span><br><span class="line">脚本测试</span><br><span class="line">修改一下数据库内容</span><br><span class="line">create database ws02;</span><br><span class="line">use ws02;</span><br><span class="line">create table wst1 (<span class="built_in">id</span> int, name varchar(20));</span><br><span class="line">insert into wst1 value (1,<span class="string">&quot;ws&quot;</span>),(2,<span class="string">&quot;xhy&quot;</span>);</span><br><span class="line">commit;</span><br><span class="line"></span><br><span class="line"><span class="built_in">tail</span> -f /var/log/rsyncd.log</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">下载inotify-tools插件与编译安装
+<span class="token function">wget</span> https://github.com/inotify-tools/inotify-tools/archive/refs/tags/3.22.6.0.tar.gz
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> <span class="token number">3.22</span>.6.0.tar.gz
+<span class="token builtin class-name">cd</span> inotify-tools-3.22.6.0/
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> autoconf automake libtool
+./autogen.sh
+./configure <span class="token parameter variable">--prefix</span><span class="token operator">=</span>/usr/local/inotify
+<span class="token function">make</span>
+<span class="token function">make</span> <span class="token function">install</span>
+
+<span class="token function">ls</span> /usr/local/inotify/bin
+inotifywait 能监控文件和目录设置，并设置触发器
+inotifywatch 收集被监控的文件系统的统计数据
+
+inotifywait参数
+<span class="token parameter variable">-m</span> monitor保持监听状态
+<span class="token parameter variable">-r</span> recursive递归
+<span class="token parameter variable">-q</span> quiet安静模式
+<span class="token parameter variable">-e</span> event 指定要监控的事件、包括modify修改、delete删除、create创建、attrib修改属性
+
+脚本
+<span class="token function">cp</span> <span class="token parameter variable">-f</span> /usr/local/inotify/bin/* /bin/
+<span class="token function">cat</span> <span class="token operator">>></span> rsync.sh <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+#!/bin/bash
+inotifywait -mrq --format '%w%f' -e create,delete,close_write /usr/local/mysql/data|while read file
+# 监控，并且将有变化的文件作为变量输入给file
+do
+rsync -az /usr/local/mysql/data --delete backup@192.168.10.102::wangsheng --password-file=/var/rsync.password
+#或使用ssh模式rsync -az /uar/local/mysql/data --delete root@192.168.10.102:/backup
+echo "<span class="token variable">$&#123;file&#125;</span> is rsynced" >> /var/log/rsyncd.log 2>&amp;1
+done
+#如果有变化(create,delete,close_write)，使用rsync将
+EOF</span>
+<span class="token function">chmod</span> +x rsync.sh
+./rsync.sh
+
+脚本测试
+修改一下数据库内容
+create database ws02<span class="token punctuation">;</span>
+use ws02<span class="token punctuation">;</span>
+create table wst1 <span class="token punctuation">(</span>id int, name varchar<span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">))</span><span class="token punctuation">;</span>
+insert into wst1 value <span class="token punctuation">(</span><span class="token number">1</span>,<span class="token string">"ws"</span><span class="token punctuation">)</span>,<span class="token punctuation">(</span><span class="token number">2</span>,<span class="token string">"xhy"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+commit<span class="token punctuation">;</span>
+
+<span class="token function">tail</span> <span class="token parameter variable">-f</span> /var/log/rsyncd.log<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240811170210.png"></p>
 
@@ -6571,36 +6725,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7065,13 +7189,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8112,13 +8236,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8571,14 +8695,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8586,14 +8710,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

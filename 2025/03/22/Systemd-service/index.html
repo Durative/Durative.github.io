@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="targettarget就是一堆Service的集合，它本身不是service，但是他关联了很多service 123456789101112131415161718众所周知，系统运行等级3是多租户模式systemctl get-defaultmulti-user.targetsystemctl list-dependencies multi-user.targetmulti-user.targe">
+    <meta name="description" content="targettarget就是一堆Service的集合，它本身不是service，但是他关联了很多service 众所周知，系统运行等级3是多租户模式 systemctl get-default multi-user.target  systemctl list-dependencies multi-user.target multi-user.target ● ├─aegis.service ●">
 <meta property="og:type" content="article">
 <meta property="og:title" content="systemd Unit及其配置文件">
 <meta property="og:url" content="https://akemi.zj.cn/2025/03/22/Systemd-service/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="targettarget就是一堆Service的集合，它本身不是service，但是他关联了很多service 123456789101112131415161718众所周知，系统运行等级3是多租户模式systemctl get-defaultmulti-user.targetsystemctl list-dependencies multi-user.targetmulti-user.targe">
+<meta property="og:description" content="targettarget就是一堆Service的集合，它本身不是service，但是他关联了很多service 众所周知，系统运行等级3是多租户模式 systemctl get-default multi-user.target  systemctl list-dependencies multi-user.target multi-user.target ● ├─aegis.service ●">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-03-22T09:57:21.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:06:24.120Z">
@@ -491,19 +491,102 @@
                 <main class="main post-page">
     <article class="article-entry">
         <h2 id="target"><a href="#target" class="headerlink" title="target"></a>target</h2><p>target就是一堆Service的集合，它本身不是service，但是他关联了很多service</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">众所周知，系统运行等级3是多租户模式</span><br><span class="line">systemctl get-default</span><br><span class="line">multi-user.target</span><br><span class="line"></span><br><span class="line">systemctl list-dependencies multi-user.target</span><br><span class="line">multi-user.target</span><br><span class="line">● ├─aegis.service</span><br><span class="line">● ├─aliyun.service</span><br><span class="line">....</span><br><span class="line">● ├─var-lib-snapd-snap-snapd-23771.mount</span><br><span class="line">● ├─basic.target</span><br><span class="line">● │ ├─microcode.service</span><br><span class="line"></span><br><span class="line">从这个图中可以看出，它除了依赖service，还依赖basic.target</span><br><span class="line"></span><br><span class="line">除此之外，系统会加载/etc/systemd/system/multi-user.target.wants</span><br><span class="line">这个目录下都是一些软链接</span><br><span class="line">是multi-user.target它希望运行的一些service</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">众所周知，系统运行等级3是多租户模式
+systemctl get-default
+multi-user.target
+
+systemctl list-dependencies multi-user.target
+multi-user.target
+● ├─aegis.service
+● ├─aliyun.service
+<span class="token punctuation">..</span><span class="token punctuation">..</span>
+● ├─var-lib-snapd-snap-snapd-23771.mount
+● ├─basic.target
+● │ ├─microcode.service
+
+从这个图中可以看出，它除了依赖service，还依赖basic.target
+
+除此之外，系统会加载/etc/systemd/system/multi-user.target.wants
+这个目录下都是一些软链接
+是multi-user.target它希望运行的一些service<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="Service配置文件解析"><a href="#Service配置文件解析" class="headerlink" title="Service配置文件解析"></a>Service配置文件解析</h2><p>以sshd服务为例</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /usr/lib/systemd/system/sshd.service</span><br><span class="line">[Unit]</span><br><span class="line">Description=OpenSSH server daemon</span><br><span class="line">Documentation=man:sshd(8) man:sshd_config(5)</span><br><span class="line">After=network.target sshd-keygen.service</span><br><span class="line">Wants=sshd-keygen.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=notify</span><br><span class="line">EnvironmentFile=/etc/sysconfig/sshd</span><br><span class="line">ExecStart=/usr/sbin/sshd -D <span class="variable">$OPTIONS</span></span><br><span class="line">ExecReload=/bin/kill -HUP <span class="variable">$MAINPID</span></span><br><span class="line">KillMode=process</span><br><span class="line">Restart=on-failure</span><br><span class="line">RestartSec=42s</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> /usr/lib/systemd/system/sshd.service
+<span class="token punctuation">[</span>Unit<span class="token punctuation">]</span>
+<span class="token assign-left variable">Description</span><span class="token operator">=</span>OpenSSH server daemon
+<span class="token assign-left variable">Documentation</span><span class="token operator">=</span>man:sshd<span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">)</span> man:sshd_config<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
+<span class="token assign-left variable">After</span><span class="token operator">=</span>network.target sshd-keygen.service
+<span class="token assign-left variable">Wants</span><span class="token operator">=</span>sshd-keygen.service
 
-<h3 id="Unit-部分——定义Unit的元数据"><a href="#Unit-部分——定义Unit的元数据" class="headerlink" title="[Unit]部分——定义Unit的元数据"></a>[Unit]部分——定义Unit的元数据</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Description: 描述</span><br><span class="line">Documentation: 文档地址</span><br><span class="line">Requires: (硬性)依赖关系——当前Unit依赖的其他Unit</span><br><span class="line">Wants: (软性)配合关系——当前Unit配合的其他Unit</span><br><span class="line">BindsTo: 共生关系——如果指定Unit退出，当前Unit也会退出</span><br><span class="line">Before: 顺序关系——指定的Unit必须在当前Unit启动后启动</span><br><span class="line">After: 顺序关系——指定的Unit必须在当前Unit启动前启动</span><br><span class="line">Conflicts: 冲突关系——不能和当前Unit同时运行</span><br><span class="line">Condition: 条件关系——当前Unit运行需要满足的条件</span><br><span class="line">Assert: 条件关系——当前Unit运行需要满足的条件</span><br></pre></td></tr></table></figure>
+<span class="token punctuation">[</span>Service<span class="token punctuation">]</span>
+<span class="token assign-left variable">Type</span><span class="token operator">=</span>notify
+<span class="token assign-left variable">EnvironmentFile</span><span class="token operator">=</span>/etc/sysconfig/sshd
+<span class="token assign-left variable">ExecStart</span><span class="token operator">=</span>/usr/sbin/sshd <span class="token parameter variable">-D</span> <span class="token variable">$OPTIONS</span>
+<span class="token assign-left variable">ExecReload</span><span class="token operator">=</span>/bin/kill <span class="token parameter variable">-HUP</span> <span class="token variable">$MAINPID</span>
+<span class="token assign-left variable">KillMode</span><span class="token operator">=</span>process
+<span class="token assign-left variable">Restart</span><span class="token operator">=</span>on-failure
+<span class="token assign-left variable">RestartSec</span><span class="token operator">=</span>42s
 
-<h3 id="Service-部分——表示Unit的配置"><a href="#Service-部分——表示Unit的配置" class="headerlink" title="[Service]部分——表示Unit的配置"></a>[Service]部分——表示Unit的配置</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Type: 定义Service启动时的进程行为(</span><br><span class="line">其选项包括:</span><br><span class="line">Type-simple: 默认值，执行ExecStart命令，启动主进程</span><br><span class="line">Type-forking: 从父进程创建子进程，创建后父进程会退出，需要指定PIDFile。如mysql,redis,httpd</span><br><span class="line">Type-notify: 当服务启动完毕，通知systemd继续往下执行——作为系统启动流程的一部分</span><br><span class="line">Type-oneshot: 一次性进程，Systemd会等待服务退出再继续执行</span><br><span class="line">Type-dbus: 通过D-bus启动</span><br><span class="line">Type-idle: 其他任务执行完毕时，当前服务才会运行</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">ExecStart: 启动服务的命令</span><br><span class="line">ExecStartPre: 启动服务之前运行的命令</span><br><span class="line">ExecStartPost: 启动服务之后运行的命令</span><br><span class="line">ExecReload: 重启服务时执行的命令(<span class="built_in">kill</span> -hup)</span><br><span class="line">ExecStop: 服务停止时执行的命令</span><br><span class="line">ExecStopPost: 停止服务后执行的命令</span><br><span class="line">Restart: 自动重启的策略:(</span><br><span class="line">always 总是重启</span><br><span class="line">on-success 只有成功了才自动重启</span><br><span class="line">on-failure 只有失败了才自动重启</span><br><span class="line">等)</span><br><span class="line">RestartSec: 自动重启时，间隔的秒数</span><br><span class="line">TimeoutSec: 停止服务前等待的秒数</span><br><span class="line">Environment: 定义变量</span><br></pre></td></tr></table></figure>
+<span class="token punctuation">[</span>Install<span class="token punctuation">]</span>
+<span class="token assign-left variable">WantedBy</span><span class="token operator">=</span>multi-user.target<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="Install-部分——定义如何启动服务"><a href="#Install-部分——定义如何启动服务" class="headerlink" title="[Install]部分——定义如何启动服务"></a>[Install]部分——定义如何启动服务</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">WantedBy: 和target联系起来，会将当前Unit放入到目标target的wants目录中，使其开机自启</span><br><span class="line">RequiredBy: 和target联系起来，会将当前Unit放入到目标target的required目录中，使其开机自启</span><br><span class="line">Alias: 当前Unit用于启动的别名</span><br><span class="line">Also: 依赖关系-同时激活其他Unit</span><br></pre></td></tr></table></figure>
+<h3 id="Unit-部分——定义Unit的元数据"><a href="#Unit-部分——定义Unit的元数据" class="headerlink" title="[Unit]部分——定义Unit的元数据"></a>[Unit]部分——定义Unit的元数据</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">Description: 描述
+Documentation: 文档地址
+Requires: <span class="token punctuation">(</span>硬性<span class="token punctuation">)</span>依赖关系——当前Unit依赖的其他Unit
+Wants: <span class="token punctuation">(</span>软性<span class="token punctuation">)</span>配合关系——当前Unit配合的其他Unit
+BindsTo: 共生关系——如果指定Unit退出，当前Unit也会退出
+Before: 顺序关系——指定的Unit必须在当前Unit启动后启动
+After: 顺序关系——指定的Unit必须在当前Unit启动前启动
+Conflicts: 冲突关系——不能和当前Unit同时运行
+Condition: 条件关系——当前Unit运行需要满足的条件
+Assert: 条件关系——当前Unit运行需要满足的条件<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="Service-部分——表示Unit的配置"><a href="#Service-部分——表示Unit的配置" class="headerlink" title="[Service]部分——表示Unit的配置"></a>[Service]部分——表示Unit的配置</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">Type: 定义Service启动时的进程行为<span class="token punctuation">(</span>
+其选项包括:
+Type-simple: 默认值，执行ExecStart命令，启动主进程
+Type-forking: 从父进程创建子进程，创建后父进程会退出，需要指定PIDFile。如mysql,redis,httpd
+Type-notify: 当服务启动完毕，通知systemd继续往下执行——作为系统启动流程的一部分
+Type-oneshot: 一次性进程，Systemd会等待服务退出再继续执行
+Type-dbus: 通过D-bus启动
+Type-idle: 其他任务执行完毕时，当前服务才会运行
+<span class="token punctuation">)</span>
+
+ExecStart: 启动服务的命令
+ExecStartPre: 启动服务之前运行的命令
+ExecStartPost: 启动服务之后运行的命令
+ExecReload: 重启服务时执行的命令<span class="token punctuation">(</span>kill -hup<span class="token punctuation">)</span>
+ExecStop: 服务停止时执行的命令
+ExecStopPost: 停止服务后执行的命令
+Restart: 自动重启的策略:<span class="token punctuation">(</span>
+always 总是重启
+on-success 只有成功了才自动重启
+on-failure 只有失败了才自动重启
+等<span class="token punctuation">)</span>
+RestartSec: 自动重启时，间隔的秒数
+TimeoutSec: 停止服务前等待的秒数
+Environment: 定义变量<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="Install-部分——定义如何启动服务"><a href="#Install-部分——定义如何启动服务" class="headerlink" title="[Install]部分——定义如何启动服务"></a>[Install]部分——定义如何启动服务</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">WantedBy: 和target联系起来，会将当前Unit放入到目标target的wants目录中，使其开机自启
+RequiredBy: 和target联系起来，会将当前Unit放入到目标target的required目录中，使其开机自启
+Alias: 当前Unit用于启动的别名
+Also: 依赖关系-同时激活其他Unit<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="自定义一个Service文件"><a href="#自定义一个Service文件" class="headerlink" title="自定义一个Service文件"></a>自定义一个Service文件</h2><p>比如我现在要在启动系统时就启动一个脚本，并且让它重复不断运行，这个脚本叫k8s-check.sh</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/k8s-check.service</span><br><span class="line">[Unit]</span><br><span class="line">Description: This is a k8s cluster check scrpit</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/root/k8s-check.sh --all -n prod --kubeconfig /root/config_aliyun</span><br><span class="line">Restart=always</span><br><span class="line">RestartSec=60</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载服务</span></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl <span class="built_in">enable</span> k8s-check.service --now</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /usr/lib/systemd/system/k8s-check.service
+<span class="token punctuation">[</span>Unit<span class="token punctuation">]</span>
+Description: This is a k8s cluster check scrpit
+
+<span class="token punctuation">[</span>Service<span class="token punctuation">]</span>
+<span class="token assign-left variable">ExecStart</span><span class="token operator">=</span>/root/k8s-check.sh <span class="token parameter variable">--all</span> <span class="token parameter variable">-n</span> prod <span class="token parameter variable">--kubeconfig</span> /root/config_aliyun
+<span class="token assign-left variable">Restart</span><span class="token operator">=</span>always
+<span class="token assign-left variable">RestartSec</span><span class="token operator">=</span><span class="token number">60</span>
+
+<span class="token punctuation">[</span>Install<span class="token punctuation">]</span>
+<span class="token assign-left variable">WantedBy</span><span class="token operator">=</span>multi-user.target
+
+<span class="token comment"># 加载服务</span>
+systemctl daemon-reload
+systemctl <span class="token builtin class-name">enable</span> k8s-check.service <span class="token parameter variable">--now</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6562,36 +6645,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7056,13 +7109,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8103,13 +8156,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8562,14 +8615,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8577,14 +8630,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

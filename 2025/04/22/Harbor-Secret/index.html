@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="在k8s集群中，往往需要方便的拉取服务所需镜像，但镜像仓库账密铁铁是机密，肯定不能明文存储 那么如何将镜像仓库账号密码，以dockerconfigjson形式存储在Secret中，使服务可以使用imagePullSecrets的形式方便的进行引用呢？ 创建Secret 12345678910111213141516171819202122232425262728kubectl create sec">
+    <meta name="description" content="在k8s集群中，往往需要方便的拉取服务所需镜像，但镜像仓库账密铁铁是机密，肯定不能明文存储 那么如何将镜像仓库账号密码，以dockerconfigjson形式存储在Secret中，使服务可以使用imagePullSecrets的形式方便的进行引用呢？ 创建Secret kubectl create secret docker-registry &lt;secret-name&gt; \   --dock">
 <meta property="og:type" content="article">
 <meta property="og:title" content="将镜像仓库信息保存到Secret与反向解密">
 <meta property="og:url" content="https://akemi.zj.cn/2025/04/22/Harbor-Secret/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="在k8s集群中，往往需要方便的拉取服务所需镜像，但镜像仓库账密铁铁是机密，肯定不能明文存储 那么如何将镜像仓库账号密码，以dockerconfigjson形式存储在Secret中，使服务可以使用imagePullSecrets的形式方便的进行引用呢？ 创建Secret 12345678910111213141516171819202122232425262728kubectl create sec">
+<meta property="og:description" content="在k8s集群中，往往需要方便的拉取服务所需镜像，但镜像仓库账密铁铁是机密，肯定不能明文存储 那么如何将镜像仓库账号密码，以dockerconfigjson形式存储在Secret中，使服务可以使用imagePullSecrets的形式方便的进行引用呢？ 创建Secret kubectl create secret docker-registry &lt;secret-name&gt; \   --dock">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-04-22T13:59:56.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.196Z">
@@ -493,12 +493,72 @@
         <p>在k8s集群中，往往需要方便的拉取服务所需镜像，但镜像仓库账密铁铁是机密，肯定不能明文存储</p>
 <p>那么如何将镜像仓库账号密码，以dockerconfigjson形式存储在Secret中，使服务可以使用imagePullSecrets的形式方便的进行引用呢？</p>
 <p><strong>创建Secret</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">kubectl create secret docker-registry &lt;secret-name&gt; \</span><br><span class="line">  --docker-server=&lt;registry-url&gt; \</span><br><span class="line">  --docker-username=&lt;username&gt; \</span><br><span class="line">  --docker-password=&lt;password&gt; \</span><br><span class="line"></span><br><span class="line"><span class="comment"># 这是我内网的一个harbor仓库</span></span><br><span class="line">kubectl create secret docker-registry harbor \</span><br><span class="line">--docker-server=<span class="string">&quot;192.168.10.130&quot;</span> \</span><br><span class="line">--docker-username=<span class="string">&quot;admin&quot;</span> \</span><br><span class="line">--docker-password=<span class="string">&quot;Harbor12345&quot;</span> </span><br><span class="line"><span class="comment"># secret/harbor created</span></span><br><span class="line"></span><br><span class="line">kubectl get secrets</span><br><span class="line">NAME                  TYPE                                  DATA   AGE</span><br><span class="line">default-token-xmc6r   kubernetes.io/service-account-token   3      75d</span><br><span class="line">harbor                kubernetes.io/dockerconfigjson        1      22s</span><br><span class="line"></span><br><span class="line">kubectl describe secrets harbor</span><br><span class="line">Name:         harbor</span><br><span class="line">Namespace:    default</span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  &lt;none&gt;</span><br><span class="line"></span><br><span class="line">Type:  kubernetes.io/dockerconfigjson</span><br><span class="line"></span><br><span class="line">Data</span><br><span class="line">====</span><br><span class="line">.dockerconfigjson:  108 bytes</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl create secret docker-registry <span class="token operator">&lt;</span>secret-name<span class="token operator">></span> <span class="token punctuation">\</span>
+  --docker-server<span class="token operator">=</span><span class="token operator">&lt;</span>registry-url<span class="token operator">></span> <span class="token punctuation">\</span>
+  --docker-username<span class="token operator">=</span><span class="token operator">&lt;</span>username<span class="token operator">></span> <span class="token punctuation">\</span>
+  --docker-password<span class="token operator">=</span><span class="token operator">&lt;</span>password<span class="token operator">></span> <span class="token punctuation">\</span>
+
+<span class="token comment"># 这是我内网的一个harbor仓库</span>
+kubectl create secret docker-registry harbor <span class="token punctuation">\</span>
+--docker-server<span class="token operator">=</span><span class="token string">"192.168.10.130"</span> <span class="token punctuation">\</span>
+--docker-username<span class="token operator">=</span><span class="token string">"admin"</span> <span class="token punctuation">\</span>
+--docker-password<span class="token operator">=</span><span class="token string">"Harbor12345"</span> 
+<span class="token comment"># secret/harbor created</span>
+
+kubectl get secrets
+NAME                  TYPE                                  DATA   AGE
+default-token-xmc6r   kubernetes.io/service-account-token   <span class="token number">3</span>      75d
+harbor                kubernetes.io/dockerconfigjson        <span class="token number">1</span>      22s
+
+kubectl describe secrets harbor
+Name:         harbor
+Namespace:    default
+Labels:       <span class="token operator">&lt;</span>none<span class="token operator">></span>
+Annotations:  <span class="token operator">&lt;</span>none<span class="token operator">></span>
+
+Type:  kubernetes.io/dockerconfigjson
+
+Data
+<span class="token operator">==</span><span class="token operator">==</span>
+.dockerconfigjson:  <span class="token number">108</span> bytes<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>解密dockerconfigjson</strong></p>
 <p>那么现在我们看到了集群中有这么一个Secret，类型是dockerconfigjson</p>
 <p>从其中应该如何反推出其仓库地址，账号和密码呢？</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">kubectl get secrets</span><br><span class="line">NAME                  TYPE                                  DATA   AGE</span><br><span class="line">default-token-xmc6r   kubernetes.io/service-account-token   3      75d</span><br><span class="line">harbor                kubernetes.io/dockerconfigjson        1      113s</span><br><span class="line"></span><br><span class="line"><span class="comment"># 取出.dockerconfigjson的data</span></span><br><span class="line">kubectl get secrets harbor -o yaml</span><br><span class="line">apiVersion: v1</span><br><span class="line">data:</span><br><span class="line">  .dockerconfigjson: eyJhdXRocyI6eyIxOTIuMTY4LjEwLjEzMCI6eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiJIYXJib3IxMjM0NSIsImF1dGgiOiJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0ifX19</span><br><span class="line">kind: Secret</span><br><span class="line">metadata:</span><br><span class="line">  creationTimestamp: <span class="string">&quot;2025-04-22T13:52:48Z&quot;</span></span><br><span class="line">  name: harbor</span><br><span class="line">  namespace: default</span><br><span class="line">  resourceVersion: <span class="string">&quot;8027982&quot;</span></span><br><span class="line">  uid: 1591f404-af7d-4169-b70b-c3a1be3935b9</span><br><span class="line"><span class="built_in">type</span>: kubernetes.io/dockerconfigjson</span><br><span class="line"></span><br><span class="line">json也行，随你喜欢</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将其复制出来进行base64解密</span></span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">&quot;eyJhdXRocyI6eyIxOTIuMTY4LjEwLjEzMCI6eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiJIYXJib3IxMjM0NSIsImF1dGgiOiJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0ifX19&quot;</span> \</span><br><span class="line">| <span class="built_in">base64</span> -d</span><br><span class="line"></span><br><span class="line">&#123;<span class="string">&quot;auths&quot;</span>:&#123;<span class="string">&quot;192.168.10.130&quot;</span>:&#123;<span class="string">&quot;username&quot;</span>:<span class="string">&quot;admin&quot;</span>,<span class="string">&quot;password&quot;</span>:<span class="string">&quot;Harbor12345&quot;</span>,<span class="string">&quot;auth&quot;</span>:<span class="string">&quot;YWRtaW46SGFyYm9yMTIzNDU=&quot;</span>&#125;&#125;&#125;</span><br><span class="line">此时已经可以看出来endpoint和username和password的</span><br><span class="line"></span><br><span class="line">有时候只有一个auth字段</span><br><span class="line">可以将auth字段再次进行解密</span><br><span class="line"><span class="built_in">echo</span> -n <span class="string">&quot;YWRtaW46SGFyYm9yMTIzNDU=&quot;</span> | <span class="built_in">base64</span> -d</span><br><span class="line">admin:Harbor12345</span><br><span class="line"></span><br><span class="line">得到用户名和密码，中间使用冒号隔开</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get secrets
+NAME                  TYPE                                  DATA   AGE
+default-token-xmc6r   kubernetes.io/service-account-token   <span class="token number">3</span>      75d
+harbor                kubernetes.io/dockerconfigjson        <span class="token number">1</span>      113s
+
+<span class="token comment"># 取出.dockerconfigjson的data</span>
+kubectl get secrets harbor <span class="token parameter variable">-o</span> yaml
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyIxOTIuMTY4LjEwLjEzMCI6eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiJIYXJib3IxMjM0NSIsImF1dGgiOiJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0ifX19
+kind: Secret
+metadata:
+  creationTimestamp: <span class="token string">"2025-04-22T13:52:48Z"</span>
+  name: harbor
+  namespace: default
+  resourceVersion: <span class="token string">"8027982"</span>
+  uid: 1591f404-af7d-4169-b70b-c3a1be3935b9
+type: kubernetes.io/dockerconfigjson
+
+json也行，随你喜欢
+
+<span class="token comment"># 将其复制出来进行base64解密</span>
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">"eyJhdXRocyI6eyIxOTIuMTY4LjEwLjEzMCI6eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiJIYXJib3IxMjM0NSIsImF1dGgiOiJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0ifX19"</span> <span class="token punctuation">\</span>
+<span class="token operator">|</span> base64 <span class="token parameter variable">-d</span>
+
+<span class="token punctuation">&#123;</span><span class="token string">"auths"</span>:<span class="token punctuation">&#123;</span><span class="token string">"192.168.10.130"</span>:<span class="token punctuation">&#123;</span><span class="token string">"username"</span><span class="token builtin class-name">:</span><span class="token string">"admin"</span>,<span class="token string">"password"</span><span class="token builtin class-name">:</span><span class="token string">"Harbor12345"</span>,<span class="token string">"auth"</span><span class="token builtin class-name">:</span><span class="token string">"YWRtaW46SGFyYm9yMTIzNDU="</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+此时已经可以看出来endpoint和username和password的
+
+有时候只有一个auth字段
+可以将auth字段再次进行解密
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">"YWRtaW46SGFyYm9yMTIzNDU="</span> <span class="token operator">|</span> base64 <span class="token parameter variable">-d</span>
+admin:Harbor12345
+
+得到用户名和密码，中间使用冒号隔开<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6557,36 +6617,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7051,13 +7081,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8098,13 +8128,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8557,14 +8587,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8572,14 +8602,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

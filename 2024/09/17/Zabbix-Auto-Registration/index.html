@@ -499,15 +499,53 @@
 <p>1.修改zabbix客户端配置文件<br>2.在web中配置动作——自动注册</p>
 <h2 id="修改zabbix客户端配置文件"><a href="#修改zabbix客户端配置文件" class="headerlink" title="修改zabbix客户端配置文件"></a>修改zabbix客户端配置文件</h2><p>待添加主机:<br>192.168.10.126 mysql-2<br>192.168.10.127 mysql-3<br>192.168.10.128 mysql-4</p>
 <p><strong>安装zabbix-agnet</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cp</span> -a /etc/yum.repos.d /etc/yum.repos.d.backup</span><br><span class="line"><span class="built_in">rm</span> -f /etc/yum.repos.d/*</span><br><span class="line">curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line">wget https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line">rpm -Uvh zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line">yum clean all</span><br><span class="line">yum makecache</span><br><span class="line">yum -y install zabbix-agent2</span><br><span class="line">systemctl <span class="built_in">enable</span> zabbix-agent2 --now</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cp</span> <span class="token parameter variable">-a</span> /etc/yum.repos.d /etc/yum.repos.d.backup
+<span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/yum.repos.d/*
+<span class="token function">curl</span> <span class="token parameter variable">-o</span> /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+<span class="token function">wget</span> https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm
+<span class="token function">rpm</span> <span class="token parameter variable">-Uvh</span> zabbix-release-5.0-1.el7.noarch.rpm
+yum clean all
+yum makecache
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> zabbix-agent2
+systemctl <span class="token builtin class-name">enable</span> zabbix-agent2 <span class="token parameter variable">--now</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>修改配置文件的serveractive参数（主动模式ip地址）与hostname参数</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">默认：</span><br><span class="line">grep -vE <span class="string">&#x27;^(#|$)&#x27;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">PidFile=/var/run/zabbix/zabbix_agent2.pid</span><br><span class="line">LogFile=/var/log/zabbix/zabbix_agent2.<span class="built_in">log</span></span><br><span class="line">LogFileSize=0</span><br><span class="line">Server=127.0.0.1</span><br><span class="line">ServerActive=127.0.0.1</span><br><span class="line">Hostname=Zabbix server</span><br><span class="line">Include=/etc/zabbix/zabbix_agent2.d/*.conf</span><br><span class="line">ControlSocket=/tmp/agent.sock</span><br><span class="line"></span><br><span class="line">手动获取方式——适合脚本的方式</span><br><span class="line">sed -i <span class="string">&#x27;s/^Server=.*/Server=192.168.10.171/g&#x27;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">sed -i <span class="string">&#x27;s/^ServerA.*/ServerActive=192.168.10.171/g&#x27;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">sed -i <span class="string">&quot;s/^Hostname.*/Hostname=<span class="subst">$(hostname)</span>/g&quot;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;HostMetadata=<span class="subst">$(hostname)</span>&quot;</span> &gt;&gt; /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">systemctl restart zabbix-agent2</span><br><span class="line"></span><br><span class="line">自动获取方式——适合配置文件分发、复制的情况，区别不大</span><br><span class="line">sed -i <span class="string">&#x27;s/^Server=.*/Server=192.168.10.171/g&#x27;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">sed -i <span class="string">&#x27;s/^ServerA.*/ServerActive=192.168.10.171/g&#x27;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">sed -i <span class="string">&#x27;s/^Hostname.*/HostnameItem=system.hostname/g&#x27;</span> /etc/zabbix/zabbix_agent2.conf</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;HostMetadataItem=system.hostname&quot;</span> &gt;&gt; /etc/zabbix/zabbix_agent2.conf</span><br><span class="line">systemctl restart zabbix-agent2</span><br><span class="line">↑</span><br><span class="line">HostnameItem=system.hostname</span><br><span class="line">HostMetadataItem=system.hostname</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /etc/zabbix/zabbix_agent2.conf
+默认：
+<span class="token function">grep</span> <span class="token parameter variable">-vE</span> <span class="token string">'^(#|$)'</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token assign-left variable">PidFile</span><span class="token operator">=</span>/var/run/zabbix/zabbix_agent2.pid
+<span class="token assign-left variable">LogFile</span><span class="token operator">=</span>/var/log/zabbix/zabbix_agent2.log
+<span class="token assign-left variable">LogFileSize</span><span class="token operator">=</span><span class="token number">0</span>
+<span class="token assign-left variable">Server</span><span class="token operator">=</span><span class="token number">127.0</span>.0.1
+<span class="token assign-left variable">ServerActive</span><span class="token operator">=</span><span class="token number">127.0</span>.0.1
+<span class="token assign-left variable">Hostname</span><span class="token operator">=</span>Zabbix server
+<span class="token assign-left variable">Include</span><span class="token operator">=</span>/etc/zabbix/zabbix_agent2.d/*.conf
+<span class="token assign-left variable">ControlSocket</span><span class="token operator">=</span>/tmp/agent.sock
+
+手动获取方式——适合脚本的方式
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^Server=.*/Server=192.168.10.171/g'</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^ServerA.*/ServerActive=192.168.10.171/g'</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s/^Hostname.*/Hostname=<span class="token variable"><span class="token variable">$(</span><span class="token function">hostname</span><span class="token variable">)</span></span>/g"</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token builtin class-name">echo</span> <span class="token string">"HostMetadata=<span class="token variable"><span class="token variable">$(</span><span class="token function">hostname</span><span class="token variable">)</span></span>"</span> <span class="token operator">>></span> /etc/zabbix/zabbix_agent2.conf
+systemctl restart zabbix-agent2
+
+自动获取方式——适合配置文件分发、复制的情况，区别不大
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^Server=.*/Server=192.168.10.171/g'</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^ServerA.*/ServerActive=192.168.10.171/g'</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^Hostname.*/HostnameItem=system.hostname/g'</span> /etc/zabbix/zabbix_agent2.conf
+<span class="token builtin class-name">echo</span> <span class="token string">"HostMetadataItem=system.hostname"</span> <span class="token operator">>></span> /etc/zabbix/zabbix_agent2.conf
+systemctl restart zabbix-agent2
+↑
+<span class="token assign-left variable">HostnameItem</span><span class="token operator">=</span>system.hostname
+<span class="token assign-left variable">HostMetadataItem</span><span class="token operator">=</span>system.hostname<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="配置自动注册动作"><a href="#配置自动注册动作" class="headerlink" title="配置自动注册动作"></a>配置自动注册动作</h2><p>首先关闭自动发现规则与动作</p>
 <p>进入-配置-动作-自动注册动作-创建动作</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/ec2e0dedba9082de991c65ce7304b41b.png"></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">tail</span> -f /var/log/zabbix/zabbix_server.log</span><br><span class="line"> 30640:20240917:172135.896 enabling Zabbix agent checks on host <span class="string">&quot;mysql-2&quot;</span>: host became available</span><br><span class="line"> 30645:20240917:172136.122 enabling Zabbix agent checks on host <span class="string">&quot;mysql-4&quot;</span>: host became available</span><br><span class="line"> 30645:20240917:172137.108 enabling Zabbix agent checks on host <span class="string">&quot;mysql-3&quot;</span>: host became available</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">tail</span> <span class="token parameter variable">-f</span> /var/log/zabbix/zabbix_server.log
+ <span class="token number">30640</span>:20240917:172135.896 enabling Zabbix agent checks on <span class="token function">host</span> <span class="token string">"mysql-2"</span><span class="token builtin class-name">:</span> <span class="token function">host</span> became available
+ <span class="token number">30645</span>:20240917:172136.122 enabling Zabbix agent checks on <span class="token function">host</span> <span class="token string">"mysql-4"</span><span class="token builtin class-name">:</span> <span class="token function">host</span> became available
+ <span class="token number">30645</span>:20240917:172137.108 enabling Zabbix agent checks on <span class="token function">host</span> <span class="token string">"mysql-3"</span><span class="token builtin class-name">:</span> <span class="token function">host</span> became available<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/fb86a4f42e5b93048a7d3dd2d963ca3d.png"></p>
 
@@ -6569,36 +6607,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7063,13 +7071,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8110,13 +8118,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8569,14 +8577,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8584,14 +8592,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

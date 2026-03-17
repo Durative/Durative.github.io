@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="本文将介绍如何将Let’s Encrypt生成免费SSL证书，并且进行自动续期 我之前还傻呆呆的在阿里云花68买了个人证书来着，md  Let’s Encrypt的优势  支持ACME协议，实现了证书申请、安装和续期的自动化 提供的SSL&#x2F;TLS证书完全免费  安装工具与生成SSL证书1234567891011121314151617181920212223242526272829303">
+    <meta name="description" content="本文将介绍如何将Let’s Encrypt生成免费SSL证书，并且进行自动续期 我之前还傻呆呆的在阿里云花68买了个人证书来着，md  Let’s Encrypt的优势  支持ACME协议，实现了证书申请、安装和续期的自动化 提供的SSL&#x2F;TLS证书完全免费  安装工具与生成SSL证书# 环境说明，使用的是CentOS7.9 2C2G 阿里云公有云实例   # 安装Let&#39;s Encry">
 <meta property="og:type" content="article">
 <meta property="og:title" content="通过Let&#39;s Encrypt生成免费SSL证书">
 <meta property="og:url" content="https://akemi.zj.cn/2025/03/11/SSL-Encrypt/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="本文将介绍如何将Let’s Encrypt生成免费SSL证书，并且进行自动续期 我之前还傻呆呆的在阿里云花68买了个人证书来着，md  Let’s Encrypt的优势  支持ACME协议，实现了证书申请、安装和续期的自动化 提供的SSL&#x2F;TLS证书完全免费  安装工具与生成SSL证书1234567891011121314151617181920212223242526272829303">
+<meta property="og:description" content="本文将介绍如何将Let’s Encrypt生成免费SSL证书，并且进行自动续期 我之前还傻呆呆的在阿里云花68买了个人证书来着，md  Let’s Encrypt的优势  支持ACME协议，实现了证书申请、安装和续期的自动化 提供的SSL&#x2F;TLS证书完全免费  安装工具与生成SSL证书# 环境说明，使用的是CentOS7.9 2C2G 阿里云公有云实例   # 安装Let&#39;s Encry">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250311014540350.png">
 <meta property="article:published_time" content="2025-03-11T03:35:46.000Z">
@@ -506,12 +506,64 @@
 <li>支持ACME协议，<strong>实现了证书申请、安装和续期的自动化</strong></li>
 <li>提供的<strong>SSL&#x2F;TLS证书完全免费</strong></li>
 </ul>
-<h2 id="安装工具与生成SSL证书"><a href="#安装工具与生成SSL证书" class="headerlink" title="安装工具与生成SSL证书"></a>安装工具与生成SSL证书</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 环境说明，使用的是CentOS7.9 2C2G 阿里云公有云实例 </span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装Let&#x27;s Encrypt提供的工具certbot与nginx插件</span></span><br><span class="line">(1)使用certbot的旧python2插件</span><br><span class="line">yum install epel-release</span><br><span class="line">yum install certbot</span><br><span class="line">yum install python2-certbot-nginx -y</span><br><span class="line"></span><br><span class="line">(2)使用snapd安装（如果本来用的是snapd就建议这么搞）</span><br><span class="line">yum install snapd -y</span><br><span class="line">systemctl <span class="built_in">enable</span> --now snapd.socket</span><br><span class="line"><span class="built_in">ln</span> -s /var/lib/snapd/snap /snap</span><br><span class="line">snap install --classic certbot</span><br><span class="line"><span class="built_in">ln</span> -s /snap/bin/certbot /usr/bin/certbot</span><br><span class="line"></span><br><span class="line"><span class="comment"># 为域名生成一个针对于nginx的证书，我的域名就是akemi.zj.cn</span></span><br><span class="line">(1)手动配置、自定义 SSL 参数</span><br><span class="line">certbot certonly --nginx -d akemi.zj.cn</span><br><span class="line"></span><br><span class="line">证书存放位置/etc/letsencrypt/live/&lt;domain&gt;</span><br><span class="line"><span class="built_in">ls</span> /etc/letsencrypt/live/akemi.zj.cn</span><br><span class="line">cert.pem  chain.pem  fullchain.pem  privkey.pem  README</span><br><span class="line"></span><br><span class="line">(2)快速部署、自动配置（建议备份配置文件）</span><br><span class="line"><span class="built_in">cp</span> /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak</span><br><span class="line">certbot --nginx -d akemi.zj.cn</span><br><span class="line">...</span><br><span class="line">server &#123;</span><br><span class="line">    listen 443 ssl http2;</span><br><span class="line">    server_name akemi.zj.cn;</span><br><span class="line">    ssl_certificate /etc/letsencrypt/live/akemi.zj.cn/fullchain.pem; <span class="comment"># managed by Certbot</span></span><br><span class="line">    ssl_certificate_key /etc/letsencrypt/live/akemi.zj.cn/privkey.pem; <span class="comment"># managed by Certbot</span></span><br><span class="line">    root /home/git/web/blog;</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment"># 也可以certbot certonly后执行certbot --nginx，但会覆盖配置</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="安装工具与生成SSL证书"><a href="#安装工具与生成SSL证书" class="headerlink" title="安装工具与生成SSL证书"></a>安装工具与生成SSL证书</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 环境说明，使用的是CentOS7.9 2C2G 阿里云公有云实例 </span>
 
-<h2 id="验证：网站SSL证书生效"><a href="#验证：网站SSL证书生效" class="headerlink" title="验证：网站SSL证书生效"></a>验证：网站SSL证书生效</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx -s reload</span><br></pre></td></tr></table></figure>
+<span class="token comment"># 安装Let's Encrypt提供的工具certbot与nginx插件</span>
+<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>使用certbot的旧python2插件
+yum <span class="token function">install</span> epel-release
+yum <span class="token function">install</span> certbot
+yum <span class="token function">install</span> python2-certbot-nginx <span class="token parameter variable">-y</span>
+
+<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>使用snapd安装（如果本来用的是snapd就建议这么搞）
+yum <span class="token function">install</span> snapd <span class="token parameter variable">-y</span>
+systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> snapd.socket
+<span class="token function">ln</span> <span class="token parameter variable">-s</span> /var/lib/snapd/snap /snap
+snap <span class="token function">install</span> <span class="token parameter variable">--classic</span> certbot
+<span class="token function">ln</span> <span class="token parameter variable">-s</span> /snap/bin/certbot /usr/bin/certbot
+
+<span class="token comment"># 为域名生成一个针对于nginx的证书，我的域名就是akemi.zj.cn</span>
+<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>手动配置、自定义 SSL 参数
+certbot certonly <span class="token parameter variable">--nginx</span> <span class="token parameter variable">-d</span> akemi.zj.cn
+
+证书存放位置/etc/letsencrypt/live/<span class="token operator">&lt;</span>domain<span class="token operator">></span>
+<span class="token function">ls</span> /etc/letsencrypt/live/akemi.zj.cn
+cert.pem  chain.pem  fullchain.pem  privkey.pem  README
+
+<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>快速部署、自动配置（建议备份配置文件）
+<span class="token function">cp</span> /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+certbot <span class="token parameter variable">--nginx</span> <span class="token parameter variable">-d</span> akemi.zj.cn
+<span class="token punctuation">..</span>.
+server <span class="token punctuation">&#123;</span>
+    listen <span class="token number">443</span> ssl http2<span class="token punctuation">;</span>
+    server_name akemi.zj.cn<span class="token punctuation">;</span>
+    ssl_certificate /etc/letsencrypt/live/akemi.zj.cn/fullchain.pem<span class="token punctuation">;</span> <span class="token comment"># managed by Certbot</span>
+    ssl_certificate_key /etc/letsencrypt/live/akemi.zj.cn/privkey.pem<span class="token punctuation">;</span> <span class="token comment"># managed by Certbot</span>
+    root /home/git/web/blog<span class="token punctuation">;</span>
+<span class="token punctuation">..</span>.
+
+<span class="token comment"># 也可以certbot certonly后执行certbot --nginx，但会覆盖配置</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="验证：网站SSL证书生效"><a href="#验证：网站SSL证书生效" class="headerlink" title="验证：网站SSL证书生效"></a>验证：网站SSL证书生效</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nginx <span class="token parameter variable">-s</span> reload<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250311014540350.png"></p>
-<h2 id="证书续期"><a href="#证书续期" class="headerlink" title="证书续期"></a>证书续期</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">(1)自动续期</span><br><span class="line">如果使用的是certbot --nginx -d akemi.zj.cn，那就会自动续期</span><br><span class="line">可以通过下面两条命令检查</span><br><span class="line"><span class="built_in">cat</span> /etc/cron.d/certbot</span><br><span class="line">或</span><br><span class="line">systemctl list-timers | grep certbot</span><br><span class="line"><span class="comment"># Tue 2025-03-11 20:03:00 CST  8h left Tue 2025-03-11 05:13:00 CST  6h ago  snap.certbot.renew.timer     snap.certbot.renew.service</span></span><br><span class="line"></span><br><span class="line">(2)手动续期</span><br><span class="line">certbot renew <span class="comment"># 当证书距离到期不足30天时会生效</span></span><br><span class="line"></span><br><span class="line">(3)续期注意事项</span><br><span class="line">续期过程中所有文件均会被更新</span><br><span class="line">续期后重启服务</span><br><span class="line">新证书（cert.pem）会包含更新的有效期 90天</span><br><span class="line">续期后旧文件会被替换，若需备份需手动操作</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="证书续期"><a href="#证书续期" class="headerlink" title="证书续期"></a>证书续期</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>自动续期
+如果使用的是certbot <span class="token parameter variable">--nginx</span> <span class="token parameter variable">-d</span> akemi.zj.cn，那就会自动续期
+可以通过下面两条命令检查
+<span class="token function">cat</span> /etc/cron.d/certbot
+或
+systemctl list-timers <span class="token operator">|</span> <span class="token function">grep</span> certbot
+<span class="token comment"># Tue 2025-03-11 20:03:00 CST  8h left Tue 2025-03-11 05:13:00 CST  6h ago  snap.certbot.renew.timer     snap.certbot.renew.service</span>
+
+<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>手动续期
+certbot renew <span class="token comment"># 当证书距离到期不足30天时会生效</span>
+
+<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>续期注意事项
+续期过程中所有文件均会被更新
+续期后重启服务
+新证书（cert.pem）会包含更新的有效期 <span class="token number">90</span>天
+续期后旧文件会被替换，若需备份需手动操作
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6570,36 +6622,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7064,13 +7086,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8111,13 +8133,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8570,14 +8592,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8585,14 +8607,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

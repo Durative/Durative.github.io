@@ -449,7 +449,15 @@
             <div class="abstract-content">
                 二进制常规部署minio因为我之前没部署过minio，在helm部署前我觉得需要先通过常规的部署，熟悉一下
 这种部署其实就相当于单点的部署
-12345678910111213141516171819202122232425262728官网给的部署方式很简单采用二进制部署方式，系统是centos7.9服务端：wget https://dl.minio.org.cn/server/minio/release/linux-amd64/miniochmod +x minioMINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password ./minio ser...
+官网给的部署方式很简单
+采用二进制部署方式，系统是centos7.9
+
+服务端：
+wget https://dl.minio.org.cn/server/minio/release/linux-amd64/minio
+chmod +x minio
+MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password ./minio server /mnt/data --console-address ":9001"
+
+...
             </div>
             <!-- read more -->
             
@@ -484,9 +492,22 @@
                 <span class="abstract-title-text">Helm部署redis5与使用local-path-provisioner</span>
             </a>
             <div class="abstract-content">
-                搜索与下载chart123456789101112helm search repo redis可以看到基本上都是redis7和redis4通过helm search repo redis -l挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改helm pull bitnami/redis --version 16.13.2mv redis-16.13.2.tgz ~cd ~tar -xf redis-16.13.2.tgz mv redis helm-redis5
+                搜索与下载charthelm search repo redis
+可以看到基本上都是redis7和redis4
 
-查看chart信息，观察yaml文件结构12345678910111213141516171819202...
+通过
+helm search repo redis -l
+挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改
+
+helm pull bitnami/redis --version 16.13.2
+mv redis-16.13.2.tgz ~
+cd ~
+tar -xf redis-16.13.2.tgz 
+mv redis helm-redis5
+
+查看chart信息，观察yaml文件结构cd helm-redis5/
+进入Chart.yaml
+修改appve...
             </div>
             <!-- read more -->
             
@@ -526,10 +547,12 @@
                 用的单点k8s，装单点mysql8
 添加与下载chart模板阿里云的仓库默认提供的mysql5.7的，所以使用bitnami的仓库
 但是bitnami概率被墙，所以有时需要在另外机器上下载
-123helm repo add bitnami https://charts.bitnami.com/bitnamihelm search repo bitnami | grep mysqlhelm pull bitnami/mysql
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm search repo bitnami | grep mysql
+helm pull bitnami/mysql
 
 查看chart信息与准备镜像可以看到有几个镜像需要提前准备好
-我用了docker desktop挂代理拉的，他妈docker桌面版还和VMware互斥，我一会还得...
+我用了docker desktop挂代理拉的，他妈docker桌面版还和VMware互斥，我一会还得费...
             </div>
             <!-- read more -->
             
@@ -613,7 +636,13 @@ tkinter基本组件窗口标签按钮文本框框架菜单
                 能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移
 也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源
 也可以用来做主备的harbor，可以说相当有用
-下载1234567#linux系统，x86适用wget https://github.com/lework/skopeo-binary/releases/download/v1.17.0/skopeo-linux-amd64sudo mv skopeo-linux-amd64 /usr/bin/skopeosudo chmod +x /usr/bin/skopeo skopeo --version#skopeo vers...
+下载#linux系统，x86适用
+wget https://github.com/lework/skopeo-binary/releases/download/v1.17.0/skopeo-linux-amd64
+sudo mv skopeo-linux-amd64 /usr/bin/skopeo
+sudo chmod +x /usr/bin/skopeo 
+
+skopeo --version
+#skopeo versi...
             </div>
             <!-- read more -->
             
@@ -650,10 +679,22 @@ tkinter基本组件窗口标签按钮文本框框架菜单
             <div class="abstract-content">
                 k3s是一个轻量化k8s环境，适合用来做测试，这两天换工作，服务器还没准备好，先用笔记本虚机搭一个k8s环境用用
 环境
-1234567VMwareWorkstation 17Pro8G6C 20G硬盘Centos7.9.2009k3s版本1.20.6192.168.8.128 k3s-server192.168.8.129 k3s-agent
+VMwareWorkstation 17Pro
+8G6C 20G硬盘
+Centos7.9.2009
+k3s版本1.20.6
+
+192.168.8.128 k3s-server
+192.168.8.129 k3s-agent
 
 初始化
-12345678910111213141516171819202122232425262728#安全systemctl disable firewalld --nowsed -i &#x27;s/^SELINUX=.*/SELINUX=d...
+#安全
+systemctl disable firewalld --now
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+
+#swap
+swapoff -a
+se...
             </div>
             <!-- read more -->
             
@@ -689,7 +730,18 @@ tkinter基本组件窗口标签按钮文本框框架菜单
             </a>
             <div class="abstract-content">
                 办公电脑装ubuntu了，搞个k8s当测试环境
-环境初始化12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455# 关闭swapsudo swapoff -asudo sed -i &#x27;$ s/^/#/&#x27; /etc/fstab# 修改内核，允许路由转发sudo modprobe br_netfiltersudo tee &gt; /etc/sysctl.d/k8s.conf &lt;&lt; &#x27;EOF&#x27;n...
+环境初始化# 关闭swap
+sudo swapoff -a
+sudo sed -i '$ s/^/#/' /etc/fstab
+
+# 修改内核，允许路由转发
+sudo modprobe br_netfilter
+sudo tee > /etc/sysctl.d/k8s.conf &lt;&lt; 'EOF'
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+sudo sysctl...
             </div>
             <!-- read more -->
             
@@ -726,7 +778,15 @@ tkinter基本组件窗口标签按钮文本框框架菜单
                 <span class="abstract-title-text">Python基于多种方式检测linux服务运行状态(进程筛选、systemctl、API)</span>
             </a>
             <div class="abstract-content">
-                基于systemctl检查nginx服务状态1234567891011121314151617181920212223242526272829303132333435import subprocess# nginx配置检查def check_nginx_config():    try:        subprocess.run([&#x27;nginx&#x27;, &#x27;-t&#x27;],capture_output=True,text=True,check=True)        print(&quot;Checking nginx configuration succ...
+                基于systemctl检查nginx服务状态import subprocess
+
+# nginx配置检查
+def check_nginx_config():
+    try:
+        subprocess.run(['nginx', '-t'],capture_output=True,text=True,check=True)
+        print("Checking nginx configuration successfully")
+    except subprocess.CalledProcessError as e:
+        print(e.stderr...
             </div>
             <!-- read more -->
             
@@ -764,9 +824,17 @@ tkinter基本组件窗口标签按钮文本框框架菜单
                 mysql-connector-python是一个官方提供的python库，用于和mysql数据库的交互
 功能：数据库连接、执行SQL、处理结果集、事务处理、错误处理
 pip3 install mysql-connector-python
-mysql环境准备1234567CREATE DATABASE test_db; USE test_db; CREATE TABLE users ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), age INT );
+mysql环境准备CREATE DATABASE test_db; 
+USE test_db; 
+CREATE TABLE users ( 
+id INT AUTO_INCREMENT PRIMARY KEY, 
+name VARCHAR(100), 
+age INT 
+);
 
-Mysql模块使用方法1234567891011121314151617...
+Mysql模块使用方法import mysql.connector
+
+# ...
             </div>
             <!-- read more -->
             
@@ -803,7 +871,17 @@ Mysql模块使用方法1234567891011121314151617...
                 <span class="abstract-title-text">Python-kubernetes模块案例—根据不同ns更新pod副本数</span>
             </a>
             <div class="abstract-content">
-                根据不同ns更新pod副本数123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566from kubernetes import config,clientconfig.load_kube_config(config_file=&#x27;config&#x27;)client_apps=client.AppsV1Api()# 定义有效ns名列表namespaces_list=[&#x27;qates...
+                根据不同ns更新pod副本数from kubernetes import config,client
+config.load_kube_config(config_file='config')
+client_apps=client.AppsV1Api()
+
+# 定义有效ns名列表
+namespaces_list=['qatest','production','dev']
+
+while True:
+# 输入ns，提示词用逗号分隔
+    print("动态调整deployment副本数脚本（输入exit退出）")
+    namespaces=input(f"输入命名空间:\n可选:&#1...
             </div>
             <!-- read more -->
             
@@ -6892,36 +6970,6 @@ Mysql模块使用方法1234567891011121314151617...
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7386,13 +7434,13 @@ Mysql模块使用方法1234567891011121314151617...
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8433,13 +8481,13 @@ Mysql模块使用方法1234567891011121314151617...
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8892,14 +8940,14 @@ Mysql模块使用方法1234567891011121314151617...
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8907,14 +8955,14 @@ Mysql模块使用方法1234567891011121314151617...
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

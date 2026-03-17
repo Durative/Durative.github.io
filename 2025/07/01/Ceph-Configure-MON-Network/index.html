@@ -493,22 +493,70 @@
         <h1 id="MON配置"><a href="#MON配置" class="headerlink" title="MON配置"></a>MON配置</h1><p>Ceph监视器(MONs)存储并维护client用来查找MON和OSD节点的集群映射。Ceph客户端必须连接到一个MON来检索集群映射，然后才能向osd读写任何数据。</p>
 <p>一般要求奇数个</p>
 <p>mon角色有这几种：<br>Leader:第一个获得最新版本集群映射的MON。<br>provider:拥有集群映射最新版本的MON，但不是领导者。<br>Requester:没有集群映射最新版本的MON，必须与provider同步才能重新加入quorum</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">ceph mon <span class="built_in">stat</span></span><br><span class="line">e5: 3 mons at &#123;cephadm-1=[v2:192.168.10.141:3300/0,v1:192.168.10.141:6789/0],</span><br><span class="line">cephadm-2=[v2:192.168.10.142:3300/0,v1:192.168.10.142:6789/0],</span><br><span class="line">cephadm-3=[v2:192.168.10.143:3300/0,v1:192.168.10.143:6789/0]&#125; removed_ranks: &#123;0&#125; </span><br><span class="line">disallowed_leaders: &#123;&#125;, election epoch 126, </span><br><span class="line">leader 0 cephadm-3, quorum 0,1,2 cephadm-3,cephadm-2,cephadm-1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
+ceph mon <span class="token function">stat</span>
+e5: <span class="token number">3</span> mons at <span class="token punctuation">&#123;</span>cephadm-1<span class="token operator">=</span><span class="token punctuation">[</span>v2:192.168.10.141:3300/0,v1:192.168.10.141:6789/0<span class="token punctuation">]</span>,
+cephadm-2<span class="token operator">=</span><span class="token punctuation">[</span>v2:192.168.10.142:3300/0,v1:192.168.10.142:6789/0<span class="token punctuation">]</span>,
+cephadm-3<span class="token operator">=</span><span class="token punctuation">[</span>v2:192.168.10.143:3300/0,v1:192.168.10.143:6789/0<span class="token punctuation">]</span><span class="token punctuation">&#125;</span> removed_ranks: <span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">&#125;</span> 
+disallowed_leaders: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>, election epoch <span class="token number">126</span>, 
+leader <span class="token number">0</span> cephadm-3, quorum <span class="token number">0,1</span>,2 cephadm-3,cephadm-2,cephadm-1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="Monitor-Map"><a href="#Monitor-Map" class="headerlink" title="Monitor Map"></a>Monitor Map</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ceph集群映射包括MON映射，OSD映射，PG映射，MDS映射，CRUSH映射</span><br><span class="line"></span><br><span class="line">MON映射包含FSID，每个MON节点通信的名称、IP、端口</span><br><span class="line">保存Map版本信息，MON节点通过同步更改并同步当前版本来维护映射</span><br><span class="line"></span><br><span class="line">查看当前mon map</span><br><span class="line">ceph mon dump</span><br><span class="line">epoch 5</span><br><span class="line">fsid 8b27889e-52af-11f0-bedb-bc2411f9a113</span><br><span class="line">last_changed 2025-06-26T17:07:19.214285+0000</span><br><span class="line">created 2025-06-26T17:04:00.412826+0000</span><br><span class="line">min_mon_release 17 (quincy)</span><br><span class="line">election_strategy: 1</span><br><span class="line">0: [v2:192.168.10.143:3300/0,v1:192.168.10.143:6789/0] mon.cephadm-3</span><br><span class="line">1: [v2:192.168.10.142:3300/0,v1:192.168.10.142:6789/0] mon.cephadm-2</span><br><span class="line">2: [v2:192.168.10.141:3300/0,v1:192.168.10.141:6789/0] mon.cephadm-1</span><br><span class="line">dumped monmap epoch 5</span><br></pre></td></tr></table></figure>
+<h2 id="Monitor-Map"><a href="#Monitor-Map" class="headerlink" title="Monitor Map"></a>Monitor Map</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph集群映射包括MON映射，OSD映射，PG映射，MDS映射，CRUSH映射
+
+MON映射包含FSID，每个MON节点通信的名称、IP、端口
+保存Map版本信息，MON节点通过同步更改并同步当前版本来维护映射
+
+查看当前mon map
+ceph mon dump
+epoch <span class="token number">5</span>
+fsid 8b27889e-52af-11f0-bedb-bc2411f9a113
+last_changed <span class="token number">2025</span>-06-26T17:07:19.214285+0000
+created <span class="token number">2025</span>-06-26T17:04:00.412826+0000
+min_mon_release <span class="token number">17</span> <span class="token punctuation">(</span>quincy<span class="token punctuation">)</span>
+election_strategy: <span class="token number">1</span>
+<span class="token number">0</span>: <span class="token punctuation">[</span>v2:192.168.10.143:3300/0,v1:192.168.10.143:6789/0<span class="token punctuation">]</span> mon.cephadm-3
+<span class="token number">1</span>: <span class="token punctuation">[</span>v2:192.168.10.142:3300/0,v1:192.168.10.142:6789/0<span class="token punctuation">]</span> mon.cephadm-2
+<span class="token number">2</span>: <span class="token punctuation">[</span>v2:192.168.10.141:3300/0,v1:192.168.10.141:6789/0<span class="token punctuation">]</span> mon.cephadm-1
+dumped monmap epoch <span class="token number">5</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="MON数据库"><a href="#MON数据库" class="headerlink" title="MON数据库"></a>MON数据库</h2><p>Monitor节点存储和维护集中配置数据库，：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">数据库文件位置: </span><br><span class="line">/var/lib/ceph/<span class="variable">$fsid</span>/mon.<span class="variable">$host</span>/store.db</span><br><span class="line">/var/lib/ceph/8b27889e-52af-11f0-bedb-bc2411f9a113/removed/mon.ansible_2025-06-26T17:07:24.296138Z/store.db</span><br><span class="line"></span><br><span class="line"><span class="comment"># 压缩数据库</span></span><br><span class="line">ceph tell mon.<span class="variable">$id</span> compact</span><br><span class="line"><span class="comment"># 启动就压缩</span></span><br><span class="line">ceph config <span class="built_in">set</span> mon mon_compact_on_start <span class="literal">true</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">数据库文件位置: 
+/var/lib/ceph/<span class="token variable">$fsid</span>/mon.<span class="token variable">$host</span>/store.db
+/var/lib/ceph/8b27889e-52af-11f0-bedb-bc2411f9a113/removed/mon.ansible_2025-06-26T17:07:24.296138Z/store.db
+
+<span class="token comment"># 压缩数据库</span>
+ceph tell mon.<span class="token variable">$id</span> compact
+<span class="token comment"># 启动就压缩</span>
+ceph config <span class="token builtin class-name">set</span> mon mon_compact_on_start <span class="token boolean">true</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="集群认证"><a href="#集群认证" class="headerlink" title="集群认证"></a>集群认证</h2><p>ceph使用Cephx协议，在ceph组件之间进行加密身份认证，使用共享密钥进行身份验证</p>
 <p>正常情况下，cephadm工具会在&#x2F;etc&#x2F;ceph目录里面创建client.admin用户，这个用户允许你执行管理员命令，并且你可以通过这个用户来创建其它ceph客户端用户账户</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">/etc/ceph目录和守护进程目录一般都包含了keyring文件</span><br><span class="line"><span class="built_in">ls</span> /etc/ceph/</span><br><span class="line">ceph.client.admin.keyring  ceph.conf  ceph.pub  initial-config-primary-cluster.yaml  rbdmap</span><br><span class="line"></span><br><span class="line">这里也有</span><br><span class="line">/var/lib/ceph/8b27889e-52af-11f0-bedb-bc2411f9a113/config/ceph.client.admin.keyring</span><br><span class="line"></span><br><span class="line">为mons节点创建key-ring</span><br><span class="line">ceph-authtool --create-keyring /tmp/ceph.mon.keyring --gen-key -n mon. \</span><br><span class="line">--<span class="built_in">cap</span> mon <span class="string">&quot;allow *&quot;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">/etc/ceph目录和守护进程目录一般都包含了keyring文件
+<span class="token function">ls</span> /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  ceph.pub  initial-config-primary-cluster.yaml  rbdmap
+
+这里也有
+/var/lib/ceph/8b27889e-52af-11f0-bedb-bc2411f9a113/config/ceph.client.admin.keyring
+
+为mons节点创建key-ring
+ceph-authtool --create-keyring /tmp/ceph.mon.keyring --gen-key <span class="token parameter variable">-n</span> mon. <span class="token punctuation">\</span>
+<span class="token parameter variable">--cap</span> mon <span class="token string">"allow *"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="Ceph网络"><a href="#Ceph网络" class="headerlink" title="Ceph网络"></a>Ceph网络</h1><h2 id="Public网络与Cluster网络"><a href="#Public网络与Cluster网络" class="headerlink" title="Public网络与Cluster网络"></a>Public网络与Cluster网络</h2><p>public网络是所有Ceph集群通信的默认网络。cephadm工具假设第一个MON的IP网络是public网络，新的MON守护进程就部署在public中</p>
 <p>ceph客户端通过public网络直接向OSD发出请求，ODS的复制与恢复流量都是用public网络，除非专门配置Cluster网络</p>
 <p>一般来说生产环境会使用单独的Cluster网络来让OSD走复制与恢复流量，<strong>且cluster网络与public网络必须没有路由</strong></p>
 <p><strong>添加cluster网络</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">1.为每个集群节点配置一个额外的网络接口</span><br><span class="line">2.在每个节点上为新的网络接口配置cluster网络ip地址</span><br><span class="line">3.cephadm boostrap使用--cluster-network参数在集群bootstrap时创建cluster网络</span><br><span class="line"></span><br><span class="line">也可以使用集群配置文件中进行添加</span><br><span class="line">[global]</span><br><span class="line">	public_network = 172.25.250.0/24,172.25.251.0/24</span><br><span class="line">	cluster_network = 192.25.249.0/24</span><br><span class="line">	</span><br><span class="line">public和cluster网络可以通过ceph config <span class="built_in">set</span>命令或者ceph config assimilate-conf命令修改</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.为每个集群节点配置一个额外的网络接口
+<span class="token number">2</span>.在每个节点上为新的网络接口配置cluster网络ip地址
+<span class="token number">3</span>.cephadm boostrap使用--cluster-network参数在集群bootstrap时创建cluster网络
+
+也可以使用集群配置文件中进行添加
+<span class="token punctuation">[</span>global<span class="token punctuation">]</span>
+	public_network <span class="token operator">=</span> <span class="token number">172.25</span>.250.0/24,172.25.251.0/24
+	cluster_network <span class="token operator">=</span> <span class="token number">192.25</span>.249.0/24
+	
+public和cluster网络可以通过ceph config set命令或者ceph config assimilate-conf命令修改<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="配置独立MON守护进程"><a href="#配置独立MON守护进程" class="headerlink" title="配置独立MON守护进程"></a>配置独立MON守护进程</h2><p>MON守护进程绑定特定的ip地址，而MGR，OSD，MDS守护进程默认绑定所有可用的ip地址</p>
 <ul>
@@ -527,9 +575,63 @@
 <ul>
 <li><strong>使用服务配置文件（推荐）</strong></li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">其中第一个必须为集群配置文件</span><br><span class="line">service_type: mon</span><br><span class="line">placement:</span><br><span class="line">  hosts:</span><br><span class="line">    - ceph-mon1</span><br><span class="line">    - ceph-mon2</span><br><span class="line">    - ceph-mon3</span><br><span class="line">spec:</span><br><span class="line">  networks:</span><br><span class="line">    - 192.168.100.0/24  <span class="comment"># Public</span></span><br><span class="line">    - 10.10.0.0/20      <span class="comment"># Cluster</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">其中第一个必须为集群配置文件
+service_type: mon
+placement:
+  hosts:
+    - ceph-mon1
+    - ceph-mon2
+    - ceph-mon3
+spec:
+  networks:
+    - <span class="token number">192.168</span>.100.0/24  <span class="token comment"># Public</span>
+    - <span class="token number">10.10</span>.0.0/20      <span class="token comment"># Cluster</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="其他网络配置"><a href="#其他网络配置" class="headerlink" title="其他网络配置"></a>其他网络配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ipv4/6</span></span><br><span class="line">默认</span><br><span class="line">ms_bind_ipv4 = <span class="literal">true</span></span><br><span class="line">ms_bind_ipv6 = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 巨型帧</span></span><br><span class="line">在Cluster接口上配置MTU为9000</span><br><span class="line">同一链路上的MTU都必须相同</span><br><span class="line"></span><br><span class="line"><span class="comment"># 防火墙规则</span></span><br><span class="line">ceph的守护进程默认绑定6800-7300范围的TCP端口</span><br><span class="line">也可以修改其绑定的范围</span><br><span class="line">ms_bind_port_min</span><br><span class="line">ms_bind_port_max</span><br><span class="line"></span><br><span class="line">ss -tunlp  | grep ceph</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6800      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">17</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6801      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">18</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6802      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">19</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6803      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">20</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6804      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">21</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6805      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">22</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6806      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">23</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6807      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">69344</span>,fd=<span class="number">24</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6808      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">17</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6809      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">18</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6810      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">19</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6811      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">20</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6812      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">21</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6813      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">22</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6814      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">23</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6815      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">70485</span>,fd=<span class="number">24</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6816      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">17</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6817      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">18</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6818      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">19</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6819      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">20</span>))</span><br><span class="line">tcp   LISTEN 0      512                       192.168.10.141:3300      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-mon&quot;,pid=<span class="number">82651</span>,fd=<span class="number">26</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6820      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">21</span>))</span><br><span class="line">tcp   LISTEN 0      512                       192.168.10.141:6789      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-mon&quot;,pid=<span class="number">82651</span>,fd=<span class="number">27</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6821      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">22</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6822      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">23</span>))</span><br><span class="line">tcp   LISTEN 0      512                              0.0.0.0:6823      0.0.0.0:*    <span class="built_in">users</span>:((&quot;ceph-osd&quot;,pid=<span class="number">71635</span>,fd=<span class="number">24</span>))</span><br><span class="line">tcp   LISTEN 0      5                                      *:8443            *:*    <span class="built_in">users</span>:((&quot;ceph-mgr&quot;,pid=<span class="number">51574</span>,fd=<span class="number">26</span>))</span><br><span class="line">tcp   LISTEN 0      5                                      *:9283            *:*    <span class="built_in">users</span>:((&quot;ceph-mgr&quot;,pid=<span class="number">51574</span>,fd=<span class="number">22</span>))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="其他网络配置"><a href="#其他网络配置" class="headerlink" title="其他网络配置"></a>其他网络配置</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ipv4/6</span>
+默认
+ms_bind_ipv4 <span class="token operator">=</span> <span class="token boolean">true</span>
+ms_bind_ipv6 <span class="token operator">=</span> <span class="token boolean">false</span>
+
+<span class="token comment"># 巨型帧</span>
+在Cluster接口上配置MTU为9000
+同一链路上的MTU都必须相同
+
+<span class="token comment"># 防火墙规则</span>
+ceph的守护进程默认绑定6800-7300范围的TCP端口
+也可以修改其绑定的范围
+ms_bind_port_min
+ms_bind_port_max
+
+ss <span class="token parameter variable">-tunlp</span>  <span class="token operator">|</span> <span class="token function">grep</span> ceph
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6800      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">17</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6801      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">18</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6802      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">19</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6803      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6804      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">21</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6805      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6806      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">23</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6807      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">69344</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">24</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6808      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">17</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6809      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">18</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6810      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">19</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6811      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6812      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">21</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6813      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6814      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">23</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6815      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">70485</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">24</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6816      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">17</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6817      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">18</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6818      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">19</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6819      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                       <span class="token number">192.168</span>.10.141:3300      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>mon"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">82651</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">26</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6820      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">21</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                       <span class="token number">192.168</span>.10.141:6789      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>mon"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">82651</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">27</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6821      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6822      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">23</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">512</span>                              <span class="token number">0.0</span>.0.0:6823      <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>osd"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">71635</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">24</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">5</span>                                      *:8443            *:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>mgr"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">51574</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">26</span><span class="token punctuation">))</span></span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">5</span>                                      *:9283            *:*    users:<span class="token variable"><span class="token punctuation">((</span>"ceph<span class="token operator">-</span>mgr"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">51574</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">))</span></span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6588,36 +6690,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7082,13 +7154,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8129,13 +8201,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8588,14 +8660,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8603,14 +8675,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -534,23 +534,160 @@
 <td></td>
 </tr>
 </tbody></table>
-<h2 id="RGW部署"><a href="#RGW部署" class="headerlink" title="RGW部署"></a>RGW部署</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">使用服务特定文件部署</span><br><span class="line">service_type: rgw</span><br><span class="line">service_id: realm.zone</span><br><span class="line">placement:</span><br><span class="line">  count: 4</span><br><span class="line">  hosts:</span><br><span class="line">    - cephadm-1</span><br><span class="line">    - cephadm-2</span><br><span class="line">    - cephadm-3</span><br><span class="line">spec:</span><br><span class="line">   rgw_frontend_port: 8080</span><br><span class="line"></span><br><span class="line">ceph orch apply -i /etc/ceph/initial-config-primary-cluster.yaml</span><br><span class="line"></span><br><span class="line">使用命令行创建</span><br><span class="line">ceph orch apply rgw &lt;service-name&gt; --realm=&lt;realm&gt; --zone=zone-name \</span><br><span class="line">--port 8080 --placement=<span class="string">&quot;2 node1 node2&quot;</span> --ssl</span><br><span class="line"></span><br><span class="line">如果创建了多实例，第一个会使用rgw_frontend_port，第二个会+1</span><br><span class="line">比如一台上两个RGW实例分别是8080和8081</span><br><span class="line"></span><br><span class="line">部署验证</span><br><span class="line">ceph orch <span class="built_in">ls</span></span><br><span class="line">NAME                     PORTS        RUNNING  REFRESHED  AGE  PLACEMENT                            </span><br><span class="line">alertmanager             ?:9093,9094      1/1  31s ago    12d  count:1                              </span><br><span class="line">crash                                     4/4  32s ago    12d  *                                    </span><br><span class="line">grafana                  ?:3000           1/1  31s ago    12d  count:1                              </span><br><span class="line">iscsi.iscsi              ?:5000           3/3  32s ago    2m   cephadm-1;cephadm-2;cephadm-3        </span><br><span class="line">mgr                                       4/4  32s ago    2m   ansible;cephadm-1;cephadm-2;cephadm-3</span><br><span class="line">mon                                       3/3  32s ago    2m   cephadm-1;cephadm-2;cephadm-3        </span><br><span class="line">node-exporter            ?:9100           4/4  32s ago    12d  *                                    </span><br><span class="line">osd.default_drive_group                     9  32s ago    2m   count:3;label:ssd-node;cephadm-*     </span><br><span class="line">prometheus               ?:9095           1/1  31s ago    12d  count:1                              </span><br><span class="line">rgw.realm.zone           ?:8080           4/4  32s ago    39s  cephadm-1;cephadm-2;cephadm-3;count:4</span><br><span class="line"></span><br><span class="line">[root@cephadm-1 ~]<span class="comment"># curl localhost:8080</span></span><br><span class="line">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;&lt;ListAllMyBucketsResult xmlns=<span class="string">&quot;http://s3.amazonaws.com/doc/2006-03-01/&quot;</span>&gt;&lt;Owner&gt;&lt;ID&gt;anonymous&lt;/ID&gt;&lt;DisplayName&gt;&lt;/DisplayName&gt;&lt;/Owner&gt;&lt;Buckets&gt;&lt;/Buckets&gt;&lt;/ListAllMy</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="RGW部署"><a href="#RGW部署" class="headerlink" title="RGW部署"></a>RGW部署</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">使用服务特定文件部署
+service_type: rgw
+service_id: realm.zone
+placement:
+  count: <span class="token number">4</span>
+  hosts:
+    - cephadm-1
+    - cephadm-2
+    - cephadm-3
+spec:
+   rgw_frontend_port: <span class="token number">8080</span>
+
+ceph orch apply <span class="token parameter variable">-i</span> /etc/ceph/initial-config-primary-cluster.yaml
+
+使用命令行创建
+ceph orch apply rgw <span class="token operator">&lt;</span>service-name<span class="token operator">></span> <span class="token parameter variable">--realm</span><span class="token operator">=</span><span class="token operator">&lt;</span>realm<span class="token operator">></span> <span class="token parameter variable">--zone</span><span class="token operator">=</span>zone-name <span class="token punctuation">\</span>
+<span class="token parameter variable">--port</span> <span class="token number">8080</span> <span class="token parameter variable">--placement</span><span class="token operator">=</span><span class="token string">"2 node1 node2"</span> <span class="token parameter variable">--ssl</span>
+
+如果创建了多实例，第一个会使用rgw_frontend_port，第二个会+1
+比如一台上两个RGW实例分别是8080和8081
+
+部署验证
+ceph orch <span class="token function">ls</span>
+NAME                     PORTS        RUNNING  REFRESHED  AGE  PLACEMENT                            
+alertmanager             ?:9093,9094      <span class="token number">1</span>/1  31s ago    12d  count:1                              
+crash                                     <span class="token number">4</span>/4  32s ago    12d  *                                    
+grafana                  ?:3000           <span class="token number">1</span>/1  31s ago    12d  count:1                              
+iscsi.iscsi              ?:5000           <span class="token number">3</span>/3  32s ago    2m   cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3        
+mgr                                       <span class="token number">4</span>/4  32s ago    2m   ansible<span class="token punctuation">;</span>cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3
+mon                                       <span class="token number">3</span>/3  32s ago    2m   cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3        
+node-exporter            ?:9100           <span class="token number">4</span>/4  32s ago    12d  *                                    
+osd.default_drive_group                     <span class="token number">9</span>  32s ago    2m   count:3<span class="token punctuation">;</span>label:ssd-node<span class="token punctuation">;</span>cephadm-*     
+prometheus               ?:9095           <span class="token number">1</span>/1  31s ago    12d  count:1                              
+rgw.realm.zone           ?:8080           <span class="token number">4</span>/4  32s ago    39s  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3<span class="token punctuation">;</span>count:4
+
+<span class="token punctuation">[</span>root@cephadm-1 ~<span class="token punctuation">]</span><span class="token comment"># curl localhost:8080</span>
+<span class="token operator">&lt;</span>?xml <span class="token assign-left variable">version</span><span class="token operator">=</span><span class="token string">"1.0"</span> <span class="token assign-left variable">encoding</span><span class="token operator">=</span><span class="token string">"UTF-8"</span>?<span class="token operator">></span><span class="token operator">&lt;</span>ListAllMyBucketsResult <span class="token assign-left variable">xmlns</span><span class="token operator">=</span><span class="token string">"http://s3.amazonaws.com/doc/2006-03-01/"</span><span class="token operator">></span><span class="token operator">&lt;</span>Owner<span class="token operator">></span><span class="token operator">&lt;</span>ID<span class="token operator">></span>anonymous<span class="token operator">&lt;</span>/ID<span class="token operator">></span><span class="token operator">&lt;</span>DisplayName<span class="token operator">></span><span class="token operator">&lt;</span>/DisplayName<span class="token operator">></span><span class="token operator">&lt;</span>/Owner<span class="token operator">></span><span class="token operator">&lt;</span>Buckets<span class="token operator">></span><span class="token operator">&lt;</span>/Buckets<span class="token operator">></span><span class="token operator">&lt;</span>/ListAllMy
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="多site-站点-RGW配置（未完成"><a href="#多site-站点-RGW配置（未完成" class="headerlink" title="多site(站点)RGW配置（未完成"></a>多site(站点)RGW配置（未完成</h2><p>多ceph集中之间自动复制对象数据，即不同集群之间的双活</p>
 <p>比较少见，等用到了再研究吧</p>
 <h2 id="S3-API连接Ceph-RGW"><a href="#S3-API连接Ceph-RGW" class="headerlink" title="S3 API连接Ceph RGW"></a>S3 API连接Ceph RGW</h2><p>在使用Amazon S3 API时，需要考虑对象和元数据大小的限制:<br>1.对象大小介于最小0B和最大5TB之间。<br>2.在单个上传操作中，最大大小为5GB。<br>3.使用多部分上传功能上传大于100MB的对象。<br>4.在单个HTTP请求中，元数据的最大大小为16,000字节</p>
 <p><strong>为S3 API创建一个用户</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">radosgw-admin user create --uid=<span class="built_in">test</span> --display-name=<span class="string">&#x27;test user&#x27;</span> \</span><br><span class="line">--access-key=12345 --secret=67890</span><br><span class="line"></span><br><span class="line">--uid          必选，</span><br><span class="line">--display-name 必选</span><br><span class="line">--access-key，--secret可选，如果不写，则会提示</span><br><span class="line"></span><br><span class="line">就像这样</span><br><span class="line">radosgw-admin user create --uid=wangsheng --display-name=<span class="string">&#x27;wangsheng user&#x27;</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;user_id&quot;</span>: <span class="string">&quot;wangsheng&quot;</span>,</span><br><span class="line">    <span class="string">&quot;display_name&quot;</span>: <span class="string">&quot;wangsheng user&quot;</span>,</span><br><span class="line">    <span class="string">&quot;email&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="string">&quot;suspended&quot;</span>: 0,</span><br><span class="line">    <span class="string">&quot;max_buckets&quot;</span>: 1000,</span><br><span class="line">    <span class="string">&quot;subusers&quot;</span>: [],</span><br><span class="line">    <span class="string">&quot;keys&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;user&quot;</span>: <span class="string">&quot;wangsheng&quot;</span>,</span><br><span class="line">            <span class="string">&quot;access_key&quot;</span>: <span class="string">&quot;5DMSE495PNGYFJLROAEL&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_key&quot;</span>: <span class="string">&quot;P9F9IquHCtKQkM1rWC1ZeE7BmPaE0cpyXOVZkcRp&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">radosgw-admin user create <span class="token parameter variable">--uid</span><span class="token operator">=</span>test --display-name<span class="token operator">=</span><span class="token string">'test user'</span> <span class="token punctuation">\</span>
+--access-key<span class="token operator">=</span><span class="token number">12345</span> <span class="token parameter variable">--secret</span><span class="token operator">=</span><span class="token number">67890</span>
+
+<span class="token parameter variable">--uid</span>          必选，
+--display-name 必选
+--access-key，--secret可选，如果不写，则会提示
+
+就像这样
+radosgw-admin user create <span class="token parameter variable">--uid</span><span class="token operator">=</span>wangsheng --display-name<span class="token operator">=</span><span class="token string">'wangsheng user'</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token string">"user_id"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng"</span>,
+    <span class="token string">"display_name"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng user"</span>,
+    <span class="token string">"email"</span><span class="token builtin class-name">:</span> <span class="token string">""</span>,
+    <span class="token string">"suspended"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+    <span class="token string">"max_buckets"</span><span class="token builtin class-name">:</span> <span class="token number">1000</span>,
+    <span class="token string">"subusers"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>,
+    <span class="token string">"keys"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token string">"user"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng"</span>,
+            <span class="token string">"access_key"</span><span class="token builtin class-name">:</span> <span class="token string">"5DMSE495PNGYFJLROAEL"</span>,
+            <span class="token string">"secret_key"</span><span class="token builtin class-name">:</span> <span class="token string">"P9F9IquHCtKQkM1rWC1ZeE7BmPaE0cpyXOVZkcRp"</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">]</span>,
+<span class="token punctuation">..</span>.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>管理RGW用户</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">重新生成现有用户密钥</span><br><span class="line">radosgw-admin key create --uid=wangsheng --access-key=<span class="string">&quot;123123&quot;</span> \</span><br><span class="line">--gen-secret</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;user_id&quot;</span>: <span class="string">&quot;wangsheng&quot;</span>,</span><br><span class="line">    <span class="string">&quot;display_name&quot;</span>: <span class="string">&quot;wangsheng user&quot;</span>,</span><br><span class="line">    <span class="string">&quot;email&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="string">&quot;suspended&quot;</span>: 0,</span><br><span class="line">    <span class="string">&quot;max_buckets&quot;</span>: 1000,</span><br><span class="line">    <span class="string">&quot;subusers&quot;</span>: [],</span><br><span class="line">    <span class="string">&quot;keys&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;user&quot;</span>: <span class="string">&quot;wangsheng&quot;</span>,</span><br><span class="line">            <span class="string">&quot;access_key&quot;</span>: <span class="string">&quot;123123&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_key&quot;</span>: <span class="string">&quot;tGhC7XOoCyArl2B3FHpLL8YIoP71g3KC4qaue0D4&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;user&quot;</span>: <span class="string">&quot;wangsheng&quot;</span>,</span><br><span class="line">            <span class="string">&quot;access_key&quot;</span>: <span class="string">&quot;5DMSE495PNGYFJLROAEL&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_key&quot;</span>: <span class="string">&quot;P9F9IquHCtKQkM1rWC1ZeE7BmPaE0cpyXOVZkcRp&quot;</span></span><br><span class="line"></span><br><span class="line">删除用户密钥</span><br><span class="line">radosgw-admin key <span class="built_in">rm</span> --access-key=5DMSE495PNGYFJLROAEL</span><br><span class="line"></span><br><span class="line">修改用户的权限</span><br><span class="line">radosgw-admin user modify --uid=wangsheng --access=full</span><br><span class="line"></span><br><span class="line">删除一个用户，同时删除他们的对象存储</span><br><span class="line">radosgw-admin user <span class="built_in">rm</span> --uid=wangsheng --purge-data</span><br><span class="line"></span><br><span class="line">查看用户信息</span><br><span class="line">radosgw-admin user info --uid=<span class="built_in">test</span></span><br><span class="line">radosgw-admin user stats --uid=<span class="built_in">test</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">重新生成现有用户密钥
+radosgw-admin key create <span class="token parameter variable">--uid</span><span class="token operator">=</span>wangsheng --access-key<span class="token operator">=</span><span class="token string">"123123"</span> <span class="token punctuation">\</span>
+--gen-secret
+<span class="token punctuation">&#123;</span>
+    <span class="token string">"user_id"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng"</span>,
+    <span class="token string">"display_name"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng user"</span>,
+    <span class="token string">"email"</span><span class="token builtin class-name">:</span> <span class="token string">""</span>,
+    <span class="token string">"suspended"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+    <span class="token string">"max_buckets"</span><span class="token builtin class-name">:</span> <span class="token number">1000</span>,
+    <span class="token string">"subusers"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>,
+    <span class="token string">"keys"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token string">"user"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng"</span>,
+            <span class="token string">"access_key"</span><span class="token builtin class-name">:</span> <span class="token string">"123123"</span>,
+            <span class="token string">"secret_key"</span><span class="token builtin class-name">:</span> <span class="token string">"tGhC7XOoCyArl2B3FHpLL8YIoP71g3KC4qaue0D4"</span>
+        <span class="token punctuation">&#125;</span>,
+        <span class="token punctuation">&#123;</span>
+            <span class="token string">"user"</span><span class="token builtin class-name">:</span> <span class="token string">"wangsheng"</span>,
+            <span class="token string">"access_key"</span><span class="token builtin class-name">:</span> <span class="token string">"5DMSE495PNGYFJLROAEL"</span>,
+            <span class="token string">"secret_key"</span><span class="token builtin class-name">:</span> <span class="token string">"P9F9IquHCtKQkM1rWC1ZeE7BmPaE0cpyXOVZkcRp"</span>
+
+删除用户密钥
+radosgw-admin key <span class="token function">rm</span> --access-key<span class="token operator">=</span>5DMSE495PNGYFJLROAEL
+
+修改用户的权限
+radosgw-admin user modify <span class="token parameter variable">--uid</span><span class="token operator">=</span>wangsheng <span class="token parameter variable">--access</span><span class="token operator">=</span>full
+
+删除一个用户，同时删除他们的对象存储
+radosgw-admin user <span class="token function">rm</span> <span class="token parameter variable">--uid</span><span class="token operator">=</span>wangsheng --purge-data
+
+查看用户信息
+radosgw-admin user info <span class="token parameter variable">--uid</span><span class="token operator">=</span>test
+radosgw-admin user stats <span class="token parameter variable">--uid</span><span class="token operator">=</span>test
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>设置用户配额</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">先设置配额参数，再启用配额。如果要禁用配额，可以将配额参数设置为负值。</span><br><span class="line"></span><br><span class="line">用户app1最高1024个对象</span><br><span class="line">radosgw-admin quota <span class="built_in">set</span> --quota-scope=user --uid=app1 --max-objects=1024</span><br><span class="line">启用配额</span><br><span class="line">radosgw-admin quota <span class="built_in">enable</span> --quota-scope=user --uid=app1</span><br><span class="line"></span><br><span class="line">桶loghistory的最大大小1024B</span><br><span class="line">radosgw-admin quota <span class="built_in">set</span> --quota-scope=bucket --uid=loghistory --max-objects=1024B</span><br><span class="line">radosgw-admin quota <span class="built_in">enable</span> --quota-scope=bucket --uid=loghistory</span><br><span class="line"></span><br><span class="line">全局配额，所有桶都会收到影响</span><br><span class="line">radosgw-admin global quota <span class="built_in">set</span> --quota-scope=bucket --max-objects 2048</span><br><span class="line">radosgw-admin global quota <span class="built_in">enable</span> --quota-scope=bucket</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">先设置配额参数，再启用配额。如果要禁用配额，可以将配额参数设置为负值。
+
+用户app1最高1024个对象
+radosgw-admin <span class="token function">quota</span> <span class="token builtin class-name">set</span> --quota-scope<span class="token operator">=</span>user <span class="token parameter variable">--uid</span><span class="token operator">=</span>app1 --max-objects<span class="token operator">=</span><span class="token number">1024</span>
+启用配额
+radosgw-admin <span class="token function">quota</span> <span class="token builtin class-name">enable</span> --quota-scope<span class="token operator">=</span>user <span class="token parameter variable">--uid</span><span class="token operator">=</span>app1
+
+桶loghistory的最大大小1024B
+radosgw-admin <span class="token function">quota</span> <span class="token builtin class-name">set</span> --quota-scope<span class="token operator">=</span>bucket <span class="token parameter variable">--uid</span><span class="token operator">=</span>loghistory --max-objects<span class="token operator">=</span>1024B
+radosgw-admin <span class="token function">quota</span> <span class="token builtin class-name">enable</span> --quota-scope<span class="token operator">=</span>bucket <span class="token parameter variable">--uid</span><span class="token operator">=</span>loghistory
+
+全局配额，所有桶都会收到影响
+radosgw-admin global <span class="token function">quota</span> <span class="token builtin class-name">set</span> --quota-scope<span class="token operator">=</span>bucket --max-objects <span class="token number">2048</span>
+radosgw-admin global <span class="token function">quota</span> <span class="token builtin class-name">enable</span> --quota-scope<span class="token operator">=</span>bucket<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>安装与使用awscli</strong></p>
 <p>说实话感觉不如mc，花里胡哨的</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">curl <span class="string">&quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot;</span> -o <span class="string">&quot;awscliv2.zip&quot;</span></span><br><span class="line">yum install unzip -y</span><br><span class="line">unzip awscliv2.zip</span><br><span class="line">./aws/install</span><br><span class="line">aws --version</span><br><span class="line">aws-cli/2.27.49 Python/3.13.4 Linux/4.18.0-553.51.1.el8_10.x86_64 exe/x86_64.rocky.8</span><br><span class="line"></span><br><span class="line">交互式配置awscli</span><br><span class="line">aws configure --profile=ceph</span><br><span class="line">AWS Access Key ID [None]: 12345</span><br><span class="line">AWS Secret Access Key [None]: 67890</span><br><span class="line">Default region name [None]:</span><br><span class="line">Default output format [None]:</span><br><span class="line"></span><br><span class="line">创建一个桶</span><br><span class="line">aws --profile=ceph --endpoint=http://cephadm-1:8080 s3api create-bucket \</span><br><span class="line">  --bucket testbucket \</span><br><span class="line">  --create-bucket-configuration LocationConstraint=</span><br><span class="line"></span><br><span class="line">列出桶</span><br><span class="line">aws --profile=ceph --endpoint-url=http://cephadm-1:8080 s3 <span class="built_in">ls</span></span><br><span class="line">2025-07-09 04:48:47 testbucket</span><br><span class="line"></span><br><span class="line">****上传文件</span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=./testfile-1G bs=1M count=1024</span><br><span class="line">aws --profile=ceph --endpoint=http://cephadm-1:8080 s3 <span class="built_in">cp</span> testfile-1G s3://testbucket</span><br><span class="line">upload: ./testfile-10M to s3://testbucket/testfile-10M</span><br><span class="line"></span><br><span class="line">验证</span><br><span class="line">aws --profile=ceph --endpoint=http://cephadm-1:8080 s3 <span class="built_in">ls</span> s3://testbucket</span><br><span class="line">2025-07-09 05:04:06   10485760 testfile-10M</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">curl</span> <span class="token string">"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"</span> <span class="token parameter variable">-o</span> <span class="token string">"awscliv2.zip"</span>
+yum <span class="token function">install</span> <span class="token function">unzip</span> <span class="token parameter variable">-y</span>
+<span class="token function">unzip</span> awscliv2.zip
+./aws/install
+aws <span class="token parameter variable">--version</span>
+aws-cli/2.27.49 Python/3.13.4 Linux/4.18.0-553.51.1.el8_10.x86_64 exe/x86_64.rocky.8
+
+交互式配置awscli
+aws configure <span class="token parameter variable">--profile</span><span class="token operator">=</span>ceph
+AWS Access Key ID <span class="token punctuation">[</span>None<span class="token punctuation">]</span>: <span class="token number">12345</span>
+AWS Secret Access Key <span class="token punctuation">[</span>None<span class="token punctuation">]</span>: <span class="token number">67890</span>
+Default region name <span class="token punctuation">[</span>None<span class="token punctuation">]</span>:
+Default output <span class="token function">format</span> <span class="token punctuation">[</span>None<span class="token punctuation">]</span>:
+
+创建一个桶
+aws <span class="token parameter variable">--profile</span><span class="token operator">=</span>ceph <span class="token parameter variable">--endpoint</span><span class="token operator">=</span>http://cephadm-1:8080 s3api create-bucket <span class="token punctuation">\</span>
+  <span class="token parameter variable">--bucket</span> testbucket <span class="token punctuation">\</span>
+  --create-bucket-configuration <span class="token assign-left variable">LocationConstraint</span><span class="token operator">=</span>
+
+列出桶
+aws <span class="token parameter variable">--profile</span><span class="token operator">=</span>ceph --endpoint-url<span class="token operator">=</span>http://cephadm-1:8080 s3 <span class="token function">ls</span>
+<span class="token number">2025</span>-07-09 04:48:47 testbucket
+
+****上传文件
+<span class="token function">dd</span> <span class="token assign-left variable">if</span><span class="token operator">=</span>/dev/zero <span class="token assign-left variable">of</span><span class="token operator">=</span>./testfile-1G <span class="token assign-left variable">bs</span><span class="token operator">=</span>1M <span class="token assign-left variable">count</span><span class="token operator">=</span><span class="token number">1024</span>
+aws <span class="token parameter variable">--profile</span><span class="token operator">=</span>ceph <span class="token parameter variable">--endpoint</span><span class="token operator">=</span>http://cephadm-1:8080 s3 <span class="token function">cp</span> testfile-1G s3://testbucket
+upload: ./testfile-10M to s3://testbucket/testfile-10M
+
+验证
+aws <span class="token parameter variable">--profile</span><span class="token operator">=</span>ceph <span class="token parameter variable">--endpoint</span><span class="token operator">=</span>http://cephadm-1:8080 s3 <span class="token function">ls</span> s3://testbucket
+<span class="token number">2025</span>-07-09 05:04:06   <span class="token number">10485760</span> testfile-10M<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6609,36 +6746,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7103,13 +7210,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8150,13 +8257,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8609,14 +8716,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8624,14 +8731,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

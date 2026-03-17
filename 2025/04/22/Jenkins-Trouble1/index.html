@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问&#123;JENKINS_URL&#125;&#x2F;computer&#x2F;&#123;NODE_NAME&#125;&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 123456789101112131415161718192021222324">
+    <meta name="description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问&#123;JENKINS_URL&#125;&#x2F;computer&#x2F;&#123;NODE_NAME&#125;&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 def adjust_executors(target_num):     &quot;">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Jenkins从节点并发构建数改0消失故障">
 <meta property="og:url" content="https://akemi.zj.cn/2025/04/22/Jenkins-Trouble1/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问&#123;JENKINS_URL&#125;&#x2F;computer&#x2F;&#123;NODE_NAME&#125;&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 123456789101112131415161718192021222324">
+<meta property="og:description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问&#123;JENKINS_URL&#125;&#x2F;computer&#x2F;&#123;NODE_NAME&#125;&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 def adjust_executors(target_num):     &quot;">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-04-22T13:59:27.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.195Z">
@@ -494,7 +494,30 @@
 <p>修改了jenkins从节点numExecutors字段（并发构建数）后</p>
 <p>节点从列表中消失，无法分配任务，并且访问<code>&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml</code>也报404，无法再通过api对节点进行操作</p>
 <p>以下是引发该问题的脚本</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">def adjust_executors(target_num):</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;调整节点并发执行器数量&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    config_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml&quot;</span></span><br><span class="line">    </span><br><span class="line">    try:</span><br><span class="line">        <span class="comment"># 获取当前节点配置</span></span><br><span class="line">        response = session.get(config_url, headers=crumb_header)</span><br><span class="line">        root = ET.fromstring(response.content)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 定位并发数配置节点</span></span><br><span class="line">        num_exec = root.find(<span class="string">&quot;.//numExecutors&quot;</span>)</span><br><span class="line">        num_exec.text = str(target_num)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 提交修改后的配置</span></span><br><span class="line">        response = session.post(</span><br><span class="line">            config_url,</span><br><span class="line">            headers=&#123;<span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;text/xml&#x27;</span>&#125;,</span><br><span class="line">            data=ET.tostring(root),</span><br><span class="line">            auth=session.auth</span><br><span class="line">        )</span><br><span class="line">        <span class="built_in">return</span> response.status_code == 200</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 调整并发数失败: &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">def adjust_executors<span class="token punctuation">(</span>target_num<span class="token punctuation">)</span>:
+    <span class="token string">""</span>"调整节点并发执行器数量<span class="token string">""</span>"
+    config_url <span class="token operator">=</span> f<span class="token string">"&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml"</span>
+    
+    try:
+        <span class="token comment"># 获取当前节点配置</span>
+        response <span class="token operator">=</span> session.get<span class="token punctuation">(</span>config_url, <span class="token assign-left variable">headers</span><span class="token operator">=</span>crumb_header<span class="token punctuation">)</span>
+        root <span class="token operator">=</span> ET.fromstring<span class="token punctuation">(</span>response.content<span class="token punctuation">)</span>
+        
+        <span class="token comment"># 定位并发数配置节点</span>
+        num_exec <span class="token operator">=</span> root.find<span class="token punctuation">(</span><span class="token string">".//numExecutors"</span><span class="token punctuation">)</span>
+        num_exec.text <span class="token operator">=</span> str<span class="token punctuation">(</span>target_num<span class="token punctuation">)</span>
+        
+        <span class="token comment"># 提交修改后的配置</span>
+        response <span class="token operator">=</span> session.post<span class="token punctuation">(</span>
+            config_url,
+            <span class="token assign-left variable">headers</span><span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">'Content-Type'</span><span class="token builtin class-name">:</span> <span class="token string">'text/xml'</span><span class="token punctuation">&#125;</span>,
+            <span class="token assign-left variable">data</span><span class="token operator">=</span>ET.tostring<span class="token punctuation">(</span>root<span class="token punctuation">)</span>,
+            <span class="token assign-left variable">auth</span><span class="token operator">=</span>session.auth
+        <span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> response.status_code <span class="token operator">==</span> <span class="token number">200</span>
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"× 调整并发数失败: &#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> False<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>故障原因：</strong></p>
 <p>在jenkins中将从节点并发构建数改为0是非法操作：在web上根本不允许</p>
@@ -502,7 +525,34 @@
 <p><strong>解决方法：</strong></p>
 <p>进入<code>&#123;JENKINS_URL&#125;/script</code> 脚本控制台，使用groovy脚本运行下面这段脚本</p>
 <p>其原理是通过主节点的jenkins节点目录，一般是<code>/var/lib/jenkins/nodes/slave-5/</code> 来找到config.xml，随后使用该config.xml重新创建节点</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">import jenkins.model.Jenkins</span><br><span class="line">def nodeName = <span class="string">&quot;slave-5&quot;</span></span><br><span class="line">def instance = Jenkins.instance</span><br><span class="line">def node = instance.getNode(nodeName)</span><br><span class="line"><span class="keyword">if</span> (node == null) &#123;</span><br><span class="line">  println <span class="string">&quot;节点 <span class="variable">$&#123;nodeName&#125;</span> 不存在&quot;</span></span><br><span class="line">  <span class="built_in">return</span></span><br><span class="line">&#125;</span><br><span class="line">try &#123;</span><br><span class="line">  // 1. 通过文件系统路径读取配置</span><br><span class="line">  def configFilePath = <span class="string">&quot;<span class="variable">$&#123;instance.rootDir&#125;</span>/nodes/<span class="variable">$&#123;nodeName&#125;</span>/config.xml&quot;</span></span><br><span class="line">  def configFile = new File(configFilePath)</span><br><span class="line">  <span class="keyword">if</span> (!configFile.exists()) &#123;</span><br><span class="line">    throw new Exception(<span class="string">&quot;配置文件 <span class="variable">$&#123;configFilePath&#125;</span> 不存在&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  def configXml = configFile.text</span><br><span class="line">  println <span class="string">&quot;备份配置成功:\n<span class="variable">$&#123;configXml&#125;</span>&quot;</span></span><br><span class="line">  // 2. 删除原节点</span><br><span class="line">  instance.removeNode(node)</span><br><span class="line">  println <span class="string">&quot;节点已删除&quot;</span></span><br><span class="line">  // 3. 从 XML 重建节点</span><br><span class="line">  def newNode = Jenkins.XSTREAM.fromXML(configXml)</span><br><span class="line">  instance.addNode(newNode)</span><br><span class="line">  println <span class="string">&quot;节点已成功重建&quot;</span></span><br><span class="line">&#125; catch (Exception e) &#123;</span><br><span class="line">  println <span class="string">&quot;操作失败: <span class="variable">$&#123;e.message&#125;</span>&quot;</span></span><br><span class="line">  e.printStackTrace()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">import</span> jenkins.model.Jenkins
+def nodeName <span class="token operator">=</span> <span class="token string">"slave-5"</span>
+def instance <span class="token operator">=</span> Jenkins.instance
+def <span class="token function">node</span> <span class="token operator">=</span> instance.getNode<span class="token punctuation">(</span>nodeName<span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>node <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  println <span class="token string">"节点 <span class="token variable">$&#123;nodeName&#125;</span> 不存在"</span>
+  <span class="token builtin class-name">return</span>
+<span class="token punctuation">&#125;</span>
+try <span class="token punctuation">&#123;</span>
+  // <span class="token number">1</span>. 通过文件系统路径读取配置
+  def configFilePath <span class="token operator">=</span> <span class="token string">"<span class="token variable">$&#123;instance.rootDir&#125;</span>/nodes/<span class="token variable">$&#123;nodeName&#125;</span>/config.xml"</span>
+  def configFile <span class="token operator">=</span> new File<span class="token punctuation">(</span>configFilePath<span class="token punctuation">)</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>configFile.exists<span class="token punctuation">(</span><span class="token punctuation">))</span> <span class="token punctuation">&#123;</span>
+    throw new Exception<span class="token punctuation">(</span><span class="token string">"配置文件 <span class="token variable">$&#123;configFilePath&#125;</span> 不存在"</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#125;</span>
+  def configXml <span class="token operator">=</span> configFile.text
+  println <span class="token string">"备份配置成功:<span class="token entity" title="\n">\n</span><span class="token variable">$&#123;configXml&#125;</span>"</span>
+  // <span class="token number">2</span>. 删除原节点
+  instance.removeNode<span class="token punctuation">(</span>node<span class="token punctuation">)</span>
+  println <span class="token string">"节点已删除"</span>
+  // <span class="token number">3</span>. 从 XML 重建节点
+  def newNode <span class="token operator">=</span> Jenkins.XSTREAM.fromXML<span class="token punctuation">(</span>configXml<span class="token punctuation">)</span>
+  instance.addNode<span class="token punctuation">(</span>newNode<span class="token punctuation">)</span>
+  println <span class="token string">"节点已成功重建"</span>
+<span class="token punctuation">&#125;</span> catch <span class="token punctuation">(</span>Exception e<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  println <span class="token string">"操作失败: <span class="token variable">$&#123;e.message&#125;</span>"</span>
+  e.printStackTrace<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6561,36 +6611,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7055,13 +7075,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8102,13 +8122,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8561,14 +8581,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8576,14 +8596,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

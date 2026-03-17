@@ -506,7 +506,9 @@
 <h3 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h3><p><strong>数据特点</strong></p>
 <p>数据 &#x3D; 指标(metric)+标签(labels)+时间序列(time series)</p>
 <p>指标：要监控的具体项，比如CPU用户态使用率、CPU等待时间、可用内存等 标签：要为指标附加的维度信息，用来区分不同业务、环境等，同k8s的labels 时间序列：指标随时间变化的数值序列</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">比如监控某个服务的http请求延迟：</span><br><span class="line">metric: http_request_duration_</span><br><span class="line">labels: service=<span class="string">&quot;app-service&quot;</span>,endpoint=<span class="string">&quot;/login&quot;</span>,method=<span class="string">&quot;post&quot;</span>,instance=<span class="string">&quot;10.0.0.1&quot;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python">比如监控某个服务的http请求延迟：
+metric<span class="token punctuation">:</span> http_request_duration_
+labels<span class="token punctuation">:</span> service<span class="token operator">=</span><span class="token string">"app-service"</span><span class="token punctuation">,</span>endpoint<span class="token operator">=</span><span class="token string">"/login"</span><span class="token punctuation">,</span>method<span class="token operator">=</span><span class="token string">"post"</span><span class="token punctuation">,</span>instance<span class="token operator">=</span><span class="token string">"10.0.0.1"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>数据采集方式</strong></p>
 <ul>
@@ -537,35 +539,399 @@
 <p>适用：请求总数、错误总数、处理字节数 rate(http_requests_total[5m]) 过去5分钟每秒平均的http</p>
 <p><strong>Gauge测量器</strong></p>
 <p>Gauge指标可以任意增减，适合表示当前状态的数值，能反应瞬时的资源使用量或状态数值 使用：内存使用量、磁盘剩余空间、当前并发连接数</p>
-<h2 id="安装与配置"><a href="#安装与配置" class="headerlink" title="安装与配置"></a>安装与配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl set-hostname prometheus &amp;&amp; bash</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动补全</span></span><br><span class="line">yum -y install bash-completion wget tar &amp;&amp; bash</span><br><span class="line"><span class="comment"># 安全</span></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">setenforce 0</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/g&#x27;</span> /etc/selinux/config</span><br><span class="line"></span><br><span class="line"><span class="comment"># 选用LTS版本3.5.0</span></span><br><span class="line">wget &lt;https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheus-3.5.0.linux-amd64.tar.gz&gt;</span><br><span class="line">tar -xf prometheus-3.5.0.linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> -r prometheus-3.5.0.linux-amd64 /usr/local/</span><br><span class="line"><span class="built_in">cd</span> /usr/local/prometheus-3.5.0.linux-amd64/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置文件参数说明</span></span><br><span class="line"><span class="comment"># 全局配置</span></span><br><span class="line">global:</span><br><span class="line">  scrape_interval: 15s      <span class="comment"># 抓取间隔，默认为15秒</span></span><br><span class="line">  evaluation_interval: 15s  <span class="comment"># 规则评估间隔，默认为15秒</span></span><br><span class="line">  <span class="comment"># scrape_timeout 使用全局默认值 (10秒)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Alertmanager 配置</span></span><br><span class="line">alerting:</span><br><span class="line">  alertmanagers:</span><br><span class="line">    - static_configs:</span><br><span class="line">        - targets:</span><br><span class="line">            - 192.168.10.100:9093  <span class="comment"># Alertmanager 地址</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 规则文件配置</span></span><br><span class="line">rule_files:</span><br><span class="line"></span><br><span class="line"><span class="comment"># 抓取配置</span></span><br><span class="line">scrape_configs:</span><br><span class="line">  <span class="comment"># 抓取 Prometheus 自身指标</span></span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [<span class="string">&quot;localhost:9090&quot;</span>]</span><br><span class="line">        labels:</span><br><span class="line">          instance: <span class="string">&quot;prometheus&quot;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment"># 配置其他的静态抓取job</span></span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [<span class="string">&quot;192.168.10.254:9100&quot;</span>]</span><br><span class="line">        labels:</span><br><span class="line">          instance: <span class="string">&quot;openwrt&quot;</span></span><br><span class="line"></span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [<span class="string">&quot;192.168.10.100:9100&quot;</span>]</span><br><span class="line">        labels:</span><br><span class="line">          instance: <span class="string">&quot;1panel&quot;</span></span><br><span class="line"></span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [<span class="string">&quot;192.168.10.100:9101&quot;</span>]</span><br><span class="line">        labels:</span><br><span class="line">          instance: <span class="string">&quot;mysql&quot;</span></span><br><span class="line"></span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [<span class="string">&quot;192.168.10.100:9102&quot;</span>]</span><br><span class="line">        labels:</span><br><span class="line">          instance: <span class="string">&quot;nginx&quot;</span>		</span><br></pre></td></tr></table></figure>
+<h2 id="安装与配置"><a href="#安装与配置" class="headerlink" title="安装与配置"></a>安装与配置</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">hostnamectl set-hostname prometheus <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+
+<span class="token comment"># 自动补全</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> bash-completion <span class="token function">wget</span> <span class="token function">tar</span> <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+<span class="token comment"># 安全</span>
+systemctl disable firewalld.service <span class="token parameter variable">--now</span>
+setenforce <span class="token number">0</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=disabled/g'</span> /etc/selinux/config
+
+<span class="token comment"># 选用LTS版本3.5.0</span>
+<span class="token function">wget</span> <span class="token operator">&lt;</span>https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheus-3.5.0.linux-amd64.tar.gz<span class="token operator">></span>
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> prometheus-3.5.0.linux-amd64.tar.gz
+<span class="token function">cp</span> <span class="token parameter variable">-r</span> prometheus-3.5.0.linux-amd64 /usr/local/
+<span class="token builtin class-name">cd</span> /usr/local/prometheus-3.5.0.linux-amd64/
+
+<span class="token comment"># 配置文件参数说明</span>
+<span class="token comment"># 全局配置</span>
+global:
+  scrape_interval: 15s      <span class="token comment"># 抓取间隔，默认为15秒</span>
+  evaluation_interval: 15s  <span class="token comment"># 规则评估间隔，默认为15秒</span>
+  <span class="token comment"># scrape_timeout 使用全局默认值 (10秒)</span>
+
+<span class="token comment"># Alertmanager 配置</span>
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - <span class="token number">192.168</span>.10.100:9093  <span class="token comment"># Alertmanager 地址</span>
+
+<span class="token comment"># 规则文件配置</span>
+rule_files:
+
+<span class="token comment"># 抓取配置</span>
+scrape_configs:
+  <span class="token comment"># 抓取 Prometheus 自身指标</span>
+    static_configs:
+      - targets: <span class="token punctuation">[</span><span class="token string">"localhost:9090"</span><span class="token punctuation">]</span>
+        labels:
+          instance: <span class="token string">"prometheus"</span>
+
+  <span class="token comment"># 配置其他的静态抓取job</span>
+    static_configs:
+      - targets: <span class="token punctuation">[</span><span class="token string">"192.168.10.254:9100"</span><span class="token punctuation">]</span>
+        labels:
+          instance: <span class="token string">"openwrt"</span>
+
+    static_configs:
+      - targets: <span class="token punctuation">[</span><span class="token string">"192.168.10.100:9100"</span><span class="token punctuation">]</span>
+        labels:
+          instance: <span class="token string">"1panel"</span>
+
+    static_configs:
+      - targets: <span class="token punctuation">[</span><span class="token string">"192.168.10.100:9101"</span><span class="token punctuation">]</span>
+        labels:
+          instance: <span class="token string">"mysql"</span>
+
+    static_configs:
+      - targets: <span class="token punctuation">[</span><span class="token string">"192.168.10.100:9102"</span><span class="token punctuation">]</span>
+        labels:
+          instance: <span class="token string">"nginx"</span>		<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="配置告警规则"><a href="#配置告警规则" class="headerlink" title="配置告警规则"></a>配置告警规则</h2><p>前面将规则配置文件放在了&#x2F;usr&#x2F;local&#x2F;prometheus-3.5.0.linux-amd64&#x2F;rules.yml<br>这些规则都是PromQL写的</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/local/prometheus-3.5.0.linux-amd64/</span><br><span class="line">vim rules.yml</span><br><span class="line"><span class="built_in">groups</span>:</span><br><span class="line">  <span class="comment"># 节点监控告警规则组</span></span><br><span class="line">    rules:</span><br><span class="line">      <span class="comment"># 1. CPU使用率过高（超过80%持续5分钟）</span></span><br><span class="line">      - alert: HighCpuUsage</span><br><span class="line">        <span class="built_in">expr</span>: (1 - avg(rate(node_cpu_seconds_total&#123;mode=<span class="string">&quot;idle&quot;</span>&#125;[5m])) by (instance)) * 100 &gt; 80</span><br><span class="line">        <span class="keyword">for</span>: 5m</span><br><span class="line">        labels:</span><br><span class="line">          severity: warning</span><br><span class="line">          category: resource</span><br><span class="line">        annotations:</span><br><span class="line">          summary: <span class="string">&quot;节点CPU使用率过高&quot;</span></span><br><span class="line">          description: <span class="string">&quot;&#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的CPU使用率已超过80%持续5分钟，当前值为 &#123;&#123; <span class="variable">$value</span> | printf \\&quot;</span>%.2f\\&quot; &#125;&#125;%<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 2. 内存使用率过高（超过85%持续5分钟）</span></span><br><span class="line"><span class="string">      - alert: HighMemoryUsage</span></span><br><span class="line"><span class="string">        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 &gt; 85</span></span><br><span class="line"><span class="string">        for: 10s # 这个不好测，我就把它弄小点</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: resource</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>节点内存使用率过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>&#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的内存使用率已超过85%持续5分钟，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125;%<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 3. 磁盘空间使用率过高（超过90%）</span></span><br><span class="line"><span class="string">      - alert: HighDiskUsage</span></span><br><span class="line"><span class="string">        expr: (node_filesystem_size_bytes&#123;fstype=~&quot;</span>ext4|xfs<span class="string">&quot;&#125; - node_filesystem_free_bytes&#123;fstype=~&quot;</span>ext4|xfs<span class="string">&quot;&#125;) / node_filesystem_size_bytes&#123;fstype=~&quot;</span>ext4|xfs<span class="string">&quot;&#125; * 100 &gt; 90</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: resource</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>磁盘空间使用率过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>&#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的 &#123;&#123; <span class="variable">$labels</span>.mountpoint &#125;&#125; 分区使用率已超过90%，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125;%<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 4. 磁盘IO过高（读取+写入延迟超过100ms）</span></span><br><span class="line"><span class="string">      - alert: HighDiskIOLatency</span></span><br><span class="line"><span class="string">        expr: rate(node_disk_read_time_seconds_total[5m]) + rate(node_disk_write_time_seconds_total[5m]) &gt; 0.1</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: performance</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>磁盘IO延迟过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>&#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的磁盘 &#123;&#123; <span class="variable">$labels</span>.device &#125;&#125; IO延迟超过100ms，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.4f\\&quot; &#125;&#125;s<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 5. 网络入栈流量过大（超过100MB/s持续1分钟）</span></span><br><span class="line"><span class="string">      - alert: HighNetworkInboundTraffic</span></span><br><span class="line"><span class="string">        expr: rate(node_network_receive_bytes_total[1m]) &gt; 100 * 1024 * 1024</span></span><br><span class="line"><span class="string">        for: 1m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: network</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>网络入栈流量过大<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>&#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的 &#123;&#123; <span class="variable">$labels</span>.device &#125;&#125; 网卡入栈流量超过100MB/s，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125; bytes/s<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 6. 节点宕机（up指标为0）</span></span><br><span class="line"><span class="string">      - alert: NodeDown</span></span><br><span class="line"><span class="string">        expr: up&#123;job=~&quot;</span>.*node_status.*<span class="string">&quot;&#125; == 0</span></span><br><span class="line"><span class="string">        for: 1m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: critical</span></span><br><span class="line"><span class="string">          category: availability</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>监控节点宕机<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>&#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 节点已宕机超过1分钟<span class="string">&quot;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  # MySQL监控告警规则组</span></span><br><span class="line"><span class="string">    rules:</span></span><br><span class="line"><span class="string">      # 1. MySQL服务不可用</span></span><br><span class="line"><span class="string">      - alert: MySQLDown</span></span><br><span class="line"><span class="string">        expr: mysql_up == 0</span></span><br><span class="line"><span class="string">        for: 1m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: critical</span></span><br><span class="line"><span class="string">          category: availability</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>MySQL服务不可用<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>MySQL实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 已宕机超过1分钟<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 2. 连接数超过最大限制的80%</span></span><br><span class="line"><span class="string">      - alert: MySQLHighConnections</span></span><br><span class="line"><span class="string">        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100 &gt; 80</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: performance</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>MySQL连接数过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>MySQL实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的连接数已达到最大连接数的&#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125;%<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 3. 查询响应时间过慢（平均查询时间超过1秒）</span></span><br><span class="line"><span class="string">      - alert: MySQLSlowQueries</span></span><br><span class="line"><span class="string">        expr: rate(mysql_global_status_slow_queries[5m]) &gt; 10</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: performance</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>MySQL慢查询过多<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>MySQL实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 在过去5分钟内慢查询数量为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125; 个/秒<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 4. InnoDB缓冲池命中率过低（低于95%）</span></span><br><span class="line"><span class="string">      - alert: MySQLLowBufferPoolHitRate</span></span><br><span class="line"><span class="string">        expr: (1 - (mysql_innodb_buffer_pool_reads / (mysql_innodb_buffer_pool_read_requests + mysql_innodb_buffer_pool_reads))) * 100 &lt; 95</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: performance</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>MySQL缓冲池命中率过低<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>MySQL实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的InnoDB缓冲池命中率低于95%，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125;%<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 5. 复制延迟（如果有主从复制）</span></span><br><span class="line"><span class="string">      - alert: MySQLReplicationLag</span></span><br><span class="line"><span class="string">        expr: mysql_slave_status_seconds_behind_master &gt; 30</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: replication</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>MySQL复制延迟过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>MySQL从库 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的复制延迟超过30秒，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125;秒<span class="string">&quot;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  # Nginx监控告警规则组</span></span><br><span class="line"><span class="string">    rules:</span></span><br><span class="line"><span class="string">      # 1. Nginx服务不可用</span></span><br><span class="line"><span class="string">      - alert: NginxDown</span></span><br><span class="line"><span class="string">        expr: nginx_up == 0</span></span><br><span class="line"><span class="string">        for: 1m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: critical</span></span><br><span class="line"><span class="string">          category: availability</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>Nginx服务不可用<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>Nginx实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 已宕机超过1分钟<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 2. 请求错误率过高（超过5%）</span></span><br><span class="line"><span class="string">      - alert: NginxHighErrorRate</span></span><br><span class="line"><span class="string">        expr: (sum(rate(nginx_http_requests_total&#123;status=~&quot;</span>5..<span class="string">&quot;&#125;[5m])) by (instance) / sum(rate(nginx_http_requests_total[5m])) by (instance)) * 100 &gt; 5</span></span><br><span class="line"><span class="string">        for: 2m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: errors</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>Nginx请求错误率过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>Nginx实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的5xx错误率超过5%，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.2f\\&quot; &#125;&#125;%<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 3. 活跃连接数过高（超过1000）</span></span><br><span class="line"><span class="string">      - alert: NginxHighActiveConnections</span></span><br><span class="line"><span class="string">        expr: nginx_connections_active &gt; 1000</span></span><br><span class="line"><span class="string">        for: 2m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: performance</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>Nginx活跃连接数过高<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>Nginx实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的活跃连接数超过1000，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.0f\\&quot; &#125;&#125;<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 4. 请求处理时间过慢（95分位数超过1秒）</span></span><br><span class="line"><span class="string">      - alert: NginxSlowRequests</span></span><br><span class="line"><span class="string">        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) &gt; 1</span></span><br><span class="line"><span class="string">        for: 5m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: performance</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>Nginx请求处理过慢<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>Nginx实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的95%请求处理时间超过1秒，当前值为 &#123;&#123; <span class="variable">$value</span> | <span class="built_in">printf</span> \\&quot;%.3f\\&quot; &#125;&#125;秒<span class="string">&quot;</span></span><br><span class="line"><span class="string">          </span></span><br><span class="line"><span class="string">      # 5. 请求率异常（突然增长100%）</span></span><br><span class="line"><span class="string">      - alert: NginxRequestRateAnomaly</span></span><br><span class="line"><span class="string">        expr: (rate(nginx_http_requests_total[2m]) / rate(nginx_http_requests_total[2m] offset 5m)) &gt; 2</span></span><br><span class="line"><span class="string">        for: 1m</span></span><br><span class="line"><span class="string">        labels:</span></span><br><span class="line"><span class="string">          severity: warning</span></span><br><span class="line"><span class="string">          category: anomaly</span></span><br><span class="line"><span class="string">        annotations:</span></span><br><span class="line"><span class="string">          summary: &quot;</span>Nginx请求率异常<span class="string">&quot;</span></span><br><span class="line"><span class="string">          description: &quot;</span>Nginx实例 &#123;&#123; <span class="variable">$labels</span>.instance &#125;&#125; 的请求率相比5分钟前增长了100%以上<span class="string">&quot;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> /usr/local/prometheus-3.5.0.linux-amd64/
+<span class="token function">vim</span> rules.yml
+groups:
+  <span class="token comment"># 节点监控告警规则组</span>
+    rules:
+      <span class="token comment"># 1. CPU使用率过高（超过80%持续5分钟）</span>
+      - alert: HighCpuUsage
+        expr: <span class="token punctuation">(</span><span class="token number">1</span> - avg<span class="token punctuation">(</span>rate<span class="token punctuation">(</span>node_cpu_seconds_total<span class="token punctuation">&#123;</span>mode<span class="token operator">=</span><span class="token string">"idle"</span><span class="token punctuation">&#125;</span><span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">))</span> by <span class="token punctuation">(</span>instance<span class="token punctuation">))</span> * <span class="token number">100</span> <span class="token operator">></span> <span class="token number">80</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: <span class="token string">"节点CPU使用率过高"</span>
+          description: <span class="token string">"&#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的CPU使用率已超过80%持续5分钟，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;%"</span>
+          
+      <span class="token comment"># 2. 内存使用率过高（超过85%持续5分钟）</span>
+      - alert: HighMemoryUsage
+        expr: <span class="token punctuation">(</span><span class="token number">1</span> - <span class="token punctuation">(</span>node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes<span class="token punctuation">))</span> * <span class="token number">100</span> <span class="token operator">></span> <span class="token number">85</span>
+        for: 10s <span class="token comment"># 这个不好测，我就把它弄小点</span>
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: <span class="token string">"节点内存使用率过高"</span>
+          description: <span class="token string">"&#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的内存使用率已超过85%持续5分钟，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;%"</span>
+          
+      <span class="token comment"># 3. 磁盘空间使用率过高（超过90%）</span>
+      - alert: HighDiskUsage
+        expr: <span class="token punctuation">(</span>node_filesystem_size_bytes<span class="token punctuation">&#123;</span>fstype<span class="token operator">=~</span><span class="token string">"ext4|xfs"</span><span class="token punctuation">&#125;</span> - node_filesystem_free_bytes<span class="token punctuation">&#123;</span>fstype<span class="token operator">=~</span><span class="token string">"ext4|xfs"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> / node_filesystem_size_bytes<span class="token punctuation">&#123;</span>fstype<span class="token operator">=~</span><span class="token string">"ext4|xfs"</span><span class="token punctuation">&#125;</span> * <span class="token number">100</span> <span class="token operator">></span> <span class="token number">90</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: <span class="token string">"磁盘空间使用率过高"</span>
+          description: <span class="token string">"&#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的 &#123;&#123; <span class="token variable">$labels</span>.mountpoint &#125;&#125; 分区使用率已超过90%，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;%"</span>
+          
+      <span class="token comment"># 4. 磁盘IO过高（读取+写入延迟超过100ms）</span>
+      - alert: HighDiskIOLatency
+        expr: rate<span class="token punctuation">(</span>node_disk_read_time_seconds_total<span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">)</span> + rate<span class="token punctuation">(</span>node_disk_write_time_seconds_total<span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0.1</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: <span class="token string">"磁盘IO延迟过高"</span>
+          description: <span class="token string">"&#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的磁盘 &#123;&#123; <span class="token variable">$labels</span>.device &#125;&#125; IO延迟超过100ms，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.4f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;s"</span>
+          
+      <span class="token comment"># 5. 网络入栈流量过大（超过100MB/s持续1分钟）</span>
+      - alert: HighNetworkInboundTraffic
+        expr: rate<span class="token punctuation">(</span>node_network_receive_bytes_total<span class="token punctuation">[</span>1m<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">100</span> * <span class="token number">1024</span> * <span class="token number">1024</span>
+        for: 1m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: <span class="token string">"网络入栈流量过大"</span>
+          description: <span class="token string">"&#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的 &#123;&#123; <span class="token variable">$labels</span>.device &#125;&#125; 网卡入栈流量超过100MB/s，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125; bytes/s"</span>
+          
+      <span class="token comment"># 6. 节点宕机（up指标为0）</span>
+      - alert: NodeDown
+        expr: up<span class="token punctuation">&#123;</span>job<span class="token operator">=~</span><span class="token string">".*node_status.*"</span><span class="token punctuation">&#125;</span> <span class="token operator">==</span> <span class="token number">0</span>
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: <span class="token string">"监控节点宕机"</span>
+          description: <span class="token string">"&#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 节点已宕机超过1分钟"</span>
 
-<h2 id="测试启动"><a href="#测试启动" class="headerlink" title="测试启动"></a>测试启动</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">/usr/local/prometheus-3.5.0.linux-amd64/prometheus --config.file=/usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果没问题就创建成service文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/prometheus.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit]</span></span><br><span class="line"><span class="string">Description=Prometheus Server</span></span><br><span class="line"><span class="string">Documentation=https://prometheus.io/docs/introduction/overview/</span></span><br><span class="line"><span class="string">After=network.target</span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">Restart=on-failure</span></span><br><span class="line"><span class="string">WorkingDirectory=/usr/local/prometheus-3.5.0.linux-amd64/</span></span><br><span class="line"><span class="string">ExecStart=/usr/local/prometheus-3.5.0.linux-amd64/prometheus --config.file=/usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml</span></span><br><span class="line"><span class="string">[Install]</span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl start prometheus.service</span><br><span class="line">systemctl <span class="built_in">enable</span> prometheus.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试访问</span></span><br><span class="line">访问本机 &lt;http://10.163.2.100:9090&gt;</span><br></pre></td></tr></table></figure>
+  <span class="token comment"># MySQL监控告警规则组</span>
+    rules:
+      <span class="token comment"># 1. MySQL服务不可用</span>
+      - alert: MySQLDown
+        expr: mysql_up <span class="token operator">==</span> <span class="token number">0</span>
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: <span class="token string">"MySQL服务不可用"</span>
+          description: <span class="token string">"MySQL实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 已宕机超过1分钟"</span>
+          
+      <span class="token comment"># 2. 连接数超过最大限制的80%</span>
+      - alert: MySQLHighConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * <span class="token number">100</span> <span class="token operator">></span> <span class="token number">80</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: <span class="token string">"MySQL连接数过高"</span>
+          description: <span class="token string">"MySQL实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的连接数已达到最大连接数的&#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;%"</span>
+          
+      <span class="token comment"># 3. 查询响应时间过慢（平均查询时间超过1秒）</span>
+      - alert: MySQLSlowQueries
+        expr: rate<span class="token punctuation">(</span>mysql_global_status_slow_queries<span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">10</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: <span class="token string">"MySQL慢查询过多"</span>
+          description: <span class="token string">"MySQL实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 在过去5分钟内慢查询数量为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125; 个/秒"</span>
+          
+      <span class="token comment"># 4. InnoDB缓冲池命中率过低（低于95%）</span>
+      - alert: MySQLLowBufferPoolHitRate
+        expr: <span class="token punctuation">(</span><span class="token number">1</span> - <span class="token punctuation">(</span>mysql_innodb_buffer_pool_reads / <span class="token punctuation">(</span>mysql_innodb_buffer_pool_read_requests + mysql_innodb_buffer_pool_reads<span class="token punctuation">))</span><span class="token punctuation">)</span> * <span class="token number">100</span> <span class="token operator">&lt;</span> <span class="token number">95</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: <span class="token string">"MySQL缓冲池命中率过低"</span>
+          description: <span class="token string">"MySQL实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的InnoDB缓冲池命中率低于95%，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;%"</span>
+          
+      <span class="token comment"># 5. 复制延迟（如果有主从复制）</span>
+      - alert: MySQLReplicationLag
+        expr: mysql_slave_status_seconds_behind_master <span class="token operator">></span> <span class="token number">30</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: replication
+        annotations:
+          summary: <span class="token string">"MySQL复制延迟过高"</span>
+          description: <span class="token string">"MySQL从库 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的复制延迟超过30秒，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;秒"</span>
+
+  <span class="token comment"># Nginx监控告警规则组</span>
+    rules:
+      <span class="token comment"># 1. Nginx服务不可用</span>
+      - alert: NginxDown
+        expr: nginx_up <span class="token operator">==</span> <span class="token number">0</span>
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: <span class="token string">"Nginx服务不可用"</span>
+          description: <span class="token string">"Nginx实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 已宕机超过1分钟"</span>
+          
+      <span class="token comment"># 2. 请求错误率过高（超过5%）</span>
+      - alert: NginxHighErrorRate
+        expr: <span class="token punctuation">(</span>sum<span class="token punctuation">(</span>rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">&#123;</span>status<span class="token operator">=~</span><span class="token string">"5.."</span><span class="token punctuation">&#125;</span><span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">))</span> by <span class="token punctuation">(</span>instance<span class="token punctuation">)</span> / sum<span class="token punctuation">(</span>rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">))</span> by <span class="token punctuation">(</span>instance<span class="token punctuation">))</span> * <span class="token number">100</span> <span class="token operator">></span> <span class="token number">5</span>
+        for: 2m
+        labels:
+          severity: warning
+          category: errors
+        annotations:
+          summary: <span class="token string">"Nginx请求错误率过高"</span>
+          description: <span class="token string">"Nginx实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的5xx错误率超过5%，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.2f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;%"</span>
+          
+      <span class="token comment"># 3. 活跃连接数过高（超过1000）</span>
+      - alert: NginxHighActiveConnections
+        expr: nginx_connections_active <span class="token operator">></span> <span class="token number">1000</span>
+        for: 2m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: <span class="token string">"Nginx活跃连接数过高"</span>
+          description: <span class="token string">"Nginx实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的活跃连接数超过1000，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.0f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;"</span>
+          
+      <span class="token comment"># 4. 请求处理时间过慢（95分位数超过1秒）</span>
+      - alert: NginxSlowRequests
+        expr: histogram_quantile<span class="token punctuation">(</span><span class="token number">0.95</span>, rate<span class="token punctuation">(</span>nginx_http_request_duration_seconds_bucket<span class="token punctuation">[</span>5m<span class="token punctuation">]</span><span class="token punctuation">))</span> <span class="token operator">></span> <span class="token number">1</span>
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: <span class="token string">"Nginx请求处理过慢"</span>
+          description: <span class="token string">"Nginx实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的95%请求处理时间超过1秒，当前值为 &#123;&#123; <span class="token variable">$value</span> | printf <span class="token entity" title="\\">\\</span>"</span>%.3f<span class="token punctuation">\</span><span class="token punctuation">\</span><span class="token string">" &#125;&#125;秒"</span>
+          
+      <span class="token comment"># 5. 请求率异常（突然增长100%）</span>
+      - alert: NginxRequestRateAnomaly
+        expr: <span class="token punctuation">(</span>rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">[</span>2m<span class="token punctuation">]</span><span class="token punctuation">)</span> / rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">[</span>2m<span class="token punctuation">]</span> offset 5m<span class="token punctuation">))</span> <span class="token operator">></span> <span class="token number">2</span>
+        for: 1m
+        labels:
+          severity: warning
+          category: anomaly
+        annotations:
+          summary: <span class="token string">"Nginx请求率异常"</span>
+          description: <span class="token string">"Nginx实例 &#123;&#123; <span class="token variable">$labels</span>.instance &#125;&#125; 的请求率相比5分钟前增长了100%以上"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="测试启动"><a href="#测试启动" class="headerlink" title="测试启动"></a>测试启动</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">/usr/local/prometheus-3.5.0.linux-amd64/prometheus <span class="token parameter variable">--config.file</span><span class="token operator">=</span>/usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml
+
+<span class="token comment"># 如果没问题就创建成service文件</span>
+<span class="token function">cat</span> <span class="token operator">></span> /etc/systemd/system/prometheus.service <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Unit]
+Description=Prometheus Server
+Documentation=https://prometheus.io/docs/introduction/overview/
+After=network.target
+[Service]
+Restart=on-failure
+WorkingDirectory=/usr/local/prometheus-3.5.0.linux-amd64/
+ExecStart=/usr/local/prometheus-3.5.0.linux-amd64/prometheus --config.file=/usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml
+[Install]
+WantedBy=multi-user.target
+EOF</span>
+
+systemctl daemon-reload
+systemctl start prometheus.service
+systemctl <span class="token builtin class-name">enable</span> prometheus.service
+
+<span class="token comment"># 测试访问</span>
+访问本机 <span class="token operator">&lt;</span>http://10.163.2.100:909<span class="token operator"><span class="token file-descriptor important">0</span>></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260107211544428.png" alt="img"></p>
 <h2 id="部署exporter并连接到Prometheus"><a href="#部署exporter并连接到Prometheus" class="headerlink" title="部署exporter并连接到Prometheus"></a>部署exporter并连接到Prometheus</h2><p>这些组件可以使用二进制部署，也可以使用容器部署</p>
 <h3 id="二进制部署node-exporter"><a href="#二进制部署node-exporter" class="headerlink" title="二进制部署node_exporter"></a>二进制部署node_exporter</h3><p>node_exporter由于需要主机权限，所以推荐使用二进制部署</p>
 <p>二进制官网下载地址<a target="_blank" rel="noopener" href="https://prometheus.io/download/#alertmanager">Download | Prometheus</a></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz</span><br><span class="line">tar -xf node_exporter-1.10.2.linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> -r node_exporter-1.10.2.linux-amd64 /usr/local/</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/node-exporter.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit] </span></span><br><span class="line"><span class="string">Description=Node Exporter </span></span><br><span class="line"><span class="string">After=network.target </span></span><br><span class="line"><span class="string">[Service] </span></span><br><span class="line"><span class="string">ExecStart=/usr/local/node_exporter-1.10.2.linux-amd64/node_exporter </span></span><br><span class="line"><span class="string">Restart=always </span></span><br><span class="line"><span class="string">User=root </span></span><br><span class="line"><span class="string">Group=root </span></span><br><span class="line"><span class="string">RestartSec=3 </span></span><br><span class="line"><span class="string">LimitNOFILE=4096 </span></span><br><span class="line"><span class="string">[Install] </span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl <span class="built_in">enable</span> node-exporter.service --now</span><br><span class="line">ss -tunlp | grep 9100</span><br><span class="line">tcp   LISTEN 0      4096                                   *:9100             *:*    <span class="built_in">users</span>:((&quot;node_exporter&quot;,pid=<span class="number">650555</span>,fd=<span class="number">3</span>))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">wget</span> https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> node_exporter-1.10.2.linux-amd64.tar.gz
+<span class="token function">cp</span> <span class="token parameter variable">-r</span> node_exporter-1.10.2.linux-amd64 /usr/local/
+
+<span class="token function">cat</span> <span class="token operator">></span> /etc/systemd/system/node-exporter.service <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Unit] 
+Description=Node Exporter 
+After=network.target 
+[Service] 
+ExecStart=/usr/local/node_exporter-1.10.2.linux-amd64/node_exporter 
+Restart=always 
+User=root 
+Group=root 
+RestartSec=3 
+LimitNOFILE=4096 
+[Install] 
+WantedBy=multi-user.target
+EOF</span>
+
+systemctl daemon-reload
+systemctl <span class="token builtin class-name">enable</span> node-exporter.service <span class="token parameter variable">--now</span>
+ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">9100</span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">4096</span>                                   *:9100             *:*    users:<span class="token variable"><span class="token punctuation">((</span>"node_exporter"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">650555</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">))</span></span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108111829428.png"></p>
-<h3 id="docker部署node-exporter（不推荐）"><a href="#docker部署node-exporter（不推荐）" class="headerlink" title="docker部署node_exporter（不推荐）"></a>docker部署node_exporter（不推荐）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">  --name=node_exporter \</span><br><span class="line">  --restart=always \</span><br><span class="line">  --pid=<span class="string">&quot;host&quot;</span> \</span><br><span class="line">  --net=<span class="string">&quot;host&quot;</span> \</span><br><span class="line">  -v <span class="string">&quot;/:/host:ro&quot;</span> \</span><br><span class="line">  prom/node-exporter:latest \</span><br><span class="line">  --path.rootfs=/host</span><br><span class="line"></span><br><span class="line">netstat -tunlp  | grep 9100</span><br><span class="line">tcp        0      0 :::9100                 :::*                    LISTEN      8984/node_exporter</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="docker部署node-exporter（不推荐）"><a href="#docker部署node-exporter（不推荐）" class="headerlink" title="docker部署node_exporter（不推荐）"></a>docker部署node_exporter（不推荐）</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">--name</span><span class="token operator">=</span>node_exporter <span class="token punctuation">\</span>
+  <span class="token parameter variable">--restart</span><span class="token operator">=</span>always <span class="token punctuation">\</span>
+  <span class="token parameter variable">--pid</span><span class="token operator">=</span><span class="token string">"host"</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">--net</span><span class="token operator">=</span><span class="token string">"host"</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-v</span> <span class="token string">"/:/host:ro"</span> <span class="token punctuation">\</span>
+  prom/node-exporter:latest <span class="token punctuation">\</span>
+  <span class="token parameter variable">--path.rootfs</span><span class="token operator">=</span>/host
+
+<span class="token function">netstat</span> <span class="token parameter variable">-tunlp</span>  <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">9100</span>
+tcp        <span class="token number">0</span>      <span class="token number">0</span> :::9100                 :::*                    LISTEN      <span class="token number">8984</span>/node_exporter
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108115143808.png"></p>
 <h3 id="docker部署mysql-exporter"><a href="#docker部署mysql-exporter" class="headerlink" title="docker部署mysql_exporter"></a>docker部署mysql_exporter</h3><p>mysql运行在192.168.10.100:3306，root密码为mysql_Nw764j</p>
 <p>二进制安装是同理，就不演示了</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 数据库配置exporter用户</span></span><br><span class="line">mysql -h 127.0.0.1 -P 3306 -u root -pmysql_Nw764j -e <span class="string">&quot;CREATE USER IF NOT EXISTS &#x27;exporter&#x27;@&#x27;%&#x27; IDENTIFIED BY &#x27;mysql_Nw764j&#x27;; GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO &#x27;exporter&#x27;@&#x27;%&#x27;; FLUSH PRIVILEGES;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建隐藏配置文件.my.cnf，mysqld_exporter连接mysql采集数据</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/.my.cnf &lt;&lt; <span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[client]</span><br><span class="line">host=127.0.0.1</span><br><span class="line">port=3306</span><br><span class="line">user=exporter</span><br><span class="line">password=mysql_Nw764j</span><br><span class="line">[exporter]</span><br><span class="line"><span class="comment"># 收集器配置</span></span><br><span class="line">collect.global_status = <span class="literal">true</span></span><br><span class="line">collect.global_variables = <span class="literal">true</span></span><br><span class="line">collect.slave_status = <span class="literal">true</span></span><br><span class="line">collect.info_schema.processlist = <span class="literal">true</span></span><br><span class="line">collect.info_schema.innodb_metrics = <span class="literal">true</span></span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">docker run -d --name mysql-exporter \</span><br><span class="line">  --network host \</span><br><span class="line">  -v /etc/.my.cnf:/etc/.my.cnf:ro \</span><br><span class="line">  --restart unless-stopped \</span><br><span class="line">  prom/mysqld-exporter:main \</span><br><span class="line">  --config.my-cnf=/etc/.my.cnf \</span><br><span class="line">  --web.listen-address=:9101  <span class="comment"># 强制监听9101端口</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 数据库配置exporter用户</span>
+mysql <span class="token parameter variable">-h</span> <span class="token number">127.0</span>.0.1 <span class="token parameter variable">-P</span> <span class="token number">3306</span> <span class="token parameter variable">-u</span> root <span class="token parameter variable">-pmysql_Nw764j</span> <span class="token parameter variable">-e</span> <span class="token string">"CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'mysql_Nw764j'; GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%'; FLUSH PRIVILEGES;"</span>
+
+<span class="token comment"># 创建隐藏配置文件.my.cnf，mysqld_exporter连接mysql采集数据</span>
+<span class="token function">cat</span> <span class="token operator">></span> /etc/.my.cnf <span class="token operator">&lt;&lt;</span> <span class="token string">'EOF'
+[client]
+host=127.0.0.1
+port=3306
+user=exporter
+password=mysql_Nw764j
+[exporter]
+# 收集器配置
+collect.global_status = true
+collect.global_variables = true
+collect.slave_status = true
+collect.info_schema.processlist = true
+collect.info_schema.innodb_metrics = true
+EOF</span>
+
+<span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> mysql-exporter <span class="token punctuation">\</span>
+  <span class="token parameter variable">--network</span> <span class="token function">host</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-v</span> /etc/.my.cnf:/etc/.my.cnf:ro <span class="token punctuation">\</span>
+  <span class="token parameter variable">--restart</span> unless-stopped <span class="token punctuation">\</span>
+  prom/mysqld-exporter:main <span class="token punctuation">\</span>
+  --config.my-cnf<span class="token operator">=</span>/etc/.my.cnf <span class="token punctuation">\</span>
+  --web.listen-address<span class="token operator">=</span>:9101  <span class="token comment"># 强制监听9101端口</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108135233089.png"></p>
 <h3 id="docker部署nginx-exporter"><a href="#docker部署nginx-exporter" class="headerlink" title="docker部署nginx_exporter"></a>docker部署nginx_exporter</h3><p>我的nginx运行在192.168.10.100:80，这实际上是zabbix-server的nginx，我直接拿过来用了</p>
 <p><strong>使用nginx-exporter需要nginx自己安装了http_stub_status的模块，同时需要配置nginx.conf或者子配置文件，使访问x.x.x.x&#x2F;nginx_status能够有数据</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看是否安装了模块</span></span><br><span class="line">docker <span class="built_in">exec</span> zabbix-docker-zabbix-web-nginx-mysql-1 nginx -V 2&gt;&amp;1 | grep -i stub_status &amp;&amp; <span class="built_in">echo</span> $?</span><br><span class="line">0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看是否有相关页面</span></span><br><span class="line">docker <span class="built_in">exec</span> zabbix-docker-zabbix-web-nginx-mysql-1 grep nginx-status /etc/nginx/http.d/nginx.conf -A6</span><br><span class="line">    location = /nginx-status &#123;</span><br><span class="line">        access_log off;</span><br><span class="line">        allow 127.0.0.1;</span><br><span class="line">        allow ::1;</span><br><span class="line">        deny all; <span class="comment"># 可以看到这里是拒绝除了自己以外的所有访问的</span></span><br><span class="line">        stub_status;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment"># 在容器中修改zabbix的nginx配置，允许宿主机网段和容器网段访问</span></span><br><span class="line">    location = /nginx-status &#123;</span><br><span class="line">        access_log off;</span><br><span class="line">        allow 127.0.0.1;</span><br><span class="line">        allow 192.168.10.0/24;</span><br><span class="line">        allow 172.17.0.0/24;</span><br><span class="line">        deny all;</span><br><span class="line">        stub_status;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment"># 在容器中重启nginx</span></span><br><span class="line">nginx -s reload</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行容器</span></span><br><span class="line">docker run -d \</span><br><span class="line">  --name nginx-exporter \</span><br><span class="line">  -p 9102:9102 \</span><br><span class="line">  --restart unless-stopped \</span><br><span class="line">  nginx/nginx-prometheus-exporter \</span><br><span class="line">  --web.listen-address=<span class="string">&quot;:9102&quot;</span> \</span><br><span class="line">  --nginx.scrape-uri=<span class="string">&quot;http://192.168.10.100/nginx-status&quot;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看是否安装了模块</span>
+<span class="token function">docker</span> <span class="token builtin class-name">exec</span> zabbix-docker-zabbix-web-nginx-mysql-1 nginx <span class="token parameter variable">-V</span> <span class="token operator"><span class="token file-descriptor important">2</span>></span><span class="token file-descriptor important">&amp;1</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> stub_status <span class="token operator">&amp;&amp;</span> <span class="token builtin class-name">echo</span> <span class="token variable">$?</span>
+<span class="token number">0</span>
+
+<span class="token comment"># 查看是否有相关页面</span>
+<span class="token function">docker</span> <span class="token builtin class-name">exec</span> zabbix-docker-zabbix-web-nginx-mysql-1 <span class="token function">grep</span> nginx-status /etc/nginx/http.d/nginx.conf <span class="token parameter variable">-A6</span>
+    location <span class="token operator">=</span> /nginx-status <span class="token punctuation">&#123;</span>
+        access_log off<span class="token punctuation">;</span>
+        allow <span class="token number">127.0</span>.0.1<span class="token punctuation">;</span>
+        allow ::1<span class="token punctuation">;</span>
+        deny all<span class="token punctuation">;</span> <span class="token comment"># 可以看到这里是拒绝除了自己以外的所有访问的</span>
+        stub_status<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+<span class="token comment"># 在容器中修改zabbix的nginx配置，允许宿主机网段和容器网段访问</span>
+    location <span class="token operator">=</span> /nginx-status <span class="token punctuation">&#123;</span>
+        access_log off<span class="token punctuation">;</span>
+        allow <span class="token number">127.0</span>.0.1<span class="token punctuation">;</span>
+        allow <span class="token number">192.168</span>.10.0/24<span class="token punctuation">;</span>
+        allow <span class="token number">172.17</span>.0.0/24<span class="token punctuation">;</span>
+        deny all<span class="token punctuation">;</span>
+        stub_status<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token comment"># 在容器中重启nginx</span>
+nginx <span class="token parameter variable">-s</span> reload
+
+<span class="token comment"># 运行容器</span>
+<span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">--name</span> nginx-exporter <span class="token punctuation">\</span>
+  <span class="token parameter variable">-p</span> <span class="token number">9102</span>:9102 <span class="token punctuation">\</span>
+  <span class="token parameter variable">--restart</span> unless-stopped <span class="token punctuation">\</span>
+  nginx/nginx-prometheus-exporter <span class="token punctuation">\</span>
+  --web.listen-address<span class="token operator">=</span><span class="token string">":9102"</span> <span class="token punctuation">\</span>
+  --nginx.scrape-uri<span class="token operator">=</span><span class="token string">"http://192.168.10.100/nginx-status"</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108143832723.png"></p>
 <h2 id="Grafana部署（略）"><a href="#Grafana部署（略）" class="headerlink" title="Grafana部署（略）"></a>Grafana部署（略）</h2><p>grafana也没配置文件的，他只是一个面板，设置什么的全在web上点点点就行，所以这种直接用docker也没问题，默认端口3000，默认账密admin&#x2F;admin</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name grafana \</span><br><span class="line">  -p 3000:3000 \</span><br><span class="line">  grafana/grafana:10.4.3</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 重置admin密码（重置为admin123</span></span><br><span class="line">docker <span class="built_in">exec</span> -it -uroot grafana /bin/bash</span><br><span class="line">grafana cli admin reset-admin-password admin123</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> grafana <span class="token punctuation">\</span>
+  <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 <span class="token punctuation">\</span>
+  grafana/grafana:10.4.3
+ 
+<span class="token comment"># 重置admin密码（重置为admin123</span>
+<span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> <span class="token parameter variable">-uroot</span> grafana /bin/bash
+grafana cli admin reset-admin-password admin123
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="Grafana配置"><a href="#Grafana配置" class="headerlink" title="Grafana配置"></a>Grafana配置</h2><p>官网：<a target="_blank" rel="noopener" href="https://grafana.com/grafana/dashboards/">Grafana dashboards | Grafana Labs</a></p>
 <p>比如：Node Exporter Dashboard 20240520 通用JOB分组版（序号16098）<a target="_blank" rel="noopener" href="https://grafana.com/grafana/dashboards/16098-node-exporter-dashboard-20240520-job/">Node Exporter Dashboard 20240520 通用JOB分组版 | Grafana Labs</a></p>
@@ -575,9 +941,33 @@
 <p>使用序号可以直接导入</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108155723085.png"></p>
 <h2 id="altermanage部署与告警推送设置"><a href="#altermanage部署与告警推送设置" class="headerlink" title="altermanage部署与告警推送设置"></a>altermanage部署与告警推送设置</h2><p>之前在配置文件里写的altermanager地址为192.168.10.100:9093</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/prometheus/alertmanager/releases/download/v0.30.0/alertmanager-0.30.0.linux-amd64.tar.gz</span><br><span class="line">tar -xf alertmanager-0.30.0.linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> -r alertmanager-0.30.0.linux-amd64 /usr/local/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置文件/usr/local/alertmanager-0.30.0.linux-amd64/alertmanager.yml</span></span><br><span class="line">global:</span><br><span class="line">  resolve_timeout: 1m         <span class="comment">#超时时间</span></span><br><span class="line">  smtp_smarthost: <span class="string">&#x27;smtp.163.com:25&#x27;</span>     <span class="comment">#发送163邮箱的协议</span></span><br><span class="line">  smtp_from: <span class="string">&#x27;alertwarning@163.com&#x27;</span>      <span class="comment">#发送告警的邮箱</span></span><br><span class="line">  smtp_auth_username: <span class="string">&#x27;alertwarning@163.com&#x27;</span>   <span class="comment">#邮箱名</span></span><br><span class="line">  smtp_auth_password: <span class="string">&#x27;xxxx&#x27;</span>      <span class="comment">#服务授权码</span></span><br><span class="line">  smtp_require_tls: <span class="literal">false</span>               <span class="comment">#</span></span><br><span class="line">route:   <span class="comment">#路由</span></span><br><span class="line">  group_by: [alertname]</span><br><span class="line">  group_wait: 10s             <span class="comment">#告警生产后等待时间</span></span><br><span class="line">  group_interval: 10s         </span><br><span class="line">  repeat_interval: 10m        <span class="comment">#重复发送告警的间隔时间</span></span><br><span class="line">  receiver: default-receiver  <span class="comment">#和下面要对应名称</span></span><br><span class="line">receivers:                    <span class="comment">#接受者</span></span><br><span class="line">- name: <span class="string">&#x27;default-receiver&#x27;</span>    <span class="comment">#</span></span><br><span class="line">  email_configs:</span><br><span class="line">    send_resolved: <span class="literal">true</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">wget</span> https://github.com/prometheus/alertmanager/releases/download/v0.30.0/alertmanager-0.30.0.linux-amd64.tar.gz
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> alertmanager-0.30.0.linux-amd64.tar.gz
+<span class="token function">cp</span> <span class="token parameter variable">-r</span> alertmanager-0.30.0.linux-amd64 /usr/local/
 
-<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 同时测试CPU和内存</span></span><br><span class="line">stress --cpu 12 --vm 1 --vm-bytes 23G</span><br><span class="line"><span class="comment">#</span></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 配置文件/usr/local/alertmanager-0.30.0.linux-amd64/alertmanager.yml</span>
+global:
+  resolve_timeout: 1m         <span class="token comment">#超时时间</span>
+  smtp_smarthost: <span class="token string">'smtp.163.com:25'</span>     <span class="token comment">#发送163邮箱的协议</span>
+  smtp_from: <span class="token string">'alertwarning@163.com'</span>      <span class="token comment">#发送告警的邮箱</span>
+  smtp_auth_username: <span class="token string">'alertwarning@163.com'</span>   <span class="token comment">#邮箱名</span>
+  smtp_auth_password: <span class="token string">'xxxx'</span>      <span class="token comment">#服务授权码</span>
+  smtp_require_tls: <span class="token boolean">false</span>               <span class="token comment">#</span>
+route:   <span class="token comment">#路由</span>
+  group_by: <span class="token punctuation">[</span>alertname<span class="token punctuation">]</span>
+  group_wait: 10s             <span class="token comment">#告警生产后等待时间</span>
+  group_interval: 10s         
+  repeat_interval: 10m        <span class="token comment">#重复发送告警的间隔时间</span>
+  receiver: default-receiver  <span class="token comment">#和下面要对应名称</span>
+receivers:                    <span class="token comment">#接受者</span>
+- name: <span class="token string">'default-receiver'</span>    <span class="token comment">#</span>
+  email_configs:
+    send_resolved: <span class="token boolean">true</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 同时测试CPU和内存</span>
+stress <span class="token parameter variable">--cpu</span> <span class="token number">12</span> <span class="token parameter variable">--vm</span> <span class="token number">1</span> --vm-bytes 23G
+<span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108194157912.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260108195142421.png"></p>
@@ -6640,36 +7030,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7134,13 +7494,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8181,13 +8541,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8640,14 +9000,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8655,14 +9015,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="kind可以用以部署多个集群，适用于本地多集群测试与CI&#x2F;CD测试支持多集群共享镜像缓存缺点：只适用于内核版本比较高的系统，像是almalinux等像是centos7.9就会因为内核版本落后，无法使用cgroup进行容器的资源隔离，启动时会报错 初始化内容（略过）包括安装docker，kubectl等 安装kind123curl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.">
+    <meta name="description" content="kind可以用以部署多个集群，适用于本地多集群测试与CI&#x2F;CD测试支持多集群共享镜像缓存缺点：只适用于内核版本比较高的系统，像是almalinux等像是centos7.9就会因为内核版本落后，无法使用cgroup进行容器的资源隔离，启动时会报错 初始化内容（略过）包括安装docker，kubectl等 安装kindcurl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.k8s">
 <meta property="og:type" content="article">
 <meta property="og:title" content="使用kind快速部署多节点k8s">
 <meta property="og:url" content="https://akemi.zj.cn/2025/02/06/K8s-Kind/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="kind可以用以部署多个集群，适用于本地多集群测试与CI&#x2F;CD测试支持多集群共享镜像缓存缺点：只适用于内核版本比较高的系统，像是almalinux等像是centos7.9就会因为内核版本落后，无法使用cgroup进行容器的资源隔离，启动时会报错 初始化内容（略过）包括安装docker，kubectl等 安装kind123curl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.">
+<meta property="og:description" content="kind可以用以部署多个集群，适用于本地多集群测试与CI&#x2F;CD测试支持多集群共享镜像缓存缺点：只适用于内核版本比较高的系统，像是almalinux等像是centos7.9就会因为内核版本落后，无法使用cgroup进行容器的资源隔离，启动时会报错 初始化内容（略过）包括安装docker，kubectl等 安装kindcurl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.k8s">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-02-06T09:29:35.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.184Z">
@@ -492,14 +492,119 @@
     <article class="article-entry">
         <p>kind可以用以部署多个集群，适用于本地多集群测试与CI&#x2F;CD测试<br>支持多集群共享镜像缓存<br>缺点：只适用于内核版本比较高的系统，像是almalinux等<br>像是centos7.9就会因为内核版本落后，无法使用cgroup进行容器的资源隔离，启动时会报错</p>
 <h3 id="初始化内容（略过）"><a href="#初始化内容（略过）" class="headerlink" title="初始化内容（略过）"></a><strong>初始化内容（略过）</strong></h3><p>包括安装docker，kubectl等</p>
-<h3 id="安装kind"><a href="#安装kind" class="headerlink" title="安装kind"></a><strong>安装kind</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64</span><br><span class="line"><span class="built_in">chmod</span> +x ./kind</span><br><span class="line">sudo <span class="built_in">mv</span> ./kind /usr/local/bin/kind</span><br></pre></td></tr></table></figure>
+<h3 id="安装kind"><a href="#安装kind" class="headerlink" title="安装kind"></a><strong>安装kind</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">curl</span> <span class="token parameter variable">-Lo</span> ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64
+<span class="token function">chmod</span> +x ./kind
+<span class="token function">sudo</span> <span class="token function">mv</span> ./kind /usr/local/bin/kind<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="创建单节点集群"><a href="#创建单节点集群" class="headerlink" title="创建单节点集群"></a><strong>创建单节点集群</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">kind create cluster --name my-cluster</span><br><span class="line">kind create cluster --name my-cluster-2</span><br><span class="line"></span><br><span class="line">Creating cluster <span class="string">&quot;my-cluster-2&quot;</span> ...</span><br><span class="line"> ✓ Ensuring node image (kindest/node:v1.29.2) 🖼</span><br><span class="line"> ✓ Preparing nodes 📦</span><br><span class="line"> ✓ Writing configuration 📜</span><br><span class="line"> ✓ Starting control-plane 🕹️</span><br><span class="line"> ✓ Installing CNI 🔌</span><br><span class="line"> ✓ Installing StorageClass 💾</span><br><span class="line">Set kubectl context to <span class="string">&quot;kind-my-cluster-2&quot;</span></span><br><span class="line">You can now use your cluster with:</span><br><span class="line"></span><br><span class="line">kubectl cluster-info --context kind-my-cluster-2</span><br><span class="line"></span><br><span class="line">Thanks <span class="keyword">for</span> using kind! 😊</span><br><span class="line"></span><br><span class="line">此时就已经创建了两个集群了，通过查看上下文可以</span><br><span class="line">kubectl config get-contexts</span><br><span class="line">CURRENT   NAME                CLUSTER             AUTHINFO            NAMESPACE</span><br><span class="line">          kind-my-cluster     kind-my-cluster     kind-my-cluster</span><br><span class="line">*         kind-my-cluster-2   kind-my-cluster-2   kind-my-cluster-2</span><br><span class="line"></span><br><span class="line">测试进行镜像拉取，能不能跑业务</span><br><span class="line"><span class="built_in">cat</span> &gt;k8s-test.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: apps/v1</span></span><br><span class="line"><span class="string">kind: Deployment</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: nginx-deployment</span></span><br><span class="line"><span class="string">  labels:</span></span><br><span class="line"><span class="string">    app: nginx</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  replicas: 1</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">    matchLabels:</span></span><br><span class="line"><span class="string">      app: nginx</span></span><br><span class="line"><span class="string">  template:</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      labels:</span></span><br><span class="line"><span class="string">        app: nginx</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">      - name: nginx</span></span><br><span class="line"><span class="string">        image: nginx:alpine</span></span><br><span class="line"><span class="string">        ports:</span></span><br><span class="line"><span class="string">        - containerPort: 80</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kubectl apply -f k8s-test.yaml</span><br><span class="line"></span><br><span class="line">删除这两个集群</span><br><span class="line">kind delete cluster --name my-cluster</span><br><span class="line">kind delete cluster --name my-cluster-2</span><br></pre></td></tr></table></figure>
+<h3 id="创建单节点集群"><a href="#创建单节点集群" class="headerlink" title="创建单节点集群"></a><strong>创建单节点集群</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kind create cluster <span class="token parameter variable">--name</span> my-cluster
+kind create cluster <span class="token parameter variable">--name</span> my-cluster-2
+
+Creating cluster <span class="token string">"my-cluster-2"</span> <span class="token punctuation">..</span>.
+ ✓ Ensuring <span class="token function">node</span> image <span class="token punctuation">(</span>kindest/node:v1.29.2<span class="token punctuation">)</span> 🖼
+ ✓ Preparing nodes 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
+Set kubectl context to <span class="token string">"kind-my-cluster-2"</span>
+You can now use your cluster with:
+
+kubectl cluster-info <span class="token parameter variable">--context</span> kind-my-cluster-2
+
+Thanks <span class="token keyword">for</span> using kind<span class="token operator">!</span> 😊
+
+此时就已经创建了两个集群了，通过查看上下文可以
+kubectl config get-contexts
+CURRENT   NAME                CLUSTER             AUTHINFO            NAMESPACE
+          kind-my-cluster     kind-my-cluster     kind-my-cluster
+*         kind-my-cluster-2   kind-my-cluster-2   kind-my-cluster-2
+
+测试进行镜像拉取，能不能跑业务
+<span class="token function">cat</span> <span class="token operator">></span>k8s-test.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+EOF</span>
+
+kubectl apply <span class="token parameter variable">-f</span> k8s-test.yaml
+
+删除这两个集群
+kind delete cluster <span class="token parameter variable">--name</span> my-cluster
+kind delete cluster <span class="token parameter variable">--name</span> my-cluster-2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="创建多节点k8s集群"><a href="#创建多节点k8s集群" class="headerlink" title="创建多节点k8s集群"></a>创建多节点k8s集群</h3><p>利用yaml配置文件来创建集群，可以指定k8s的镜像版本</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt;kind-config.yaml&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">kind: Cluster</span></span><br><span class="line"><span class="string">apiVersion: kind.x-k8s.io/v1alpha4</span></span><br><span class="line"><span class="string">nodes:</span></span><br><span class="line"><span class="string">- role: control-plane</span></span><br><span class="line"><span class="string">  image: kindest/node:v1.23.0</span></span><br><span class="line"><span class="string">  extraMounts:</span></span><br><span class="line"><span class="string">    - hostPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">      containerPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">- role: worker</span></span><br><span class="line"><span class="string">  image: kindest/node:v1.23.0</span></span><br><span class="line"><span class="string">  extraMounts:</span></span><br><span class="line"><span class="string">    - hostPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">      containerPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">- role: worker</span></span><br><span class="line"><span class="string">  image: kindest/node:v1.23.0</span></span><br><span class="line"><span class="string">  extraMounts:</span></span><br><span class="line"><span class="string">    - hostPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">      containerPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kind create cluster --config kind-config.yaml --name ws-cluster</span><br><span class="line"></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME                       STATUS   ROLES                  AGE   VERSION</span><br><span class="line">ws-cluster-control-plane   Ready    control-plane,master   11m   v1.23.0</span><br><span class="line">ws-cluster-worker          Ready    &lt;none&gt;                 11m   v1.23.0</span><br><span class="line">ws-cluster-worker2         Ready    &lt;none&gt;                 11m   v1.23.0</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> <span class="token operator">></span>kind-config.yaml<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  image: kindest/node:v1.23.0
+  extraMounts:
+    - hostPath: /var/run/docker.sock
+      containerPath: /var/run/docker.sock
+- role: worker
+  image: kindest/node:v1.23.0
+  extraMounts:
+    - hostPath: /var/run/docker.sock
+      containerPath: /var/run/docker.sock
+- role: worker
+  image: kindest/node:v1.23.0
+  extraMounts:
+    - hostPath: /var/run/docker.sock
+      containerPath: /var/run/docker.sock
+EOF</span>
 
-<h3 id="其他常用命令"><a href="#其他常用命令" class="headerlink" title="其他常用命令"></a>其他常用命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">创建单节点集群</span><br><span class="line">kind create cluster --name &lt;cluster-name&gt;</span><br><span class="line"></span><br><span class="line">使用配置文件创建集群</span><br><span class="line">kind create cluster --config &lt;config-name&gt; --name &lt;cluster-name&gt;</span><br><span class="line"></span><br><span class="line">删除集群</span><br><span class="line">kind delete cluster --name &lt;cluster-name&gt;</span><br><span class="line"></span><br><span class="line">列出集群</span><br><span class="line">kind get clusters</span><br><span class="line"></span><br><span class="line">导出集群配置到一个新的kubeconfig中</span><br><span class="line">kind <span class="built_in">export</span> kubeconfig --name &lt;cluster-name&gt; --kubeconfig &lt;kubeconfig-name&gt;</span><br><span class="line">如</span><br><span class="line">kind <span class="built_in">export</span> kubeconfig --name ws-cluster --kubeconfig config_ws</span><br><span class="line"><span class="comment">#Set kubectl context to &quot;kind-ws-cluster&quot;</span></span><br><span class="line">当前目录下生成了一个config_ws</span><br><span class="line"></span><br><span class="line">加载镜像到集群内</span><br><span class="line">kind load docker-image &lt;image-name&gt; --name &lt;cluster-name&gt;</span><br><span class="line"></span><br><span class="line">停止与启动集群</span><br><span class="line">docker stop $(docker ps -q -f <span class="string">&quot;label=io.x-k8s.kind.cluster=&lt;cluster-name&gt;&quot;</span>)</span><br><span class="line">docker start $(docker ps -aq -f <span class="string">&quot;label=io.x-k8s.kind.cluster=&lt;cluster-name&gt;&quot;</span>)</span><br></pre></td></tr></table></figure>
+kind create cluster <span class="token parameter variable">--config</span> kind-config.yaml <span class="token parameter variable">--name</span> ws-cluster
+
+kubectl get nodes
+NAME                       STATUS   ROLES                  AGE   VERSION
+ws-cluster-control-plane   Ready    control-plane,master   11m   v1.23.0
+ws-cluster-worker          Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>                 11m   v1.23.0
+ws-cluster-worker2         Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>                 11m   v1.23.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="其他常用命令"><a href="#其他常用命令" class="headerlink" title="其他常用命令"></a>其他常用命令</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">创建单节点集群
+kind create cluster <span class="token parameter variable">--name</span> <span class="token operator">&lt;</span>cluster-name<span class="token operator">></span>
+
+使用配置文件创建集群
+kind create cluster <span class="token parameter variable">--config</span> <span class="token operator">&lt;</span>config-name<span class="token operator">></span> <span class="token parameter variable">--name</span> <span class="token operator">&lt;</span>cluster-name<span class="token operator">></span>
+
+删除集群
+kind delete cluster <span class="token parameter variable">--name</span> <span class="token operator">&lt;</span>cluster-name<span class="token operator">></span>
+
+列出集群
+kind get clusters
+
+导出集群配置到一个新的kubeconfig中
+kind <span class="token builtin class-name">export</span> kubeconfig <span class="token parameter variable">--name</span> <span class="token operator">&lt;</span>cluster-name<span class="token operator">></span> <span class="token parameter variable">--kubeconfig</span> <span class="token operator">&lt;</span>kubeconfig-name<span class="token operator">></span>
+如
+kind <span class="token builtin class-name">export</span> kubeconfig <span class="token parameter variable">--name</span> ws-cluster <span class="token parameter variable">--kubeconfig</span> config_ws
+<span class="token comment">#Set kubectl context to "kind-ws-cluster"</span>
+当前目录下生成了一个config_ws
+
+加载镜像到集群内
+kind load docker-image <span class="token operator">&lt;</span>image-name<span class="token operator">></span> <span class="token parameter variable">--name</span> <span class="token operator">&lt;</span>cluster-name<span class="token operator">></span>
+
+停止与启动集群
+<span class="token function">docker</span> stop <span class="token variable"><span class="token variable">$(</span><span class="token function">docker</span> <span class="token function">ps</span> <span class="token parameter variable">-q</span> <span class="token parameter variable">-f</span> <span class="token string">"label=io.x-k8s.kind.cluster=&lt;cluster-name>"</span><span class="token variable">)</span></span>
+<span class="token function">docker</span> start <span class="token variable"><span class="token variable">$(</span><span class="token function">docker</span> <span class="token function">ps</span> <span class="token parameter variable">-aq</span> <span class="token parameter variable">-f</span> <span class="token string">"label=io.x-k8s.kind.cluster=&lt;cluster-name>"</span><span class="token variable">)</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6558,36 +6663,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7052,13 +7127,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8099,13 +8174,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8558,14 +8633,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8573,14 +8648,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

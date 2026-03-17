@@ -565,22 +565,144 @@
 </tr>
 </tbody></table>
 <h2 id="DHCP服务器搭建"><a href="#DHCP服务器搭建" class="headerlink" title="DHCP服务器搭建"></a>DHCP服务器搭建</h2><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250402182723447.png"></p>
-<h3 id="交换机配置"><a href="#交换机配置" class="headerlink" title="交换机配置"></a>交换机配置</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">enable</span></span><br><span class="line">configure</span><br><span class="line">vlan 1,10,20,30,40</span><br><span class="line"><span class="built_in">exit</span></span><br><span class="line"></span><br><span class="line">interface e0/1</span><br><span class="line">switchport mode access</span><br><span class="line">switchport access vlan 10</span><br><span class="line"></span><br><span class="line">int e0/2</span><br><span class="line">sw m ac</span><br><span class="line">sw ac v 20</span><br><span class="line"></span><br><span class="line">int e0/0</span><br><span class="line">sw t en d</span><br><span class="line">sw m t </span><br><span class="line"></span><br><span class="line">int range e0/0,e0/3</span><br><span class="line">switchport trunk encapsulation dot1q</span><br><span class="line">switchport mode trunk</span><br><span class="line"></span><br><span class="line">int e0/3</span><br><span class="line">switchport trunk allowed vlan remove 10,20</span><br></pre></td></tr></table></figure>
+<h3 id="交换机配置"><a href="#交换机配置" class="headerlink" title="交换机配置"></a>交换机配置</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">enable</span>
+configure
+vlan <span class="token number">1,10</span>,20,30,40
+<span class="token builtin class-name">exit</span>
 
-<h2 id="dhcp服务器配置"><a href="#dhcp服务器配置" class="headerlink" title="dhcp服务器配置"></a>dhcp服务器配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># rhel/centos——dhcp-server</span></span><br><span class="line"><span class="comment"># ubuntu——isc-dhcp-server</span></span><br><span class="line"></span><br><span class="line">yum -y install dhcp-server</span><br><span class="line"></span><br><span class="line">\<span class="built_in">cp</span> /usr/share/doc/dhcp-server/dhcpd.conf.example /etc/dhcp/dhcpd.conf</span><br></pre></td></tr></table></figure>
+interface e0/1
+switchport mode access
+switchport access vlan <span class="token number">10</span>
 
-<h3 id="dhcp配置文件解析"><a href="#dhcp配置文件解析" class="headerlink" title="dhcp配置文件解析"></a>dhcp配置文件解析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">/etc/dhcp/dhcpd.conf</span><br><span class="line"></span><br><span class="line">option domain-name <span class="string">&quot;example.org&quot;</span>; ;分配的域(全局)</span><br><span class="line">option domain-name-servers ns1.example.org, ns2.example.org; ;dns服务器(全局)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 租期时间(s)</span></span><br><span class="line">default-lease-time 600;</span><br><span class="line"><span class="comment"># 最长租期时间</span></span><br><span class="line">max-lease-time 7200;</span><br><span class="line"></span><br><span class="line"><span class="comment">#authoritative;如果是官方，就打开授权</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 给10.152.187.0/24网段分配地址</span></span><br><span class="line">subnet 10.152.187.0 netmask 255.255.255.0 &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># range 分配地址范围</span></span><br><span class="line">subnet 10.254.239.0 netmask 255.255.255.224 &#123;</span><br><span class="line">  range 10.254.239.10 10.254.239.20;</span><br><span class="line">  option routers rtr-239-0-1.example.org, rtr-239-0-2.example.org; (局部)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># 每次拿地址都不同dynamic-bootp</span></span><br><span class="line">	range dynamic-bootp 10.254.239.10 10.254.239.20;</span><br><span class="line"></span><br><span class="line">一堆option不列举了</span><br><span class="line"></span><br><span class="line"><span class="comment"># 针对主机做特定配置</span></span><br><span class="line">host passacaglia &#123;</span><br><span class="line"><span class="comment"># 如果网卡mac地址是这个</span></span><br><span class="line">  hardware ethernet 0:0:c0:5d:bd:95;</span><br><span class="line"><span class="comment"># 根据配置文件进行配置，用来做pve的</span></span><br><span class="line">  filename <span class="string">&quot;vmunix.passacaglia&quot;</span>;</span><br><span class="line"><span class="comment"># 指定host名字</span></span><br><span class="line">  server-name <span class="string">&quot;toccata.example.com&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+int e0/2
+sw m ac
+sw ac <span class="token function">v</span> <span class="token number">20</span>
+
+int e0/0
+sw t en d
+sw m t 
+
+int range e0/0,e0/3
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+int e0/3
+switchport trunk allowed vlan remove <span class="token number">10,20</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="dhcp服务器配置"><a href="#dhcp服务器配置" class="headerlink" title="dhcp服务器配置"></a>dhcp服务器配置</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># rhel/centos——dhcp-server</span>
+<span class="token comment"># ubuntu——isc-dhcp-server</span>
+
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> dhcp-server
+
+<span class="token punctuation">\</span>cp /usr/share/doc/dhcp-server/dhcpd.conf.example /etc/dhcp/dhcpd.conf<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="dhcp配置文件解析"><a href="#dhcp配置文件解析" class="headerlink" title="dhcp配置文件解析"></a>dhcp配置文件解析</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">/etc/dhcp/dhcpd.conf
+
+option domain-name <span class="token string">"example.org"</span><span class="token punctuation">;</span> <span class="token punctuation">;</span>分配的域<span class="token punctuation">(</span>全局<span class="token punctuation">)</span>
+option domain-name-servers ns1.example.org, ns2.example.org<span class="token punctuation">;</span> <span class="token punctuation">;</span>dns服务器<span class="token punctuation">(</span>全局<span class="token punctuation">)</span>
+
+<span class="token comment"># 租期时间(s)</span>
+default-lease-time <span class="token number">600</span><span class="token punctuation">;</span>
+<span class="token comment"># 最长租期时间</span>
+max-lease-time <span class="token number">7200</span><span class="token punctuation">;</span>
+
+<span class="token comment">#authoritative;如果是官方，就打开授权</span>
+
+<span class="token comment"># 给10.152.187.0/24网段分配地址</span>
+subnet <span class="token number">10.152</span>.187.0 netmask <span class="token number">255.255</span>.255.0 <span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># range 分配地址范围</span>
+subnet <span class="token number">10.254</span>.239.0 netmask <span class="token number">255.255</span>.255.224 <span class="token punctuation">&#123;</span>
+  range <span class="token number">10.254</span>.239.10 <span class="token number">10.254</span>.239.20<span class="token punctuation">;</span>
+  option routers rtr-239-0-1.example.org, rtr-239-0-2.example.org<span class="token punctuation">;</span> <span class="token punctuation">(</span>局部<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment"># 每次拿地址都不同dynamic-bootp</span>
+	range dynamic-bootp <span class="token number">10.254</span>.239.10 <span class="token number">10.254</span>.239.20<span class="token punctuation">;</span>
+
+一堆option不列举了
+
+<span class="token comment"># 针对主机做特定配置</span>
+<span class="token function">host</span> passacaglia <span class="token punctuation">&#123;</span>
+<span class="token comment"># 如果网卡mac地址是这个</span>
+  hardware ethernet <span class="token number">0</span>:0:c0:5d:bd:95<span class="token punctuation">;</span>
+<span class="token comment"># 根据配置文件进行配置，用来做pve的</span>
+  filename <span class="token string">"vmunix.passacaglia"</span><span class="token punctuation">;</span>
+<span class="token comment"># 指定host名字</span>
+  server-name <span class="token string">"toccata.example.com"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h3><p>其中vlan1也需要配置（VLAN 1默认放行是二层行为，DHCP依赖三层子网划分</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">default-lease-time 600;</span><br><span class="line">max-lease-time 7200;</span><br><span class="line">log-facility local7;</span><br><span class="line"></span><br><span class="line">subnet 192.168.1.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  range 192.168.1.100 192.168.1.200;</span><br><span class="line">  option routers 192.168.1.1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subnet 192.168.10.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  range 192.168.10.100 192.168.10.200;</span><br><span class="line">  option routers 192.168.10.1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subnet 192.168.20.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  range 192.168.20.100 192.168.20.200;</span><br><span class="line">  option routers 192.168.20.1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subnet 192.168.30.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  range 192.168.30.100 192.168.30.200;</span><br><span class="line">  option routers 192.168.30.1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">subnet 192.168.40.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  range 192.168.40.100 192.168.40.200;</span><br><span class="line">  option routers 192.168.40.1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">default-lease-time <span class="token number">600</span><span class="token punctuation">;</span>
+max-lease-time <span class="token number">7200</span><span class="token punctuation">;</span>
+log-facility local7<span class="token punctuation">;</span>
 
-<h3 id="网卡配置"><a href="#网卡配置" class="headerlink" title="网卡配置"></a>网卡配置</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">nmcli con add con-name eth1-vlan1 <span class="built_in">type</span> ethernet ifname eth1 ipv4.addresses 192.168.1.1/24 ipv4.method manual</span><br><span class="line">nmcli con add con-name eth1-vlan10 <span class="built_in">type</span> vlan <span class="built_in">id</span> 10 ifname eth1-vlan10 \</span><br><span class="line">dev eth1 ipv4.addresses 192.168.10.1/24 ipv4.method manual</span><br><span class="line"></span><br><span class="line">nmcli con add con-name eth1-vlan20 <span class="built_in">type</span> vlan <span class="built_in">id</span> 20 dev eth1 ifname eth1-vlan20 ipv4.addresses 192.168.20.1/24 ipv4.method manual</span><br><span class="line">nmcli con add con-name eth1-vlan30 <span class="built_in">type</span> vlan <span class="built_in">id</span> 30 dev eth1 ifname eth1-vlan30 ipv4.addresses 192.168.30.1/24 ipv4.method manual</span><br><span class="line">nmcli con add con-name eth1-vlan40 <span class="built_in">type</span> vlan <span class="built_in">id</span> 40 dev eth1 ifname eth1-vlan40 ipv4.addresses 192.168.40.1/24 ipv4.method manual</span><br><span class="line"></span><br><span class="line"> ip a | grep 192</span><br><span class="line">    inet 192.168.1.1/24 brd 192.168.1.255 scope global noprefixroute eth1</span><br><span class="line">    inet 192.168.10.1/24 brd 192.168.10.255 scope global noprefixroute eth1-vlan10</span><br><span class="line">    inet 192.168.20.1/24 brd 192.168.20.255 scope global noprefixroute eth1-vlan20</span><br><span class="line">    inet 192.168.30.1/24 brd 192.168.30.255 scope global noprefixroute eth1-vlan30</span><br><span class="line">    inet 192.168.40.1/24 brd 192.168.40.255 scope global noprefixroute eth1-vlan40</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+subnet <span class="token number">192.168</span>.1.0 netmask <span class="token number">255.255</span>.255.0 <span class="token punctuation">&#123;</span>
+  range <span class="token number">192.168</span>.1.100 <span class="token number">192.168</span>.1.200<span class="token punctuation">;</span>
+  option routers <span class="token number">192.168</span>.1.1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
 
-<h3 id="dhcp测试"><a href="#dhcp测试" class="headerlink" title="dhcp测试"></a>dhcp测试</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测试</span></span><br><span class="line">dhcpd -t</span><br><span class="line">Internet Systems Consortium DHCP Server 4.4.2b1</span><br><span class="line">Copyright 2004-2019 Internet Systems Consortium.</span><br><span class="line">All rights reserved.</span><br><span class="line">For info, please visit https://www.isc.org/software/dhcp/</span><br><span class="line">ldap_gssapi_principal is not <span class="built_in">set</span>,GSSAPI Authentication <span class="keyword">for</span> LDAP will not be used</span><br><span class="line">Not searching LDAP since ldap-server, ldap-port and ldap-base-dn were not specified <span class="keyword">in</span> the config file</span><br><span class="line">Config file: /etc/dhcp/dhcpd.conf</span><br><span class="line">Database file: /var/lib/dhcpd/dhcpd.leases</span><br><span class="line">PID file: /var/run/dhcpd.pid</span><br><span class="line">Source compiled to use binary-leases</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> dhcpd --now</span><br><span class="line"></span><br><span class="line">此时node1和node2都获得了ip</span><br><span class="line">是因为链路使用access，所以不需要打tag也可以获取到流量</span><br><span class="line">而node3因为使用了trunk，必须使用带tag的接口来接受，所以只能获取到vlan 1分配的ip</span><br></pre></td></tr></table></figure>
+subnet <span class="token number">192.168</span>.10.0 netmask <span class="token number">255.255</span>.255.0 <span class="token punctuation">&#123;</span>
+  range <span class="token number">192.168</span>.10.100 <span class="token number">192.168</span>.10.200<span class="token punctuation">;</span>
+  option routers <span class="token number">192.168</span>.10.1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+subnet <span class="token number">192.168</span>.20.0 netmask <span class="token number">255.255</span>.255.0 <span class="token punctuation">&#123;</span>
+  range <span class="token number">192.168</span>.20.100 <span class="token number">192.168</span>.20.200<span class="token punctuation">;</span>
+  option routers <span class="token number">192.168</span>.20.1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+subnet <span class="token number">192.168</span>.30.0 netmask <span class="token number">255.255</span>.255.0 <span class="token punctuation">&#123;</span>
+  range <span class="token number">192.168</span>.30.100 <span class="token number">192.168</span>.30.200<span class="token punctuation">;</span>
+  option routers <span class="token number">192.168</span>.30.1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+subnet <span class="token number">192.168</span>.40.0 netmask <span class="token number">255.255</span>.255.0 <span class="token punctuation">&#123;</span>
+  range <span class="token number">192.168</span>.40.100 <span class="token number">192.168</span>.40.200<span class="token punctuation">;</span>
+  option routers <span class="token number">192.168</span>.40.1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="网卡配置"><a href="#网卡配置" class="headerlink" title="网卡配置"></a>网卡配置</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nmcli con <span class="token function">add</span> con-name eth1-vlan1 <span class="token builtin class-name">type</span> ethernet ifname eth1 ipv4.addresses <span class="token number">192.168</span>.1.1/24 ipv4.method manual
+nmcli con <span class="token function">add</span> con-name eth1-vlan10 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">10</span> ifname eth1-vlan10 <span class="token punctuation">\</span>
+dev eth1 ipv4.addresses <span class="token number">192.168</span>.10.1/24 ipv4.method manual
+
+nmcli con <span class="token function">add</span> con-name eth1-vlan20 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">20</span> dev eth1 ifname eth1-vlan20 ipv4.addresses <span class="token number">192.168</span>.20.1/24 ipv4.method manual
+nmcli con <span class="token function">add</span> con-name eth1-vlan30 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">30</span> dev eth1 ifname eth1-vlan30 ipv4.addresses <span class="token number">192.168</span>.30.1/24 ipv4.method manual
+nmcli con <span class="token function">add</span> con-name eth1-vlan40 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">40</span> dev eth1 ifname eth1-vlan40 ipv4.addresses <span class="token number">192.168</span>.40.1/24 ipv4.method manual
+
+ <span class="token function">ip</span> a <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">192</span>
+    inet <span class="token number">192.168</span>.1.1/24 brd <span class="token number">192.168</span>.1.255 scope global noprefixroute eth1
+    inet <span class="token number">192.168</span>.10.1/24 brd <span class="token number">192.168</span>.10.255 scope global noprefixroute eth1-vlan10
+    inet <span class="token number">192.168</span>.20.1/24 brd <span class="token number">192.168</span>.20.255 scope global noprefixroute eth1-vlan20
+    inet <span class="token number">192.168</span>.30.1/24 brd <span class="token number">192.168</span>.30.255 scope global noprefixroute eth1-vlan30
+    inet <span class="token number">192.168</span>.40.1/24 brd <span class="token number">192.168</span>.40.255 scope global noprefixroute eth1-vlan40
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="dhcp测试"><a href="#dhcp测试" class="headerlink" title="dhcp测试"></a>dhcp测试</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 测试</span>
+dhcpd <span class="token parameter variable">-t</span>
+Internet Systems Consortium DHCP Server <span class="token number">4.4</span>.2b1
+Copyright <span class="token number">2004</span>-2019 Internet Systems Consortium.
+All rights reserved.
+For info, please visit https://www.isc.org/software/dhcp/
+ldap_gssapi_principal is not set,GSSAPI Authentication <span class="token keyword">for</span> LDAP will not be used
+Not searching LDAP since ldap-server, ldap-port and ldap-base-dn were not specified <span class="token keyword">in</span> the config <span class="token function">file</span>
+Config file: /etc/dhcp/dhcpd.conf
+Database file: /var/lib/dhcpd/dhcpd.leases
+PID file: /var/run/dhcpd.pid
+Source compiled to use binary-leases
+
+systemctl <span class="token builtin class-name">enable</span> dhcpd <span class="token parameter variable">--now</span>
+
+此时node1和node2都获得了ip
+是因为链路使用access，所以不需要打tag也可以获取到流量
+而node3因为使用了trunk，必须使用带tag的接口来接受，所以只能获取到vlan <span class="token number">1</span>分配的ip<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250402192136024.png"></p>
 <p><strong>添加node3 vlan网卡配置</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">nmcli con add con-name eth0-vlan30 ifname eth0-vlan30 <span class="built_in">type</span> vlan <span class="built_in">id</span> 30 dev eth0 </span><br><span class="line">nmcli con add con-name eth0-vlan40 ifname eth0-vlan40 <span class="built_in">type</span> vlan <span class="built_in">id</span> 40 dev eth0 </span><br><span class="line"></span><br><span class="line">然后可以获取到了地址</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nmcli con <span class="token function">add</span> con-name eth0-vlan30 ifname eth0-vlan30 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">30</span> dev eth0 
+nmcli con <span class="token function">add</span> con-name eth0-vlan40 ifname eth0-vlan40 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">40</span> dev eth0 
+
+然后可以获取到了地址<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250402192755747.png"></p>
 
@@ -6642,36 +6764,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7136,13 +7228,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8183,13 +8275,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8642,14 +8734,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8657,14 +8749,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

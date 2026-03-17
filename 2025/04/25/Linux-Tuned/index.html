@@ -538,9 +538,77 @@
 <li><strong>系统默认配置文件位置&#x2F;usr&#x2F;lib&#x2F;tuned&#x2F;</strong></li>
 <li><strong>用户自定义配置文件位置&#x2F;etc&#x2F;tuned&#x2F;</strong></li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 部署tuned服务</span></span><br><span class="line">yum -y install tuned</span><br><span class="line">apt -y install tuned</span><br><span class="line">systemctl <span class="built_in">enable</span> tuned.service --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前模式</span></span><br><span class="line">tuned-adm active</span><br><span class="line">Current active profile: virtual-guest</span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活配置</span></span><br><span class="line">tuned-adm profile &lt;模式名称&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看可用模式</span></span><br><span class="line">tuned-adm list</span><br><span class="line">Available profiles:</span><br><span class="line">- accelerator-performance     - Throughput performance based tuning with disabled higher latency STOP states</span><br><span class="line">- aws                         - Optimize <span class="keyword">for</span> aws ec2 instances</span><br><span class="line">- balanced                    - General non-specialized tuned profile</span><br><span class="line">- balanced-battery            - Balanced profile biased towards power savings changes <span class="keyword">for</span> battery</span><br><span class="line">- desktop                     - Optimize <span class="keyword">for</span> the desktop use-case</span><br><span class="line">- hpc-compute                 - Optimize <span class="keyword">for</span> HPC compute workloads</span><br><span class="line">- intel-sst                   - Configure <span class="keyword">for</span> Intel Speed Select Base Frequency</span><br><span class="line">- latency-performance         - Optimize <span class="keyword">for</span> deterministic performance at the cost of increased power consumption</span><br><span class="line">- network-latency             - Optimize <span class="keyword">for</span> deterministic performance at the cost of increased power consumption, focused on low latency network performance</span><br><span class="line">- network-throughput          - Optimize <span class="keyword">for</span> streaming network throughput, generally only necessary on older CPUs or 40G+ networks</span><br><span class="line">- optimize-serial-console     - Optimize <span class="keyword">for</span> serial console use.</span><br><span class="line">- powersave                   - Optimize <span class="keyword">for</span> low power consumption</span><br><span class="line">- throughput-performance      - Broadly applicable tuning that provides excellent performance across a variety of common server workloads</span><br><span class="line">- virtual-guest               - Optimize <span class="keyword">for</span> running inside a virtual guest</span><br><span class="line">- virtual-host                - Optimize <span class="keyword">for</span> running KVM guests</span><br><span class="line">Current active profile: virtual-guest</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置文件</span></span><br><span class="line"><span class="built_in">ls</span> /usr/lib/tuned/</span><br><span class="line">accelerator-performance  desktop      latency-performance      powersave               virtual-host</span><br><span class="line">aws                      <span class="built_in">functions</span>    network-latency          recommend.d</span><br><span class="line">balanced                 hpc-compute  network-throughput       throughput-performance</span><br><span class="line">balanced-battery         intel-sst    optimize-serial-console  virtual-guest</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 部署tuned服务</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> tuned
+<span class="token function">apt</span> <span class="token parameter variable">-y</span> <span class="token function">install</span> tuned
+systemctl <span class="token builtin class-name">enable</span> tuned.service <span class="token parameter variable">--now</span>
 
-<h3 id="配置文件解析"><a href="#配置文件解析" class="headerlink" title="配置文件解析"></a><strong>配置文件解析</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /usr/lib/tuned/virtual-guest/tuned.conf</span><br><span class="line">[main]</span><br><span class="line">summary=Optimize <span class="keyword">for</span> running inside a virtual guest <span class="comment"># 备注/描述</span></span><br><span class="line">include=throughput-performance <span class="comment"># 表示继承自 throughput-performance 模式</span></span><br><span class="line"></span><br><span class="line">[sysctl]             <span class="comment"># 内核可调项</span></span><br><span class="line">vm.dirty_ratio = 30  <span class="comment"># 内存中“脏页”最大占比</span></span><br><span class="line">vm.swappiness = 30   <span class="comment"># 控制系统使用交换分区的倾向程度</span></span><br><span class="line"> </span><br><span class="line">除此之外还有</span><br><span class="line">[cpu]  <span class="comment"># 调整 CPU 相关设置（如调节器、频率、节能模式）</span></span><br><span class="line">governor=performance</span><br><span class="line">energy_perf_bias=performance</span><br><span class="line"></span><br><span class="line">[script] <span class="comment"># 在 Tuned 配置激活或停用时运行自定义脚本</span></span><br><span class="line">script=/usr/local/bin/custom_optimize.sh</span><br><span class="line"></span><br><span class="line">[variables] <span class="comment"># 定义变量供其他配置块引用</span></span><br><span class="line">MY_DEVICES=sda, sdb</span><br><span class="line"></span><br><span class="line">[disk] <span class="comment"># 优化磁盘 I/O 行为（调度器、APM、缓存策略）</span></span><br><span class="line">devices=<span class="variable">$&#123;MY_DEVICES&#125;</span></span><br><span class="line">scheduler=mq-deadline</span><br><span class="line">readahead=4096</span><br><span class="line"></span><br><span class="line">[service] <span class="comment"># 管理系统服务: 启用/禁用</span></span><br><span class="line">service.firewalld=start,<span class="built_in">enable</span>  <span class="comment"># 启动并启用服务</span></span><br><span class="line">service.firewalld=stop,<span class="built_in">disable</span>  <span class="comment"># 停止并禁用服务</span></span><br><span class="line"></span><br><span class="line">[bootloader] <span class="comment"># 修改内核启动参数</span></span><br><span class="line">cmdline=mitigations=off isolcpus=1-4</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 查看当前模式</span>
+tuned-adm active
+Current active profile: virtual-guest
+
+<span class="token comment"># 激活配置</span>
+tuned-adm profile <span class="token operator">&lt;</span>模式名称<span class="token operator">></span>
+
+<span class="token comment"># 查看可用模式</span>
+tuned-adm list
+Available profiles:
+- accelerator-performance     - Throughput performance based tuning with disabled higher latency STOP states
+- aws                         - Optimize <span class="token keyword">for</span> aws ec2 instances
+- balanced                    - General non-specialized tuned profile
+- balanced-battery            - Balanced profile biased towards power savings changes <span class="token keyword">for</span> battery
+- desktop                     - Optimize <span class="token keyword">for</span> the desktop use-case
+- hpc-compute                 - Optimize <span class="token keyword">for</span> HPC compute workloads
+- intel-sst                   - Configure <span class="token keyword">for</span> Intel Speed Select Base Frequency
+- latency-performance         - Optimize <span class="token keyword">for</span> deterministic performance at the cost of increased power consumption
+- network-latency             - Optimize <span class="token keyword">for</span> deterministic performance at the cost of increased power consumption, focused on low latency network performance
+- network-throughput          - Optimize <span class="token keyword">for</span> streaming network throughput, generally only necessary on older CPUs or 40G+ networks
+- optimize-serial-console     - Optimize <span class="token keyword">for</span> serial console use.
+- powersave                   - Optimize <span class="token keyword">for</span> low power consumption
+- throughput-performance      - Broadly applicable tuning that provides excellent performance across a variety of common server workloads
+- virtual-guest               - Optimize <span class="token keyword">for</span> running inside a virtual guest
+- virtual-host                - Optimize <span class="token keyword">for</span> running KVM guests
+Current active profile: virtual-guest
+
+<span class="token comment"># 配置文件</span>
+<span class="token function">ls</span> /usr/lib/tuned/
+accelerator-performance  desktop      latency-performance      powersave               virtual-host
+aws                      functions    network-latency          recommend.d
+balanced                 hpc-compute  network-throughput       throughput-performance
+balanced-battery         intel-sst    optimize-serial-console  virtual-guest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="配置文件解析"><a href="#配置文件解析" class="headerlink" title="配置文件解析"></a><strong>配置文件解析</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> /usr/lib/tuned/virtual-guest/tuned.conf
+<span class="token punctuation">[</span>main<span class="token punctuation">]</span>
+<span class="token assign-left variable">summary</span><span class="token operator">=</span>Optimize <span class="token keyword">for</span> running inside a virtual guest <span class="token comment"># 备注/描述</span>
+<span class="token assign-left variable">include</span><span class="token operator">=</span>throughput-performance <span class="token comment"># 表示继承自 throughput-performance 模式</span>
+
+<span class="token punctuation">[</span>sysctl<span class="token punctuation">]</span>             <span class="token comment"># 内核可调项</span>
+vm.dirty_ratio <span class="token operator">=</span> <span class="token number">30</span>  <span class="token comment"># 内存中“脏页”最大占比</span>
+vm.swappiness <span class="token operator">=</span> <span class="token number">30</span>   <span class="token comment"># 控制系统使用交换分区的倾向程度</span>
+ 
+除此之外还有
+<span class="token punctuation">[</span>cpu<span class="token punctuation">]</span>  <span class="token comment"># 调整 CPU 相关设置（如调节器、频率、节能模式）</span>
+<span class="token assign-left variable">governor</span><span class="token operator">=</span>performance
+<span class="token assign-left variable">energy_perf_bias</span><span class="token operator">=</span>performance
+
+<span class="token punctuation">[</span>script<span class="token punctuation">]</span> <span class="token comment"># 在 Tuned 配置激活或停用时运行自定义脚本</span>
+<span class="token assign-left variable">script</span><span class="token operator">=</span>/usr/local/bin/custom_optimize.sh
+
+<span class="token punctuation">[</span>variables<span class="token punctuation">]</span> <span class="token comment"># 定义变量供其他配置块引用</span>
+<span class="token assign-left variable">MY_DEVICES</span><span class="token operator">=</span>sda, sdb
+
+<span class="token punctuation">[</span>disk<span class="token punctuation">]</span> <span class="token comment"># 优化磁盘 I/O 行为（调度器、APM、缓存策略）</span>
+<span class="token assign-left variable">devices</span><span class="token operator">=</span><span class="token variable">$&#123;MY_DEVICES&#125;</span>
+<span class="token assign-left variable">scheduler</span><span class="token operator">=</span>mq-deadline
+<span class="token assign-left variable">readahead</span><span class="token operator">=</span><span class="token number">4096</span>
+
+<span class="token punctuation">[</span>service<span class="token punctuation">]</span> <span class="token comment"># 管理系统服务: 启用/禁用</span>
+<span class="token assign-left variable">service.firewalld</span><span class="token operator">=</span>start,enable  <span class="token comment"># 启动并启用服务</span>
+<span class="token assign-left variable">service.firewalld</span><span class="token operator">=</span>stop,disable  <span class="token comment"># 停止并禁用服务</span>
+
+<span class="token punctuation">[</span>bootloader<span class="token punctuation">]</span> <span class="token comment"># 修改内核启动参数</span>
+<span class="token assign-left variable">cmdline</span><span class="token operator">=</span>mitigations<span class="token operator">=</span>off <span class="token assign-left variable">isolcpus</span><span class="token operator">=</span><span class="token number">1</span>-4
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6599,36 +6667,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7093,13 +7131,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8140,13 +8178,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8599,14 +8637,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8614,14 +8652,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -519,34 +519,385 @@
 <p>9.外部访问<br>外部访问入口gateway，通过gateway访问frontend</p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506152959.png"></p>
 <h1 id="Istio部署，开启与关闭"><a href="#Istio部署，开启与关闭" class="headerlink" title="Istio部署，开启与关闭"></a>Istio部署，开启与关闭</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>k8s版本 1.28<br>Istio版本 1.21<br>安装需要的镜像：<br>docker.io&#x2F;istio&#x2F;pilot:1.21.0<br>docker.io&#x2F;istio&#x2F;proxyv2:1.21.0<br>可以直接拉取也可以在github上下载</p>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">tar xf istio-1.21.0-linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cd</span> istio-1.21.0/</span><br><span class="line"><span class="built_in">cp</span> bin/istioctl /bin/</span><br><span class="line"><span class="comment">#安装istio</span></span><br><span class="line">istioctl install --<span class="built_in">set</span> profile=demo -y</span><br><span class="line"><span class="comment">#看网络条件，我直接一次性装完了，如果网络差可能需要先拉取docker镜像，再ctr导入镜像</span></span><br><span class="line">安装模式profile=demo：适应生产环境，安装3个pod</span><br><span class="line">profile=default：最小配置，仅包含istiod与ingressgateway（一般测试用</span><br><span class="line">profile=minimal：最小化安装，仅包含istiod（一般测试用</span><br><span class="line"></span><br><span class="line"><span class="comment">#卸载istio命令</span></span><br><span class="line">istioctl manifest generate --<span class="built_in">set</span> profile=demo | kubectl delete -f -</span><br></pre></td></tr></table></figure>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">tar</span> xf istio-1.21.0-linux-amd64.tar.gz
+<span class="token builtin class-name">cd</span> istio-1.21.0/
+<span class="token function">cp</span> bin/istioctl /bin/
+<span class="token comment">#安装istio</span>
+istioctl <span class="token function">install</span> <span class="token parameter variable">--set</span> <span class="token assign-left variable">profile</span><span class="token operator">=</span>demo <span class="token parameter variable">-y</span>
+<span class="token comment">#看网络条件，我直接一次性装完了，如果网络差可能需要先拉取docker镜像，再ctr导入镜像</span>
+安装模式profile<span class="token operator">=</span>demo：适应生产环境，安装3个pod
+<span class="token assign-left variable">profile</span><span class="token operator">=</span>default：最小配置，仅包含istiod与ingressgateway（一般测试用
+<span class="token assign-left variable">profile</span><span class="token operator">=</span>minimal：最小化安装，仅包含istiod（一般测试用
+
+<span class="token comment">#卸载istio命令</span>
+istioctl manifest generate <span class="token parameter variable">--set</span> <span class="token assign-left variable">profile</span><span class="token operator">=</span>demo <span class="token operator">|</span> kubectl delete <span class="token parameter variable">-f</span> -<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506152642.png"></p>
-<h2 id="关闭istio自动注入"><a href="#关闭istio自动注入" class="headerlink" title="关闭istio自动注入"></a>关闭istio自动注入</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">kubectl get ns --show-labels</span><br><span class="line">NAME                  STATUS   AGE     LABELS</span><br><span class="line">default               Active   35d     istio-injection=enabled,kubernetes.io/metadata.name=default</span><br><span class="line">devlopment            Active   8d      kubernetes.io/metadata.name=devlopment</span><br><span class="line">istio-system          Active   7d2h    kubernetes.io/metadata.name=istio-system</span><br><span class="line">jenkins-k8s           Active   9d      kubernetes.io/metadata.name=jenkins-k8s</span><br><span class="line">kube-node-lease       Active   35d     kubernetes.io/metadata.name=kube-node-lease</span><br><span class="line">kube-public           Active   35d     kubernetes.io/metadata.name=kube-public</span><br><span class="line">kube-system           Active   35d     kubernetes.io/metadata.name=kube-system</span><br><span class="line">letsencrypt-staging   Active   5d22h   kubernetes.io/metadata.name=letsencrypt-staging</span><br><span class="line">monitor-sa            Active   31d     kubernetes.io/metadata.name=monitor-sa</span><br><span class="line"></span><br><span class="line">因为default ns下有istio-injection=enabled，</span><br><span class="line">默认在defaultns下创建pod，就会自动注入代理容器</span><br><span class="line"></span><br><span class="line"><span class="comment">#关闭功能</span></span><br><span class="line">kubectl label ns default istio-injection-</span><br></pre></td></tr></table></figure>
+<h2 id="关闭istio自动注入"><a href="#关闭istio自动注入" class="headerlink" title="关闭istio自动注入"></a>关闭istio自动注入</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get ns --show-labels
+NAME                  STATUS   AGE     LABELS
+default               Active   35d     istio-injection<span class="token operator">=</span>enabled,kubernetes.io/metadata.name<span class="token operator">=</span>default
+devlopment            Active   8d      kubernetes.io/metadata.name<span class="token operator">=</span>devlopment
+istio-system          Active   7d2h    kubernetes.io/metadata.name<span class="token operator">=</span>istio-system
+jenkins-k8s           Active   9d      kubernetes.io/metadata.name<span class="token operator">=</span>jenkins-k8s
+kube-node-lease       Active   35d     kubernetes.io/metadata.name<span class="token operator">=</span>kube-node-lease
+kube-public           Active   35d     kubernetes.io/metadata.name<span class="token operator">=</span>kube-public
+kube-system           Active   35d     kubernetes.io/metadata.name<span class="token operator">=</span>kube-system
+letsencrypt-staging   Active   5d22h   kubernetes.io/metadata.name<span class="token operator">=</span>letsencrypt-staging
+monitor-sa            Active   31d     kubernetes.io/metadata.name<span class="token operator">=</span>monitor-sa
+
+因为default ns下有istio-injection<span class="token operator">=</span>enabled，
+默认在defaultns下创建pod，就会自动注入代理容器
+
+<span class="token comment">#关闭功能</span>
+kubectl label ns default istio-injection-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="Istio使用——以bookinfo应用为例"><a href="#Istio使用——以bookinfo应用为例" class="headerlink" title="Istio使用——以bookinfo应用为例"></a>Istio使用——以bookinfo应用为例</h1><p>bookinfo在线书店，是istio自带的一个案例<br>分为四个单独的微服务：<br>1.productpage会调用details和reviews两个微服务用来生成界面<br>2.details包含书籍信息<br>3.review包含书籍评论<br>4.ratings包含书籍评级信息</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#为了让istio能自动注入sidecar，default的ns打上标签，istio-injection=enabled</span></span><br><span class="line">kubectl label ns default istio-injection=enabled</span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="built_in">cd</span> /root/Istio/istio-1.21.0/samples/bookinfo/platform/kube</span><br><span class="line">kubectl apply -f bookinfo.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建网关与虚拟服务</span></span><br><span class="line">/root/Istio/istio-1.21.0/samples/bookinfo/networking</span><br><span class="line">kubectl apply -f bookinfo-gateway.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看状态</span></span><br><span class="line">kubectl get gateway</span><br><span class="line">NAME               AGE</span><br><span class="line">bookinfo-gateway   35s</span><br><span class="line"></span><br><span class="line">kubectl get virtualservice</span><br><span class="line">NAME       GATEWAYS               HOSTS   AGE</span><br><span class="line">bookinfo   [<span class="string">&quot;bookinfo-gateway&quot;</span>]   [<span class="string">&quot;*&quot;</span>]   54s</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看svc</span></span><br><span class="line">kubectl get svc -n istio-system</span><br><span class="line">NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                                                                      AGE</span><br><span class="line">istio-egressgateway    ClusterIP      10.102.255.76   &lt;none&gt;        80/TCP,443/TCP                                                               64m</span><br><span class="line">istio-ingressgateway   LoadBalancer   10.107.22.5     &lt;pending&gt;     15021:31606/TCP,80:32510/TCP,443:32060/TCP,31400:32635/TCP,15443:31893/TCP   64m</span><br><span class="line">istiod                 ClusterIP      10.105.99.16    &lt;none&gt;        15010/TCP,15012/TCP,443/TCP,15014/TCP                                        64m</span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">浏览器访问</span><br><span class="line">http://apiserver:32510/productpage</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#为了让istio能自动注入sidecar，default的ns打上标签，istio-injection=enabled</span>
+kubectl label ns default istio-injection<span class="token operator">=</span>enabled
+
+<span class="token comment">#</span>
+<span class="token builtin class-name">cd</span> /root/Istio/istio-1.21.0/samples/bookinfo/platform/kube
+kubectl apply <span class="token parameter variable">-f</span> bookinfo.yaml
+
+<span class="token comment">#创建网关与虚拟服务</span>
+/root/Istio/istio-1.21.0/samples/bookinfo/networking
+kubectl apply <span class="token parameter variable">-f</span> bookinfo-gateway.yaml
+
+<span class="token comment">#查看状态</span>
+kubectl get gateway
+NAME               AGE
+bookinfo-gateway   35s
+
+kubectl get virtualservice
+NAME       GATEWAYS               HOSTS   AGE
+bookinfo   <span class="token punctuation">[</span><span class="token string">"bookinfo-gateway"</span><span class="token punctuation">]</span>   <span class="token punctuation">[</span><span class="token string">"*"</span><span class="token punctuation">]</span>   54s
+
+<span class="token comment">#查看svc</span>
+kubectl get svc <span class="token parameter variable">-n</span> istio-system
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP   PORT<span class="token punctuation">(</span>S<span class="token punctuation">)</span>                                                                      AGE
+istio-egressgateway    ClusterIP      <span class="token number">10.102</span>.255.76   <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">80</span>/TCP,443/TCP                                                               64m
+istio-ingressgateway   LoadBalancer   <span class="token number">10.107</span>.22.5     <span class="token operator">&lt;</span>pending<span class="token operator">></span>     <span class="token number">15021</span>:31606/TCP,80:32510/TCP,443:32060/TCP,31400:32635/TCP,15443:31893/TCP   64m
+istiod                 ClusterIP      <span class="token number">10.105</span>.99.16    <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">15010</span>/TCP,15012/TCP,443/TCP,15014/TCP                                        64m
+
+<span class="token comment">#</span>
+浏览器访问
+http://apiserver:32510/productpage
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506152813.png"></p>
-<h1 id="Istio灰度发布"><a href="#Istio灰度发布" class="headerlink" title="Istio灰度发布"></a>Istio灰度发布</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line">创建两个pod，分别打上不同的标签</span><br><span class="line"><span class="comment">#创建canary v1 labels：apply=canary</span></span><br><span class="line">      labels:</span><br><span class="line">        app: v1</span><br><span class="line">        apply: canary</span><br><span class="line">        </span><br><span class="line"><span class="comment">#创建canary v2 labels：apply=canary</span></span><br><span class="line">      labels:</span><br><span class="line">        app: v2</span><br><span class="line">        apply: canary</span><br><span class="line">        </span><br><span class="line"><span class="comment">#创建service绑定apply=canary，将流量引入v1v2两个pod（默认轮询）</span></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: canary</span><br><span class="line">  labels:</span><br><span class="line">    apply: canary</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    apply: canary</span><br><span class="line">  ports:</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 80</span><br><span class="line">      targetPort: 80</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建gateway，绑定istio=ingressgateway，表示接受发送给ingressgateway的流量</span></span><br><span class="line">apiVersion: networking.istio.io/v1beta1</span><br><span class="line">kind: Gateway</span><br><span class="line">metadata:</span><br><span class="line">  name: canary-gateway</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    istio: ingressgateway</span><br><span class="line">  servers:</span><br><span class="line">      number: 80</span><br><span class="line">      name: http</span><br><span class="line">      protocol: HTTP</span><br><span class="line">    hosts:</span><br><span class="line">    - <span class="string">&quot;*&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#创建virtualservice，创建路由，将通往canary-gateway的流量发给svc，并且指定权重</span></span><br><span class="line">apiVersion: networking.istio.io/v1beta1</span><br><span class="line">kind: VirtualService</span><br><span class="line">metadata:</span><br><span class="line">  name: canary</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  gateways:</span><br><span class="line">  http:</span><br><span class="line">    - destination:</span><br><span class="line">        host: canary.default.svc.cluster.local</span><br><span class="line">        subset: v1</span><br><span class="line">      weight: 90 <span class="comment">#权重</span></span><br><span class="line">    - destination:</span><br><span class="line">        host: canary.default.svc.cluster.local</span><br><span class="line">        subset: v2</span><br><span class="line">      weight: 10</span><br><span class="line"> </span><br><span class="line"><span class="comment">#创建destination rule，给svc创建v1v2两条subnet</span></span><br><span class="line">apiVersion: networking.istio.io/v1beta1</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: canary</span><br><span class="line">spec:</span><br><span class="line">  host: canary.default.svc.cluster.local</span><br><span class="line">  subsets:</span><br><span class="line">    labels:</span><br><span class="line">      app: v1</span><br><span class="line">    labels:</span><br><span class="line">      app: v2</span><br><span class="line">      </span><br><span class="line">逐渐修改weight比例，将流量逐步向v2转移</span><br></pre></td></tr></table></figure>
+<h1 id="Istio灰度发布"><a href="#Istio灰度发布" class="headerlink" title="Istio灰度发布"></a>Istio灰度发布</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">创建两个pod，分别打上不同的标签
+<span class="token comment">#创建canary v1 labels：apply=canary</span>
+      labels:
+        app: v1
+        apply: canary
+        
+<span class="token comment">#创建canary v2 labels：apply=canary</span>
+      labels:
+        app: v2
+        apply: canary
+        
+<span class="token comment">#创建service绑定apply=canary，将流量引入v1v2两个pod（默认轮询）</span>
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary
+  labels:
+    apply: canary
+spec:
+  selector:
+    apply: canary
+  ports:
+    - protocol: TCP
+      port: <span class="token number">80</span>
+      targetPort: <span class="token number">80</span>
+
+<span class="token comment">#创建gateway，绑定istio=ingressgateway，表示接受发送给ingressgateway的流量</span>
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: canary-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+      number: <span class="token number">80</span>
+      name: http
+      protocol: HTTP
+    hosts:
+    - <span class="token string">"*"</span>
+
+<span class="token comment">#创建virtualservice，创建路由，将通往canary-gateway的流量发给svc，并且指定权重</span>
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: canary
+spec:
+  hosts:
+  gateways:
+  http:
+    - destination:
+        host: canary.default.svc.cluster.local
+        subset: v1
+      weight: <span class="token number">90</span> <span class="token comment">#权重</span>
+    - destination:
+        host: canary.default.svc.cluster.local
+        subset: v2
+      weight: <span class="token number">10</span>
+ 
+<span class="token comment">#创建destination rule，给svc创建v1v2两条subnet</span>
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: canary
+spec:
+  host: canary.default.svc.cluster.local
+  subsets:
+    labels:
+      app: v1
+    labels:
+      app: v2
+      
+逐渐修改weight比例，将流量逐步向v2转移<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="熔断"><a href="#熔断" class="headerlink" title="熔断"></a>熔断</h1><p>所需镜像：docker.io&#x2F;kong&#x2F;httpbin</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建httpbin的deployment</span></span><br><span class="line">/root/istio/istio-1.21.0/samples/httpbin</span><br><span class="line">kubectl apply -f httpbin.yaml</span><br><span class="line">所用镜像：docker.io/kong/httpbin</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建一个DestinationRule，熔断策略</span></span><br><span class="line"><span class="built_in">cat</span> &gt; fuse-policy.yaml &lt;&lt;<span class="string">EOF </span></span><br><span class="line"><span class="string">apiVersion:  networking.istio.io/v1beta1</span></span><br><span class="line"><span class="string">kind: DestinationRule</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: httpbin</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  host: httpbin  #绑定httpbin的service</span></span><br><span class="line"><span class="string">  trafficPolicy: #策略</span></span><br><span class="line"><span class="string">    connectionPool: #熔断连接池，设置了两个</span></span><br><span class="line"><span class="string">      tcp: #限制tcp链接的数量</span></span><br><span class="line"><span class="string">        maxConnections: 1 #httpbin的最多并发1个连接 </span></span><br><span class="line"><span class="string">      http: #限制http的连接数</span></span><br><span class="line"><span class="string">        http1MaxPendingRequests: 1 #每个连接最大挂起请求数   </span></span><br><span class="line"><span class="string">        maxRequestsPerConnection: 1 #每个连接最大处理请求数</span></span><br><span class="line"><span class="string">    outlierDetection:</span></span><br><span class="line"><span class="string">      consecutiveGatewayErrors: 1 #错误1次网关错误即异常</span></span><br><span class="line"><span class="string">      interval: 1s #探测间隔</span></span><br><span class="line"><span class="string">      baseEjectionTime: 3m</span></span><br><span class="line"><span class="string">      maxEjectionPercent: 100 #100%拒绝连接</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f fuse-policy.yaml </span><br><span class="line"></span><br><span class="line"><span class="comment">#部署fortio客户端进行测试访问，fortio是一个专门对网站做压测的工具，可以对连接数 并发数进行测试</span></span><br><span class="line">/root/istio/istio-1.21.0/samples/httpbin/sample-client</span><br><span class="line">kubectl apply -f fortio-deploy.yaml </span><br><span class="line">kubectl get svc</span><br><span class="line">NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE</span><br><span class="line">fortio       ClusterIP   10.102.153.6    &lt;none&gt;        8080/TCP   28h</span><br><span class="line">httpbin      ClusterIP   10.97.84.16     &lt;none&gt;        8000/TCP   28h</span><br><span class="line">kubectl get pods</span><br><span class="line">NAME                              READY   STATUS    RESTARTS       AGE</span><br><span class="line">fortio-deploy-77fd47587d-mrfl9    2/2     Running   0              27h</span><br><span class="line">httpbin-86b8ffc5ff-7mjmn          2/2     Running   0              28h</span><br><span class="line"></span><br><span class="line">所用镜像：fortio/fortio:latest_release</span><br><span class="line"></span><br><span class="line"><span class="comment">#测试</span></span><br><span class="line">kubectl <span class="built_in">exec</span>  fortio-deploy-77fd47587d-mrfl9 -c fortio \</span><br><span class="line">-- /usr/bin/fortio curl http://httpbin:8000/get</span><br><span class="line">返回状态码200，正常</span><br><span class="line"></span><br><span class="line">kubectl <span class="built_in">exec</span>  fortio-deploy-77fd47587d-mrfl9 -c fortio \</span><br><span class="line">-- /usr/bin/fortio load -c 2 -qps 0 -n 20 -loglevel Warning \</span><br><span class="line">http://httpbin:8000/get</span><br><span class="line">-c 2: 指定并发连接数为 2。这表示在测试期间，将会模拟 2 个并发请求。</span><br><span class="line">-qps 0: 指定每秒请求数为 0。这表示在测试期间，将以最大速率发送请求，即不限制每秒请求数。</span><br><span class="line">-n 20: 指定总请求数为 20。这表示在测试期间，将发送总共 20 个请求</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line">Code 200 : 14 (70.0 %)</span><br><span class="line">Code 503 : 6 (30.0 %)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#创建httpbin的deployment</span>
+/root/istio/istio-1.21.0/samples/httpbin
+kubectl apply <span class="token parameter variable">-f</span> httpbin.yaml
+所用镜像：docker.io/kong/httpbin
+
+<span class="token comment">#创建一个DestinationRule，熔断策略</span>
+<span class="token function">cat</span> <span class="token operator">></span> fuse-policy.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF 
+apiVersion:  networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: httpbin
+spec:
+  host: httpbin  #绑定httpbin的service
+  trafficPolicy: #策略
+    connectionPool: #熔断连接池，设置了两个
+      tcp: #限制tcp链接的数量
+        maxConnections: 1 #httpbin的最多并发1个连接 
+      http: #限制http的连接数
+        http1MaxPendingRequests: 1 #每个连接最大挂起请求数   
+        maxRequestsPerConnection: 1 #每个连接最大处理请求数
+    outlierDetection:
+      consecutiveGatewayErrors: 1 #错误1次网关错误即异常
+      interval: 1s #探测间隔
+      baseEjectionTime: 3m
+      maxEjectionPercent: 100 #100%拒绝连接
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> fuse-policy.yaml 
+
+<span class="token comment">#部署fortio客户端进行测试访问，fortio是一个专门对网站做压测的工具，可以对连接数 并发数进行测试</span>
+/root/istio/istio-1.21.0/samples/httpbin/sample-client
+kubectl apply <span class="token parameter variable">-f</span> fortio-deploy.yaml 
+kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span class="token punctuation">(</span>S<span class="token punctuation">)</span>    AGE
+fortio       ClusterIP   <span class="token number">10.102</span>.153.6    <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">8080</span>/TCP   28h
+httpbin      ClusterIP   <span class="token number">10.97</span>.84.16     <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">8000</span>/TCP   28h
+kubectl get pods
+NAME                              READY   STATUS    RESTARTS       AGE
+fortio-deploy-77fd47587d-mrfl9    <span class="token number">2</span>/2     Running   <span class="token number">0</span>              27h
+httpbin-86b8ffc5ff-7mjmn          <span class="token number">2</span>/2     Running   <span class="token number">0</span>              28h
+
+所用镜像：fortio/fortio:latest_release
+
+<span class="token comment">#测试</span>
+kubectl <span class="token builtin class-name">exec</span>  fortio-deploy-77fd47587d-mrfl9 <span class="token parameter variable">-c</span> fortio <span class="token punctuation">\</span>
+-- /usr/bin/fortio <span class="token function">curl</span> http://httpbin:8000/get
+返回状态码200，正常
+
+kubectl <span class="token builtin class-name">exec</span>  fortio-deploy-77fd47587d-mrfl9 <span class="token parameter variable">-c</span> fortio <span class="token punctuation">\</span>
+-- /usr/bin/fortio load <span class="token parameter variable">-c</span> <span class="token number">2</span> <span class="token parameter variable">-qps</span> <span class="token number">0</span> <span class="token parameter variable">-n</span> <span class="token number">20</span> <span class="token parameter variable">-loglevel</span> Warning <span class="token punctuation">\</span>
+http://httpbin:8000/get
+<span class="token parameter variable">-c</span> <span class="token number">2</span>: 指定并发连接数为 <span class="token number">2</span>。这表示在测试期间，将会模拟 <span class="token number">2</span> 个并发请求。
+<span class="token parameter variable">-qps</span> <span class="token number">0</span>: 指定每秒请求数为 <span class="token number">0</span>。这表示在测试期间，将以最大速率发送请求，即不限制每秒请求数。
+<span class="token parameter variable">-n</span> <span class="token number">20</span>: 指定总请求数为 <span class="token number">20</span>。这表示在测试期间，将发送总共 <span class="token number">20</span> 个请求
+
+<span class="token punctuation">..</span>.
+Code <span class="token number">200</span> <span class="token builtin class-name">:</span> <span class="token number">14</span> <span class="token punctuation">(</span><span class="token number">70.0</span> %<span class="token punctuation">)</span>
+Code <span class="token number">503</span> <span class="token builtin class-name">:</span> <span class="token number">6</span> <span class="token punctuation">(</span><span class="token number">30.0</span> %<span class="token punctuation">)</span>
+<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="超时"><a href="#超时" class="headerlink" title="超时"></a>超时</h1><p>在生产环境中经常会碰到由于调用方等待下游的响应过长，堆积大量的请求阻塞了自身服务，造成雪崩的情况，通过通过超时处理来避免由于无限期等待造成的故障，进而增强服务的可用性，Istio 使用虚拟服务来优雅实现超时处理。</p>
-<h2 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">nginx-deployment.yaml</span><br><span class="line"></span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">  labels:</span><br><span class="line">    server: nginx</span><br><span class="line">    app: web</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      server: nginx</span><br><span class="line">      app: web</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: nginx</span><br><span class="line">      labels: </span><br><span class="line">        server: nginx</span><br><span class="line">        app: web</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: nginx</span><br><span class="line">        image: nginx:1.14-alpine</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line"></span><br><span class="line">tomcat-deployment.yaml</span><br><span class="line"></span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: tomcat</span><br><span class="line">  labels:</span><br><span class="line">    server: tomcat</span><br><span class="line">    app: web</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      server: tomcat</span><br><span class="line">      app: web</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: tomcat</span><br><span class="line">      labels: </span><br><span class="line">        server: tomcat</span><br><span class="line">        app: web</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: tomcat</span><br><span class="line">        image: docker.io/kubeguide/tomcat-app:v1 </span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line"></span><br><span class="line">nginx-tomcat-svc.yaml </span><br><span class="line"></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-svc</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    server: nginx</span><br><span class="line">  ports:</span><br><span class="line">    port: 80</span><br><span class="line">    targetPort: 80</span><br><span class="line">    protocol: TCP</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: tomcat-svc</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    server: tomcat</span><br><span class="line">  ports:</span><br><span class="line">    port: 8080</span><br><span class="line">    targetPort: 8080</span><br><span class="line">    protocol: TCP</span><br><span class="line"></span><br><span class="line">virtual-tomcat.yaml 虚拟服务</span><br><span class="line">apiVersion: networking.istio.io/v1beta1</span><br><span class="line">kind: VirtualService</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-vs</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  http:</span><br><span class="line">    - destination: </span><br><span class="line">        host: nginx-svc</span><br><span class="line">    <span class="built_in">timeout</span>: 2s</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1beta1</span><br><span class="line">kind: VirtualService</span><br><span class="line">metadata:</span><br><span class="line">  name: tomcat-vs</span><br><span class="line">spec:</span><br><span class="line">  hosts:</span><br><span class="line">  http:</span><br><span class="line">      delay:</span><br><span class="line">        percentage:</span><br><span class="line">          value: 100</span><br><span class="line">        fixedDelay: 10s</span><br><span class="line">    route:</span><br><span class="line">    - destination:</span><br><span class="line">        host: tomcat-svc</span><br></pre></td></tr></table></figure>
+<h2 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nginx-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    server: nginx
+    app: web
+spec:
+  replicas: <span class="token number">1</span>
+  selector:
+    matchLabels:
+      server: nginx
+      app: web
+  template:
+    metadata:
+      name: nginx
+      labels: 
+        server: nginx
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14-alpine
+        imagePullPolicy: IfNotPresent
+
+tomcat-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tomcat
+  labels:
+    server: tomcat
+    app: web
+spec:
+  replicas: <span class="token number">1</span>
+  selector:
+    matchLabels:
+      server: tomcat
+      app: web
+  template:
+    metadata:
+      name: tomcat
+      labels: 
+        server: tomcat
+        app: web
+    spec:
+      containers:
+      - name: tomcat
+        image: docker.io/kubeguide/tomcat-app:v1 
+        imagePullPolicy: IfNotPresent
+
+nginx-tomcat-svc.yaml 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  selector:
+    server: nginx
+  ports:
+    port: <span class="token number">80</span>
+    targetPort: <span class="token number">80</span>
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomcat-svc
+spec:
+  selector:
+    server: tomcat
+  ports:
+    port: <span class="token number">8080</span>
+    targetPort: <span class="token number">8080</span>
+    protocol: TCP
+
+virtual-tomcat.yaml 虚拟服务
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nginx-vs
+spec:
+  hosts:
+  http:
+    - destination: 
+        host: nginx-svc
+    timeout: 2s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: tomcat-vs
+spec:
+  hosts:
+  http:
+      delay:
+        percentage:
+          value: <span class="token number">100</span>
+        fixedDelay: 10s
+    route:
+    - destination:
+        host: tomcat-svc<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>应用案例pod文件<br>nginx-deployment.yaml  tomcat-deployment.yaml<br>nginx-tomcat-svc.yaml  </p>
 <p>创建虚拟服务virtual-tomcat.yaml:<br>设置应用到nginx的svc，请求超时时间2s<br>设置应用到tomcat的svc，调用请求时，延迟10s</p>
 <p>这种情况下一定会报错，用这种方法来手动模拟故障</p>
 <p>进入容器修改nginx配置文件，将流量代理到svc上，流量会通过定义好的虚拟服务进入<br>在虚拟服务中添加相应规则，就可以防止下游响应时间过长的问题</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pods</span><br><span class="line">NAME                             READY   STATUS    RESTARTS      AGE</span><br><span class="line">fortio-deploy-77fd47587d-mrfl9   2/2     Running   4 (54m ago)   30h</span><br><span class="line">httpbin-86b8ffc5ff-7mjmn         2/2     Running   4 (54m ago)   31h</span><br><span class="line">nginx-67dffc45d-nf2rh            2/2     Running   4 (54m ago)   63m</span><br><span class="line">tomcat-659d5845d4-5fcpx          2/2     Running   4 (54m ago)   63m</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改nginx的配置文件</span></span><br><span class="line">kubectl <span class="built_in">exec</span> -it nginx-67dffc45d-nf2rh --  sh</span><br><span class="line"><span class="comment"># vi /etc/nginx/conf.d/default.conf</span></span><br><span class="line"></span><br><span class="line">location / &#123;</span><br><span class="line">    proxy_pass http://tomcat-svc:8080;</span><br><span class="line">    proxy_http_version 1.1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get pods
+NAME                             READY   STATUS    RESTARTS      AGE
+fortio-deploy-77fd47587d-mrfl9   <span class="token number">2</span>/2     Running   <span class="token number">4</span> <span class="token punctuation">(</span>54m ago<span class="token punctuation">)</span>   30h
+httpbin-86b8ffc5ff-7mjmn         <span class="token number">2</span>/2     Running   <span class="token number">4</span> <span class="token punctuation">(</span>54m ago<span class="token punctuation">)</span>   31h
+nginx-67dffc45d-nf2rh            <span class="token number">2</span>/2     Running   <span class="token number">4</span> <span class="token punctuation">(</span>54m ago<span class="token punctuation">)</span>   63m
+tomcat-659d5845d4-5fcpx          <span class="token number">2</span>/2     Running   <span class="token number">4</span> <span class="token punctuation">(</span>54m ago<span class="token punctuation">)</span>   63m
 
-<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">测试</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建一个网络测试镜像busybox</span></span><br><span class="line">kubectl run busybox --image busybox:1.28 --restart=Never --<span class="built_in">rm</span> -it busybox -- sh</span><br><span class="line"></span><br><span class="line">time wget -q -O - http://nginx-svc</span><br><span class="line">wget: server returned error: HTTP/1.1 504 Gateway Timeout</span><br><span class="line">Command exited with non-zero status 1</span><br><span class="line">real    0m 2.00s</span><br><span class="line">user    0m 0.00s</span><br><span class="line">sys     0m 0.00s</span><br><span class="line"></span><br><span class="line">time wget -q -O - http://tomcat-svc:8080</span><br><span class="line">...超时</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment">#修改nginx的配置文件</span>
+kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> nginx-67dffc45d-nf2rh --  <span class="token function">sh</span>
+<span class="token comment"># vi /etc/nginx/conf.d/default.conf</span>
+
+location / <span class="token punctuation">&#123;</span>
+    proxy_pass http://tomcat-svc:8080<span class="token punctuation">;</span>
+    proxy_http_version <span class="token number">1.1</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">测试
+
+<span class="token comment">#创建一个网络测试镜像busybox</span>
+kubectl run busybox <span class="token parameter variable">--image</span> busybox:1.28 <span class="token parameter variable">--restart</span><span class="token operator">=</span>Never <span class="token parameter variable">--rm</span> <span class="token parameter variable">-it</span> busybox -- <span class="token function">sh</span>
+
+<span class="token function">time</span> <span class="token function">wget</span> <span class="token parameter variable">-q</span> <span class="token parameter variable">-O</span> - http://nginx-svc
+wget: server returned error: HTTP/1.1 <span class="token number">504</span> Gateway Timeout
+Command exited with non-zero status <span class="token number">1</span>
+real    0m <span class="token number">2</span>.00s
+user    0m <span class="token number">0</span>.00s
+sys     0m <span class="token number">0</span>.00s
+
+<span class="token function">time</span> <span class="token function">wget</span> <span class="token parameter variable">-q</span> <span class="token parameter variable">-O</span> - http://tomcat-svc:8080
+<span class="token punctuation">..</span>.超时
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="重试"><a href="#重试" class="headerlink" title="重试"></a>重试</h1><p>Istio 重试机制就是如果调用服务失败，Envoy 代理尝试连接服务的最大次数。而默认情况下，Envoy 代理在失败后并不会尝试重新连接服务，除非我们启动 Istio 重试机制。</p>
 <p>（默认情况下不会开启重试功能）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete -f virtual-tomcat.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">写一个用来重试的virtualservice</span><br><span class="line">...</span><br><span class="line">    - destination: </span><br><span class="line">        host: nginx-svc</span><br><span class="line">    retries: <span class="comment">#重试配置</span></span><br><span class="line">      attempts: 3  <span class="comment">#表示失败了重试三次</span></span><br><span class="line">      perTryTimeout: 2s <span class="comment">#手动请求间隔2s</span></span><br><span class="line">...</span><br><span class="line">  http:</span><br><span class="line">      abort:</span><br><span class="line">        percentage:</span><br><span class="line">          value: 100</span><br><span class="line">        httpStatus: 503 <span class="comment">#设置返回为503</span></span><br><span class="line">    route: <span class="comment">#目标服务</span></span><br><span class="line">    - destination:</span><br><span class="line">        host: tomcat-svc</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">kubectl apply -f virtual-attempt.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment">#测试容器</span></span><br><span class="line">kubectl run busybox --image busybox:1.28 --restart=Never --<span class="built_in">rm</span> -it busybox -- sh</span><br><span class="line"></span><br><span class="line">wget -q -O - http://nginx-svc</span><br><span class="line">wget: server returned error: HTTP/1.1 503 Service Unavailable</span><br><span class="line"><span class="comment">#重试了三次</span></span><br><span class="line"></span><br><span class="line">查看日志：</span><br><span class="line">kubectl logs -f nginx-67dffc45d-nf2rh -c istio-proxy</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl delete <span class="token parameter variable">-f</span> virtual-tomcat.yaml
+
+<span class="token comment">#</span>
+写一个用来重试的virtualservice
+<span class="token punctuation">..</span>.
+    - destination: 
+        host: nginx-svc
+    retries: <span class="token comment">#重试配置</span>
+      attempts: <span class="token number">3</span>  <span class="token comment">#表示失败了重试三次</span>
+      perTryTimeout: 2s <span class="token comment">#手动请求间隔2s</span>
+<span class="token punctuation">..</span>.
+  http:
+      abort:
+        percentage:
+          value: <span class="token number">100</span>
+        httpStatus: <span class="token number">503</span> <span class="token comment">#设置返回为503</span>
+    route: <span class="token comment">#目标服务</span>
+    - destination:
+        host: tomcat-svc
+<span class="token punctuation">..</span>.
+
+kubectl apply <span class="token parameter variable">-f</span> virtual-attempt.yaml
+
+<span class="token comment">#测试容器</span>
+kubectl run busybox <span class="token parameter variable">--image</span> busybox:1.28 <span class="token parameter variable">--restart</span><span class="token operator">=</span>Never <span class="token parameter variable">--rm</span> <span class="token parameter variable">-it</span> busybox -- <span class="token function">sh</span>
+
+<span class="token function">wget</span> <span class="token parameter variable">-q</span> <span class="token parameter variable">-O</span> - http://nginx-svc
+wget: server returned error: HTTP/1.1 <span class="token number">503</span> Service Unavailable
+<span class="token comment">#重试了三次</span>
+
+查看日志：
+kubectl logs <span class="token parameter variable">-f</span> nginx-67dffc45d-nf2rh <span class="token parameter variable">-c</span> istio-proxy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506154713.png"></p>
 <h1 id="补充————熔断、压测与性能评估原则"><a href="#补充————熔断、压测与性能评估原则" class="headerlink" title="补充————熔断、压测与性能评估原则"></a>补充————熔断、压测与性能评估原则</h1><h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><p>假设k8s集群有100个节点，每个节点是100vCPU、100g内存，基于deployment部署了3个pod，运行的服务是web服务，三个pod跑在不同的节点上，每个pod最多占用6g内存6vcpu，每个pod最多的请求数是100万，三个pod前端有个四层代理，通过istio熔断机制作用在三个pod前端的四层代理上，那熔断参数值如何设置？</p>
@@ -6682,36 +7033,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7176,13 +7497,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8223,13 +8544,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8682,14 +9003,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8697,14 +9018,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

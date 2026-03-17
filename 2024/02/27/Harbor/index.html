@@ -498,13 +498,171 @@
         <p><strong>如果出现无法载图的情况，请检查与github的连通性</strong></p>
 <p>环境<br>VMware Workstation 17 Pro<br>CentOS Linux release 7.9.2009 (Core)<br>4G，8vCPU，100G精简置备，NAT网络网段192.168.8.0&#x2F;24<br>wsdocker 192.168.8.150&#x2F;24<br>harbor 192.168.8.148&#x2F;24</p>
 <p>harbor版本: v2.10</p>
-<h1 id="自签发证书"><a href="#自签发证书" class="headerlink" title="自签发证书"></a>自签发证书</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl set-hostname harbor &amp;&amp; bash</span><br><span class="line"><span class="comment">#因为要用https访问harbor，所以需要使用自签发证书</span></span><br><span class="line">1.生成CA证书</span><br><span class="line">SSL工具生成2048位的密钥对，并将私钥保存到名为 <span class="string">&quot;ca.key&quot;</span> 的文件中，3072位更加安全</span><br><span class="line">openssl genrsa -out ca.key 2048</span><br><span class="line">生成一个自签发的 X.509 格式的 CA（证书颁发机构）证书</span><br><span class="line"><span class="comment">#-x509: 生成一个自签发的 X.509 格式的证书，而不是生成证书签署请求</span></span><br><span class="line"><span class="comment">#-key ca.key: 指定用于生成证书的私钥文件路径和文件名为 &quot;ca.key&quot;。该私钥将与生成的证书绑定。</span></span><br><span class="line"><span class="comment">#-out ca.pem: 指定生成的证书文件的输出路径和文件名为 &quot;ca.pem&quot;</span></span><br><span class="line">openssl req -new -x509 -days 365 -key ca.key -out ca.pem</span><br><span class="line"><span class="comment">#选择国家CN，城市BJ</span></span><br><span class="line"></span><br><span class="line">2.生成域名的证书</span><br><span class="line">SSL工具生成2048位的RSA私钥</span><br><span class="line">openssl genrsa -out harbor.key 2048</span><br><span class="line">SSL工具用创建的私钥生成一个证书签署请求，用以向CA申请签署证书</span><br><span class="line"><span class="comment">#-key harbor.key: 指定私钥文件的路径和文件名为 &quot;harbor.key&quot;。该私钥将与生成的证书绑定。</span></span><br><span class="line"><span class="comment">#-out harbor.csr: 指定生成的证书签署请求的输出路径和文件名为 &quot;harbor.csr&quot;</span></span><br><span class="line">openssl req -new -key harbor.key -out harbor.csr</span><br><span class="line"><span class="comment">#选择国家CN，城市BJ，hostname harbor</span></span><br><span class="line"></span><br><span class="line">3.签发证书</span><br><span class="line">证书签署请求（CSR）与根证书进行签署，生成一个具有指定有效期的 X.509 格式的证书</span><br><span class="line"><span class="comment">#-in harbor.csr: 指定输入的证书签署请求文件路径和文件名为 &quot;harbor.csr&quot;</span></span><br><span class="line"><span class="comment">#-CA ca.pem: 指定用于签署证书的自签发 CA 证书文件路径和文件名为 &quot;ca.pem&quot;</span></span><br><span class="line"><span class="comment">#-CAkey ca.key: 指定用于签署证书的自签发 CA 私钥文件路径和文件名为 &quot;ca.key&quot;。该私钥与上述的 CA 证书配对。</span></span><br><span class="line"><span class="comment">#-CAcreateserial: 指定在签署证书时自动生成一个序列号文件。</span></span><br><span class="line"><span class="comment">#-out harbor.pem: 指定生成的证书文件的输出路径和文件名为 &quot;harbor.pem&quot;</span></span><br><span class="line"><span class="comment">#-days 365: 指定生成的证书的有效期为 365 天</span></span><br><span class="line">openssl x509 -req -<span class="keyword">in</span> harbor.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out harbor.pem -days 365</span><br><span class="line"><span class="comment">#Signature ok</span></span><br><span class="line"><span class="comment">#subject=/C=CN/ST=BJ/L=BJ/O=Default Company Ltd/CN=harbor</span></span><br><span class="line"><span class="comment">#Getting CA Private Key</span></span><br><span class="line"><span class="comment">#证书签发成功</span></span><br></pre></td></tr></table></figure>
+<h1 id="自签发证书"><a href="#自签发证书" class="headerlink" title="自签发证书"></a>自签发证书</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">hostnamectl set-hostname harbor <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+<span class="token comment">#因为要用https访问harbor，所以需要使用自签发证书</span>
+<span class="token number">1</span>.生成CA证书
+SSL工具生成2048位的密钥对，并将私钥保存到名为 <span class="token string">"ca.key"</span> 的文件中，3072位更加安全
+openssl genrsa <span class="token parameter variable">-out</span> ca.key <span class="token number">2048</span>
+生成一个自签发的 X.509 格式的 CA（证书颁发机构）证书
+<span class="token comment">#-x509: 生成一个自签发的 X.509 格式的证书，而不是生成证书签署请求</span>
+<span class="token comment">#-key ca.key: 指定用于生成证书的私钥文件路径和文件名为 "ca.key"。该私钥将与生成的证书绑定。</span>
+<span class="token comment">#-out ca.pem: 指定生成的证书文件的输出路径和文件名为 "ca.pem"</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-x509</span> <span class="token parameter variable">-days</span> <span class="token number">365</span> <span class="token parameter variable">-key</span> ca.key <span class="token parameter variable">-out</span> ca.pem
+<span class="token comment">#选择国家CN，城市BJ</span>
+
+<span class="token number">2</span>.生成域名的证书
+SSL工具生成2048位的RSA私钥
+openssl genrsa <span class="token parameter variable">-out</span> harbor.key <span class="token number">2048</span>
+SSL工具用创建的私钥生成一个证书签署请求，用以向CA申请签署证书
+<span class="token comment">#-key harbor.key: 指定私钥文件的路径和文件名为 "harbor.key"。该私钥将与生成的证书绑定。</span>
+<span class="token comment">#-out harbor.csr: 指定生成的证书签署请求的输出路径和文件名为 "harbor.csr"</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-key</span> harbor.key <span class="token parameter variable">-out</span> harbor.csr
+<span class="token comment">#选择国家CN，城市BJ，hostname harbor</span>
+
+<span class="token number">3</span>.签发证书
+证书签署请求（CSR）与根证书进行签署，生成一个具有指定有效期的 X.509 格式的证书
+<span class="token comment">#-in harbor.csr: 指定输入的证书签署请求文件路径和文件名为 "harbor.csr"</span>
+<span class="token comment">#-CA ca.pem: 指定用于签署证书的自签发 CA 证书文件路径和文件名为 "ca.pem"</span>
+<span class="token comment">#-CAkey ca.key: 指定用于签署证书的自签发 CA 私钥文件路径和文件名为 "ca.key"。该私钥与上述的 CA 证书配对。</span>
+<span class="token comment">#-CAcreateserial: 指定在签署证书时自动生成一个序列号文件。</span>
+<span class="token comment">#-out harbor.pem: 指定生成的证书文件的输出路径和文件名为 "harbor.pem"</span>
+<span class="token comment">#-days 365: 指定生成的证书的有效期为 365 天</span>
+openssl x509 <span class="token parameter variable">-req</span> <span class="token parameter variable">-in</span> harbor.csr <span class="token parameter variable">-CA</span> ca.pem <span class="token parameter variable">-CAkey</span> ca.key <span class="token parameter variable">-CAcreateserial</span> <span class="token parameter variable">-out</span> harbor.pem <span class="token parameter variable">-days</span> <span class="token number">365</span>
+<span class="token comment">#Signature ok</span>
+<span class="token comment">#subject=/C=CN/ST=BJ/L=BJ/O=Default Company Ltd/CN=harbor</span>
+<span class="token comment">#Getting CA Private Key</span>
+<span class="token comment">#证书签发成功</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="安装harbor"><a href="#安装harbor" class="headerlink" title="安装harbor"></a>安装harbor</h1><p>harbor版本采用最新的v2.10<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173541.png" alt="图片"></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#安全相关</span></span><br><span class="line">yum -y install iptables-services</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld --now</span><br><span class="line">systemctl <span class="built_in">disable</span> iptables --now</span><br><span class="line">iptables -F</span><br><span class="line">sed -i <span class="string">&#x27;s/SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line"></span><br><span class="line"><span class="comment">#时钟同步，注释掉默认服务器，并使用cn.pool.ntp.org</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd.service</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改hosts文件，添加解析</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.150 wsdocker</span></span><br><span class="line"><span class="string">192.168.8.148 harbor</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"></span><br><span class="line"><span class="comment">#软件包安装，多安装几遍</span></span><br><span class="line">yum install -y  wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line">yum install -y  wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line">yum install -y  wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装docker-ce</span></span><br><span class="line">curl -fsSL https://get.docker.com -o get-docker.sh</span><br><span class="line">sh get-docker.sh</span><br><span class="line">systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line">docker --version</span><br><span class="line"><span class="comment">#Docker version 24.0.7, build afdd53b</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#启用linux的ip转发功能，使其可以作为路由器或vpn服务器使用</span></span><br><span class="line"><span class="comment">#加载模块，br_netfilte用于支持网络桥接和网络过滤，暂时加载即可</span></span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="comment">#修改/etc/sysctl.d/docker.conf文件</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1</span></span><br><span class="line"><span class="string">&quot;</span> &gt; /etc/sysctl.d/docker.conf</span><br><span class="line"><span class="comment">#使内核配置文件生效</span></span><br><span class="line">sysctl -p /etc/sysctl.d/docker.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#配置docker镜像加速，这是我的阿里云镜像加速器</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&#x27;</span> &gt;&gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装docker-compose</span></span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">wget https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64</span><br><span class="line"><span class="built_in">mkdir</span> -p /usr/bin/docker-compose</span><br><span class="line"><span class="built_in">mv</span> docker-compose-linux-x86_64 /usr/bin/docker-compose/</span><br><span class="line"><span class="built_in">chmod</span> +x /usr/bin/docker-compose</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装harbor</span></span><br><span class="line"><span class="comment">#在线安装直接wget github上的安装包 wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz</span></span><br><span class="line"><span class="comment">#离线安装需要从可以在github寻找对应版本的offline包，上传至虚机进行安装</span></span><br><span class="line"><span class="comment">#在线安装非常折磨，推荐离线安装</span></span><br><span class="line">tar zxvf harbor-offline-installer-v2.10.0.tgz</span><br><span class="line"><span class="built_in">cd</span> harbor</span><br><span class="line"><span class="built_in">cp</span> harbor.yml.tmpl harbor.yml</span><br><span class="line"><span class="comment">#修改配置文件，改成和上面的证书一致的信息</span></span><br><span class="line"><span class="comment">#把证书相关放到/ssl</span></span><br><span class="line"><span class="built_in">mkdir</span> /ssl</span><br><span class="line"><span class="built_in">cp</span> harbor.* ca.* /ssl/</span><br><span class="line">vim harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/^hostname.*/hostname: harbor/&#x27;</span> harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/\/your\/certificate\/path/\/ssl\/harbor.pem/&#x27;</span> harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/\/your\/private\/key\/path/\/ssl\/harbor.key/&#x27;</span> harbor.yml</span><br><span class="line"><span class="comment">#安装</span></span><br><span class="line"><span class="built_in">cd</span> ~/harbor/</span><br><span class="line">./install.sh</span><br><span class="line"><span class="comment">#成功提示如图</span></span><br><span class="line"><span class="comment">#修改宿主机hosts文件</span></span><br><span class="line">C:\Windows\System32\drivers\etc\hosts</span><br><span class="line">在末尾添加并保存</span><br><span class="line">192.168.8.148 harbor</span><br><span class="line"></span><br><span class="line">宿主机访问https://harbor/</span><br><span class="line"><span class="comment">#默认账号密码admin/Harbor12345</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#安全相关</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> iptables-services
+systemctl disable firewalld <span class="token parameter variable">--now</span>
+systemctl disable iptables <span class="token parameter variable">--now</span>
+iptables <span class="token parameter variable">-F</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/SELINUX=.*/SELINUX=disabled/'</span> /etc/selinux/config
+setenforce <span class="token number">0</span>
+
+<span class="token comment">#时钟同步，注释掉默认服务器，并使用cn.pool.ntp.org</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^server/#server/g'</span> /etc/chrony.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'1s/^/server cn.pool.ntp.org iburst\n/'</span> /etc/chrony.conf
+systemctl restart chronyd.service
+
+<span class="token comment">#修改hosts文件，添加解析</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"
+192.168.8.150 wsdocker
+192.168.8.148 harbor
+"</span> <span class="token operator">>></span> /etc/hosts
+
+<span class="token comment">#软件包安装，多安装几遍</span>
+yum <span class="token function">install</span> <span class="token parameter variable">-y</span>  <span class="token function">wget</span> net-tools nfs-utils lrzsz gcc gcc-c++ <span class="token function">make</span> cmake libxml2-devel openssl-devel <span class="token function">curl</span> curl-devel <span class="token function">unzip</span> <span class="token function">sudo</span> ntp libaio-devel <span class="token function">wget</span> <span class="token function">vim</span> ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack
+yum <span class="token function">install</span> <span class="token parameter variable">-y</span>  <span class="token function">wget</span> net-tools nfs-utils lrzsz gcc gcc-c++ <span class="token function">make</span> cmake libxml2-devel openssl-devel <span class="token function">curl</span> curl-devel <span class="token function">unzip</span> <span class="token function">sudo</span> ntp libaio-devel <span class="token function">wget</span> <span class="token function">vim</span> ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack
+yum <span class="token function">install</span> <span class="token parameter variable">-y</span>  <span class="token function">wget</span> net-tools nfs-utils lrzsz gcc gcc-c++ <span class="token function">make</span> cmake libxml2-devel openssl-devel <span class="token function">curl</span> curl-devel <span class="token function">unzip</span> <span class="token function">sudo</span> ntp libaio-devel <span class="token function">wget</span> <span class="token function">vim</span> ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack
+
+<span class="token comment">#安装docker-ce</span>
+<span class="token function">curl</span> <span class="token parameter variable">-fsSL</span> https://get.docker.com <span class="token parameter variable">-o</span> get-docker.sh
+<span class="token function">sh</span> get-docker.sh
+systemctl <span class="token builtin class-name">enable</span> <span class="token function">docker</span> <span class="token parameter variable">--now</span>
+<span class="token function">docker</span> <span class="token parameter variable">--version</span>
+<span class="token comment">#Docker version 24.0.7, build afdd53b</span>
+
+<span class="token comment">#启用linux的ip转发功能，使其可以作为路由器或vpn服务器使用</span>
+<span class="token comment">#加载模块，br_netfilte用于支持网络桥接和网络过滤，暂时加载即可</span>
+modprobe br_netfilter
+<span class="token comment">#修改/etc/sysctl.d/docker.conf文件</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+"</span> <span class="token operator">></span> /etc/sysctl.d/docker.conf
+<span class="token comment">#使内核配置文件生效</span>
+<span class="token function">sysctl</span> <span class="token parameter variable">-p</span> /etc/sysctl.d/docker.conf
+
+<span class="token comment">#配置docker镜像加速，这是我的阿里云镜像加速器</span>
+<span class="token builtin class-name">echo</span> <span class="token string">'
+&#123;
+  "registry-mirrors": ["https://bsx9xf1d.mirror.aliyuncs.com"]
+&#125;
+'</span> <span class="token operator">>></span> /etc/docker/daemon.json
+systemctl daemon-reload
+systemctl restart <span class="token function">docker</span>
+
+<span class="token comment">#安装docker-compose</span>
+<span class="token builtin class-name">cd</span> ~
+<span class="token function">wget</span> https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64
+<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /usr/bin/docker-compose
+<span class="token function">mv</span> docker-compose-linux-x86_64 /usr/bin/docker-compose/
+<span class="token function">chmod</span> +x /usr/bin/docker-compose
+
+<span class="token comment">#安装harbor</span>
+<span class="token comment">#在线安装直接wget github上的安装包 wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz</span>
+<span class="token comment">#离线安装需要从可以在github寻找对应版本的offline包，上传至虚机进行安装</span>
+<span class="token comment">#在线安装非常折磨，推荐离线安装</span>
+<span class="token function">tar</span> zxvf harbor-offline-installer-v2.10.0.tgz
+<span class="token builtin class-name">cd</span> harbor
+<span class="token function">cp</span> harbor.yml.tmpl harbor.yml
+<span class="token comment">#修改配置文件，改成和上面的证书一致的信息</span>
+<span class="token comment">#把证书相关放到/ssl</span>
+<span class="token function">mkdir</span> /ssl
+<span class="token function">cp</span> harbor.* ca.* /ssl/
+<span class="token function">vim</span> harbor.yml
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^hostname.*/hostname: harbor/'</span> harbor.yml
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/\/your\/certificate\/path/\/ssl\/harbor.pem/'</span> harbor.yml
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/\/your\/private\/key\/path/\/ssl\/harbor.key/'</span> harbor.yml
+<span class="token comment">#安装</span>
+<span class="token builtin class-name">cd</span> ~/harbor/
+./install.sh
+<span class="token comment">#成功提示如图</span>
+<span class="token comment">#修改宿主机hosts文件</span>
+C:<span class="token punctuation">\</span>Windows<span class="token punctuation">\</span>System32<span class="token punctuation">\</span>drivers<span class="token punctuation">\</span>etc<span class="token punctuation">\</span>hosts
+在末尾添加并保存
+<span class="token number">192.168</span>.8.148 harbor
+
+宿主机访问https://harbor/
+<span class="token comment">#默认账号密码admin/Harbor12345</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>安装完成如图提示<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173505.png"></p>
 <p>登录web界面<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173716.png"></p>
-<h1 id="测试：使用harbor内的镜像"><a href="#测试：使用harbor内的镜像" class="headerlink" title="测试：使用harbor内的镜像"></a>测试：使用harbor内的镜像</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#先在harbor网页创建一个ws项目且公开</span></span><br><span class="line"><span class="comment">#wsdocker内</span></span><br><span class="line">hostnamectl set-hostname wsdocker &amp;&amp; bash</span><br><span class="line"><span class="comment">#修改docker镜像源</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [&quot;https://bsx9xf1d.mirror.aliyuncs.com&quot;],</span></span><br><span class="line"><span class="string">&quot;insecure-registries&quot;: [&quot;192.168.8.148&quot;,&quot;harbor&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&#x27;</span> &gt; /etc/docker/daemon.json</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br><span class="line"><span class="comment">#修改hosts文件，添加解析</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">192.168.8.150 wsdocker</span></span><br><span class="line"><span class="string">192.168.8.148 harbor</span></span><br><span class="line"><span class="string">&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"></span><br><span class="line">docker login 192.168.8.148</span><br><span class="line"><span class="comment">#默认账号密码admin/Harbor12345</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#上传本地镜像到harbo</span></span><br><span class="line"><span class="comment">#docker pull后通过docker save打包下来作为例子</span></span><br><span class="line">docker pull centos</span><br><span class="line">docker save -o centos.tar.gz centos</span><br><span class="line"><span class="built_in">ls</span> | grep centos.tar.gz</span><br><span class="line"><span class="comment">#centos.tar.gz</span></span><br><span class="line">docker load -i centos.tar.gz</span><br><span class="line"><span class="comment">#上传</span></span><br><span class="line">docker push 192.168.8.148/ws/centos:ws</span><br><span class="line"></span><br><span class="line"><span class="comment">#删除本地镜像并从harbor拉取centos:ws</span></span><br><span class="line">docker rmi -f 192.168.8.148/ws/centos:ws</span><br><span class="line"><span class="comment">#Untagged: 192.168.8.148/ws/centos:ws</span></span><br><span class="line"><span class="comment">#Untagged: 192.168.8.148/ws/centos@sha256:a1801b843b1bfaf77c501e7a6d3f709401a1e0c83863037fa3aab063a7fdb9dc</span></span><br><span class="line">docker pull 192.168.8.148/ws/centos:ws</span><br><span class="line"><span class="comment">#ws: Pulling from ws/centos</span></span><br><span class="line"><span class="comment">#Digest: sha256:a1801b843b1bfaf77c501e7a6d3f709401a1e0c83863037fa3aab063a7fdb9dc</span></span><br><span class="line"><span class="comment">#Status: Downloaded newer image for 192.168.8.148/ws/centos:ws</span></span><br><span class="line">docker images | grep 192</span><br><span class="line">192.168.8.148/ws/centos   ws        5d0da3dc9764   2 years ago    231MB</span><br></pre></td></tr></table></figure>
+<h1 id="测试：使用harbor内的镜像"><a href="#测试：使用harbor内的镜像" class="headerlink" title="测试：使用harbor内的镜像"></a>测试：使用harbor内的镜像</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#先在harbor网页创建一个ws项目且公开</span>
+<span class="token comment">#wsdocker内</span>
+hostnamectl set-hostname wsdocker <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+<span class="token comment">#修改docker镜像源</span>
+<span class="token builtin class-name">echo</span> <span class="token string">'
+&#123;
+  "registry-mirrors": ["https://bsx9xf1d.mirror.aliyuncs.com"],
+"insecure-registries": ["192.168.8.148","harbor"]
+&#125;
+'</span> <span class="token operator">></span> /etc/docker/daemon.json
+systemctl daemon-reload
+systemctl restart <span class="token function">docker</span>
+<span class="token comment">#修改hosts文件，添加解析</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"
+192.168.8.150 wsdocker
+192.168.8.148 harbor
+"</span> <span class="token operator">>></span> /etc/hosts
+
+<span class="token function">docker</span> login <span class="token number">192.168</span>.8.148
+<span class="token comment">#默认账号密码admin/Harbor12345</span>
+
+<span class="token comment">#上传本地镜像到harbo</span>
+<span class="token comment">#docker pull后通过docker save打包下来作为例子</span>
+<span class="token function">docker</span> pull centos
+<span class="token function">docker</span> save <span class="token parameter variable">-o</span> centos.tar.gz centos
+<span class="token function">ls</span> <span class="token operator">|</span> <span class="token function">grep</span> centos.tar.gz
+<span class="token comment">#centos.tar.gz</span>
+<span class="token function">docker</span> load <span class="token parameter variable">-i</span> centos.tar.gz
+<span class="token comment">#上传</span>
+<span class="token function">docker</span> push <span class="token number">192.168</span>.8.148/ws/centos:ws
+
+<span class="token comment">#删除本地镜像并从harbor拉取centos:ws</span>
+<span class="token function">docker</span> rmi <span class="token parameter variable">-f</span> <span class="token number">192.168</span>.8.148/ws/centos:ws
+<span class="token comment">#Untagged: 192.168.8.148/ws/centos:ws</span>
+<span class="token comment">#Untagged: 192.168.8.148/ws/centos@sha256:a1801b843b1bfaf77c501e7a6d3f709401a1e0c83863037fa3aab063a7fdb9dc</span>
+<span class="token function">docker</span> pull <span class="token number">192.168</span>.8.148/ws/centos:ws
+<span class="token comment">#ws: Pulling from ws/centos</span>
+<span class="token comment">#Digest: sha256:a1801b843b1bfaf77c501e7a6d3f709401a1e0c83863037fa3aab063a7fdb9dc</span>
+<span class="token comment">#Status: Downloaded newer image for 192.168.8.148/ws/centos:ws</span>
+<span class="token function">docker</span> images <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">192</span>
+<span class="token number">192.168</span>.8.148/ws/centos   ws        5d0da3dc9764   <span class="token number">2</span> years ago    231MB<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>docker主机上成功登录<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240227173902.png"></p>
 
@@ -6566,36 +6724,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7060,13 +7188,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8107,13 +8235,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8566,14 +8694,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8581,14 +8709,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

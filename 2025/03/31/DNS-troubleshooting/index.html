@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="解析查找顺序默认情况下，使用host、dig、nslookup时，会默认使用dns进行解析 但是当使用ping、curl时，会优先使用&#x2F;etc&#x2F;hosts中的解析 这是因为**&#x2F;etc&#x2F;nsswitch.conf**这个文件中定义了查找的顺序 1234567891011121314151617181920&#x2F;etc&#x2F;nsswitch.conf# In orde">
+    <meta name="description" content="解析查找顺序默认情况下，使用host、dig、nslookup时，会默认使用dns进行解析 但是当使用ping、curl时，会优先使用&#x2F;etc&#x2F;hosts中的解析 这是因为**&#x2F;etc&#x2F;nsswitch.conf**这个文件中定义了查找的顺序 &#x2F;etc&#x2F;nsswitch.conf  # In order of likelihood of use to acc">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DNS排查">
 <meta property="og:url" content="https://akemi.zj.cn/2025/03/31/DNS-troubleshooting/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="解析查找顺序默认情况下，使用host、dig、nslookup时，会默认使用dns进行解析 但是当使用ping、curl时，会优先使用&#x2F;etc&#x2F;hosts中的解析 这是因为**&#x2F;etc&#x2F;nsswitch.conf**这个文件中定义了查找的顺序 1234567891011121314151617181920&#x2F;etc&#x2F;nsswitch.conf# In orde">
+<meta property="og:description" content="解析查找顺序默认情况下，使用host、dig、nslookup时，会默认使用dns进行解析 但是当使用ping、curl时，会优先使用&#x2F;etc&#x2F;hosts中的解析 这是因为**&#x2F;etc&#x2F;nsswitch.conf**这个文件中定义了查找的顺序 &#x2F;etc&#x2F;nsswitch.conf  # In order of likelihood of use to acc">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-03-31T10:30:00.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.193Z">
@@ -493,16 +493,104 @@
         <h2 id="解析查找顺序"><a href="#解析查找顺序" class="headerlink" title="解析查找顺序"></a>解析查找顺序</h2><p>默认情况下，使用host、dig、nslookup时，会默认使用dns进行解析</p>
 <p>但是当使用ping、curl时，会优先使用&#x2F;etc&#x2F;hosts中的解析</p>
 <p>这是因为**&#x2F;etc&#x2F;nsswitch.conf**这个文件中定义了查找的顺序</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">/etc/nsswitch.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># In order of likelihood of use to accelerate lookup.</span></span><br><span class="line">shadow:     files</span><br><span class="line"><span class="comment"># hosts:      files dns myhostname ←默认优先级最高的是file</span></span><br><span class="line">hosts:      dns files myhostname <span class="comment"># 使其优先使用dns第一优先级</span></span><br><span class="line"></span><br><span class="line">aliases:    files</span><br><span class="line">ethers:     files</span><br><span class="line">gshadow:    files</span><br><span class="line"><span class="comment"># Allow initgroups to default to the setting for group.</span></span><br><span class="line"><span class="comment"># initgroups: files</span></span><br><span class="line">networks:   files dns</span><br><span class="line">protocols:  files</span><br><span class="line">publickey:  files</span><br><span class="line">rpc:        files</span><br><span class="line"></span><br><span class="line">使用getent工具可以快速进行解析顺序的测试:</span><br><span class="line">getent hosts www.wangsheng.com</span><br><span class="line">1.1.1.1         www.wangsheng.com</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">/etc/nsswitch.conf
+
+<span class="token comment"># In order of likelihood of use to accelerate lookup.</span>
+shadow:     files
+<span class="token comment"># hosts:      files dns myhostname ←默认优先级最高的是file</span>
+hosts:      dns files myhostname <span class="token comment"># 使其优先使用dns第一优先级</span>
+
+aliases:    files
+ethers:     files
+gshadow:    files
+<span class="token comment"># Allow initgroups to default to the setting for group.</span>
+<span class="token comment"># initgroups: files</span>
+networks:   files dns
+protocols:  files
+publickey:  files
+rpc:        files
+
+使用getent工具可以快速进行解析顺序的测试:
+getent hosts www.wangsheng.com
+<span class="token number">1.1</span>.1.1         www.wangsheng.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用dig命令"><a href="#使用dig命令" class="headerlink" title="使用dig命令"></a>使用dig命令</h2><p>dig命令 -t参数可以指定查找记录的类型，默认查找A记录</p>
 <p>dig命令@ 指定dns服务器地址</p>
 <p>dig命令 +trace选项，逐步解析，同tracert</p>
 <p>dns默认使用53udp端口，但建议udp与tcp都放行，否则会遇到报错，因为如果响应超过 512 字节，DNS 服务器会返回一个截断标志（TC 位），客户端需改用 TCP 重新发起请求。</p>
 <p><strong>dig返回</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">dig www.wangsheng.com</span><br><span class="line"></span><br><span class="line">; &lt;&lt;&gt;&gt; DiG 9.16.23-RH &lt;&lt;&gt;&gt; www.wangsheng.com</span><br><span class="line">;; global options: +cmd</span><br><span class="line">;; Got answer:</span><br><span class="line"></span><br><span class="line"><span class="comment"># 请求的概况，请求数量1回答数量1，状态NOERROR，AUTHORITY表示权威服务器NS数量，ADDITIONAL表示是否附加记录</span></span><br><span class="line">;; -&gt;&gt;HEADER&lt;&lt;- <span class="string">opcode: QUERY, status: NOERROR, id: 27017</span></span><br><span class="line"><span class="string">;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">;; OPT PSEUDOSECTION:</span></span><br><span class="line"><span class="string">; EDNS: version: 0, flags:; udp: 1232</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 查找类型</span></span><br><span class="line"><span class="string">;; QUESTION SECTION:</span></span><br><span class="line"><span class="string">;www.wangsheng.com.             IN      A</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 回答记录</span></span><br><span class="line"><span class="string">;; ANSWER SECTION:</span></span><br><span class="line"><span class="string">www.wangsheng.com.      3600    IN      A       1.1.1.1</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 查找的信息</span></span><br><span class="line"><span class="string">;; Query time: 2 msec</span></span><br><span class="line"><span class="string">;; SERVER: 10.163.2.100#53(10.163.2.100)</span></span><br><span class="line"><span class="string">;; WHEN: Mon Mar 31 03:28:28 EDT 2025</span></span><br><span class="line"><span class="string">;; MSG SIZE  rcvd: 62</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 返回状态：</span></span><br><span class="line"><span class="string">NOERROR -- 正常</span></span><br><span class="line"><span class="string">SERVFAIL -- 查询遇到问题(可能是DNSSEC选项)</span></span><br><span class="line"><span class="string">NXDOMAIN -- 查询无结果</span></span><br><span class="line"><span class="string">REFUSED -- 查询拒绝(可能网段被拒绝)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># flags:</span></span><br><span class="line"><span class="string">aa -- 表示是权威服务器</span></span><br><span class="line"><span class="string">ra -- 表示支持递归查询</span></span><br><span class="line"><span class="string">qr -- 表示是一个响应</span></span><br><span class="line"><span class="string">tc -- 响应过长被截断</span></span><br><span class="line"><span class="string">rd -- 客户端请求递归查询</span></span><br><span class="line"><span class="string">ad -- 表示通过DNSSEC</span></span><br><span class="line"><span class="string">cd -- 表示禁用DNSSEC</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">dig</span> www.wangsheng.com
 
-<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">1.DNS轮询:</span><br><span class="line">将一个域名解析为3个不同的IP</span><br><span class="line">以round-robin的方式来进行轮询</span><br><span class="line">如果其中一个IP挂了，就会导致访问有1/3无法正常进行连接</span><br><span class="line"></span><br><span class="line">2.缺少反向解析记录:</span><br><span class="line">很多网络服务会使用DNS传入的连接来进行反向查找</span><br><span class="line">比如sshd会对客户端IP进行查找，如果没有反向解析记录就会很慢</span><br><span class="line">比如邮件服务器</span><br><span class="line"></span><br><span class="line">3.通过通配符扩大相应范围:</span><br><span class="line">仅仅给一个成功的解析，说明DNS服务器没挂</span><br><span class="line">wangsheng.com IN A 10.200.2.100</span><br><span class="line">↓</span><br><span class="line">*.wangsheng.com IN A 10.200.2.100</span><br><span class="line"></span><br><span class="line">4.出现两次域名</span><br><span class="line">是因为结尾没有加点(.)</span><br><span class="line">比如www.wangsheng.com</span><br><span class="line">会被解析为www.wang.sheng.com.sheng.com.</span><br><span class="line"></span><br><span class="line">5.CNAME孤儿/循环</span><br><span class="line">孤儿--没有目标别名，会返回NXDOMAIN</span><br><span class="line">循环--互相指向别名，会返回NOERROR</span><br><span class="line"></span><br><span class="line">6.同DNS-zone内多主NS</span><br><span class="line">在DNS服务器master-slave结构中</span><br><span class="line">如果发生脑裂，就会出现双主</span><br><span class="line">此时如果解析，就会返回多个结果</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token punctuation">;</span> <span class="token operator">&lt;&lt;</span><span class="token operator">>></span> DiG <span class="token number">9.16</span>.23-RH <span class="token operator">&lt;&lt;</span><span class="token operator">>></span> www.wangsheng.com
+<span class="token punctuation">;</span><span class="token punctuation">;</span> global options: +cmd
+<span class="token punctuation">;</span><span class="token punctuation">;</span> Got answer:
+
+<span class="token comment"># 请求的概况，请求数量1回答数量1，状态NOERROR，AUTHORITY表示权威服务器NS数量，ADDITIONAL表示是否附加记录</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> -<span class="token operator">>></span>HEADER<span class="token operator">&lt;&lt;-</span> opcode: QUERY, status: NOERROR, id: <span class="token number">27017</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> flags: qr aa rd ra<span class="token punctuation">;</span> QUERY: <span class="token number">1</span>, ANSWER: <span class="token number">1</span>, AUTHORITY: <span class="token number">0</span>, ADDITIONAL: <span class="token number">1</span>
+
+<span class="token punctuation">;</span><span class="token punctuation">;</span> OPT PSEUDOSECTION:
+<span class="token punctuation">;</span> EDNS: version: <span class="token number">0</span>, flags:<span class="token punctuation">;</span> udp: <span class="token number">1232</span>
+
+<span class="token comment"># 查找类型</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> QUESTION SECTION:
+<span class="token punctuation">;</span>www.wangsheng.com.             IN      A
+
+<span class="token comment"># 回答记录</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> ANSWER SECTION:
+www.wangsheng.com.      <span class="token number">3600</span>    IN      A       <span class="token number">1.1</span>.1.1
+
+<span class="token comment"># 查找的信息</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> Query time: <span class="token number">2</span> msec
+<span class="token punctuation">;</span><span class="token punctuation">;</span> SERVER: <span class="token number">10.163</span>.2.100<span class="token comment">#53(10.163.2.100)</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> WHEN: Mon Mar <span class="token number">31</span> 03:28:28 EDT <span class="token number">2025</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> MSG SIZE  rcvd: <span class="token number">62</span>
+
+<span class="token comment"># 返回状态：</span>
+NOERROR -- 正常
+SERVFAIL -- 查询遇到问题<span class="token punctuation">(</span>可能是DNSSEC选项<span class="token punctuation">)</span>
+NXDOMAIN -- 查询无结果
+REFUSED -- 查询拒绝<span class="token punctuation">(</span>可能网段被拒绝<span class="token punctuation">)</span>
+
+<span class="token comment"># flags:</span>
+aa -- 表示是权威服务器
+ra -- 表示支持递归查询
+qr -- 表示是一个响应
+tc -- 响应过长被截断
+rd -- 客户端请求递归查询
+ad -- 表示通过DNSSEC
+<span class="token builtin class-name">cd</span> -- 表示禁用DNSSEC<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.DNS轮询:
+将一个域名解析为3个不同的IP
+以round-robin的方式来进行轮询
+如果其中一个IP挂了，就会导致访问有1/3无法正常进行连接
+
+<span class="token number">2</span>.缺少反向解析记录:
+很多网络服务会使用DNS传入的连接来进行反向查找
+比如sshd会对客户端IP进行查找，如果没有反向解析记录就会很慢
+比如邮件服务器
+
+<span class="token number">3</span>.通过通配符扩大相应范围:
+仅仅给一个成功的解析，说明DNS服务器没挂
+wangsheng.com IN A <span class="token number">10.200</span>.2.100
+↓
+*.wangsheng.com IN A <span class="token number">10.200</span>.2.100
+
+<span class="token number">4</span>.出现两次域名
+是因为结尾没有加点<span class="token punctuation">(</span>.<span class="token punctuation">)</span>
+比如www.wangsheng.com
+会被解析为www.wang.sheng.com.sheng.com.
+
+<span class="token number">5</span>.CNAME孤儿/循环
+孤儿--没有目标别名，会返回NXDOMAIN
+循环--互相指向别名，会返回NOERROR
+
+<span class="token number">6</span>.同DNS-zone内多主NS
+在DNS服务器master-slave结构中
+如果发生脑裂，就会出现双主
+此时如果解析，就会返回多个结果
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6561,36 +6649,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7055,13 +7113,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8102,13 +8160,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8561,14 +8619,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8576,14 +8634,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

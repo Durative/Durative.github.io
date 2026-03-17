@@ -532,7 +532,18 @@
 </tr>
 </tbody></table>
 <h2 id="配置ulimit"><a href="#配置ulimit" class="headerlink" title="配置ulimit"></a><strong>配置ulimit</strong></h2><p>ulimit持久化配置文件&#x2F;etc&#x2F;security&#x2F;limits.conf<br>或子配置文件&#x2F;etc&#x2F;security&#x2F;limits.d&#x2F;</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前所有ulimit</span></span><br><span class="line"><span class="built_in">ulimit</span> -a</span><br><span class="line"></span><br><span class="line"><span class="comment"># 持久化配置</span></span><br><span class="line">vim /etc/security/limits.conf</span><br><span class="line"><span class="comment">#&lt;domain&gt;        &lt;type&gt;  &lt;item&gt;  &lt;value&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 限制所有用户的打开文件数为 8192</span></span><br><span class="line">*        hard    nofile      8192</span><br><span class="line"></span><br><span class="line"><span class="comment"># 限制用户 &quot;appuser&quot; 的最大进程数为 1024</span></span><br><span class="line">appuser  hard    <span class="built_in">nproc</span>       1024</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看当前所有ulimit</span>
+<span class="token builtin class-name">ulimit</span> <span class="token parameter variable">-a</span>
+
+<span class="token comment"># 持久化配置</span>
+<span class="token function">vim</span> /etc/security/limits.conf
+<span class="token comment">#&lt;domain>        &lt;type>  &lt;item>  &lt;value></span>
+
+<span class="token comment"># 限制所有用户的打开文件数为 8192</span>
+*        hard    nofile      <span class="token number">8192</span>
+
+<span class="token comment"># 限制用户 "appuser" 的最大进程数为 1024</span>
+appuser  hard    nproc       <span class="token number">1024</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="cgroup-v1"><a href="#cgroup-v1" class="headerlink" title="cgroup v1"></a>cgroup v1</h1><p>cgroups（Control Groups）是 Linux 内核提供的一种机制，用于<strong>对进程或进程组进行资源限制、优先级分配、资源统计和任务控制</strong>。它是现代 Linux 系统资源管理的核心组件（尤其在容器化技术中广泛应用）。</p>
 <h2 id="核心功能"><a href="#核心功能" class="headerlink" title="核心功能"></a><strong>核心功能</strong></h2><p><strong>(1) 资源限制</strong></p>
@@ -557,7 +568,9 @@
 <li>冻结、恢复或终止一组进程（freezer）。</li>
 </ul>
 <h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><h3 id="控制器"><a href="#控制器" class="headerlink" title="控制器"></a><strong>控制器</strong></h3><p>每种资源：CPU&#x2F;MM&#x2F;IO等对应一个控制器</p>
-<h3 id="层级结构-树状结构"><a href="#层级结构-树状结构" class="headerlink" title="层级结构-树状结构"></a><strong>层级结构-树状结构</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">根目录：       /sys/fs/cgroup</span><br><span class="line">层级目录如CPU：/sys/fs/cgroup/cpu</span><br><span class="line">控制组目录     /sys/fs/cgroup/cpu/mygroup</span><br></pre></td></tr></table></figure>
+<h3 id="层级结构-树状结构"><a href="#层级结构-树状结构" class="headerlink" title="层级结构-树状结构"></a><strong>层级结构-树状结构</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">根目录：       /sys/fs/cgroup
+层级目录如CPU：/sys/fs/cgroup/cpu
+控制组目录     /sys/fs/cgroup/cpu/mygroup<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="控制组-任务"><a href="#控制组-任务" class="headerlink" title="控制组&#x2F;任务"></a><strong>控制组&#x2F;任务</strong></h3><p>任务即进程，是cgroup资源管理的直接对象</p>
 <p>控制组是进程的集合，用于关联控制器并应用资源管理策略</p>
@@ -583,16 +596,30 @@
 </ul>
 <h2 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h2><ol>
 <li><p><strong>创建层级</strong>：挂载关联CPU和内存控制器的层级。</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bash</span><br><span class="line">mount -t cgroup -o cpu,memory none /sys/fs/cgroup/wangsheng</span><br><span class="line"></span><br><span class="line">这就是一个控制器，叫wangsheng</span><br></pre></td></tr></table></figure>
+ <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">bash</span>
+<span class="token function">mount</span> <span class="token parameter variable">-t</span> cgroup <span class="token parameter variable">-o</span> cpu,memory none /sys/fs/cgroup/wangsheng
+
+这就是一个控制器，叫wangsheng<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p><strong>创建控制组</strong>：在层级下创建子cgroup。</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bash</span><br><span class="line"><span class="built_in">mkdir</span> /sys/fs/cgroup/wangsheng/ws</span><br><span class="line"></span><br><span class="line">这是一个工作组ws</span><br><span class="line">隶属于wangsheng控制器的</span><br></pre></td></tr></table></figure>
+ <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">bash</span>
+<span class="token function">mkdir</span> /sys/fs/cgroup/wangsheng/ws
+
+这是一个工作组ws
+隶属于wangsheng控制器的<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p><strong>配置资源限制</strong>：设置CPU配额</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bash</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;20000 100000&quot;</span> &gt; /sys/fs/cgroup/myhierarchy/cgroup/wangsheng/ws</span><br><span class="line"></span><br><span class="line">添加一个规则</span><br></pre></td></tr></table></figure>
+ <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">bash</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"20000 100000"</span> <span class="token operator">></span> /sys/fs/cgroup/myhierarchy/cgroup/wangsheng/ws
+
+添加一个规则<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p><strong>添加进程</strong>：将PID为1234的进程加入cgroup。</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bash</span><br><span class="line"><span class="built_in">echo</span> 1234 &gt; /sys/fs/cgroup/cgroup/wangsheng/ws/cgroup.procs</span><br><span class="line"></span><br><span class="line">现在1234这个进程就属于wangsheng控制器下的ws控制组了</span><br><span class="line">该组下的进程，都遵循上面的资源限制</span><br></pre></td></tr></table></figure></li>
+ <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">bash</span>
+<span class="token builtin class-name">echo</span> <span class="token number">1234</span> <span class="token operator">></span> /sys/fs/cgroup/cgroup/wangsheng/ws/cgroup.procs
+
+现在1234这个进程就属于wangsheng控制器下的ws控制组了
+该组下的进程，都遵循上面的资源限制<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
 </ol>
 <h1 id="cgroupv2"><a href="#cgroupv2" class="headerlink" title="cgroupv2"></a>cgroupv2</h1><h2 id="v1的局限性"><a href="#v1的局限性" class="headerlink" title="v1的局限性"></a>v1的局限性</h2><p>如果你已经看懂了cgroup的工作流程<br>那么就很容易知道，在多个控制器的工作组下，一定会有cgroup.procs文件中<br>含有相同的PID，就会增加配置的复杂性</p>
 <table>
@@ -621,7 +648,12 @@
 </tbody></table>
 <h2 id="v2的优越性"><a href="#v2的优越性" class="headerlink" title="v2的优越性"></a>v2的优越性</h2><p>主要是层级结构的不同</p>
 <p>也就是，现在同一个控制组中，可以直接定义规则，而不是通过控制器进行分类</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 内存和 CPU 限制（v2）</span></span><br><span class="line"><span class="built_in">echo</span> 500M &gt; /sys/fs/cgroup/myapp/memory.max</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;50000 100000&quot;</span> &gt; /sys/fs/cgroup/myapp/cpu.max  <span class="comment"># 50% CPU</span></span><br><span class="line"><span class="built_in">echo</span> 2000 &gt; /sys/fs/cgroup/myapp/cpu.weight        <span class="comment"># 权重值</span></span><br><span class="line"></span><br><span class="line">在下面还可以定义新的子控制组</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 内存和 CPU 限制（v2）</span>
+<span class="token builtin class-name">echo</span> 500M <span class="token operator">></span> /sys/fs/cgroup/myapp/memory.max
+<span class="token builtin class-name">echo</span> <span class="token string">"50000 100000"</span> <span class="token operator">></span> /sys/fs/cgroup/myapp/cpu.max  <span class="token comment"># 50% CPU</span>
+<span class="token builtin class-name">echo</span> <span class="token number">2000</span> <span class="token operator">></span> /sys/fs/cgroup/myapp/cpu.weight        <span class="token comment"># 权重值</span>
+
+在下面还可以定义新的子控制组<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>限制容器内存</strong></p>
 <ul>
@@ -636,19 +668,99 @@
 <h1 id="cgroup与systemd"><a href="#cgroup与systemd" class="headerlink" title="cgroup与systemd"></a>cgroup与systemd</h1><p>cgroups 和 systemd 在现代 Linux 系统中密切相关。<strong>systemd 是 cgroups 的主要管理者和使用者</strong>，它利用 cgroups 实现服务<strong>资源隔离、进程跟踪和资源限制</strong></p>
 <h2 id="slice切片"><a href="#slice切片" class="headerlink" title="slice切片"></a><strong>slice切片</strong></h2><p>相当于逻辑组group的概念 </p>
 <p><strong>systemd 预定义了三个核心slice</strong></p>
-<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">system.<span class="property">slice</span> 所有系统服务的默认分组</span><br><span class="line">user.<span class="property">slice</span> 所有用户会话和用户级服务</span><br><span class="line">init.<span class="property">scope</span> systemd 自身进程所在的 cgroup（<span class="variable constant_">PID</span> <span class="number">1</span>）</span><br><span class="line"></span><br><span class="line">machine.<span class="property">slice</span> (非顶级) 用于虚拟化或容器环境（如虚拟机、容器引擎）中资源的统一管理</span><br><span class="line"></span><br><span class="line">查看slices层级</span><br><span class="line">systemd-cgls</span><br><span class="line"><span class="title class_">Control</span> group /:</span><br><span class="line">-.<span class="property">slice</span></span><br><span class="line">├─user.<span class="property">slice</span> (#<span class="number">1225</span>)</span><br><span class="line">│ → user.<span class="property">invocation_id</span>: d8b0161e25574bd0b1945c80211fc22a</span><br><span class="line">│ └─user-<span class="number">0.</span>slice (#<span class="number">317167</span>)</span><br><span class="line">│   → trusted.<span class="property">invocation_id</span>: c43adc6a551a4b5a9b55ba6118726d12</span><br><span class="line">│   ├─session-<span class="number">107.</span>scope (#<span class="number">317426</span>)</span><br><span class="line">├─init.<span class="property">scope</span> (#<span class="number">22</span>)</span><br><span class="line">│ └─<span class="number">1</span> /usr/lib/systemd/systemd --switched-root --system --deserialize <span class="number">31</span></span><br><span class="line">└─system.<span class="property">slice</span> (#<span class="number">59</span>)</span><br><span class="line">  ├─irqbalance.<span class="property">service</span> (#<span class="number">3152</span>)</span><br><span class="line">  │ → user.<span class="property">invocation_id</span>: 7b81fa3ef1aa448498559131fd131f51</span><br><span class="line">  │ → trusted.<span class="property">invocation_id</span>: 7b81fa3ef1aa448498559131fd131f51</span><br><span class="line">  │ └─<span class="number">867</span> /usr/sbin/irqbalance</span><br><span class="line">  │ ├─init.<span class="property">scope</span> (#<span class="number">256788</span>)</span><br><span class="line">  │ │ └─<span class="number">1088268</span> /sbin/init</span><br><span class="line">  │ ├─system.<span class="property">slice</span> (#<span class="number">257142</span>)</span><br><span class="line">  │ │ ├─containerd.<span class="property">service</span> … (#<span class="number">258040</span>)</span><br><span class="line">  </span><br><span class="line"># 查看cgroup资源使用</span><br><span class="line">systemd-cgtop</span><br><span class="line"><span class="title class_">Control</span> <span class="title class_">Group</span>                                                <span class="title class_">Tasks</span>   %<span class="variable constant_">CPU</span>   <span class="title class_">Memory</span>  <span class="title class_">Input</span>/s <span class="title class_">Output</span>/s</span><br><span class="line">/                                                             <span class="number">1395</span>   <span class="number">10.0</span>     <span class="number">5.</span>9G       0B    <span class="number">21.</span>7K</span><br><span class="line">system.<span class="property">slice</span>                                                  <span class="number">1201</span>    <span class="number">6.1</span>     <span class="number">6.</span>7G       0B    <span class="number">19.</span>2K</span><br><span class="line">system.<span class="property">slice</span>/docker…8ad1d666d904588067db8ad0897192ca.<span class="property">scope</span>     <span class="number">344</span>    <span class="number">2.7</span>     <span class="number">1.</span>0G        -        -</span><br><span class="line">system.<span class="property">slice</span>/docker…d904588067db8ad0897192ca.<span class="property">scope</span>/kubelet     <span class="number">179</span>    <span class="number">1.5</span>   <span class="number">741.</span>9M        -        -</span><br><span class="line">system.<span class="property">slice</span>/docker…a1cabc5944982da13b8c3693c3a45498.<span class="property">scope</span>     <span class="number">119</span>    <span class="number">1.4</span>   <span class="number">253.</span>4M        -        -</span><br><span class="line">system.<span class="property">slice</span>/docker…da13b8c3693c3a45498.<span class="property">scope</span>/system.<span class="property">slice</span>      <span class="number">84</span>    <span class="number">1.3</span>   <span class="number">204.</span>8M        -        -</span><br><span class="line">system.<span class="property">slice</span>/docker…88067db8ad0897192ca.<span class="property">scope</span>/system.<span class="property">slice</span>     <span class="number">164</span>    <span class="number">1.3</span>   <span class="number">305.</span>2M        -        -</span><br><span class="line">user.<span class="property">slice</span>                                                       <span class="number">6</span>    <span class="number">1.1</span>     <span class="number">5.</span>1G        -        -</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-jsx" data-language="jsx"><code class="language-jsx">system<span class="token punctuation">.</span>slice 所有系统服务的默认分组
+user<span class="token punctuation">.</span>slice 所有用户会话和用户级服务
+init<span class="token punctuation">.</span>scope systemd 自身进程所在的 cgroup（<span class="token constant">PID</span> <span class="token number">1</span>）
+
+machine<span class="token punctuation">.</span><span class="token function">slice</span> <span class="token punctuation">(</span>非顶级<span class="token punctuation">)</span> 用于虚拟化或容器环境（如虚拟机、容器引擎）中资源的统一管理
+
+查看slices层级
+systemd<span class="token operator">-</span>cgls
+Control group <span class="token operator">/</span><span class="token operator">:</span>
+<span class="token operator">-</span><span class="token punctuation">.</span>slice
+├─user<span class="token punctuation">.</span><span class="token function">slice</span> <span class="token punctuation">(</span>#<span class="token number">1225</span><span class="token punctuation">)</span>
+│ → user<span class="token punctuation">.</span>invocation_id<span class="token operator">:</span> d8b0161e25574bd0b1945c80211fc22a
+│ └─user<span class="token operator">-</span><span class="token number">0.</span><span class="token function">slice</span> <span class="token punctuation">(</span>#<span class="token number">317167</span><span class="token punctuation">)</span>
+│   → trusted<span class="token punctuation">.</span>invocation_id<span class="token operator">:</span> c43adc6a551a4b5a9b55ba6118726d12
+│   ├─session<span class="token operator">-</span><span class="token number">107.</span><span class="token function">scope</span> <span class="token punctuation">(</span>#<span class="token number">317426</span><span class="token punctuation">)</span>
+├─init<span class="token punctuation">.</span><span class="token function">scope</span> <span class="token punctuation">(</span>#<span class="token number">22</span><span class="token punctuation">)</span>
+│ └─<span class="token number">1</span> <span class="token operator">/</span>usr<span class="token operator">/</span>lib<span class="token operator">/</span>systemd<span class="token operator">/</span>systemd <span class="token operator">--</span>switched<span class="token operator">-</span>root <span class="token operator">--</span>system <span class="token operator">--</span>deserialize <span class="token number">31</span>
+└─system<span class="token punctuation">.</span><span class="token function">slice</span> <span class="token punctuation">(</span>#<span class="token number">59</span><span class="token punctuation">)</span>
+  ├─irqbalance<span class="token punctuation">.</span><span class="token function">service</span> <span class="token punctuation">(</span>#<span class="token number">3152</span><span class="token punctuation">)</span>
+  │ → user<span class="token punctuation">.</span>invocation_id<span class="token operator">:</span> 7b81fa3ef1aa448498559131fd131f51
+  │ → trusted<span class="token punctuation">.</span>invocation_id<span class="token operator">:</span> 7b81fa3ef1aa448498559131fd131f51
+  │ └─<span class="token number">867</span> <span class="token operator">/</span>usr<span class="token operator">/</span>sbin<span class="token operator">/</span>irqbalance
+  │ ├─init<span class="token punctuation">.</span><span class="token function">scope</span> <span class="token punctuation">(</span>#<span class="token number">256788</span><span class="token punctuation">)</span>
+  │ │ └─<span class="token number">1088268</span> <span class="token operator">/</span>sbin<span class="token operator">/</span>init
+  │ ├─system<span class="token punctuation">.</span><span class="token function">slice</span> <span class="token punctuation">(</span>#<span class="token number">257142</span><span class="token punctuation">)</span>
+  │ │ ├─containerd<span class="token punctuation">.</span>service <span class="token function">…</span> <span class="token punctuation">(</span>#<span class="token number">258040</span><span class="token punctuation">)</span>
+  
+# 查看cgroup资源使用
+systemd<span class="token operator">-</span>cgtop
+Control Group                                                Tasks   <span class="token operator">%</span><span class="token constant">CPU</span>   Memory  Input<span class="token operator">/</span>s Output<span class="token operator">/</span>s
+<span class="token operator">/</span>                                                             <span class="token number">1395</span>   <span class="token number">10.0</span>     <span class="token number">5</span><span class="token punctuation">.</span>9G       0B    <span class="token number">21</span><span class="token punctuation">.</span>7K
+system<span class="token punctuation">.</span>slice                                                  <span class="token number">1201</span>    <span class="token number">6.1</span>     <span class="token number">6</span><span class="token punctuation">.</span>7G       0B    <span class="token number">19</span><span class="token punctuation">.</span>2K
+system<span class="token punctuation">.</span>slice<span class="token operator">/</span>docker…8ad1d666d904588067db8ad0897192ca<span class="token punctuation">.</span>scope     <span class="token number">344</span>    <span class="token number">2.7</span>     <span class="token number">1</span><span class="token punctuation">.</span>0G        <span class="token operator">-</span>        <span class="token operator">-</span>
+system<span class="token punctuation">.</span>slice<span class="token operator">/</span>docker…d904588067db8ad0897192ca<span class="token punctuation">.</span>scope<span class="token operator">/</span>kubelet     <span class="token number">179</span>    <span class="token number">1.5</span>   <span class="token number">741</span><span class="token punctuation">.</span>9M        <span class="token operator">-</span>        <span class="token operator">-</span>
+system<span class="token punctuation">.</span>slice<span class="token operator">/</span>docker…a1cabc5944982da13b8c3693c3a45498<span class="token punctuation">.</span>scope     <span class="token number">119</span>    <span class="token number">1.4</span>   <span class="token number">253</span><span class="token punctuation">.</span>4M        <span class="token operator">-</span>        <span class="token operator">-</span>
+system<span class="token punctuation">.</span>slice<span class="token operator">/</span>docker…da13b8c3693c3a45498<span class="token punctuation">.</span>scope<span class="token operator">/</span>system<span class="token punctuation">.</span>slice      <span class="token number">84</span>    <span class="token number">1.3</span>   <span class="token number">204</span><span class="token punctuation">.</span>8M        <span class="token operator">-</span>        <span class="token operator">-</span>
+system<span class="token punctuation">.</span>slice<span class="token operator">/</span>docker…88067db8ad0897192ca<span class="token punctuation">.</span>scope<span class="token operator">/</span>system<span class="token punctuation">.</span>slice     <span class="token number">164</span>    <span class="token number">1.3</span>   <span class="token number">305</span><span class="token punctuation">.</span>2M        <span class="token operator">-</span>        <span class="token operator">-</span>
+user<span class="token punctuation">.</span>slice                                                       <span class="token number">6</span>    <span class="token number">1.1</span>     <span class="token number">5</span><span class="token punctuation">.</span>1G        <span class="token operator">-</span>        <span class="token operator">-</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="创建自定义slice"><a href="#创建自定义slice" class="headerlink" title="创建自定义slice"></a><strong>创建自定义slice</strong></h2><p><strong>子slice命名规则</strong></p>
 <p>子slices名称需要带有父slice的名称，通过连字符分隔，</p>
 <p>system.slice 的子 slice → system-mycustom.slice</p>
 <p><strong>且子slice不能超过父slice的限额</strong></p>
 <h3 id="创建文件"><a href="#创建文件" class="headerlink" title="创建文件"></a>创建文件</h3><p>**存放目录(自定义)&#x2F;etc&#x2F;systemd&#x2F;system&#x2F; ****</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建slice</span></span><br><span class="line">vim /etc/systemd/system/myapp.slice</span><br><span class="line">[Slice]</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line"><span class="comment"># 查看slice状态</span></span><br><span class="line">systemctl status myapp.slice</span><br><span class="line">○ myapp.slice - Slice /myapp</span><br><span class="line">     Loaded: loaded (/etc/systemd/system/myapp.slice; static)</span><br><span class="line">     Active: inactive (dead)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将进程关联到自定义 slice </span></span><br><span class="line"><span class="comment"># 测试 使用systemd-run临时运行进程</span></span><br><span class="line">systemd-run --slice=myapp.slice --unit=myapp.service /path/to/your/command</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改现有服务的配置文件，添加配置</span></span><br><span class="line">systemctl edit nginx.service</span><br><span class="line">添加</span><br><span class="line">[Service]</span><br><span class="line">Slice=myapp.slice</span><br><span class="line"></span><br><span class="line">sudo systemctl restart nginx.service</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建slice</span>
+<span class="token function">vim</span> /etc/systemd/system/myapp.slice
+<span class="token punctuation">[</span>Slice<span class="token punctuation">]</span>
+
+systemctl daemon-reload
+<span class="token comment"># 查看slice状态</span>
+systemctl status myapp.slice
+○ myapp.slice - Slice /myapp
+     Loaded: loaded <span class="token punctuation">(</span>/etc/systemd/system/myapp.slice<span class="token punctuation">;</span> static<span class="token punctuation">)</span>
+     Active: inactive <span class="token punctuation">(</span>dead<span class="token punctuation">)</span>
+
+<span class="token comment"># 将进程关联到自定义 slice </span>
+<span class="token comment"># 测试 使用systemd-run临时运行进程</span>
+systemd-run <span class="token parameter variable">--slice</span><span class="token operator">=</span>myapp.slice <span class="token parameter variable">--unit</span><span class="token operator">=</span>myapp.service /path/to/your/command
+
+<span class="token comment"># 修改现有服务的配置文件，添加配置</span>
+systemctl edit nginx.service
+添加
+<span class="token punctuation">[</span>Service<span class="token punctuation">]</span>
+<span class="token assign-left variable">Slice</span><span class="token operator">=</span>myapp.slice
+
+<span class="token function">sudo</span> systemctl restart nginx.service<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="定义规则"><a href="#定义规则" class="headerlink" title="定义规则"></a>定义规则</h3><p>可定义多种块：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[Unit]块</span><br><span class="line">所有 systemd 单元（包括 slice）的通用配置块，用于定义单元的元信息、依赖关系和启动顺序</span><br><span class="line">不赘述</span><br><span class="line"></span><br><span class="line">[Slice]块（必选）</span><br><span class="line">slice 单元的核心配置块，用于定义资源控制</span><br><span class="line">CPUQuota	限制 CPU 使用百分比	 CPUQuota=50%</span><br><span class="line">MemoryMax	限制最大内存使用量	   MemoryMax=2G</span><br><span class="line">IOWeight	设置块设备 IO 权重	   IOWeight=500</span><br><span class="line">TasksMax	限制 slice 内最大进程/线程数	TasksMax=100</span><br><span class="line"></span><br><span class="line">[Install]块</span><br><span class="line">定义单元的安装信息(依赖关系)</span><br><span class="line">WantedBy	  指定依赖当前 slice 的单元或目标	WantedBy=multi-user.target</span><br><span class="line">RequiredBy	强制要求当前 slice 的单元或目标	RequiredBy=mariadb.service</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>Unit<span class="token punctuation">]</span>块
+所有 systemd 单元（包括 slice）的通用配置块，用于定义单元的元信息、依赖关系和启动顺序
+不赘述
 
-<h3 id="开启审计"><a href="#开启审计" class="headerlink" title="开启审计"></a>开启审计</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[Slice]</span><br><span class="line">MemoryAccounting=<span class="literal">true</span>  <span class="comment"># Slice 启用统计</span></span><br><span class="line">MemoryMax=1G          <span class="comment"># 内存限制</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># myapp.service</span></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/usr/bin/myapp</span><br><span class="line">Slice=myapp.slice</span><br><span class="line">MemoryAccounting=<span class="literal">true</span>  <span class="comment"># Service 启用审计</span></span><br></pre></td></tr></table></figure>
+<span class="token punctuation">[</span>Slice<span class="token punctuation">]</span>块（必选）
+slice 单元的核心配置块，用于定义资源控制
+CPUQuota	限制 CPU 使用百分比	 <span class="token assign-left variable">CPUQuota</span><span class="token operator">=</span><span class="token number">50</span>%
+MemoryMax	限制最大内存使用量	   <span class="token assign-left variable">MemoryMax</span><span class="token operator">=</span>2G
+IOWeight	设置块设备 IO 权重	   <span class="token assign-left variable">IOWeight</span><span class="token operator">=</span><span class="token number">500</span>
+TasksMax	限制 slice 内最大进程/线程数	<span class="token assign-left variable">TasksMax</span><span class="token operator">=</span><span class="token number">100</span>
+
+<span class="token punctuation">[</span>Install<span class="token punctuation">]</span>块
+定义单元的安装信息<span class="token punctuation">(</span>依赖关系<span class="token punctuation">)</span>
+WantedBy	  指定依赖当前 slice 的单元或目标	<span class="token assign-left variable">WantedBy</span><span class="token operator">=</span>multi-user.target
+RequiredBy	强制要求当前 slice 的单元或目标	<span class="token assign-left variable">RequiredBy</span><span class="token operator">=</span>mariadb.service<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="开启审计"><a href="#开启审计" class="headerlink" title="开启审计"></a>开启审计</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>Slice<span class="token punctuation">]</span>
+<span class="token assign-left variable">MemoryAccounting</span><span class="token operator">=</span>true  <span class="token comment"># Slice 启用统计</span>
+<span class="token assign-left variable">MemoryMax</span><span class="token operator">=</span>1G          <span class="token comment"># 内存限制</span>
+
+<span class="token comment"># myapp.service</span>
+<span class="token punctuation">[</span>Service<span class="token punctuation">]</span>
+<span class="token assign-left variable">ExecStart</span><span class="token operator">=</span>/usr/bin/myapp
+<span class="token assign-left variable">Slice</span><span class="token operator">=</span>myapp.slice
+<span class="token assign-left variable">MemoryAccounting</span><span class="token operator">=</span>true  <span class="token comment"># Service 启用审计</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6707,36 +6819,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7201,13 +7283,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8248,13 +8330,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8707,14 +8789,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8722,14 +8804,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

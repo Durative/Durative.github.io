@@ -524,25 +524,105 @@
 <p>标准：<a target="_blank" rel="noopener" href="https://github.com/argoproj/argo-cd/blob/master/manifests/install.yaml">https://github.com/argoproj/argo-cd/blob/master/manifests/install.yaml</a></p>
 <p>高可用：ha&#x2F;install.yaml: <a target="_blank" rel="noopener" href="https://github.com/argoproj/argo-cd/blob/master/manifests/ha/install.yaml">https://github.com/argoproj/argo-cd/blob/master/manifests/ha/install.yaml</a></p>
 <p>精简：<a target="_blank" rel="noopener" href="https://github.com/argoproj/argo-cd/blob/master/manifests/core-install.yaml">https://github.com/argoproj/argo-cd/blob/master/manifests/core-install.yaml</a></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">kubectl create namespace argocd</span><br><span class="line">kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml</span><br><span class="line"></span><br><span class="line">准备镜像:</span><br><span class="line">quay.io/argoproj/argocd:v2.13.1</span><br><span class="line">ghcr.io/dexidp/dex:v2.41.1</span><br><span class="line">redis:7.0.15-alpine</span><br><span class="line"></span><br><span class="line">镜像自行准备，或者配docker或者containerd的镜像加速</span><br><span class="line">docker pull quay.io/argoproj/argocd:v2.13.1</span><br><span class="line">docker save quay.io/argoproj/argocd:v2.13.1 -o argo-v2.13.1.tar.gz</span><br><span class="line">scp argo-v2.13.1.tar.gz ws-k8s-node1:/root/ &amp;&amp; ssh ws-k8s-node1 <span class="string">&quot;ctr -n k8s image import /root/argo-v2.13.1.tar.gz&quot;</span></span><br><span class="line">scp argo-v2.13.1.tar.gz ws-k8s-node2:/root/ &amp;&amp; ssh ws-k8s-node2 <span class="string">&quot;ctr -n k8s image import /root/argo-v2.13.1.tar.gz&quot;</span></span><br><span class="line">scp argo-v2.13.1.tar.gz ws-k8s-node3:/root/ &amp;&amp; ssh ws-k8s-node3 <span class="string">&quot;ctr -n k8s image import /root/argo-v2.13.1.tar.gz&quot;</span></span><br><span class="line"></span><br><span class="line">可能需要的污点——允许部署在master节点上</span><br><span class="line">tolerations:</span><br><span class="line">    - key: <span class="string">&quot;node-role.kubernetes.io/master&quot;</span></span><br><span class="line">      operator: <span class="string">&quot;Exists&quot;</span></span><br><span class="line">      effect: <span class="string">&quot;NoSchedule&quot;</span></span><br><span class="line"></span><br><span class="line">完成后</span><br><span class="line">kubectl get pods</span><br><span class="line">NAME                                                READY   STATUS    RESTARTS        AGE</span><br><span class="line">argocd-application-controller-0                     1/1     Running   0               5m23s</span><br><span class="line">argocd-applicationset-controller-5ccbf46fd8-w558t   1/1     Running   0               5m24s</span><br><span class="line">argocd-dex-server-655cb47bfb-r8xns                  1/1     Running   0               5m23s</span><br><span class="line">argocd-notifications-controller-5b9566d4c7-gkbd7    1/1     Running   0               5m23s</span><br><span class="line">argocd-redis-5c84885b88-g9wwv                       1/1     Running   0               5m23s</span><br><span class="line">argocd-repo-server-78579d98cb-vxx9z                 1/1     Running   0               5m23s</span><br><span class="line">argocd-server-6fb86547dd-k6gr4                      1/1     Running   0               5m23s</span><br><span class="line"></span><br><span class="line">暴露在外部端口</span><br><span class="line">kubectl patch svc argocd-server -n argocd -p <span class="string">&#x27;&#123;&quot;spec&quot;: &#123;&quot;type&quot;: &quot;NodePort&quot;&#125;&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">默认用户admin</span><br><span class="line">初始密码</span><br><span class="line">kubectl -n argocd get secret argocd-initial-admin-secret \</span><br><span class="line">-o jsonpath=<span class="string">&quot;&#123;.data.password&#125;&quot;</span> | <span class="built_in">base64</span> -d</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl create namespace argocd
+kubectl apply <span class="token parameter variable">-n</span> argocd <span class="token parameter variable">-f</span> https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+准备镜像:
+quay.io/argoproj/argocd:v2.13.1
+ghcr.io/dexidp/dex:v2.41.1
+redis:7.0.15-alpine
+
+镜像自行准备，或者配docker或者containerd的镜像加速
+<span class="token function">docker</span> pull quay.io/argoproj/argocd:v2.13.1
+<span class="token function">docker</span> save quay.io/argoproj/argocd:v2.13.1 <span class="token parameter variable">-o</span> argo-v2.13.1.tar.gz
+<span class="token function">scp</span> argo-v2.13.1.tar.gz ws-k8s-node1:/root/ <span class="token operator">&amp;&amp;</span> <span class="token function">ssh</span> ws-k8s-node1 <span class="token string">"ctr -n k8s image import /root/argo-v2.13.1.tar.gz"</span>
+<span class="token function">scp</span> argo-v2.13.1.tar.gz ws-k8s-node2:/root/ <span class="token operator">&amp;&amp;</span> <span class="token function">ssh</span> ws-k8s-node2 <span class="token string">"ctr -n k8s image import /root/argo-v2.13.1.tar.gz"</span>
+<span class="token function">scp</span> argo-v2.13.1.tar.gz ws-k8s-node3:/root/ <span class="token operator">&amp;&amp;</span> <span class="token function">ssh</span> ws-k8s-node3 <span class="token string">"ctr -n k8s image import /root/argo-v2.13.1.tar.gz"</span>
+
+可能需要的污点——允许部署在master节点上
+tolerations:
+    - key: <span class="token string">"node-role.kubernetes.io/master"</span>
+      operator: <span class="token string">"Exists"</span>
+      effect: <span class="token string">"NoSchedule"</span>
+
+完成后
+kubectl get pods
+NAME                                                READY   STATUS    RESTARTS        AGE
+argocd-application-controller-0                     <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m23s
+argocd-applicationset-controller-5ccbf46fd8-w558t   <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m24s
+argocd-dex-server-655cb47bfb-r8xns                  <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m23s
+argocd-notifications-controller-5b9566d4c7-gkbd7    <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m23s
+argocd-redis-5c84885b88-g9wwv                       <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m23s
+argocd-repo-server-78579d98cb-vxx9z                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m23s
+argocd-server-6fb86547dd-k6gr4                      <span class="token number">1</span>/1     Running   <span class="token number">0</span>               5m23s
+
+暴露在外部端口
+kubectl patch svc argocd-server <span class="token parameter variable">-n</span> argocd <span class="token parameter variable">-p</span> <span class="token string">'&#123;"spec": &#123;"type": "NodePort"&#125;&#125;'</span>
+
+默认用户admin
+初始密码
+kubectl <span class="token parameter variable">-n</span> argocd get secret argocd-initial-admin-secret <span class="token punctuation">\</span>
+<span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.data.password&#125;"</span> <span class="token operator">|</span> base64 <span class="token parameter variable">-d</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="argoCLI部署与交互"><a href="#argoCLI部署与交互" class="headerlink" title="argoCLI部署与交互"></a>argoCLI部署与交互</h1><p><strong>二进制安装</strong></p>
 <p>这命令行文件170M，下载下半天，真的抽象</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64</span><br><span class="line">sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd</span><br><span class="line"><span class="built_in">rm</span> argocd-linux-amd64</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">curl</span> <span class="token parameter variable">-sSL</span> <span class="token parameter variable">-o</span> argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+<span class="token function">sudo</span> <span class="token function">install</span> <span class="token parameter variable">-m</span> <span class="token number">555</span> argocd-linux-amd64 /usr/local/bin/argocd
+<span class="token function">rm</span> argocd-linux-amd64<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>使用CLI登录argoCD</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">argocd admin initial-password -n argocd</span><br><span class="line"><span class="comment">#F5Fc4oXYJf8k05Eo </span></span><br><span class="line"></span><br><span class="line">登录</span><br><span class="line">argocd login 192.168.10.200:30779</span><br><span class="line">WARNING: server certificate had error: tls: failed to verify certificate: x509: cannot validate certificate <span class="keyword">for</span> 192.168.10.200 because it doesn<span class="string">&#x27;t contain any IP SANs. Proceed insecurely (y/n)? y</span></span><br><span class="line"><span class="string">Username: admin</span></span><br><span class="line"><span class="string">Password:</span></span><br><span class="line"><span class="string">&#x27;</span>admin:login<span class="string">&#x27; logged in successfully</span></span><br><span class="line"><span class="string">Context &#x27;</span>192.168.10.200:30779<span class="string">&#x27; updated</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">更改密码</span></span><br><span class="line"><span class="string">argocd account update-password</span></span><br><span class="line"><span class="string">*** Enter password of currently logged in user (admin):</span></span><br><span class="line"><span class="string">*** Enter new password for user admin:</span></span><br><span class="line"><span class="string">*** Confirm new password for user admin:</span></span><br><span class="line"><span class="string">Password updated</span></span><br><span class="line"><span class="string">Context &#x27;</span>192.168.10.200:30779<span class="string">&#x27; updated</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">argocd admin initial-password <span class="token parameter variable">-n</span> argocd
+<span class="token comment">#F5Fc4oXYJf8k05Eo </span>
+
+登录
+argocd login <span class="token number">192.168</span>.10.200:30779
+WARNING: server certificate had error: tls: failed to verify certificate: x509: cannot validate certificate <span class="token keyword">for</span> <span class="token number">192.168</span>.10.200 because it doesn<span class="token string">'t contain any IP SANs. Proceed insecurely (y/n)? y
+Username: admin
+Password:
+'</span>admin:login<span class="token string">' logged in successfully
+Context '</span><span class="token number">192.168</span>.10.200:30779<span class="token string">' updated
+
+更改密码
+argocd account update-password
+*** Enter password of currently logged in user (admin):
+*** Enter new password for user admin:
+*** Confirm new password for user admin:
+Password updated
+Context '</span><span class="token number">192.168</span>.10.200:30779' updated<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>使用CLI部署资源</strong></p>
 <p>可以使用Web UI创建资源，或通过CLI进行部署</p>
 <p>回想上面讲的，argoCD Application指定了k8s的来源和目的，在CLI中能明显体现出来</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">例：</span><br><span class="line">kubectl config set-context --current --namespace=argocd</span><br><span class="line"></span><br><span class="line">argocd app create guestbook \</span><br><span class="line">--repo https://github.com/argoproj/argocd-example-apps.git \</span><br><span class="line">--path guestbook --dest-server https://kubernetes.default.svc \</span><br><span class="line">--dest-namespace default</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">例：
+kubectl config set-context <span class="token parameter variable">--current</span> <span class="token parameter variable">--namespace</span><span class="token operator">=</span>argocd
+
+argocd app create guestbook <span class="token punctuation">\</span>
+<span class="token parameter variable">--repo</span> https://github.com/argoproj/argocd-example-apps.git <span class="token punctuation">\</span>
+<span class="token parameter variable">--path</span> guestbook --dest-server https://kubernetes.default.svc <span class="token punctuation">\</span>
+--dest-namespace default<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>同步策略</strong></p>
 <p>Automated Sync 自动同步<br>Manual Sync 手动同步<br>Prune (修剪)：把多的资源删除<br>Sync Wave：一种分批同步的策略，用于控制应用程序的同步速率。通过将应用程序分为多个同步波，可以逐步同步应用程序的不同部分，以减轻集群的负载和避免突发的大规模同步操作。<br>Sync Options (同步选项): SYNC POLICY 还可以与 SYNC OPTIONS 结合使用，以进一步细化同步行为。SYNC OPTIONS 允许您配置诸如跳过模式验证、自动创建命名空间、最后修剪、仅应用不同步的资源等选项，以满足特定的同步需求。</p>
 <h1 id="argoCD对接"><a href="#argoCD对接" class="headerlink" title="argoCD对接"></a>argoCD对接</h1><h2 id="对接k8s说明"><a href="#对接k8s说明" class="headerlink" title="对接k8s说明"></a>对接k8s说明</h2><p><strong>对于内部k8s，</strong>在argoCD部署时，就已经默认设置好了它的RBAC，所以只需要将其集群URL指定为<a target="_blank" rel="noopener" href="https://kubernetes.default.svc/">https://kubernetes.default.svc</a>即可</p>
 <p><strong>对于外部k8s，</strong>如果需要对接需要通过argo CLI进行集群的添加，</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#先对argoCLI进行配置——登录</span></span><br><span class="line">sudo argocd login 127.0.0.1:32198      </span><br><span class="line">WARNING: server certificate had error: tls: failed to verify certificate: x509: cannot validate certificate <span class="keyword">for</span> 127.0.0.1 because it doesn<span class="string">&#x27;t contain any IP SANs. Proceed insecurely (y/n)? y</span></span><br><span class="line"><span class="string">Username: admin</span></span><br><span class="line"><span class="string">Password: </span></span><br><span class="line"><span class="string">&#x27;</span>admin:login<span class="string">&#x27; logged in successfully</span></span><br><span class="line"><span class="string">Context &#x27;</span>127.0.0.1:32198<span class="string">&#x27; updated</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">#设置外部k8s</span></span><br><span class="line"><span class="string">如果没有默认kubeconfig可以使用--kubeconfig参数进行指定</span></span><br><span class="line"><span class="string">sudo argocd cluster add --kubeconfig config_compute local</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">&#x27;</span>WARNING: This will create a service account `argocd-manager` on the cluster referenced by context `<span class="built_in">local</span>` with full cluster level privileges. Do you want to <span class="built_in">continue</span> [y/N]? y</span><br><span class="line">INFO[0001] ServiceAccount <span class="string">&quot;argocd-manager&quot;</span> already exists <span class="keyword">in</span> namespace <span class="string">&quot;kube-system&quot;</span> </span><br><span class="line">INFO[0001] ClusterRole <span class="string">&quot;argocd-manager-role&quot;</span> updated    </span><br><span class="line">INFO[0001] ClusterRoleBinding <span class="string">&quot;argocd-manager-role-binding&quot;</span> updated </span><br><span class="line">Cluster <span class="string">&#x27;https://10.175.208.16:6443&#x27;</span> added</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#先对argoCLI进行配置——登录</span>
+<span class="token function">sudo</span> argocd login <span class="token number">127.0</span>.0.1:32198      
+WARNING: server certificate had error: tls: failed to verify certificate: x509: cannot validate certificate <span class="token keyword">for</span> <span class="token number">127.0</span>.0.1 because it doesn<span class="token string">'t contain any IP SANs. Proceed insecurely (y/n)? y
+Username: admin
+Password: 
+'</span>admin:login<span class="token string">' logged in successfully
+Context '</span><span class="token number">127.0</span>.0.1:32198<span class="token string">' updated
+
+#设置外部k8s
+如果没有默认kubeconfig可以使用--kubeconfig参数进行指定
+sudo argocd cluster add --kubeconfig config_compute local
+
+'</span>WARNING: This will create a <span class="token function">service</span> account <span class="token variable"><span class="token variable">`</span>argocd-manager<span class="token variable">`</span></span> on the cluster referenced by context <span class="token variable"><span class="token variable">`</span><span class="token builtin class-name">local</span><span class="token variable">`</span></span> with full cluster level privileges. Do you want to <span class="token builtin class-name">continue</span> <span class="token punctuation">[</span>y/N<span class="token punctuation">]</span>? y
+INFO<span class="token punctuation">[</span>0001<span class="token punctuation">]</span> ServiceAccount <span class="token string">"argocd-manager"</span> already exists <span class="token keyword">in</span> namespace <span class="token string">"kube-system"</span> 
+INFO<span class="token punctuation">[</span>0001<span class="token punctuation">]</span> ClusterRole <span class="token string">"argocd-manager-role"</span> updated    
+INFO<span class="token punctuation">[</span>0001<span class="token punctuation">]</span> ClusterRoleBinding <span class="token string">"argocd-manager-role-binding"</span> updated 
+Cluster <span class="token string">'https://10.175.208.16:6443'</span> added
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/12/9e9cf6f51c7ae597e2afea4594a45b21.png"></p>
 <h2 id="对接公有仓库与部署"><a href="#对接公有仓库与部署" class="headerlink" title="对接公有仓库与部署"></a>对接公有仓库与部署</h2><p>这里使用的是官方提供的demo的github，是公开仓库，所以不涉及凭证管理</p>
@@ -6634,36 +6714,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7128,13 +7178,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8175,13 +8225,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8634,14 +8684,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8649,14 +8699,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

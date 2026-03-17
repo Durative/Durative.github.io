@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="后面改名叫配置管理了，但是还是感觉状态管理更好理解。和playbook比较像 远程执行可以节省时间，但是有一些缺点，各个命令之间有一些细微的区别，这些区别会导致，如果将远程执行的命令写成脚本，那就会存在很多问题 状态管理介绍为了解决上面这个问题，salt可以创建一个可以重用的配置模板，将其称为state 状态文件的存放位置，取决于配置文件 1234567891011121314&#x2F;etc&#x2F;salt&#x2F;">
+    <meta name="description" content="后面改名叫配置管理了，但是还是感觉状态管理更好理解。和playbook比较像 远程执行可以节省时间，但是有一些缺点，各个命令之间有一些细微的区别，这些区别会导致，如果将远程执行的命令写成脚本，那就会存在很多问题 状态管理介绍为了解决上面这个问题，salt可以创建一个可以重用的配置模板，将其称为state 状态文件的存放位置，取决于配置文件 &#x2F;etc&#x2F;salt&#x2F;master ... file_roo">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Salt状态管理与高级状态文件">
 <meta property="og:url" content="https://akemi.zj.cn/2025/09/19/Salt-State/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="后面改名叫配置管理了，但是还是感觉状态管理更好理解。和playbook比较像 远程执行可以节省时间，但是有一些缺点，各个命令之间有一些细微的区别，这些区别会导致，如果将远程执行的命令写成脚本，那就会存在很多问题 状态管理介绍为了解决上面这个问题，salt可以创建一个可以重用的配置模板，将其称为state 状态文件的存放位置，取决于配置文件 1234567891011121314&#x2F;etc&#x2F;salt&#x2F;">
+<meta property="og:description" content="后面改名叫配置管理了，但是还是感觉状态管理更好理解。和playbook比较像 远程执行可以节省时间，但是有一些缺点，各个命令之间有一些细微的区别，这些区别会导致，如果将远程执行的命令写成脚本，那就会存在很多问题 状态管理介绍为了解决上面这个问题，salt可以创建一个可以重用的配置模板，将其称为state 状态文件的存放位置，取决于配置文件 &#x2F;etc&#x2F;salt&#x2F;master ... file_roo">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-09-19T08:52:50.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.783Z">
@@ -494,21 +494,168 @@
 <p>远程执行可以节省时间，但是有一些缺点，各个命令之间有一些细微的区别，这些区别会导致，如果将远程执行的命令写成脚本，那就会存在很多问题</p>
 <h3 id="状态管理介绍"><a href="#状态管理介绍" class="headerlink" title="状态管理介绍"></a><strong>状态管理介绍</strong></h3><p>为了解决上面这个问题，salt可以创建一个可以重用的配置模板，将其称为state</p>
 <p>状态文件的存放位置，取决于配置文件</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">/etc/salt/master</span><br><span class="line">...</span><br><span class="line">file_roots:</span><br><span class="line">  base:</span><br><span class="line">    - /srv/salt/base</span><br><span class="line">  dev:</span><br><span class="line">    - /srv/salt/dev</span><br><span class="line">  prod:</span><br><span class="line">    - /srv/salt/prod</span><br><span class="line">...</span><br><span class="line"><span class="built_in">mkdir</span> /srv/salt/&#123;base,dev,prod&#125; -p</span><br><span class="line">systemctl restart salt-master.service</span><br><span class="line"></span><br><span class="line">定义了3个环境，需要将状态文件放进对应的文件夹</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">/etc/salt/master
+<span class="token punctuation">..</span>.
+file_roots:
+  base:
+    - /srv/salt/base
+  dev:
+    - /srv/salt/dev
+  prod:
+    - /srv/salt/prod
+<span class="token punctuation">..</span>.
+<span class="token function">mkdir</span> /srv/salt/<span class="token punctuation">&#123;</span>base,dev,prod<span class="token punctuation">&#125;</span> <span class="token parameter variable">-p</span>
+systemctl restart salt-master.service
 
-<h3 id="状态文件写法"><a href="#状态文件写法" class="headerlink" title="状态文件写法"></a><strong>状态文件写法</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /srv/salt/base/</span><br><span class="line">vim example.sls <span class="comment"># 需要以sls结尾</span></span><br><span class="line">格式：</span><br><span class="line">ID:           </span><br><span class="line">  module.function:</span><br><span class="line">    - name: name</span><br><span class="line">    - argument:</span><br><span class="line">        - xxx</span><br><span class="line">        - xxx</span><br><span class="line"></span><br><span class="line">显式命名:</span><br><span class="line">install_nginx:            <span class="comment"># 状态ID：安装nginx</span></span><br><span class="line">  pkg.installed:          <span class="comment"># 使用pkg模块的installed函数</span></span><br><span class="line">    - name: nginx         <span class="comment"># 要安装的软件包名是nginx</span></span><br><span class="line"></span><br><span class="line">隐式命名: name如果不定义，会自动使用ID</span><br><span class="line">nginx:</span><br><span class="line">  pkg.installed:</span><br><span class="line"></span><br><span class="line">enable_and_start_nginx:   <span class="comment"># 状态ID：描述这个状态是“启用并启动nginx”</span></span><br><span class="line">  service.running:        <span class="comment"># 确保服务在运行</span></span><br><span class="line">    - name: nginx         <span class="comment"># 服务名：nginx</span></span><br><span class="line">    - <span class="built_in">enable</span>: True        <span class="comment"># 参数：设置开机自启</span></span><br><span class="line">    - require:            <span class="comment"># 依赖关系：需要先完成install_nginx这个状态</span></span><br><span class="line">      - pkg: install_nginx</span><br></pre></td></tr></table></figure>
+定义了3个环境，需要将状态文件放进对应的文件夹<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="运行状态文件"><a href="#运行状态文件" class="headerlink" title="运行状态文件"></a><strong>运行状态文件</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">salt &lt;目标minion&gt; state.sls saltenv=&lt;环境名称&gt; &lt;sls的名称&gt;</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; /srv/salt/base/example.sls &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">nginx:</span></span><br><span class="line"><span class="string">  pkg.installed:</span></span><br><span class="line"><span class="string">enable_and_start_nginx:</span></span><br><span class="line"><span class="string">  service.running:</span></span><br><span class="line"><span class="string">    - name: nginx</span></span><br><span class="line"><span class="string">    - enable: True</span></span><br><span class="line"><span class="string">    - require:</span></span><br><span class="line"><span class="string">      - pkg: nginx</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">如果环境复杂，一定需要在使用的时候指定环境，默认环境为base</span><br><span class="line">salt <span class="string">&#x27;minion1&#x27;</span> state.sls saltenv=<span class="string">&quot;base&quot;</span> example</span><br><span class="line"></span><br><span class="line">minion1:</span><br><span class="line">----------（自带的注释）</span><br><span class="line">          ID: nginx</span><br><span class="line">    Function: pkg.installed</span><br><span class="line">      Result: True</span><br><span class="line">     Comment: The following packages were installed/updated: nginx</span><br><span class="line">     Started: 14:05:08.049181</span><br><span class="line">    Duration: 9614.023 ms</span><br><span class="line">Summary <span class="keyword">for</span> minion1</span><br><span class="line">------------</span><br><span class="line">Succeeded: 2 (changed=2)</span><br><span class="line">Failed:    0</span><br><span class="line">------------</span><br><span class="line">Total states run:     2</span><br><span class="line">Total run time:   9.717 s</span><br></pre></td></tr></table></figure>
+<h3 id="状态文件写法"><a href="#状态文件写法" class="headerlink" title="状态文件写法"></a><strong>状态文件写法</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> /srv/salt/base/
+<span class="token function">vim</span> example.sls <span class="token comment"># 需要以sls结尾</span>
+格式：
+ID:           
+  module.function:
+    - name: name
+    - argument:
+        - xxx
+        - xxx
 
-<h3 id="状态模块的查询"><a href="#状态模块的查询" class="headerlink" title="状态模块的查询"></a>状态模块的查询</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">查看有哪些状态模块</span><br><span class="line">salt <span class="string">&#x27;minion1&#x27;</span> sys.list_state_modules</span><br><span class="line"></span><br><span class="line">查看file状态模块下，有哪些方法</span><br><span class="line">salt <span class="string">&#x27;minion1&#x27;</span> sys.list_state_functions file</span><br><span class="line">minion1:</span><br><span class="line">    - file.absent</span><br><span class="line">    - file.accumulated</span><br><span class="line">    - file.append</span><br><span class="line">    - file.blockreplace</span><br><span class="line">    - file.cached</span><br><span class="line">    - file.comment</span><br><span class="line">    - file.copy</span><br><span class="line">    - file.decode</span><br><span class="line">    - file.directory</span><br><span class="line">    - file.exists</span><br><span class="line">    - file.hardlink</span><br><span class="line">    - file.keyvalue</span><br><span class="line">    - file.line</span><br><span class="line">    - file.managed</span><br><span class="line">    - file.missing</span><br><span class="line">    - file.mknod</span><br><span class="line">    - file.mod_beacon</span><br><span class="line">    - file.mod_run_check_cmd</span><br><span class="line">    - file.not_cached</span><br><span class="line">    - file.patch</span><br><span class="line">    - file.prepend</span><br><span class="line">    - file.pruned</span><br><span class="line">    - file.recurse</span><br><span class="line">    - file.rename</span><br><span class="line">    - file.replace</span><br><span class="line">    - file.retention_schedule</span><br><span class="line">    - file.serialize</span><br><span class="line">    - file.shortcut</span><br><span class="line">    - file.symlink</span><br><span class="line">    - file.tidied</span><br><span class="line">    - file.touch</span><br><span class="line">    - file.uncomment</span><br><span class="line"></span><br><span class="line">查询某一个状态模块的方法的用法</span><br><span class="line">salt <span class="string">&#x27;minion1&#x27;</span> sys.state_doc file.absent</span><br><span class="line">    file.absent:</span><br><span class="line">            Make sure that the named file or directory is absent. If it exists, it will</span><br><span class="line">            be deleted. This will work to reverse any of the <span class="built_in">functions</span> <span class="keyword">in</span> the file</span><br><span class="line">            state module. If a directory is supplied, it will be recursively deleted.</span><br><span class="line">            If only the contents of the directory need to be deleted but not the directory</span><br><span class="line">            itself, use :mod:`file.directory &lt;salt.states.file.directory&gt;` with ``clean=True``</span><br><span class="line">            name</span><br><span class="line">                The path <span class="built_in">which</span> should be deleted</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+显式命名:
+install_nginx:            <span class="token comment"># 状态ID：安装nginx</span>
+  pkg.installed:          <span class="token comment"># 使用pkg模块的installed函数</span>
+    - name: nginx         <span class="token comment"># 要安装的软件包名是nginx</span>
+
+隐式命名: name如果不定义，会自动使用ID
+nginx:
+  pkg.installed:
+
+enable_and_start_nginx:   <span class="token comment"># 状态ID：描述这个状态是“启用并启动nginx”</span>
+  service.running:        <span class="token comment"># 确保服务在运行</span>
+    - name: nginx         <span class="token comment"># 服务名：nginx</span>
+    - enable: True        <span class="token comment"># 参数：设置开机自启</span>
+    - require:            <span class="token comment"># 依赖关系：需要先完成install_nginx这个状态</span>
+      - pkg: install_nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="运行状态文件"><a href="#运行状态文件" class="headerlink" title="运行状态文件"></a><strong>运行状态文件</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">salt <span class="token operator">&lt;</span>目标minion<span class="token operator">></span> state.sls <span class="token assign-left variable">saltenv</span><span class="token operator">=</span><span class="token operator">&lt;</span>环境名称<span class="token operator">></span> <span class="token operator">&lt;</span>sls的名称<span class="token operator">></span>
+
+<span class="token function">cat</span> <span class="token operator">></span> /srv/salt/base/example.sls <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+nginx:
+  pkg.installed:
+enable_and_start_nginx:
+  service.running:
+    - name: nginx
+    - enable: True
+    - require:
+      - pkg: nginx
+EOF</span>
+
+如果环境复杂，一定需要在使用的时候指定环境，默认环境为base
+salt <span class="token string">'minion1'</span> state.sls <span class="token assign-left variable">saltenv</span><span class="token operator">=</span><span class="token string">"base"</span> example
+
+minion1:
+----------（自带的注释）
+          ID: nginx
+    Function: pkg.installed
+      Result: True
+     Comment: The following packages were installed/updated: nginx
+     Started: <span class="token number">14</span>:05:08.049181
+    Duration: <span class="token number">9614.023</span> ms
+Summary <span class="token keyword">for</span> minion1
+------------
+Succeeded: <span class="token number">2</span> <span class="token punctuation">(</span>changed<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+Failed:    <span class="token number">0</span>
+------------
+Total states run:     <span class="token number">2</span>
+Total run time:   <span class="token number">9.717</span> s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="状态模块的查询"><a href="#状态模块的查询" class="headerlink" title="状态模块的查询"></a>状态模块的查询</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看有哪些状态模块
+salt <span class="token string">'minion1'</span> sys.list_state_modules
+
+查看file状态模块下，有哪些方法
+salt <span class="token string">'minion1'</span> sys.list_state_functions <span class="token function">file</span>
+minion1:
+    - file.absent
+    - file.accumulated
+    - file.append
+    - file.blockreplace
+    - file.cached
+    - file.comment
+    - file.copy
+    - file.decode
+    - file.directory
+    - file.exists
+    - file.hardlink
+    - file.keyvalue
+    - file.line
+    - file.managed
+    - file.missing
+    - file.mknod
+    - file.mod_beacon
+    - file.mod_run_check_cmd
+    - file.not_cached
+    - file.patch
+    - file.prepend
+    - file.pruned
+    - file.recurse
+    - file.rename
+    - file.replace
+    - file.retention_schedule
+    - file.serialize
+    - file.shortcut
+    - file.symlink
+    - file.tidied
+    - file.touch
+    - file.uncomment
+
+查询某一个状态模块的方法的用法
+salt <span class="token string">'minion1'</span> sys.state_doc file.absent
+    file.absent:
+            Make sure that the named <span class="token function">file</span> or directory is absent. If it exists, it will
+            be deleted. This will work to reverse any of the functions <span class="token keyword">in</span> the <span class="token function">file</span>
+            state module. If a directory is supplied, it will be recursively deleted.
+            If only the contents of the directory need to be deleted but not the directory
+            itself, use :mod:<span class="token variable"><span class="token variable">`</span>file.directory <span class="token operator">&lt;</span>salt.states.file.directory<span class="token operator">></span><span class="token variable">`</span></span> with `<span class="token variable"><span class="token variable">`</span><span class="token assign-left variable">clean</span><span class="token operator">=</span>True<span class="token variable">`</span></span>`
+            name
+                The path <span class="token function">which</span> should be deleted
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>相比于低级的状态文件，多了对于主机的定义，所以与playbook更加相似。</p>
 <p>而低级状态文件更类似于role的tasks.yml</p>
 <p><strong>高级状态文件名字叫top.sls，一般放在base环境下</strong></p>
 <p><strong>高级状态文件可以最大程度的复用低级状态文件，只要定义了合理功能的低级状态文件</strong></p>
-<h3 id="高级状态文件定义"><a href="#高级状态文件定义" class="headerlink" title="高级状态文件定义"></a>高级状态文件定义</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">修改配置文件，打开state_top</span><br><span class="line">grep state_top /etc/salt/master</span><br><span class="line"><span class="comment"># use and what modules to use. The state_top file is defined relative to the</span></span><br><span class="line">state_top: top.sls</span><br><span class="line"></span><br><span class="line">systemctl restart salt-master.service</span><br><span class="line"></span><br><span class="line">先准备两个低级状态文件</span><br><span class="line">/srv/salt/dev/httpd.sls</span><br><span class="line">httpd:</span><br><span class="line">  pkg.installed</span><br><span class="line"></span><br><span class="line">/srv/salt/dev/apache2.sls</span><br><span class="line">apache2:</span><br><span class="line">  pkg.installed</span><br><span class="line"></span><br><span class="line">写一个高级状态文件</span><br><span class="line">vim /srv/salt/base/top.sls</span><br><span class="line">base:</span><br><span class="line">  <span class="string">&quot;*&quot;</span>:</span><br><span class="line">    - example</span><br><span class="line">dev:</span><br><span class="line">  <span class="string">&quot;minion[12]&quot;</span>:</span><br><span class="line">    - httpd</span><br><span class="line">  <span class="string">&quot;minion3&quot;</span>:</span><br><span class="line">    - apache2</span><br></pre></td></tr></table></figure>
+<h3 id="高级状态文件定义"><a href="#高级状态文件定义" class="headerlink" title="高级状态文件定义"></a>高级状态文件定义</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">修改配置文件，打开state_top
+<span class="token function">grep</span> state_top /etc/salt/master
+<span class="token comment"># use and what modules to use. The state_top file is defined relative to the</span>
+state_top: top.sls
 
-<h3 id="高级状态文件使用"><a href="#高级状态文件使用" class="headerlink" title="高级状态文件使用"></a>高级状态文件使用</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">salt \* state.apply</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">即使指定的是\*，也不会对结果有影响</span><br><span class="line">因为其将playbook的tasks和hosts解耦</span><br><span class="line"></span><br><span class="line">对于不同环境的不同主机能给出不同的清单 </span><br></pre></td></tr></table></figure>
+systemctl restart salt-master.service
+
+先准备两个低级状态文件
+/srv/salt/dev/httpd.sls
+httpd:
+  pkg.installed
+
+/srv/salt/dev/apache2.sls
+apache2:
+  pkg.installed
+
+写一个高级状态文件
+<span class="token function">vim</span> /srv/salt/base/top.sls
+base:
+  <span class="token string">"*"</span><span class="token builtin class-name">:</span>
+    - example
+dev:
+  <span class="token string">"minion[12]"</span><span class="token builtin class-name">:</span>
+    - httpd
+  <span class="token string">"minion3"</span><span class="token builtin class-name">:</span>
+    - apache2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="高级状态文件使用"><a href="#高级状态文件使用" class="headerlink" title="高级状态文件使用"></a>高级状态文件使用</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">salt <span class="token punctuation">\</span>* state.apply
+<span class="token punctuation">..</span>.
+
+即使指定的是<span class="token punctuation">\</span>*，也不会对结果有影响
+因为其将playbook的tasks和hosts解耦
+
+对于不同环境的不同主机能给出不同的清单 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6567,36 +6714,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7061,13 +7178,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8108,13 +8225,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8567,14 +8684,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8582,14 +8699,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

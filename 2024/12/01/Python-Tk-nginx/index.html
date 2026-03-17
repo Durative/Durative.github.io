@@ -506,11 +506,122 @@
 <p>这个问题搞了我一天，幸好最后还是搞明白了</p>
 <h2 id="案例-管理nginx"><a href="#案例-管理nginx" class="headerlink" title="案例-管理nginx"></a>案例-管理nginx</h2><p>简单思路：使用paramiko远程nginx服务器、定义各种按钮，定义执行命令函数，<br>通过执行不同命令来实现按钮功能</p>
 <p>并且通过创建子窗口来查看日志</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line">import tkinter as tk</span><br><span class="line">from tkinter import messagebox</span><br><span class="line">import paramiko</span><br><span class="line"></span><br><span class="line">HOST=<span class="string">&#x27;192.168.10.114&#x27;</span></span><br><span class="line">USERNAME=<span class="string">&#x27;root&#x27;</span></span><br><span class="line">PASSWORD=<span class="string">&#x27;1&#x27;</span></span><br><span class="line"></span><br><span class="line">def run_system_command(<span class="built_in">command</span>):</span><br><span class="line">    ssh=paramiko.SSHClient()</span><br><span class="line">    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())</span><br><span class="line">    try:</span><br><span class="line">        ssh.connect(HOST,username=USERNAME,password=PASSWORD)</span><br><span class="line">        stdin,stdout,stderr=ssh.exec_command(<span class="built_in">command</span>)</span><br><span class="line">        output=stdout.read().decode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">        error=stderr.read().decode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">        <span class="built_in">return</span> output.strip(),error.strip()</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">return</span> <span class="string">&quot;&quot;</span>,str(e)</span><br><span class="line">    finally:</span><br><span class="line">        ssh.close()</span><br><span class="line"></span><br><span class="line">def get_nginx_status():</span><br><span class="line">    output,error=run_system_command(<span class="string">&quot;systemctl is-active nginx&quot;</span>)</span><br><span class="line">    <span class="comment"># 如果error有值</span></span><br><span class="line">    <span class="keyword">if</span> error:</span><br><span class="line">        <span class="built_in">return</span> <span class="string">&quot;未知&quot;</span></span><br><span class="line">    <span class="built_in">return</span> output.strip()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新nginx状态的标签</span></span><br><span class="line">def update_status_label():</span><br><span class="line">    status=get_nginx_status()</span><br><span class="line">    status_label.config(text=f<span class="string">&quot;nginx状态:&#123;status&#125;&quot;</span>)</span><br><span class="line">    root.after(5000,update_status_label) <span class="comment"># 5000毫秒更新一次标签的状态</span></span><br><span class="line"><span class="comment"># 启动nginx服务</span></span><br><span class="line">def start_nginx():</span><br><span class="line">    output,error=run_system_command(<span class="string">&#x27;systemctl start nginx&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> error:</span><br><span class="line">        messagebox.showerror(<span class="string">&quot;错误&quot;</span>,f<span class="string">&quot;启动nginx失败:&#123;error&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        messagebox.showinfo(<span class="string">&quot;成功&quot;</span>,<span class="string">&quot;nginx已启动成功&quot;</span>)</span><br><span class="line">    update_status_label()</span><br><span class="line"></span><br><span class="line">def stop_nginx():</span><br><span class="line">    output,error=run_system_command(<span class="string">&#x27;systemctl stop nginx&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> error:</span><br><span class="line">        messagebox.showerror(<span class="string">&quot;错误&quot;</span>,f<span class="string">&quot;停止nginx失败:&#123;error&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        messagebox.showinfo(<span class="string">&quot;成功&quot;</span>,<span class="string">&quot;nginx已停止成功&quot;</span>)</span><br><span class="line">    update_status_label()</span><br><span class="line"></span><br><span class="line">def restart_nginx():</span><br><span class="line">    output,error=run_system_command(<span class="string">&#x27;systemctl restart nginx&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> error:</span><br><span class="line">        messagebox.showerror(<span class="string">&quot;错误&quot;</span>,f<span class="string">&quot;重启nginx失败:&#123;error&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        messagebox.showinfo(<span class="string">&quot;成功&quot;</span>,<span class="string">&quot;nginx已重启成功&quot;</span>)</span><br><span class="line">    update_status_label()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看nginx日志</span></span><br><span class="line">def view_nginx_logs():</span><br><span class="line">    output,error=run_system_command(<span class="string">&#x27;tail -n 100 /var/log/nginx/access.log&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> error:</span><br><span class="line">        messagebox.showerror(<span class="string">&quot;错误&quot;</span>,f<span class="string">&quot;查看日志失败:&#123;error&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="comment">#创建子窗口</span></span><br><span class="line">        logs_window=tk.Toplevel(root)</span><br><span class="line">        logs_window.title(<span class="string">&#x27;nginx日志&#x27;</span>)</span><br><span class="line">        logs_text=tk.Text(logs_window,wrap=<span class="string">&#x27;word&#x27;</span>) <span class="comment">#文本内容过长自动换行</span></span><br><span class="line">        logs_text.insert(tk.END,output)<span class="comment">#把内容插入到文本框末尾</span></span><br><span class="line">        logs_text.pack(fill=<span class="string">&#x27;both&#x27;</span>,<span class="built_in">expand</span>=True) <span class="comment">#文本框内容随框大小变化自动扩展</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建GUI主窗口</span></span><br><span class="line">root=tk.Tk()</span><br><span class="line"><span class="comment">#设置主窗口标题</span></span><br><span class="line">root.title(<span class="string">&quot;nginx管理工具&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">#设置初始化nginx状态的标签、字体</span></span><br><span class="line">status_label=tk.Label(root,text=<span class="string">&quot;nginx状态:正在检测&quot;</span>,font=(<span class="string">&#x27;Arial&#x27;</span>,12))</span><br><span class="line"><span class="comment">#设置标签的布局位置，pack左右，pady上下</span></span><br><span class="line">status_label.pack(padx=10,pady=10)</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建按钮——关联到函数</span></span><br><span class="line"><span class="comment">#启动按钮</span></span><br><span class="line">start_button=tk.Button(root,text=<span class="string">&quot;启动nginx&quot;</span>,<span class="built_in">command</span>=start_nginx)</span><br><span class="line">start_button.pack(padx=10,pady=10)</span><br><span class="line"></span><br><span class="line"><span class="comment">#停止按钮</span></span><br><span class="line">stop_button=tk.Button(root,text=<span class="string">&quot;停止nginx&quot;</span>,<span class="built_in">command</span>=stop_nginx)</span><br><span class="line">stop_button.pack(padx=10,pady=10)</span><br><span class="line"></span><br><span class="line"><span class="comment">#重启按钮</span></span><br><span class="line">restart_button=tk.Button(root,text=<span class="string">&quot;重启nginx&quot;</span>,<span class="built_in">command</span>=restart_nginx)</span><br><span class="line">restart_button.pack(padx=10,pady=10)</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看nginx日志按钮</span></span><br><span class="line">logs_button=tk.Button(root,text=<span class="string">&quot;查看nginx日志&quot;</span>,<span class="built_in">command</span>=view_nginx_logs)</span><br><span class="line">logs_button.pack(padx=10,pady=10)</span><br><span class="line">update_status_label()</span><br><span class="line"></span><br><span class="line"><span class="comment">#运行主窗口</span></span><br><span class="line">root.mainloop()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">import</span> tkinter as tk
+from tkinter <span class="token function">import</span> messagebox
+<span class="token function">import</span> paramiko
+
+<span class="token assign-left variable">HOST</span><span class="token operator">=</span><span class="token string">'192.168.10.114'</span>
+<span class="token assign-left variable">USERNAME</span><span class="token operator">=</span><span class="token string">'root'</span>
+<span class="token assign-left variable">PASSWORD</span><span class="token operator">=</span><span class="token string">'1'</span>
+
+def run_system_command<span class="token punctuation">(</span>command<span class="token punctuation">)</span>:
+    <span class="token assign-left variable">ssh</span><span class="token operator">=</span>paramiko.SSHClient<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    ssh.set_missing_host_key_policy<span class="token punctuation">(</span>paramiko.AutoAddPolicy<span class="token punctuation">(</span><span class="token punctuation">))</span>
+    try:
+        ssh.connect<span class="token punctuation">(</span>HOST,username<span class="token operator">=</span>USERNAME,password<span class="token operator">=</span>PASSWORD<span class="token punctuation">)</span>
+        stdin,stdout,stderr<span class="token operator">=</span>ssh.exec_command<span class="token punctuation">(</span>command<span class="token punctuation">)</span>
+        <span class="token assign-left variable">output</span><span class="token operator">=</span>stdout.read<span class="token punctuation">(</span><span class="token punctuation">)</span>.decode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span>
+        <span class="token assign-left variable">error</span><span class="token operator">=</span>stderr.read<span class="token punctuation">(</span><span class="token punctuation">)</span>.decode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> output.strip<span class="token punctuation">(</span><span class="token punctuation">)</span>,error.strip<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    except Exception as e:
+        <span class="token builtin class-name">return</span> <span class="token string">""</span>,str<span class="token punctuation">(</span>e<span class="token punctuation">)</span>
+    finally:
+        ssh.close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+def get_nginx_status<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    output,error<span class="token operator">=</span>run_system_command<span class="token punctuation">(</span><span class="token string">"systemctl is-active nginx"</span><span class="token punctuation">)</span>
+    <span class="token comment"># 如果error有值</span>
+    <span class="token keyword">if</span> error:
+        <span class="token builtin class-name">return</span> <span class="token string">"未知"</span>
+    <span class="token builtin class-name">return</span> output.strip<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 更新nginx状态的标签</span>
+def update_status_label<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    <span class="token assign-left variable">status</span><span class="token operator">=</span>get_nginx_status<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    status_label.config<span class="token punctuation">(</span>text<span class="token operator">=</span>f<span class="token string">"nginx状态:&#123;status&#125;"</span><span class="token punctuation">)</span>
+    root.after<span class="token punctuation">(</span><span class="token number">5000</span>,update_status_label<span class="token punctuation">)</span> <span class="token comment"># 5000毫秒更新一次标签的状态</span>
+<span class="token comment"># 启动nginx服务</span>
+def start_nginx<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    output,error<span class="token operator">=</span>run_system_command<span class="token punctuation">(</span><span class="token string">'systemctl start nginx'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> error:
+        messagebox.showerror<span class="token punctuation">(</span><span class="token string">"错误"</span>,f<span class="token string">"启动nginx失败:&#123;error&#125;"</span><span class="token punctuation">)</span>
+    else:
+        messagebox.showinfo<span class="token punctuation">(</span><span class="token string">"成功"</span>,<span class="token string">"nginx已启动成功"</span><span class="token punctuation">)</span>
+    update_status_label<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+def stop_nginx<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    output,error<span class="token operator">=</span>run_system_command<span class="token punctuation">(</span><span class="token string">'systemctl stop nginx'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> error:
+        messagebox.showerror<span class="token punctuation">(</span><span class="token string">"错误"</span>,f<span class="token string">"停止nginx失败:&#123;error&#125;"</span><span class="token punctuation">)</span>
+    else:
+        messagebox.showinfo<span class="token punctuation">(</span><span class="token string">"成功"</span>,<span class="token string">"nginx已停止成功"</span><span class="token punctuation">)</span>
+    update_status_label<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+def restart_nginx<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    output,error<span class="token operator">=</span>run_system_command<span class="token punctuation">(</span><span class="token string">'systemctl restart nginx'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> error:
+        messagebox.showerror<span class="token punctuation">(</span><span class="token string">"错误"</span>,f<span class="token string">"重启nginx失败:&#123;error&#125;"</span><span class="token punctuation">)</span>
+    else:
+        messagebox.showinfo<span class="token punctuation">(</span><span class="token string">"成功"</span>,<span class="token string">"nginx已重启成功"</span><span class="token punctuation">)</span>
+    update_status_label<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 查看nginx日志</span>
+def view_nginx_logs<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    output,error<span class="token operator">=</span>run_system_command<span class="token punctuation">(</span><span class="token string">'tail -n 100 /var/log/nginx/access.log'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> error:
+        messagebox.showerror<span class="token punctuation">(</span><span class="token string">"错误"</span>,f<span class="token string">"查看日志失败:&#123;error&#125;"</span><span class="token punctuation">)</span>
+    else:
+        <span class="token comment">#创建子窗口</span>
+        <span class="token assign-left variable">logs_window</span><span class="token operator">=</span>tk.Toplevel<span class="token punctuation">(</span>root<span class="token punctuation">)</span>
+        logs_window.title<span class="token punctuation">(</span><span class="token string">'nginx日志'</span><span class="token punctuation">)</span>
+        <span class="token assign-left variable">logs_text</span><span class="token operator">=</span>tk.Text<span class="token punctuation">(</span>logs_window,wrap<span class="token operator">=</span><span class="token string">'word'</span><span class="token punctuation">)</span> <span class="token comment">#文本内容过长自动换行</span>
+        logs_text.insert<span class="token punctuation">(</span>tk.END,output<span class="token punctuation">)</span><span class="token comment">#把内容插入到文本框末尾</span>
+        logs_text.pack<span class="token punctuation">(</span>fill<span class="token operator">=</span><span class="token string">'both'</span>,expand<span class="token operator">=</span>True<span class="token punctuation">)</span> <span class="token comment">#文本框内容随框大小变化自动扩展</span>
+
+<span class="token comment"># 创建GUI主窗口</span>
+<span class="token assign-left variable">root</span><span class="token operator">=</span>tk.Tk<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment">#设置主窗口标题</span>
+root.title<span class="token punctuation">(</span><span class="token string">"nginx管理工具"</span><span class="token punctuation">)</span>
+
+<span class="token comment">#设置初始化nginx状态的标签、字体</span>
+<span class="token assign-left variable">status_label</span><span class="token operator">=</span>tk.Label<span class="token punctuation">(</span>root,text<span class="token operator">=</span><span class="token string">"nginx状态:正在检测"</span>,font<span class="token operator">=</span><span class="token punctuation">(</span><span class="token string">'Arial'</span>,12<span class="token punctuation">))</span>
+<span class="token comment">#设置标签的布局位置，pack左右，pady上下</span>
+status_label.pack<span class="token punctuation">(</span>padx<span class="token operator">=</span><span class="token number">10</span>,pady<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+<span class="token comment">#创建按钮——关联到函数</span>
+<span class="token comment">#启动按钮</span>
+<span class="token assign-left variable">start_button</span><span class="token operator">=</span>tk.Button<span class="token punctuation">(</span>root,text<span class="token operator">=</span><span class="token string">"启动nginx"</span>,command<span class="token operator">=</span>start_nginx<span class="token punctuation">)</span>
+start_button.pack<span class="token punctuation">(</span>padx<span class="token operator">=</span><span class="token number">10</span>,pady<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+<span class="token comment">#停止按钮</span>
+<span class="token assign-left variable">stop_button</span><span class="token operator">=</span>tk.Button<span class="token punctuation">(</span>root,text<span class="token operator">=</span><span class="token string">"停止nginx"</span>,command<span class="token operator">=</span>stop_nginx<span class="token punctuation">)</span>
+stop_button.pack<span class="token punctuation">(</span>padx<span class="token operator">=</span><span class="token number">10</span>,pady<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+<span class="token comment">#重启按钮</span>
+<span class="token assign-left variable">restart_button</span><span class="token operator">=</span>tk.Button<span class="token punctuation">(</span>root,text<span class="token operator">=</span><span class="token string">"重启nginx"</span>,command<span class="token operator">=</span>restart_nginx<span class="token punctuation">)</span>
+restart_button.pack<span class="token punctuation">(</span>padx<span class="token operator">=</span><span class="token number">10</span>,pady<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+<span class="token comment">#查看nginx日志按钮</span>
+<span class="token assign-left variable">logs_button</span><span class="token operator">=</span>tk.Button<span class="token punctuation">(</span>root,text<span class="token operator">=</span><span class="token string">"查看nginx日志"</span>,command<span class="token operator">=</span>view_nginx_logs<span class="token punctuation">)</span>
+logs_button.pack<span class="token punctuation">(</span>padx<span class="token operator">=</span><span class="token number">10</span>,pady<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+update_status_label<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment">#运行主窗口</span>
+root.mainloop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>编译，生成一个exe文件</strong></p>
 <p>进入windows的cmd命令行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">pip3 install pyinstaller</span><br><span class="line"><span class="comment">#进入文件所在目录</span></span><br><span class="line"><span class="built_in">cd</span> C:\Users\13209\PycharmProjects\project01</span><br><span class="line"></span><br><span class="line">pyinstaller --onefile --windowed <span class="string">&quot;.\166 tkinter库-.py&quot;</span></span><br><span class="line">或者指定要使用的pyinstaller.exe</span><br><span class="line">C:\Python\Python37\Scripts\pyinstaller.exe --onefile --windowed <span class="string">&quot;.\166 tkinter 库-.py&quot;</span><span class="string">&quot;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">#编译成功提示</span></span><br><span class="line"><span class="string">#8382 INFO: Building EXE from EXE-00.toc completed successfully.</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pip3 <span class="token function">install</span> pyinstaller
+<span class="token comment">#进入文件所在目录</span>
+<span class="token builtin class-name">cd</span> C:<span class="token punctuation">\</span>Users<span class="token punctuation">\</span><span class="token number">13209</span><span class="token punctuation">\</span>PycharmProjects<span class="token punctuation">\</span>project01
+
+pyinstaller <span class="token parameter variable">--onefile</span> <span class="token parameter variable">--windowed</span> <span class="token string">".<span class="token entity" title="\166">\166</span> tkinter库-.py"</span>
+或者指定要使用的pyinstaller.exe
+C:<span class="token punctuation">\</span>Python<span class="token punctuation">\</span>Python37<span class="token punctuation">\</span>Scripts<span class="token punctuation">\</span>pyinstaller.exe <span class="token parameter variable">--onefile</span> <span class="token parameter variable">--windowed</span> <span class="token string">".<span class="token entity" title="\166">\166</span> tkinter 库-.py"</span>"
+
+<span class="token comment">#编译成功提示</span>
+<span class="token comment">#8382 INFO: Building EXE from EXE-00.toc completed successfully.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/12/a1769ac2a15d991c312b26c10f4fbe81.png"></p>
 
@@ -6572,36 +6683,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7066,13 +7147,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8113,13 +8194,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8572,14 +8653,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8587,14 +8668,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -502,15 +502,80 @@
 <li><strong>云原生集成</strong>：rook紧密整合了Kubernetes的特性，使Ceph存储系统能够以Kubernetes原生的方式进行部署和管理。</li>
 <li><strong>支持多种存储类型</strong>：rook支持包括块存储、文件系统和对象存储在内的多种存储类型，以满足不同类型的存储需求。</li>
 </ul>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span><span class="string">.搞个最新版的rook-v1.14.5</span></span><br><span class="line"><span class="string">wget</span> <span class="string">https://github.com/rook/rook/archive/refs/tags/v1.14.5.zip</span></span><br><span class="line"><span class="string">unzip</span> <span class="string">v1.14.5.zip</span></span><br><span class="line"><span class="string">cd</span> <span class="string">rook-1.14.5/</span></span><br><span class="line"></span><br><span class="line"><span class="number">2</span><span class="string">.修改配置文件</span></span><br><span class="line"><span class="string">vim</span> <span class="string">deploy/examples/operator.yaml</span></span><br><span class="line"><span class="string">修改镜像地址改成阿里云的</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">ROOK_ENABLE_DISCOVERY_DAEMON:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="comment"># 自动发现rook的守护进程</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">1.搞个最新版的rook<span class="token punctuation">-</span>v1.14.5
+wget https<span class="token punctuation">:</span>//github.com/rook/rook/archive/refs/tags/v1.14.5.zip
+unzip v1.14.5.zip
+cd rook<span class="token punctuation">-</span>1.14.5/
+
+2.修改配置文件
+vim deploy/examples/operator.yaml
+修改镜像地址改成阿里云的
+
+  <span class="token key atrule">ROOK_ENABLE_DISCOVERY_DAEMON</span><span class="token punctuation">:</span> <span class="token string">"true"</span>
+<span class="token comment"># 自动发现rook的守护进程</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240604194023.png"></p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">3</span><span class="string">.安装kook</span></span><br><span class="line"><span class="string">cd</span> <span class="string">deploy/examples/</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">crds.yaml</span> <span class="string">-f</span> <span class="string">common.yaml</span> <span class="string">-f</span> <span class="string">operator.yaml</span></span><br><span class="line"></span><br><span class="line"><span class="string">kubectl</span> <span class="string">get</span> <span class="string">pods</span> <span class="string">-n</span> <span class="string">rook-ceph</span></span><br><span class="line"><span class="string">NAME</span>                                  <span class="string">READY</span>   <span class="string">STATUS</span>    <span class="string">RESTARTS</span>   <span class="string">AGE</span></span><br><span class="line"><span class="string">rook-ceph-operator-65b8cb57cc-bqd5r</span>   <span class="number">1</span><span class="string">/1</span>     <span class="string">Running</span>   <span class="number">0</span>          <span class="string">15m</span></span><br><span class="line"><span class="string">rook-discover-9blzl</span>                   <span class="number">1</span><span class="string">/1</span>     <span class="string">Running</span>   <span class="number">0</span>          <span class="string">8m19s</span></span><br><span class="line"><span class="string">rook-discover-cqtfc</span>                   <span class="number">1</span><span class="string">/1</span>     <span class="string">Running</span>   <span class="number">0</span>          <span class="string">8m19s</span></span><br><span class="line"><span class="string">rook-discover-n9j54</span>                   <span class="number">1</span><span class="string">/1</span>     <span class="string">Running</span>   <span class="number">0</span>          <span class="string">8m19s</span></span><br><span class="line"></span><br><span class="line"><span class="number">4</span><span class="string">.创建ceph集群</span></span><br><span class="line"><span class="string">修改/root/rook-1.14.5/deploy/examples/cluser.yaml文件</span></span><br><span class="line"><span class="string">vim</span> <span class="string">cluster.yaml</span></span><br><span class="line"><span class="string">在storage.config字段下添加nodes信息</span></span><br><span class="line"></span><br><span class="line"><span class="string">同时每个节点扩容50个G的sdb，裸盘，建议最少三个节点，ceph集群三个节点起步</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">cluster.yaml</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">3.安装kook
+cd deploy/examples/
+kubectl apply <span class="token punctuation">-</span>f crds.yaml <span class="token punctuation">-</span>f common.yaml <span class="token punctuation">-</span>f operator.yaml
+
+kubectl get pods <span class="token punctuation">-</span>n rook<span class="token punctuation">-</span>ceph
+NAME                                  READY   STATUS    RESTARTS   AGE
+rook<span class="token punctuation">-</span>ceph<span class="token punctuation">-</span>operator<span class="token punctuation">-</span>65b8cb57cc<span class="token punctuation">-</span>bqd5r   1/1     Running   0          15m
+rook<span class="token punctuation">-</span>discover<span class="token punctuation">-</span>9blzl                   1/1     Running   0          8m19s
+rook<span class="token punctuation">-</span>discover<span class="token punctuation">-</span>cqtfc                   1/1     Running   0          8m19s
+rook<span class="token punctuation">-</span>discover<span class="token punctuation">-</span>n9j54                   1/1     Running   0          8m19s
+
+4.创建ceph集群
+修改/root/rook<span class="token punctuation">-</span>1.14.5/deploy/examples/cluser.yaml文件
+vim cluster.yaml
+在storage.config字段下添加nodes信息
+
+同时每个节点扩容50个G的sdb，裸盘，建议最少三个节点，ceph集群三个节点起步
+kubectl apply <span class="token punctuation">-</span>f cluster.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240604194126.png"></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240604194142.png"></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240604194200.png"></p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">5</span><span class="string">.安装ceph客户端工具</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">toolbox.yaml</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">get</span> <span class="string">pods</span> <span class="string">-n</span> <span class="string">rook-ceph</span>  <span class="string">|</span> <span class="string">grep</span> <span class="string">tools</span></span><br><span class="line"><span class="string">rook-ceph-tools-58c6857df4-zsgnc</span>                         <span class="number">1</span><span class="string">/1</span>     <span class="string">Running</span>     <span class="number">0</span>             <span class="string">40s</span></span><br><span class="line"></span><br><span class="line"><span class="string">进入客户端工具中可以使用ceph的命令，已经可以查看ceph集群了</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">exec</span> <span class="string">-it</span> <span class="string">-n</span> <span class="string">rook-ceph</span> <span class="string">rook-ceph-tools-58c6857df4-zsgnc</span> <span class="string">/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="string">bash-4.4$</span> <span class="string">ceph</span> <span class="string">status</span></span><br><span class="line">  <span class="attr">cluster:</span></span><br><span class="line">    <span class="attr">id:</span>     <span class="string">c47855be-d5ce-4747-813e-e713b2fb043e</span></span><br><span class="line">    <span class="attr">health:</span> <span class="string">HEALTH_WARN</span></span><br><span class="line">            <span class="string">mon</span> <span class="string">b</span> <span class="string">is</span> <span class="string">low</span> <span class="string">on</span> <span class="string">available</span> <span class="string">space</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">services:</span></span><br><span class="line">    <span class="attr">mon:</span> <span class="number">3</span> <span class="string">daemons,</span> <span class="string">quorum</span> <span class="string">a,b,c</span> <span class="string">(age</span> <span class="string">15m)</span></span><br><span class="line">    <span class="attr">mgr:</span> <span class="string">a(active,</span> <span class="string">since</span> <span class="string">14m),</span> <span class="attr">standbys:</span> <span class="string">b</span></span><br><span class="line">    <span class="attr">osd: 3 osds:</span> <span class="number">3</span> <span class="string">up</span> <span class="string">(since</span> <span class="string">15m),</span> <span class="number">3</span> <span class="string">in</span> <span class="string">(since</span> <span class="string">15m)</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">data:</span></span><br><span class="line">    <span class="attr">pools:</span>   <span class="number">1</span> <span class="string">pools,</span> <span class="number">1</span> <span class="string">pgs</span></span><br><span class="line">    <span class="attr">objects:</span> <span class="number">2</span> <span class="string">objects,</span> <span class="number">577</span> <span class="string">KiB</span></span><br><span class="line">    <span class="attr">usage:</span>   <span class="number">81</span> <span class="string">MiB</span> <span class="string">used,</span> <span class="number">150</span> <span class="string">GiB</span> <span class="string">/</span> <span class="number">150</span> <span class="string">GiB</span> <span class="string">avail</span></span><br><span class="line">    <span class="attr">pgs:</span>     <span class="number">1</span> <span class="string">active+clean</span></span><br><span class="line"></span><br><span class="line"><span class="string">ceph</span> <span class="string">osd</span> <span class="string">status</span></span><br><span class="line"><span class="string">ID</span>  <span class="string">HOST</span>           <span class="string">USED</span>  <span class="string">AVAIL</span>  <span class="string">WR</span> <span class="string">OPS</span>  <span class="string">WR</span> <span class="string">DATA</span>  <span class="string">RD</span> <span class="string">OPS</span>  <span class="string">RD</span> <span class="string">DATA</span>  <span class="string">STATE</span></span><br><span class="line"> <span class="number">0</span>  <span class="string">ws-k8s-node1</span>  <span class="number">26.</span><span class="string">9M</span>  <span class="number">49.</span><span class="string">9G</span>      <span class="number">0</span>        <span class="number">0</span>       <span class="number">0</span>        <span class="number">0</span>   <span class="string">exists,up</span></span><br><span class="line"> <span class="number">1</span>  <span class="string">ws-k8s-node3</span>  <span class="number">26.</span><span class="string">9M</span>  <span class="number">49.</span><span class="string">9G</span>      <span class="number">0</span>        <span class="number">0</span>       <span class="number">0</span>        <span class="number">0</span>   <span class="string">exists,up</span></span><br><span class="line"> <span class="number">2</span>  <span class="string">ws-k8s-node2</span>  <span class="number">26.</span><span class="string">9M</span>  <span class="number">49.</span><span class="string">9G</span>      <span class="number">0</span>        <span class="number">0</span>       <span class="number">0</span>        <span class="number">0</span>   <span class="string">exists,up</span></span><br><span class="line"></span><br><span class="line"><span class="number">6</span><span class="string">.安装ceph的dashboard</span></span><br><span class="line"></span><br><span class="line"><span class="string">kubectl</span> <span class="string">get</span> <span class="string">ingress</span> <span class="string">-n</span> <span class="string">rook-ceph</span></span><br><span class="line"><span class="string">NAME</span>                      <span class="string">CLASS</span>   <span class="string">HOSTS</span>                   <span class="string">ADDRESS</span>          <span class="string">PORTS</span>     <span class="string">AGE</span></span><br><span class="line"><span class="string">rook-ceph-mgr-dashboard</span>   <span class="string">nginx</span>   <span class="string">rook-ceph.example.com</span>   <span class="number">192.168</span><span class="number">.10</span><span class="number">.133</span>   <span class="number">80</span><span class="string">,</span> <span class="number">443</span>   <span class="string">78s</span></span><br><span class="line"></span><br><span class="line"><span class="string">访问看看，我这报了502，可能是因为我刚改了rook-ceph-mgr-dashboard的svc，导致出问题</span></span><br><span class="line"><span class="string">正常应该不会出</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">5.安装ceph客户端工具
+kubectl apply <span class="token punctuation">-</span>f toolbox.yaml
+kubectl get pods <span class="token punctuation">-</span>n rook<span class="token punctuation">-</span>ceph  <span class="token punctuation">|</span> grep tools
+rook<span class="token punctuation">-</span>ceph<span class="token punctuation">-</span>tools<span class="token punctuation">-</span>58c6857df4<span class="token punctuation">-</span>zsgnc                         1/1     Running     0             40s
+
+进入客户端工具中可以使用ceph的命令，已经可以查看ceph集群了
+kubectl exec <span class="token punctuation">-</span>it <span class="token punctuation">-</span>n rook<span class="token punctuation">-</span>ceph rook<span class="token punctuation">-</span>ceph<span class="token punctuation">-</span>tools<span class="token punctuation">-</span>58c6857df4<span class="token punctuation">-</span>zsgnc /bin/bash
+
+bash<span class="token punctuation">-</span>4.4$ ceph status
+  <span class="token key atrule">cluster</span><span class="token punctuation">:</span>
+    <span class="token key atrule">id</span><span class="token punctuation">:</span>     c47855be<span class="token punctuation">-</span>d5ce<span class="token punctuation">-</span>4747<span class="token punctuation">-</span>813e<span class="token punctuation">-</span>e713b2fb043e
+    <span class="token key atrule">health</span><span class="token punctuation">:</span> HEALTH_WARN
+            mon b is low on available space
+
+  <span class="token key atrule">services</span><span class="token punctuation">:</span>
+    <span class="token key atrule">mon</span><span class="token punctuation">:</span> 3 daemons<span class="token punctuation">,</span> quorum a<span class="token punctuation">,</span>b<span class="token punctuation">,</span>c (age 15m)
+    <span class="token key atrule">mgr</span><span class="token punctuation">:</span> a(active<span class="token punctuation">,</span> since 14m)<span class="token punctuation">,</span> <span class="token key atrule">standbys</span><span class="token punctuation">:</span> b
+    <span class="token key atrule">osd</span><span class="token punctuation">:</span> <span class="token key atrule">3 osds</span><span class="token punctuation">:</span> 3 up (since 15m)<span class="token punctuation">,</span> 3 in (since 15m)
+
+  <span class="token key atrule">data</span><span class="token punctuation">:</span>
+    <span class="token key atrule">pools</span><span class="token punctuation">:</span>   1 pools<span class="token punctuation">,</span> 1 pgs
+    <span class="token key atrule">objects</span><span class="token punctuation">:</span> 2 objects<span class="token punctuation">,</span> 577 KiB
+    <span class="token key atrule">usage</span><span class="token punctuation">:</span>   81 MiB used<span class="token punctuation">,</span> 150 GiB / 150 GiB avail
+    <span class="token key atrule">pgs</span><span class="token punctuation">:</span>     1 active+clean
+
+ceph osd status
+ID  HOST           USED  AVAIL  WR OPS  WR DATA  RD OPS  RD DATA  STATE
+ 0  ws<span class="token punctuation">-</span>k8s<span class="token punctuation">-</span>node1  26.9M  49.9G      0        0       0        0   exists<span class="token punctuation">,</span>up
+ 1  ws<span class="token punctuation">-</span>k8s<span class="token punctuation">-</span>node3  26.9M  49.9G      0        0       0        0   exists<span class="token punctuation">,</span>up
+ 2  ws<span class="token punctuation">-</span>k8s<span class="token punctuation">-</span>node2  26.9M  49.9G      0        0       0        0   exists<span class="token punctuation">,</span>up
+
+6.安装ceph的dashboard
+
+kubectl get ingress <span class="token punctuation">-</span>n rook<span class="token punctuation">-</span>ceph
+NAME                      CLASS   HOSTS                   ADDRESS          PORTS     AGE
+rook<span class="token punctuation">-</span>ceph<span class="token punctuation">-</span>mgr<span class="token punctuation">-</span>dashboard   nginx   rook<span class="token punctuation">-</span>ceph.example.com   192.168.10.133   80<span class="token punctuation">,</span> 443   78s
+
+访问看看，我这报了502，可能是因为我刚改了rook<span class="token punctuation">-</span>ceph<span class="token punctuation">-</span>mgr<span class="token punctuation">-</span>dashboard的svc，导致出问题
+正常应该不会出<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 
     </article>
@@ -6571,36 +6636,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7065,13 +7100,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8112,13 +8147,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8571,14 +8606,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8586,14 +8621,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

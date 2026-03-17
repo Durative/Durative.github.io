@@ -498,20 +498,167 @@
 <li><strong>支持大多数Kubernetes功能</strong>：Minikube支持大多数标准的Kubernetes功能，包括DNS、NodePorts、ConfigMaps和Secrets、Dashboard等，使得开发者可以在本地获得与远程集群几乎一致的体验。</li>
 </ol>
 <p>缺点: 镜像拉取配置较为复杂</p>
-<h3 id="环境初始化"><a href="#环境初始化" class="headerlink" title="环境初始化"></a>环境初始化</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 关闭防火墙（测试环境建议关闭）</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">systemctl</span> <span class="string">stop</span> <span class="string">firewalld</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">systemctl</span> <span class="string">disable</span> <span class="string">firewalld</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭SELinux</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">setenforce</span> <span class="number">0</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">sed</span> <span class="string">-i</span> <span class="string">&#x27;s/^SELINUX=enforcing/SELINUX=disabled/&#x27;</span> <span class="string">/etc/selinux/config</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 确保系统已更新</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">yum</span> <span class="string">update</span> <span class="string">-y</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装Docker</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">yum</span> <span class="string">install</span> <span class="string">-y</span> <span class="string">yum-utils</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">yum-config-manager</span> <span class="string">--add-repo</span> <span class="string">https://download.docker.com/linux/centos/docker-ce.repo</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">yum</span> <span class="string">install</span> <span class="string">-y</span> <span class="string">docker-ce</span> <span class="string">docker-ce-cli</span> <span class="string">containerd.io</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动Docker并设置开机自启</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">systemctl</span> <span class="string">start</span> <span class="string">docker</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">systemctl</span> <span class="string">enable</span> <span class="string">docker</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 将当前用户加入docker组（避免每次使用sudo）</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">usermod</span> <span class="string">-aG</span> <span class="string">docker</span> <span class="string">$USER</span></span><br><span class="line"><span class="string">newgrp</span> <span class="string">docker</span>  <span class="comment"># 立即生效或重新登录</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="环境初始化"><a href="#环境初始化" class="headerlink" title="环境初始化"></a>环境初始化</h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># 关闭防火墙（测试环境建议关闭）</span>
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
 
-<h3 id="安装minikube"><a href="#安装minikube" class="headerlink" title="安装minikube"></a><strong>安装minikube</strong></h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载Minikube二进制文件</span></span><br><span class="line"><span class="string">curl</span> <span class="string">-LO</span> <span class="string">https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装到系统路径</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">install</span> <span class="string">minikube-linux-amd64</span> <span class="string">/usr/local/bin/minikube</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证安装</span></span><br><span class="line"><span class="string">minikube</span> <span class="string">version</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 关闭SELinux</span>
+sudo setenforce 0
+sudo sed <span class="token punctuation">-</span>i 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
 
-<h3 id="安装kubectl"><a href="#安装kubectl" class="headerlink" title="安装kubectl"></a><strong>安装kubectl</strong></h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载kubectl</span></span><br><span class="line"><span class="string">curl</span> <span class="string">-LO</span> <span class="string">&quot;https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装到系统路径</span></span><br><span class="line"><span class="string">sudo</span> <span class="string">install</span> <span class="string">-o</span> <span class="string">root</span> <span class="string">-g</span> <span class="string">root</span> <span class="string">-m</span> <span class="number">0755 </span><span class="string">kubectl</span> <span class="string">/usr/local/bin/kubectl</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证安装</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">version</span> <span class="string">--client</span></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 确保系统已更新</span>
+sudo yum update <span class="token punctuation">-</span>y
 
-<h3 id="启动集群"><a href="#启动集群" class="headerlink" title="启动集群"></a><strong>启动集群</strong></h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">minikube</span> <span class="string">start</span> <span class="string">--driver=docker</span> <span class="string">\</span></span><br><span class="line"> <span class="string">--image-mirror-country=cn</span> <span class="string">\</span></span><br><span class="line"> <span class="string">--image-repository=registry.cn-hangzhou.aliyuncs.com/google_containers</span> <span class="string">\</span></span><br><span class="line"> <span class="string">--base-image=registry.cn-hangzhou.aliyuncs.com/google_containers/kicbase:v0.0.46</span> <span class="string">\</span></span><br><span class="line"> <span class="string">--force</span> <span class="string">\</span></span><br><span class="line"> <span class="string">--kubernetes-version=v1.32.0</span></span><br><span class="line"></span><br><span class="line"><span class="string">这里会先下载kicbase镜像，然后下载kubeadm</span> <span class="string">kubectl</span> <span class="string">kubelet的组件</span></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 安装Docker</span>
+sudo yum install <span class="token punctuation">-</span>y yum<span class="token punctuation">-</span>utils
+sudo yum<span class="token punctuation">-</span>config<span class="token punctuation">-</span>manager <span class="token punctuation">-</span><span class="token punctuation">-</span>add<span class="token punctuation">-</span>repo https<span class="token punctuation">:</span>//download.docker.com/linux/centos/docker<span class="token punctuation">-</span>ce.repo
+sudo yum install <span class="token punctuation">-</span>y docker<span class="token punctuation">-</span>ce docker<span class="token punctuation">-</span>ce<span class="token punctuation">-</span>cli containerd.io
 
-<h3 id="minikube镜像加速配置"><a href="#minikube镜像加速配置" class="headerlink" title="minikube镜像加速配置"></a><strong>minikube镜像加速配置</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">进入容器</span><br><span class="line">minikube ssh</span><br><span class="line">sudo -i</span><br><span class="line"><span class="built_in">tee</span> &gt; /etc/docker/alternate-daemon.json &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">  &quot;exec-opts&quot;: [&quot;native.cgroupdriver=cgroupfs&quot;],</span></span><br><span class="line"><span class="string">  &quot;log-driver&quot;: &quot;json-file&quot;,</span></span><br><span class="line"><span class="string">  &quot;log-opts&quot;: &#123;</span></span><br><span class="line"><span class="string">    &quot;max-size&quot;: &quot;100m&quot;</span></span><br><span class="line"><span class="string">  &#125;,</span></span><br><span class="line"><span class="string">  &quot;storage-driver&quot;: &quot;overlay2&quot;,</span></span><br><span class="line"><span class="string">  &quot;registry-mirrors&quot;: [</span></span><br><span class="line"><span class="string">    &quot;https://a88uijg4.mirror.aliyuncs.com&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://docker.lmirror.top&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://docker.m.daocloud.io&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://hub.uuuadc.top&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://docker.anyhub.us.kg&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://dockerhub.jobcher.com&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://dockerhub.icu&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://docker.ckyl.me&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://docker.awsl9527.cn&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://docker.laoex.link&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://k8s.m.daocloud.io&quot;,</span></span><br><span class="line"><span class="string">    &quot;https://gcr.m.daocloud.io&quot;</span></span><br><span class="line"><span class="string">  ]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/systemd/system/docker.service.d</span><br><span class="line"><span class="built_in">tee</span> &gt; /etc/systemd/system/docker.service.d/docker.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">ExecStart=</span></span><br><span class="line"><span class="string">ExecStart=/usr/bin/dockerd --config-file=/etc/docker/alternate-daemon.json</span></span><br><span class="line"><span class="string">TimeoutStartSec=5min</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">minikube stop</span><br><span class="line">minikube start --force</span><br><span class="line"></span><br><span class="line">再次查看docker配置，能看到已配置的</span><br><span class="line">minikube ssh</span><br><span class="line">docker info</span><br><span class="line"></span><br><span class="line">Registry Mirrors:</span><br><span class="line">  https://a88uijg4.mirror.aliyuncs.com/</span><br><span class="line">  https://docker.lmirror.top/</span><br><span class="line">  https://docker.m.daocloud.io/</span><br><span class="line">  https://hub.uuuadc.top/</span><br><span class="line">  https://docker.anyhub.us.kg/</span><br><span class="line">  https://dockerhub.jobcher.com/</span><br><span class="line">  https://dockerhub.icu/</span><br><span class="line">  https://docker.ckyl.me/</span><br><span class="line">  https://docker.awsl9527.cn/</span><br><span class="line">  https://docker.laoex.link/</span><br><span class="line">  https://k8s.m.daocloud.io/</span><br><span class="line">  https://gcr.m.daocloud.io/</span><br><span class="line"> Live Restore Enabled: <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 启动Docker并设置开机自启</span>
+sudo systemctl start docker
+sudo systemctl enable docker
+
+<span class="token comment"># 将当前用户加入docker组（避免每次使用sudo）</span>
+sudo usermod <span class="token punctuation">-</span>aG docker $USER
+newgrp docker  <span class="token comment"># 立即生效或重新登录</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="安装minikube"><a href="#安装minikube" class="headerlink" title="安装minikube"></a><strong>安装minikube</strong></h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># 下载Minikube二进制文件</span>
+curl <span class="token punctuation">-</span>LO https<span class="token punctuation">:</span>//storage.googleapis.com/minikube/releases/latest/minikube<span class="token punctuation">-</span>linux<span class="token punctuation">-</span>amd64
+
+<span class="token comment"># 安装到系统路径</span>
+sudo install minikube<span class="token punctuation">-</span>linux<span class="token punctuation">-</span>amd64 /usr/local/bin/minikube
+
+<span class="token comment"># 验证安装</span>
+minikube version
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="安装kubectl"><a href="#安装kubectl" class="headerlink" title="安装kubectl"></a><strong>安装kubectl</strong></h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># 下载kubectl</span>
+curl <span class="token punctuation">-</span>LO "https<span class="token punctuation">:</span>//dl.k8s.io/release/$(curl <span class="token punctuation">-</span>L <span class="token punctuation">-</span>s https<span class="token punctuation">:</span>//dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+<span class="token comment"># 安装到系统路径</span>
+sudo install <span class="token punctuation">-</span>o root <span class="token punctuation">-</span>g root <span class="token punctuation">-</span>m 0755 kubectl /usr/local/bin/kubectl
+
+<span class="token comment"># 验证安装</span>
+kubectl version <span class="token punctuation">-</span><span class="token punctuation">-</span>client<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="启动集群"><a href="#启动集群" class="headerlink" title="启动集群"></a><strong>启动集群</strong></h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">minikube start <span class="token punctuation">-</span><span class="token punctuation">-</span>driver=docker \
+ <span class="token punctuation">-</span><span class="token punctuation">-</span>image<span class="token punctuation">-</span>mirror<span class="token punctuation">-</span>country=cn \
+ <span class="token punctuation">-</span><span class="token punctuation">-</span>image<span class="token punctuation">-</span>repository=registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/google_containers \
+ <span class="token punctuation">-</span><span class="token punctuation">-</span>base<span class="token punctuation">-</span>image=registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/google_containers/kicbase<span class="token punctuation">:</span>v0.0.46 \
+ <span class="token punctuation">-</span><span class="token punctuation">-</span>force \
+ <span class="token punctuation">-</span><span class="token punctuation">-</span>kubernetes<span class="token punctuation">-</span>version=v1.32.0
+
+这里会先下载kicbase镜像，然后下载kubeadm kubectl kubelet的组件<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="minikube镜像加速配置"><a href="#minikube镜像加速配置" class="headerlink" title="minikube镜像加速配置"></a><strong>minikube镜像加速配置</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">进入容器
+minikube <span class="token function">ssh</span>
+<span class="token function">sudo</span> <span class="token parameter variable">-i</span>
+<span class="token function">tee</span> <span class="token operator">></span> /etc/docker/alternate-daemon.json <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+&#123;
+  "exec-opts": ["native.cgroupdriver=cgroupfs"],
+  "log-driver": "json-file",
+  "log-opts": &#123;
+    "max-size": "100m"
+  &#125;,
+  "storage-driver": "overlay2",
+  "registry-mirrors": [
+    "https://a88uijg4.mirror.aliyuncs.com",
+    "https://docker.lmirror.top",
+    "https://docker.m.daocloud.io",
+    "https://hub.uuuadc.top",
+    "https://docker.anyhub.us.kg",
+    "https://dockerhub.jobcher.com",
+    "https://dockerhub.icu",
+    "https://docker.ckyl.me",
+    "https://docker.awsl9527.cn",
+    "https://docker.laoex.link",
+    "https://k8s.m.daocloud.io",
+    "https://gcr.m.daocloud.io"
+  ]
+&#125;
+EOF</span>
+
+<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /etc/systemd/system/docker.service.d
+<span class="token function">tee</span> <span class="token operator">></span> /etc/systemd/system/docker.service.d/docker.conf <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd --config-file=/etc/docker/alternate-daemon.json
+TimeoutStartSec=5min
+EOF</span>
+
+minikube stop
+minikube start <span class="token parameter variable">--force</span>
+
+再次查看docker配置，能看到已配置的
+minikube <span class="token function">ssh</span>
+<span class="token function">docker</span> info
+
+Registry Mirrors:
+  https://a88uijg4.mirror.aliyuncs.com/
+  https://docker.lmirror.top/
+  https://docker.m.daocloud.io/
+  https://hub.uuuadc.top/
+  https://docker.anyhub.us.kg/
+  https://dockerhub.jobcher.com/
+  https://dockerhub.icu/
+  https://docker.ckyl.me/
+  https://docker.awsl9527.cn/
+  https://docker.laoex.link/
+  https://k8s.m.daocloud.io/
+  https://gcr.m.daocloud.io/
+ Live Restore Enabled: <span class="token boolean">false</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="k8s集群测试"><a href="#k8s集群测试" class="headerlink" title="k8s集群测试"></a>k8s集群测试</h3><p>成功拉取镜像</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt;test-nginx.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: apps/v1</span></span><br><span class="line"><span class="string">kind: Deployment</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: nginx-deployment</span></span><br><span class="line"><span class="string">  labels:</span></span><br><span class="line"><span class="string">    app: nginx</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  replicas: 1</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">    matchLabels:</span></span><br><span class="line"><span class="string">      app: nginx</span></span><br><span class="line"><span class="string">  template:</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      labels:</span></span><br><span class="line"><span class="string">        app: nginx</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">      - name: nginx</span></span><br><span class="line"><span class="string">        image: nginx:alpine</span></span><br><span class="line"><span class="string">        ports:</span></span><br><span class="line"><span class="string">        - containerPort: 80</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kubectl apply -f test-nginx.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pods</span><br><span class="line">NAME                                READY   STATUS    RESTARTS   AGE</span><br><span class="line">nginx-deployment-576b6dbdc9-zbqq4   1/1     Running   0          100m</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> <span class="token operator">></span>test-nginx.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+EOF</span>
 
-<h3 id="其余minikube常用命令"><a href="#其余minikube常用命令" class="headerlink" title="其余minikube常用命令"></a>其余minikube常用命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">启动与停止集群</span><br><span class="line">minikube start</span><br><span class="line">minikube stop</span><br><span class="line"></span><br><span class="line">删除集群</span><br><span class="line">minikube delete</span><br><span class="line"></span><br><span class="line">暂停、恢复集群</span><br><span class="line">minikube pause</span><br><span class="line">minikube unpause</span><br><span class="line"></span><br><span class="line">查看集群状态</span><br><span class="line">minikube status</span><br><span class="line"></span><br><span class="line">ssh进入节点</span><br><span class="line">minikube ssh</span><br><span class="line"></span><br><span class="line">加载本地镜像到集群中</span><br><span class="line">minikube image load &lt;image-name&gt;</span><br></pre></td></tr></table></figure>
+kubectl apply <span class="token parameter variable">-f</span> test-nginx.yaml
+
+kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-576b6dbdc9-zbqq4   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          100m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="其余minikube常用命令"><a href="#其余minikube常用命令" class="headerlink" title="其余minikube常用命令"></a>其余minikube常用命令</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">启动与停止集群
+minikube start
+minikube stop
+
+删除集群
+minikube delete
+
+暂停、恢复集群
+minikube pause
+minikube unpause
+
+查看集群状态
+minikube status
+
+ssh进入节点
+minikube <span class="token function">ssh</span>
+
+加载本地镜像到集群中
+minikube image load <span class="token operator">&lt;</span>image-name<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6570,36 +6717,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7064,13 +7181,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8111,13 +8228,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8570,14 +8687,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8585,14 +8702,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

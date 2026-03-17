@@ -527,7 +527,90 @@
 <p>50台&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&gt;7台</p>
 <p>100台&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&gt;11台</p>
 <p>zookeeper角色：<br>leader领导者<br>follower跟随着<br>observer观察者<br>leader：负责发起选举和决议的，更新系统状态<br>follower：接收客户端的请求，给客户端返回结果，在选主的过程参与投票<br>observe：接收客户端的连接，同步leader状态，不参与选主</p>
-<h1 id="部署zookeeper集群"><a href="#部署zookeeper集群" class="headerlink" title="部署zookeeper集群"></a>部署zookeeper集群</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">环境：</span><br><span class="line">centos7.9</span><br><span class="line">8C8G 50Gdisk</span><br><span class="line">192.168.10.181 zoo1</span><br><span class="line">192.168.10.182 zoo2</span><br><span class="line">192.168.10.183 zoo3</span><br><span class="line">filebeats版本7.13.1</span><br><span class="line">kafka版本3.1.0</span><br><span class="line">zookeeper版本3.8</span><br><span class="line">logstash版本7.9.2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 网络与主机名配置</span></span><br><span class="line">hostnamectl set-hostname zoo1 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens18 ipv4.addresses 192.168.10.181/24 ipv4.dns 192.168.1.1 ipv4.gateway 192.168.10.1 ipv4.method manual</span><br><span class="line">nmcli con up ens18</span><br><span class="line"></span><br><span class="line">hostnamectl set-hostname zoo2 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens18 ipv4.addresses 192.168.10.182/24 ipv4.dns 192.168.1.1 ipv4.gateway 192.168.10.1 ipv4.method manual</span><br><span class="line">nmcli con up ens18</span><br><span class="line"></span><br><span class="line">hostnamectl set-hostname zoo3 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens18 ipv4.addresses 192.168.10.183/24 ipv4.dns 192.168.1.1 ipv4.gateway 192.168.10.1 ipv4.method manual</span><br><span class="line">nmcli con up ens18</span><br><span class="line"></span><br><span class="line"><span class="comment"># host设置</span></span><br><span class="line"><span class="built_in">cat</span> /etc/hosts</span><br><span class="line">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span><br><span class="line">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span><br><span class="line">192.168.10.181 zoo1</span><br><span class="line">192.168.10.182 zoo2</span><br><span class="line">192.168.10.183 zoo3</span><br><span class="line">scp /etc/hosts zoo1:/etc/hosts</span><br><span class="line">scp /etc/hosts zoo2:/etc/hosts</span><br><span class="line">scp /etc/hosts zoo3:/etc/hosts</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安全</span></span><br><span class="line">sed -i  <span class="string">&#x27;s/SELINUX=enforcing/SELINUX=disabled/g&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl  <span class="built_in">disable</span> firewalld --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 时钟同步</span></span><br><span class="line">yum -y install chrony</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 上传压缩包并解压缩</span></span><br><span class="line">tar zxvf apache-zookeeper-3.8.0-bin.tar.gz -C /opt/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建数据目录与日志目录</span></span><br><span class="line"><span class="built_in">mv</span> /opt/apache-zookeeper-3.8.0-bin/ /opt/zookeeper</span><br><span class="line"><span class="built_in">mkdir</span> /opt/zookeeper/zkData</span><br><span class="line"><span class="built_in">mkdir</span> /opt/zookeeper/zkLog</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改配置文件</span></span><br><span class="line">指定数据目录与日志目录，指定另外几个节点的IP:</span><br><span class="line"><span class="built_in">cd</span> /opt/zookeeper/conf/</span><br><span class="line"><span class="built_in">cp</span> zoo_sample.cfg zoo.cfg</span><br><span class="line">vim zoo.cfg</span><br><span class="line">传送到另外两个节点： </span><br><span class="line">scp zoo.cfg zoo1:/opt/zookeeper/conf/</span><br><span class="line">scp zoo.cfg zoo2:/opt/zookeeper/conf/</span><br><span class="line">scp zoo.cfg zoo3:/opt/zookeeper/conf/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备启动zookeeper</span></span><br><span class="line">安装java</span><br><span class="line">yum -y install java</span><br><span class="line"></span><br><span class="line">设置三台的myid</span><br><span class="line">zoo1： </span><br><span class="line"><span class="built_in">echo</span> 1 &gt; /opt/zookeeper/myid</span><br><span class="line">zoo2:</span><br><span class="line"><span class="built_in">echo</span> 2 &gt; /opt/zookeeper/myid</span><br><span class="line">zoo3:</span><br><span class="line"><span class="built_in">echo</span> 3 &gt; /opt/zookeeper/myid</span><br><span class="line"></span><br><span class="line">123依次启动</span><br><span class="line"><span class="built_in">cd</span> /opt/zookeeper/bin</span><br><span class="line"><span class="built_in">nohup</span> ./zkServer.sh start  ../conf/zoo.cfg &amp;</span><br><span class="line"></span><br><span class="line">测试</span><br><span class="line"><span class="built_in">cd</span> /opt/zookeeper/bin/</span><br><span class="line">./zkCli.sh -server 127.0.0.1:2181</span><br><span class="line">注意必须关闭安全设置和时钟同步，我一开始没有设置直接一堆报错</span><br></pre></td></tr></table></figure>
+<h1 id="部署zookeeper集群"><a href="#部署zookeeper集群" class="headerlink" title="部署zookeeper集群"></a>部署zookeeper集群</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">环境：
+centos7.9
+8C8G 50Gdisk
+<span class="token number">192.168</span>.10.181 zoo1
+<span class="token number">192.168</span>.10.182 zoo2
+<span class="token number">192.168</span>.10.183 zoo3
+filebeats版本7.13.1
+kafka版本3.1.0
+zookeeper版本3.8
+logstash版本7.9.2
+
+<span class="token comment"># 网络与主机名配置</span>
+hostnamectl set-hostname zoo1 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+nmcli con modify ens18 ipv4.addresses <span class="token number">192.168</span>.10.181/24 ipv4.dns <span class="token number">192.168</span>.1.1 ipv4.gateway <span class="token number">192.168</span>.10.1 ipv4.method manual
+nmcli con up ens18
+
+hostnamectl set-hostname zoo2 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+nmcli con modify ens18 ipv4.addresses <span class="token number">192.168</span>.10.182/24 ipv4.dns <span class="token number">192.168</span>.1.1 ipv4.gateway <span class="token number">192.168</span>.10.1 ipv4.method manual
+nmcli con up ens18
+
+hostnamectl set-hostname zoo3 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+nmcli con modify ens18 ipv4.addresses <span class="token number">192.168</span>.10.183/24 ipv4.dns <span class="token number">192.168</span>.1.1 ipv4.gateway <span class="token number">192.168</span>.10.1 ipv4.method manual
+nmcli con up ens18
+
+<span class="token comment"># host设置</span>
+<span class="token function">cat</span> /etc/hosts
+<span class="token number">127.0</span>.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+<span class="token number">192.168</span>.10.181 zoo1
+<span class="token number">192.168</span>.10.182 zoo2
+<span class="token number">192.168</span>.10.183 zoo3
+<span class="token function">scp</span> /etc/hosts zoo1:/etc/hosts
+<span class="token function">scp</span> /etc/hosts zoo2:/etc/hosts
+<span class="token function">scp</span> /etc/hosts zoo3:/etc/hosts
+
+<span class="token comment"># 安全</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span>  <span class="token string">'s/SELINUX=enforcing/SELINUX=disabled/g'</span> /etc/selinux/config
+setenforce <span class="token number">0</span>
+systemctl  disable firewalld <span class="token parameter variable">--now</span>
+
+<span class="token comment"># 时钟同步</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> chrony
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^server/#server/g'</span> /etc/chrony.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'1s/^/server cn.pool.ntp.org iburst\n/'</span> /etc/chrony.conf
+systemctl restart chronyd
+
+<span class="token comment"># 上传压缩包并解压缩</span>
+<span class="token function">tar</span> zxvf apache-zookeeper-3.8.0-bin.tar.gz <span class="token parameter variable">-C</span> /opt/
+
+<span class="token comment"># 创建数据目录与日志目录</span>
+<span class="token function">mv</span> /opt/apache-zookeeper-3.8.0-bin/ /opt/zookeeper
+<span class="token function">mkdir</span> /opt/zookeeper/zkData
+<span class="token function">mkdir</span> /opt/zookeeper/zkLog
+
+<span class="token comment"># 修改配置文件</span>
+指定数据目录与日志目录，指定另外几个节点的IP:
+<span class="token builtin class-name">cd</span> /opt/zookeeper/conf/
+<span class="token function">cp</span> zoo_sample.cfg zoo.cfg
+<span class="token function">vim</span> zoo.cfg
+传送到另外两个节点： 
+<span class="token function">scp</span> zoo.cfg zoo1:/opt/zookeeper/conf/
+<span class="token function">scp</span> zoo.cfg zoo2:/opt/zookeeper/conf/
+<span class="token function">scp</span> zoo.cfg zoo3:/opt/zookeeper/conf/
+
+<span class="token comment"># 准备启动zookeeper</span>
+安装java
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">java</span>
+
+设置三台的myid
+zoo1： 
+<span class="token builtin class-name">echo</span> <span class="token number">1</span> <span class="token operator">></span> /opt/zookeeper/myid
+zoo2:
+<span class="token builtin class-name">echo</span> <span class="token number">2</span> <span class="token operator">></span> /opt/zookeeper/myid
+zoo3:
+<span class="token builtin class-name">echo</span> <span class="token number">3</span> <span class="token operator">></span> /opt/zookeeper/myid
+
+<span class="token number">123</span>依次启动
+<span class="token builtin class-name">cd</span> /opt/zookeeper/bin
+<span class="token function">nohup</span> ./zkServer.sh start  <span class="token punctuation">..</span>/conf/zoo.cfg <span class="token operator">&amp;</span>
+
+测试
+<span class="token builtin class-name">cd</span> /opt/zookeeper/bin/
+./zkCli.sh <span class="token parameter variable">-server</span> <span class="token number">127.0</span>.0.1:2181
+注意必须关闭安全设置和时钟同步，我一开始没有设置直接一堆报错<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201534.png"></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201549.png"></p>
@@ -540,25 +623,270 @@
 <p>Consumer：消息消费者，向Kafka broker读取消息的客户端。</p>
 <p><strong>和zk的关系</strong></p>
 <p>zookeeper可以帮助kafka管理broker、consumer。kafka在创建Broker后，向zookeeper注册新的broker信息，实现在服务器正常运行下的水平拓展。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">tar xf kafka_2.13-3.1.0.tgz</span><br><span class="line">修改配置文件</span><br><span class="line">vim kafka_2.13-3.1.0/config/server.properties</span><br><span class="line">listeners=192.168.10.181://:9092 <span class="comment"># 本机地址的kafka端口</span></span><br><span class="line">zookeeper.connect=192.168.10.181:2181,192.168.10.182:2181:192.168.10.192:2181</span><br><span class="line"><span class="comment"># zoo集群的地址</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">tar</span> xf kafka_2.13-3.1.0.tgz
+修改配置文件
+<span class="token function">vim</span> kafka_2.13-3.1.0/config/server.properties
+<span class="token assign-left variable">listeners</span><span class="token operator">=</span><span class="token number">192.168</span>.10.181://:9092 <span class="token comment"># 本机地址的kafka端口</span>
+<span class="token assign-left variable">zookeeper.connect</span><span class="token operator">=</span><span class="token number">192.168</span>.10.181:2181,192.168.10.182:2181:192.168.10.192:2181
+<span class="token comment"># zoo集群的地址</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201702.png"></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">启动kafka</span><br><span class="line"><span class="built_in">cd</span> kafka_2.13-3.1.0/bin</span><br><span class="line">./kafka-server-start.sh -daemon ../config/server.properties</span><br><span class="line"></span><br><span class="line">测试————登录zookeeper，查看信息broker/ids</span><br><span class="line">/opt/zookeeper/bin/zkCli.sh -server 127.0.0.1:2181</span><br><span class="line">[zk: 127.0.0.1:2181(CONNECTED) 0] <span class="built_in">ls</span> /brokers/ids</span><br><span class="line">[0] <span class="comment"># 能看到有一个broker的id</span></span><br><span class="line"></span><br><span class="line">测试————生产者消费者模型</span><br><span class="line">1.kafka里创建topic</span><br><span class="line"><span class="built_in">cd</span> kafka_2.13-3.1.0/bin</span><br><span class="line">./kafka-topics.sh --create --topic quickstart-events --bootstrap-server 192.168.10.181:9092</span><br><span class="line"><span class="comment"># Created topic quickstart-events.</span></span><br><span class="line"></span><br><span class="line">2.查看topic</span><br><span class="line">./kafka-topics.sh --describe --topic quickstart-events --bootstrap-server 192.168.10.181:9092</span><br><span class="line"><span class="comment">#Topic: quickstart-events        TopicId: mpbHVHMNQtaQEtPHDb7ZMA PartitionCount: 1       ReplicationFactor: 1       Configs: segment.bytes=1073741824</span></span><br><span class="line"><span class="comment">#        Topic: quickstart-events        Partition: 0    Leader: 0       Replicas: 0     Isr: 0</span></span><br><span class="line"></span><br><span class="line">3.调用生产者console向topic中写入消息</span><br><span class="line">./kafka-console-producer.sh --topic quickstart-events --bootstrap-server 192.168.10.181:9092</span><br><span class="line">4.同时调用消费者读取消息</span><br><span class="line">./kafka-console-consumer.sh --topic quickstart-events --from-beginning --bootstrap-server 192.168.10.181:9092</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">启动kafka
+<span class="token builtin class-name">cd</span> kafka_2.13-3.1.0/bin
+./kafka-server-start.sh <span class="token parameter variable">-daemon</span> <span class="token punctuation">..</span>/config/server.properties
+
+测试————登录zookeeper，查看信息broker/ids
+/opt/zookeeper/bin/zkCli.sh <span class="token parameter variable">-server</span> <span class="token number">127.0</span>.0.1:2181
+<span class="token punctuation">[</span>zk: <span class="token number">127.0</span>.0.1:2181<span class="token punctuation">(</span>CONNECTED<span class="token punctuation">)</span> <span class="token number">0</span><span class="token punctuation">]</span> <span class="token function">ls</span> /brokers/ids
+<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token comment"># 能看到有一个broker的id</span>
+
+测试————生产者消费者模型
+<span class="token number">1</span>.kafka里创建topic
+<span class="token builtin class-name">cd</span> kafka_2.13-3.1.0/bin
+./kafka-topics.sh <span class="token parameter variable">--create</span> <span class="token parameter variable">--topic</span> quickstart-events --bootstrap-server <span class="token number">192.168</span>.10.181:9092
+<span class="token comment"># Created topic quickstart-events.</span>
+
+<span class="token number">2</span>.查看topic
+./kafka-topics.sh <span class="token parameter variable">--describe</span> <span class="token parameter variable">--topic</span> quickstart-events --bootstrap-server <span class="token number">192.168</span>.10.181:9092
+<span class="token comment">#Topic: quickstart-events        TopicId: mpbHVHMNQtaQEtPHDb7ZMA PartitionCount: 1       ReplicationFactor: 1       Configs: segment.bytes=1073741824</span>
+<span class="token comment">#        Topic: quickstart-events        Partition: 0    Leader: 0       Replicas: 0     Isr: 0</span>
+
+<span class="token number">3</span>.调用生产者console向topic中写入消息
+./kafka-console-producer.sh <span class="token parameter variable">--topic</span> quickstart-events --bootstrap-server <span class="token number">192.168</span>.10.181:9092
+<span class="token number">4</span>.同时调用消费者读取消息
+./kafka-console-consumer.sh <span class="token parameter variable">--topic</span> quickstart-events --from-beginning --bootstrap-server <span class="token number">192.168</span>.10.181:9092<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201724.png"></p>
-<h2 id="多节点做集群"><a href="#多节点做集群" class="headerlink" title="多节点做集群"></a>多节点做集群</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">将文件夹直接复制过去</span><br><span class="line">scp -r kafka_2.13-3.1.0/ zoo2:~</span><br><span class="line">scp -r kafka_2.13-3.1.0/ zoo3:~</span><br><span class="line"></span><br><span class="line">修改server.properties配置文件，将其中的kafka监听IP改成本机ip</span><br><span class="line">vim kafka_2.13-3.1.0/config/server.properties</span><br><span class="line">listeners=PLAINTEXT://192.168.10.182:9092</span><br><span class="line">listeners=PLAINTEXT://192.168.10.183:9092</span><br><span class="line"></span><br><span class="line">修改server.properties配置文件，修改broker.id</span><br><span class="line">不能都为0，因为broker.id是kafka物理服务器的标识</span><br><span class="line">broker.id=1</span><br><span class="line">broker.id=2</span><br><span class="line"></span><br><span class="line">启动kafka</span><br><span class="line"><span class="built_in">cd</span> /root/kafka_2.13-3.1.0/bin</span><br><span class="line">./kafka-server-start.sh -daemon ../config/server.properties</span><br><span class="line"></span><br><span class="line">本机查看kafka是否正常运行</span><br><span class="line">ps aux | grep kafka</span><br><span class="line"></span><br><span class="line">登录zookeeper查看</span><br><span class="line">/opt/zookeeper/bin/zkCli.sh -server 127.0.0.1:2181</span><br><span class="line">[zk: 127.0.0.1:2181(CONNECTED) 0] <span class="built_in">ls</span> /brokers/ids</span><br><span class="line">[0, 1, 2]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="多节点做集群"><a href="#多节点做集群" class="headerlink" title="多节点做集群"></a>多节点做集群</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">将文件夹直接复制过去
+<span class="token function">scp</span> <span class="token parameter variable">-r</span> kafka_2.13-3.1.0/ zoo2:~
+<span class="token function">scp</span> <span class="token parameter variable">-r</span> kafka_2.13-3.1.0/ zoo3:~
 
-<h1 id="部署filebeat服务"><a href="#部署filebeat服务" class="headerlink" title="部署filebeat服务"></a>部署filebeat服务</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line">1.安装一个nginx用来被采集日志，先单节点采集，后面再多节点</span><br><span class="line">yum -y install nginx</span><br><span class="line">systemctl <span class="built_in">enable</span> nginx.service --now</span><br><span class="line"></span><br><span class="line">2.kafka创建topic，存放日志数据，指定kafka主机IP/端口</span><br><span class="line"><span class="built_in">cd</span> kafka_2.13-3.1.0/bin/</span><br><span class="line">./kafka-topics.sh --create --topic nginx-log-topic --bootstrap-server 192.168.10.181:9092,192.168.10.182:9092,192.168.10.183:9092</span><br><span class="line"><span class="comment"># Created topic nginx-log-topic.</span></span><br><span class="line"></span><br><span class="line">查询topic</span><br><span class="line">./kafka-topics.sh --describe --topic nginx-log-topic  --bootstrap-server 192.168.10.181:9092</span><br><span class="line"><span class="comment">#Topic: nginx-log-topic  TopicId: 7z1LPHcFSfKRQw-uT9EXgA PartitionCount: 1       ReplicationFactor: 1       Configs: segment.bytes=1073741824</span></span><br><span class="line"><span class="comment">#Topic: nginx-log-topic  Partition: 0    Leader: 1       Replicas: 1     Isr: 1</span></span><br><span class="line"></span><br><span class="line">3.为nginx主机下载解压filebeat，版本7.13.1</span><br><span class="line">wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.13.1-linux-x86_64.tar.gz</span><br><span class="line">tar xf filebeat-7.13.1-linux-x86_64.tar.gz</span><br><span class="line"></span><br><span class="line">4.开启filebeat的nginx模块</span><br><span class="line">./filebeat modules <span class="built_in">enable</span> nginx</span><br><span class="line"><span class="comment"># Enabled nginx</span></span><br><span class="line"></span><br><span class="line">5.写一个filebeats_nginx.yaml配置文件</span><br><span class="line">vim filebeats_nginx.yaml</span><br><span class="line"><span class="comment"># 指定filebeat模块配置  </span></span><br><span class="line">filebeat.modules:  </span><br><span class="line"><span class="comment"># 这是一个针对nginx的模块配置  </span></span><br><span class="line">- module: nginx  </span><br><span class="line">  <span class="comment"># 访问日志配置  </span></span><br><span class="line">  access:  </span><br><span class="line">    <span class="comment"># 启用访问日志收集  </span></span><br><span class="line">    enabled: <span class="literal">true</span>  </span><br><span class="line">    <span class="comment"># 指定访问日志的路径 </span></span><br><span class="line">    var.paths: [<span class="string">&quot;/var/log/nginx/access.log*&quot;</span>]  </span><br><span class="line">  <span class="comment"># 错误日志配置  </span></span><br><span class="line">  error:  </span><br><span class="line">    <span class="comment"># 启用错误日志收集  </span></span><br><span class="line">    enabled: <span class="literal">true</span>  </span><br><span class="line">    <span class="comment"># 指定错误日志的路径，支持通配符  </span></span><br><span class="line">    var.paths: [<span class="string">&quot;/var/log/nginx/error.log*&quot;</span>]  </span><br><span class="line">  </span><br><span class="line"><span class="comment">#----------------------------------Kafka 输出配置--------------------------------#  </span></span><br><span class="line"><span class="comment"># output到kafka的配置文件  </span></span><br><span class="line">output.kafka:  </span><br><span class="line">  <span class="comment"># 启用Kafka输出  </span></span><br><span class="line">  enabled: <span class="literal">true</span>  </span><br><span class="line">  <span class="comment"># Kafka集群的主机列表和端口</span></span><br><span class="line">  hosts: [<span class="string">&#x27;192.168.10.181:9092&#x27;</span>, <span class="string">&#x27;192.168.10.182:9092&#x27;</span>,<span class="string">&#x27;192.168.10.183:9092&#x27;</span>]  </span><br><span class="line">  <span class="comment"># Kafka的topic名称</span></span><br><span class="line">  topic: <span class="string">&#x27;nginx-log-topic&#x27;</span>  </span><br><span class="line">  <span class="comment"># acks值默认为1（leader写入即确认）  </span></span><br><span class="line">  required_acks: 1  </span><br><span class="line">  <span class="comment"># 压缩格式，默认为gzip  </span></span><br><span class="line">  compression: gzip  </span><br><span class="line">  <span class="comment"># 发送消息的最大字节数，默认为1000000字节  </span></span><br><span class="line">  max_message_bytes: 1000000  </span><br><span class="line">  <span class="comment"># 编码格式配置，直接输出message字段内容  </span></span><br><span class="line">  codec.format:  </span><br><span class="line">    string: <span class="string">&#x27;%&#123;[message]&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">6.启动filebeat</span><br><span class="line"><span class="built_in">nohup</span> ./filebeat -e -c filebeats_nginx.yaml</span><br><span class="line"></span><br><span class="line">7.测试</span><br><span class="line">尝试消费一下————查看kafka的topic是否有日志</span><br><span class="line"><span class="built_in">cd</span> ~/kafka_2.13-3.1.0/bin/</span><br><span class="line">./kafka-console-consumer.sh --topic nginx-log-topic --from-beginning --bootstrap-server 192.168.10.181:9092,192.168.10.182:9092,192.168.10.183:9092</span><br><span class="line">登录一下nginx界面</span><br><span class="line"></span><br><span class="line">能看到有数据，说明topic已经成功通过filebeat作为生产者存入数据了</span><br></pre></td></tr></table></figure>
+修改server.properties配置文件，将其中的kafka监听IP改成本机ip
+<span class="token function">vim</span> kafka_2.13-3.1.0/config/server.properties
+<span class="token assign-left variable">listeners</span><span class="token operator">=</span>PLAINTEXT://192.168.10.182:9092
+<span class="token assign-left variable">listeners</span><span class="token operator">=</span>PLAINTEXT://192.168.10.183:9092
+
+修改server.properties配置文件，修改broker.id
+不能都为0，因为broker.id是kafka物理服务器的标识
+<span class="token assign-left variable">broker.id</span><span class="token operator">=</span><span class="token number">1</span>
+<span class="token assign-left variable">broker.id</span><span class="token operator">=</span><span class="token number">2</span>
+
+启动kafka
+<span class="token builtin class-name">cd</span> /root/kafka_2.13-3.1.0/bin
+./kafka-server-start.sh <span class="token parameter variable">-daemon</span> <span class="token punctuation">..</span>/config/server.properties
+
+本机查看kafka是否正常运行
+<span class="token function">ps</span> aux <span class="token operator">|</span> <span class="token function">grep</span> kafka
+
+登录zookeeper查看
+/opt/zookeeper/bin/zkCli.sh <span class="token parameter variable">-server</span> <span class="token number">127.0</span>.0.1:2181
+<span class="token punctuation">[</span>zk: <span class="token number">127.0</span>.0.1:2181<span class="token punctuation">(</span>CONNECTED<span class="token punctuation">)</span> <span class="token number">0</span><span class="token punctuation">]</span> <span class="token function">ls</span> /brokers/ids
+<span class="token punctuation">[</span><span class="token number">0</span>, <span class="token number">1</span>, <span class="token number">2</span><span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="部署filebeat服务"><a href="#部署filebeat服务" class="headerlink" title="部署filebeat服务"></a>部署filebeat服务</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.安装一个nginx用来被采集日志，先单节点采集，后面再多节点
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> nginx
+systemctl <span class="token builtin class-name">enable</span> nginx.service <span class="token parameter variable">--now</span>
+
+<span class="token number">2</span>.kafka创建topic，存放日志数据，指定kafka主机IP/端口
+<span class="token builtin class-name">cd</span> kafka_2.13-3.1.0/bin/
+./kafka-topics.sh <span class="token parameter variable">--create</span> <span class="token parameter variable">--topic</span> nginx-log-topic --bootstrap-server <span class="token number">192.168</span>.10.181:9092,192.168.10.182:9092,192.168.10.183:9092
+<span class="token comment"># Created topic nginx-log-topic.</span>
+
+查询topic
+./kafka-topics.sh <span class="token parameter variable">--describe</span> <span class="token parameter variable">--topic</span> nginx-log-topic  --bootstrap-server <span class="token number">192.168</span>.10.181:9092
+<span class="token comment">#Topic: nginx-log-topic  TopicId: 7z1LPHcFSfKRQw-uT9EXgA PartitionCount: 1       ReplicationFactor: 1       Configs: segment.bytes=1073741824</span>
+<span class="token comment">#Topic: nginx-log-topic  Partition: 0    Leader: 1       Replicas: 1     Isr: 1</span>
+
+<span class="token number">3</span>.为nginx主机下载解压filebeat，版本7.13.1
+<span class="token function">wget</span> https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.13.1-linux-x86_64.tar.gz
+<span class="token function">tar</span> xf filebeat-7.13.1-linux-x86_64.tar.gz
+
+<span class="token number">4</span>.开启filebeat的nginx模块
+./filebeat modules <span class="token builtin class-name">enable</span> nginx
+<span class="token comment"># Enabled nginx</span>
+
+<span class="token number">5</span>.写一个filebeats_nginx.yaml配置文件
+<span class="token function">vim</span> filebeats_nginx.yaml
+<span class="token comment"># 指定filebeat模块配置  </span>
+filebeat.modules:  
+<span class="token comment"># 这是一个针对nginx的模块配置  </span>
+- module: nginx  
+  <span class="token comment"># 访问日志配置  </span>
+  access:  
+    <span class="token comment"># 启用访问日志收集  </span>
+    enabled: <span class="token boolean">true</span>  
+    <span class="token comment"># 指定访问日志的路径 </span>
+    var.paths: <span class="token punctuation">[</span><span class="token string">"/var/log/nginx/access.log*"</span><span class="token punctuation">]</span>  
+  <span class="token comment"># 错误日志配置  </span>
+  error:  
+    <span class="token comment"># 启用错误日志收集  </span>
+    enabled: <span class="token boolean">true</span>  
+    <span class="token comment"># 指定错误日志的路径，支持通配符  </span>
+    var.paths: <span class="token punctuation">[</span><span class="token string">"/var/log/nginx/error.log*"</span><span class="token punctuation">]</span>  
+  
+<span class="token comment">#----------------------------------Kafka 输出配置--------------------------------#  </span>
+<span class="token comment"># output到kafka的配置文件  </span>
+output.kafka:  
+  <span class="token comment"># 启用Kafka输出  </span>
+  enabled: <span class="token boolean">true</span>  
+  <span class="token comment"># Kafka集群的主机列表和端口</span>
+  hosts: <span class="token punctuation">[</span><span class="token string">'192.168.10.181:9092'</span>, <span class="token string">'192.168.10.182:9092'</span>,<span class="token string">'192.168.10.183:9092'</span><span class="token punctuation">]</span>  
+  <span class="token comment"># Kafka的topic名称</span>
+  topic: <span class="token string">'nginx-log-topic'</span>  
+  <span class="token comment"># acks值默认为1（leader写入即确认）  </span>
+  required_acks: <span class="token number">1</span>  
+  <span class="token comment"># 压缩格式，默认为gzip  </span>
+  compression: <span class="token function">gzip</span>  
+  <span class="token comment"># 发送消息的最大字节数，默认为1000000字节  </span>
+  max_message_bytes: <span class="token number">1000000</span>  
+  <span class="token comment"># 编码格式配置，直接输出message字段内容  </span>
+  codec.format:  
+    string: <span class="token string">'%&#123;[message]&#125;'</span>
+
+<span class="token number">6</span>.启动filebeat
+<span class="token function">nohup</span> ./filebeat <span class="token parameter variable">-e</span> <span class="token parameter variable">-c</span> filebeats_nginx.yaml
+
+<span class="token number">7</span>.测试
+尝试消费一下————查看kafka的topic是否有日志
+<span class="token builtin class-name">cd</span> ~/kafka_2.13-3.1.0/bin/
+./kafka-console-consumer.sh <span class="token parameter variable">--topic</span> nginx-log-topic --from-beginning --bootstrap-server <span class="token number">192.168</span>.10.181:9092,192.168.10.182:9092,192.168.10.183:9092
+登录一下nginx界面
+
+能看到有数据，说明topic已经成功通过filebeat作为生产者存入数据了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201813.png"></p>
-<h1 id="部署logstash"><a href="#部署logstash" class="headerlink" title="部署logstash"></a>部署logstash</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line">logstash版本7.9.2</span><br><span class="line">1.下载与解压</span><br><span class="line">wget https://artifacts.elastic.co/downloads/logstash/logstash-7.9.2.tar.gz</span><br><span class="line">tar xf logstash-7.9.2.tar.gz</span><br><span class="line"><span class="built_in">cd</span> logstash-7.9.2/</span><br><span class="line"></span><br><span class="line">2.创建一个配置文件nginx.conf</span><br><span class="line">配置input模块，设置从kafka消费</span><br><span class="line"><span class="built_in">cat</span> &gt; config/nginx.conf &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">input&#123;</span></span><br><span class="line"><span class="string">  kafka &#123;</span></span><br><span class="line"><span class="string">    bootstrap_servers =&gt; [&quot;192.168.10.181:9092,192.168.10.182:9092 ,192.168.10.183:9092&quot;]</span></span><br><span class="line"><span class="string">    auto_offset_reset =&gt; &quot;latest&quot;</span></span><br><span class="line"><span class="string">    consumer_threads =&gt; 3</span></span><br><span class="line"><span class="string">    decorate_events =&gt; true</span></span><br><span class="line"><span class="string">    topics =&gt; [&quot;nginx-log-topic&quot;]</span></span><br><span class="line"><span class="string">    codec =&gt; &quot;json&quot;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">output &#123;</span></span><br><span class="line"><span class="string">    elasticsearch &#123;</span></span><br><span class="line"><span class="string">      hosts =&gt; [&quot;192.168.10.181:9200&quot;]</span></span><br><span class="line"><span class="string">      index =&gt; &quot;kafkalog-%&#123;+YYYY.MM.dd&#125;&quot;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">注释部分：</span><br><span class="line"><span class="comment"># Logstash配置文件注释  </span></span><br><span class="line">  </span><br><span class="line"><span class="comment"># 输入配置部分 (input)  </span></span><br><span class="line"><span class="comment"># 该部分定义了Logstash从何处接收数据。在此例中，Logstash将从Kafka集群中接收数据。  </span></span><br><span class="line">  </span><br><span class="line"><span class="comment"># Kafka配置  </span></span><br><span class="line">input &#123;  </span><br><span class="line">  kafka &#123;  </span><br><span class="line">    <span class="comment"># bootstrap_servers：Kafka集群的地址列表，Logstash将连接到这些地址以获取数据。  </span></span><br><span class="line">    <span class="comment"># 确保列出了所有Kafka broker的地址和端口。  </span></span><br><span class="line">    bootstrap_servers =&gt; [<span class="string">&quot;192.168.10.181:9092,192.168.10.182:9092,192.168.10.183:9092&quot;</span>]  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># auto_offset_reset：当没有初始偏移量或当前偏移量在日志中不存在时，如何重置偏移量。  </span></span><br><span class="line">    <span class="comment"># &quot;latest&quot; 表示从最新的消息开始消费。  </span></span><br><span class="line">    auto_offset_reset =&gt; <span class="string">&quot;latest&quot;</span>  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># consumer_threads：消费者线程的数量。这将决定Logstash从Kafka并行读取数据的线程数。  </span></span><br><span class="line">    consumer_threads =&gt; 3  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># decorate_events：如果设置为true，将为每个事件添加一个包含Kafka元数据的字段。  </span></span><br><span class="line">    decorate_events =&gt; <span class="literal">true</span>  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># topics：要订阅的Kafka主题列表。  </span></span><br><span class="line">    topics =&gt; [<span class="string">&quot;nginx-log-topic&quot;</span>]  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># codec：用于解码从Kafka接收的数据的编解码器。这里使用JSON编解码器。  </span></span><br><span class="line">    codec =&gt; <span class="string">&quot;json&quot;</span>  </span><br><span class="line">  &#125;  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line"><span class="comment"># 输出配置部分 (output)  </span></span><br><span class="line"><span class="comment"># 该部分定义了Logstash将数据发送到哪里。在此例中，Logstash将数据发送到Elasticsearch集群。  </span></span><br><span class="line">  </span><br><span class="line"><span class="comment"># Elasticsearch配置  </span></span><br><span class="line">output &#123;  </span><br><span class="line">  elasticsearch &#123;  </span><br><span class="line">    <span class="comment"># hosts：Elasticsearch集群的地址列表。Logstash将发送数据到这些地址。  </span></span><br><span class="line">    hosts =&gt; [<span class="string">&quot;192.168.10.121:9200&quot;</span>]  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># index：用于存储数据的Elasticsearch索引名称。这里使用日期模板来动态生成索引名称。  </span></span><br><span class="line">    index =&gt; <span class="string">&quot;kafkalog-%&#123;+YYYY.MM.dd&#125;&quot;</span>  </span><br><span class="line">  &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">3.启动logstash</span><br><span class="line"><span class="built_in">cd</span> /root/logstash-7.9.2/bin</span><br><span class="line"><span class="built_in">nohup</span> ./logstash -f ../config/nginx.conf &gt;&gt; logstash.log &amp;</span><br><span class="line"></span><br><span class="line">此时会报错，因为咱还没有安装es，自然9200端口是不通的</span><br></pre></td></tr></table></figure>
+<h1 id="部署logstash"><a href="#部署logstash" class="headerlink" title="部署logstash"></a>部署logstash</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">logstash版本7.9.2
+<span class="token number">1</span>.下载与解压
+<span class="token function">wget</span> https://artifacts.elastic.co/downloads/logstash/logstash-7.9.2.tar.gz
+<span class="token function">tar</span> xf logstash-7.9.2.tar.gz
+<span class="token builtin class-name">cd</span> logstash-7.9.2/
+
+<span class="token number">2</span>.创建一个配置文件nginx.conf
+配置input模块，设置从kafka消费
+<span class="token function">cat</span> <span class="token operator">></span> config/nginx.conf <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+input&#123;
+  kafka &#123;
+    bootstrap_servers => ["192.168.10.181:9092,192.168.10.182:9092 ,192.168.10.183:9092"]
+    auto_offset_reset => "latest"
+    consumer_threads => 3
+    decorate_events => true
+    topics => ["nginx-log-topic"]
+    codec => "json"
+  &#125;
+&#125;
+output &#123;
+    elasticsearch &#123;
+      hosts => ["192.168.10.181:9200"]
+      index => "kafkalog-%&#123;+YYYY.MM.dd&#125;"
+    &#125;
+&#125;
+EOF</span>
+
+注释部分：
+<span class="token comment"># Logstash配置文件注释  </span>
+  
+<span class="token comment"># 输入配置部分 (input)  </span>
+<span class="token comment"># 该部分定义了Logstash从何处接收数据。在此例中，Logstash将从Kafka集群中接收数据。  </span>
+  
+<span class="token comment"># Kafka配置  </span>
+input <span class="token punctuation">&#123;</span>  
+  kafka <span class="token punctuation">&#123;</span>  
+    <span class="token comment"># bootstrap_servers：Kafka集群的地址列表，Logstash将连接到这些地址以获取数据。  </span>
+    <span class="token comment"># 确保列出了所有Kafka broker的地址和端口。  </span>
+    bootstrap_servers <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">[</span><span class="token string">"192.168.10.181:9092,192.168.10.182:9092,192.168.10.183:9092"</span><span class="token punctuation">]</span>  
+  
+    <span class="token comment"># auto_offset_reset：当没有初始偏移量或当前偏移量在日志中不存在时，如何重置偏移量。  </span>
+    <span class="token comment"># "latest" 表示从最新的消息开始消费。  </span>
+    auto_offset_reset <span class="token operator">=</span><span class="token operator">></span> <span class="token string">"latest"</span>  
+  
+    <span class="token comment"># consumer_threads：消费者线程的数量。这将决定Logstash从Kafka并行读取数据的线程数。  </span>
+    consumer_threads <span class="token operator">=</span><span class="token operator">></span> <span class="token number">3</span>  
+  
+    <span class="token comment"># decorate_events：如果设置为true，将为每个事件添加一个包含Kafka元数据的字段。  </span>
+    decorate_events <span class="token operator">=</span><span class="token operator">></span> <span class="token boolean">true</span>  
+  
+    <span class="token comment"># topics：要订阅的Kafka主题列表。  </span>
+    topics <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">[</span><span class="token string">"nginx-log-topic"</span><span class="token punctuation">]</span>  
+  
+    <span class="token comment"># codec：用于解码从Kafka接收的数据的编解码器。这里使用JSON编解码器。  </span>
+    codec <span class="token operator">=</span><span class="token operator">></span> <span class="token string">"json"</span>  
+  <span class="token punctuation">&#125;</span>  
+<span class="token punctuation">&#125;</span>  
+  
+<span class="token comment"># 输出配置部分 (output)  </span>
+<span class="token comment"># 该部分定义了Logstash将数据发送到哪里。在此例中，Logstash将数据发送到Elasticsearch集群。  </span>
+  
+<span class="token comment"># Elasticsearch配置  </span>
+output <span class="token punctuation">&#123;</span>  
+  elasticsearch <span class="token punctuation">&#123;</span>  
+    <span class="token comment"># hosts：Elasticsearch集群的地址列表。Logstash将发送数据到这些地址。  </span>
+    hosts <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">[</span><span class="token string">"192.168.10.121:9200"</span><span class="token punctuation">]</span>  
+  
+    <span class="token comment"># index：用于存储数据的Elasticsearch索引名称。这里使用日期模板来动态生成索引名称。  </span>
+    index <span class="token operator">=</span><span class="token operator">></span> <span class="token string">"kafkalog-%&#123;+YYYY.MM.dd&#125;"</span>  
+  <span class="token punctuation">&#125;</span>  
+<span class="token punctuation">&#125;</span>  
+
+<span class="token number">3</span>.启动logstash
+<span class="token builtin class-name">cd</span> /root/logstash-7.9.2/bin
+<span class="token function">nohup</span> ./logstash <span class="token parameter variable">-f</span> <span class="token punctuation">..</span>/config/nginx.conf <span class="token operator">>></span> logstash.log <span class="token operator">&amp;</span>
+
+此时会报错，因为咱还没有安装es，自然9200端口是不通的<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201838.png"></p>
 <h1 id="部署es与kibana服务"><a href="#部署es与kibana服务" class="headerlink" title="部署es与kibana服务"></a>部署es与kibana服务</h1><p>elasticsearch是一个实时的，分布式的，可扩展的搜索引擎，它允许进行全文本和结构化搜索以及对日志进行分析。它通常用于索引和搜索大量日志数据，也可以用于搜索许多不同种类的文档。elasticsearch具有三大功能：搜索、分析、存储数据</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">采用容器化的方式使用es，版本7.9.2</span><br><span class="line"></span><br><span class="line">1.创建一个目录用来存es的数据</span><br><span class="line"><span class="built_in">mkdir</span> -p ~/es_data</span><br><span class="line"><span class="built_in">chmod</span> 777 ~/es_data</span><br><span class="line"></span><br><span class="line">2.安装与配置docker</span><br><span class="line">yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">yum -y install docker-ce</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/docker/daemon.json &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">	&quot;registry-mirrors&quot;: [</span></span><br><span class="line"><span class="string">		&quot;https://hub-mirror.c.163.com&quot;,</span></span><br><span class="line"><span class="string">		&quot;https://docker.m.daocloud.io&quot;,</span></span><br><span class="line"><span class="string">		&quot;https://ghcr.io&quot;,</span></span><br><span class="line"><span class="string">		&quot;https://mirror.baidubce.com&quot;,</span></span><br><span class="line"><span class="string">		&quot;https://docker.nju.edu.cn&quot;]</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl <span class="built_in">enable</span> docker --now</span><br><span class="line">systemctl restart docker</span><br><span class="line"></span><br><span class="line">3.容器化部署es7.9.2</span><br><span class="line">docker run -p 9200:9200 -p 9330:9300 -itd -e <span class="string">&quot;discovery.type=single-node&quot;</span> --name es -v /es_data:/sr/share/elasticsearch/data docker.io/library/elasticsearch:7.9.2</span><br><span class="line">docker ps</span><br><span class="line"><span class="comment">#CONTAINER ID   IMAGE                 COMMAND                  CREATED         STATUS         PORTS                                                                                  NAMES</span></span><br><span class="line"><span class="comment">#45ad1655a212   elasticsearch:7.9.2   &quot;/tini -- /usr/local…&quot;   6 seconds ago   Up 5 seconds   0.0.0.0:9200-&gt;9200/tcp, :::9200-&gt;9200/tcp, 0.0.0.0:9330-&gt;9300/tcp, :::9330-&gt;9300/tcp   es</span></span><br><span class="line"></span><br><span class="line">netstat -tunlp | grep 9200</span><br><span class="line">tcp        0      0 0.0.0.0:9200            0.0.0.0:*               LISTEN      18151/docker-proxy </span><br><span class="line"></span><br><span class="line">4.容器化部署kibana7.9.2</span><br><span class="line">docker run -p 5601:5601 -it -d  --<span class="built_in">link</span> es -e ELASTICSEARCH_URL=http://192.168.10.181:9200 --name kibana kibana:7.9.2</span><br><span class="line">docker ps | grep kibana</span><br><span class="line"><span class="comment"># a60c6020bad3   kibana:7.9.2          &quot;/usr/local/bin/dumb…&quot;   About a minute ago   Up About a minute   0.0.0.0:5601-&gt;5601/tcp, :::5601-&gt;5601/tcp                                              kibana</span></span><br><span class="line">ss -tunlp | grep 5601</span><br><span class="line"><span class="comment">#tcp    LISTEN     0      128       *:5601                  *:*                   users:((&quot;docker-proxy&quot;,pid=18551,fd=4))</span></span><br><span class="line"></span><br><span class="line">5.修改kibana配置文件kibana.yml</span><br><span class="line">docker <span class="built_in">exec</span> -it kibana /bin/bash</span><br><span class="line">vi config/kibana.yml</span><br><span class="line">修改es地址为实际地址</span><br><span class="line"><span class="built_in">exit</span></span><br><span class="line"></span><br><span class="line">docker restart kibana</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">采用容器化的方式使用es，版本7.9.2
+
+<span class="token number">1</span>.创建一个目录用来存es的数据
+<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> ~/es_data
+<span class="token function">chmod</span> <span class="token number">777</span> ~/es_data
+
+<span class="token number">2</span>.安装与配置docker
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> docker-ce
+<span class="token function">cat</span> <span class="token operator">></span> /etc/docker/daemon.json <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+&#123;
+	"registry-mirrors": [
+		"https://hub-mirror.c.163.com",
+		"https://docker.m.daocloud.io",
+		"https://ghcr.io",
+		"https://mirror.baidubce.com",
+		"https://docker.nju.edu.cn"]
+&#125;
+EOF</span>
+systemctl daemon-reload
+systemctl <span class="token builtin class-name">enable</span> <span class="token function">docker</span> <span class="token parameter variable">--now</span>
+systemctl restart <span class="token function">docker</span>
+
+<span class="token number">3</span>.容器化部署es7.9.2
+<span class="token function">docker</span> run <span class="token parameter variable">-p</span> <span class="token number">9200</span>:9200 <span class="token parameter variable">-p</span> <span class="token number">9330</span>:9300 <span class="token parameter variable">-itd</span> <span class="token parameter variable">-e</span> <span class="token string">"discovery.type=single-node"</span> <span class="token parameter variable">--name</span> es <span class="token parameter variable">-v</span> /es_data:/sr/share/elasticsearch/data docker.io/library/elasticsearch:7.9.2
+<span class="token function">docker</span> <span class="token function">ps</span>
+<span class="token comment">#CONTAINER ID   IMAGE                 COMMAND                  CREATED         STATUS         PORTS                                                                                  NAMES</span>
+<span class="token comment">#45ad1655a212   elasticsearch:7.9.2   "/tini -- /usr/local…"   6 seconds ago   Up 5 seconds   0.0.0.0:9200->9200/tcp, :::9200->9200/tcp, 0.0.0.0:9330->9300/tcp, :::9330->9300/tcp   es</span>
+
+<span class="token function">netstat</span> <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">9200</span>
+tcp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:9200            <span class="token number">0.0</span>.0.0:*               LISTEN      <span class="token number">18151</span>/docker-proxy 
+
+<span class="token number">4</span>.容器化部署kibana7.9.2
+<span class="token function">docker</span> run <span class="token parameter variable">-p</span> <span class="token number">5601</span>:5601 <span class="token parameter variable">-it</span> <span class="token parameter variable">-d</span>  <span class="token parameter variable">--link</span> es <span class="token parameter variable">-e</span> <span class="token assign-left variable">ELASTICSEARCH_URL</span><span class="token operator">=</span>http://192.168.10.181:9200 <span class="token parameter variable">--name</span> kibana kibana:7.9.2
+<span class="token function">docker</span> <span class="token function">ps</span> <span class="token operator">|</span> <span class="token function">grep</span> kibana
+<span class="token comment"># a60c6020bad3   kibana:7.9.2          "/usr/local/bin/dumb…"   About a minute ago   Up About a minute   0.0.0.0:5601->5601/tcp, :::5601->5601/tcp                                              kibana</span>
+ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">5601</span>
+<span class="token comment">#tcp    LISTEN     0      128       *:5601                  *:*                   users:(("docker-proxy",pid=18551,fd=4))</span>
+
+<span class="token number">5</span>.修改kibana配置文件kibana.yml
+<span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> kibana /bin/bash
+<span class="token function">vi</span> config/kibana.yml
+修改es地址为实际地址
+<span class="token builtin class-name">exit</span>
+
+<span class="token function">docker</span> restart kibana<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201939.png"></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">6.登录kibana界面</span><br><span class="line">端口为5601</span><br><span class="line">创建匹配刚刚创建模式的索引</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">6</span>.登录kibana界面
+端口为5601
+创建匹配刚刚创建模式的索引<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602201952.png"></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240602202003.png"></p>
@@ -6623,36 +6951,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7117,13 +7415,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8164,13 +8462,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8623,14 +8921,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8638,14 +8936,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

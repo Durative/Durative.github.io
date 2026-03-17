@@ -503,12 +503,108 @@
 <p><strong>为什么说关联性不大</strong></p>
 <p>因为子Chart是独立的，模块化的，很容易迁移的。<br>在实际生产中，完全可以测试完成之后，直接把整个Chart放入父Chart的目录下然后<br>修改父Chart.yaml和父Values文件</p>
 <h2 id="子Chart的实际应用"><a href="#子Chart的实际应用" class="headerlink" title="子Chart的实际应用"></a>子Chart的实际应用</h2><p>最重要的是理解父子Chart目录之间的层级关系<br>这个案例就是生产环境中接入新服务到父Chart前进行的测试</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">1.创建父Chart</span><br><span class="line">现在我有个根目录，我在这个根目录下创建</span><br><span class="line">helm create helm-fa</span><br><span class="line">helm-fa目录就是我的父目录，包括Chart,template文件夹等</span><br><span class="line"></span><br><span class="line">2.定义子chart</span><br><span class="line">首先要在父Chart的Chart.yaml中进行定义依赖项：</span><br><span class="line">dependencies:</span><br><span class="line">    version: 0.5.2</span><br><span class="line">    repository: <span class="string">&quot;file://./charts/infra&quot;</span></span><br><span class="line">    condition: infra.enabled</span><br><span class="line">这个定义就是告诉父Chart，子Chart的位置，以及子Chart的开关</span><br><span class="line">即Values文件中infra.enabled字段，如果为<span class="literal">true</span>则启用依赖项</span><br><span class="line"></span><br><span class="line">3.创建子chart</span><br><span class="line">根据父Chart.yaml中指定的位置，进入charts创建</span><br><span class="line">helm create helm-son</span><br><span class="line">创建，此时父chart的目录结构，是父的chart文件夹中包含了一个子chart</span><br><span class="line"></span><br><span class="line">子chart中也包含了values，template等文件</span><br><span class="line"></span><br><span class="line">4.修改父Values文件、添加template部署文件</span><br><span class="line">这两步之所以放在一块，是因为它俩是互相呼应的，template文件需要根据Values文件的层级结构</span><br><span class="line">进行变量的引用。</span><br><span class="line">chart在创建时是自带deployment的模板的，而我要使用statefulset的模板</span><br><span class="line"></span><br><span class="line">所以建议使用AI直接生成，因为我也是这么做的</span><br><span class="line">直接生成一个statefulset和对应values的模板</span><br><span class="line">在此基础上进行修改</span><br><span class="line"></span><br><span class="line">statefulset文件：</span><br><span class="line">&#123;&#123;- <span class="keyword">if</span> and .Values.apigateway .Values.apigateway.enabled &#125;&#125;</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: StatefulSet</span><br><span class="line">metadata:</span><br><span class="line">  name: &#123;&#123; .Values.apigateway.name &#125;&#125;</span><br><span class="line">spec:</span><br><span class="line">  serviceName: <span class="string">&quot;&#123;&#123; .Values.apigateway.name &#125;&#125;&quot;</span></span><br><span class="line">  replicas: &#123;&#123; .Values.apigateway.statefulset.replicas &#125;&#125;</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: &#123;&#123; .Values.apigateway.name &#125;&#125;</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: &#123;&#123; .Values.apigateway.name &#125;&#125;</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: &#123;&#123; .Values.apigateway.name &#125;&#125;</span><br><span class="line">        image: <span class="string">&quot;&#123;&#123; .Values.apigateway.statefulset.image.repository &#125;&#125;:&#123;&#123; .Values.apigateway.statefulset.image.tag &#125;&#125;&quot;</span></span><br><span class="line">        imagePullPolicy: &#123;&#123; .Values.apigateway.statefulset.image.pullPolicy &#125;&#125;</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 80</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: &#123;&#123; .Values.apigateway.name &#125;&#125;</span><br><span class="line">spec:</span><br><span class="line">  <span class="built_in">type</span>: &#123;&#123; .Values.apigateway.service.type &#125;&#125;</span><br><span class="line">  ports:</span><br><span class="line">    targetPort: &#123;&#123; .Values.apigateway.service.targetPort &#125;&#125;</span><br><span class="line">  selector:</span><br><span class="line">    app: &#123;&#123; .Values.apigateway.name &#125;&#125;</span><br><span class="line">&#123;&#123;- end &#125;&#125;</span><br><span class="line"></span><br><span class="line">父Values文件：</span><br><span class="line">infra:</span><br><span class="line">  enabled: <span class="literal">true</span></span><br><span class="line">  apigateway:</span><br><span class="line">    enabled: <span class="literal">true</span></span><br><span class="line">    name: api-gateway</span><br><span class="line">    statefulset:</span><br><span class="line">      replicas: 1</span><br><span class="line">      image:</span><br><span class="line">        repository: xxx</span><br><span class="line">        tag: xxx</span><br><span class="line">        pullPolicy: IfNotPresent</span><br><span class="line">    service:</span><br><span class="line">      <span class="built_in">type</span>: ClusterIP</span><br><span class="line">      port: 8080</span><br><span class="line">      targetPort: 80</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.创建父Chart
+现在我有个根目录，我在这个根目录下创建
+helm create helm-fa
+helm-fa目录就是我的父目录，包括Chart,template文件夹等
+
+<span class="token number">2</span>.定义子chart
+首先要在父Chart的Chart.yaml中进行定义依赖项：
+dependencies:
+    version: <span class="token number">0.5</span>.2
+    repository: <span class="token string">"file://./charts/infra"</span>
+    condition: infra.enabled
+这个定义就是告诉父Chart，子Chart的位置，以及子Chart的开关
+即Values文件中infra.enabled字段，如果为true则启用依赖项
+
+<span class="token number">3</span>.创建子chart
+根据父Chart.yaml中指定的位置，进入charts创建
+helm create helm-son
+创建，此时父chart的目录结构，是父的chart文件夹中包含了一个子chart
+
+子chart中也包含了values，template等文件
+
+<span class="token number">4</span>.修改父Values文件、添加template部署文件
+这两步之所以放在一块，是因为它俩是互相呼应的，template文件需要根据Values文件的层级结构
+进行变量的引用。
+chart在创建时是自带deployment的模板的，而我要使用statefulset的模板
+
+所以建议使用AI直接生成，因为我也是这么做的
+直接生成一个statefulset和对应values的模板
+在此基础上进行修改
+
+statefulset文件：
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">if</span> and .Values.apigateway .Values.apigateway.enabled <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+spec:
+  serviceName: <span class="token string">"&#123;&#123; .Values.apigateway.name &#125;&#125;"</span>
+  replicas: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.statefulset.replicas <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  selector:
+    matchLabels:
+      app: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  template:
+    metadata:
+      labels:
+        app: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+    spec:
+      containers:
+      - name: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+        image: <span class="token string">"&#123;&#123; .Values.apigateway.statefulset.image.repository &#125;&#125;:&#123;&#123; .Values.apigateway.statefulset.image.tag &#125;&#125;"</span>
+        imagePullPolicy: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.statefulset.image.pullPolicy <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+        ports:
+        - containerPort: <span class="token number">80</span>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+spec:
+  type: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.service.type <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  ports:
+    targetPort: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.service.targetPort <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  selector:
+    app: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.apigateway.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+
+父Values文件：
+infra:
+  enabled: <span class="token boolean">true</span>
+  apigateway:
+    enabled: <span class="token boolean">true</span>
+    name: api-gateway
+    statefulset:
+      replicas: <span class="token number">1</span>
+      image:
+        repository: xxx
+        tag: xxx
+        pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: <span class="token number">8080</span>
+      targetPort: <span class="token number">80</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这两个文件是需要结合起来看的，就能发现statefulset.yaml中通过go引用的变量<br>在Values中都已经通过yaml的层级定义好了</p>
 <p>这里引出一个问题，按照父Values的定义，<br>statefulset.yaml引用时，应该是Values.infra.xxx，为什么可以直接使用apigateway字段进行引用？</p>
 <p>这个上面也提了，就是父Values和子Values合并时，只会合并infra后面的字段。毕竟helm认为它俩是同一个东西</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">5.添加一些字段</span><br><span class="line">比如我这台机器是单点k8s，我就需要打污点，那么怎么做呢</span><br><span class="line">我在statefulset.yaml中加入</span><br><span class="line">      &#123;&#123;- <span class="keyword">if</span> .Values.tolerations &#125;&#125;</span><br><span class="line">      tolerations:</span><br><span class="line">        &#123;&#123;- toYaml .Values.tolerations | nindent 8 &#125;&#125;</span><br><span class="line">      &#123;&#123;- end &#125;&#125;</span><br><span class="line">这里直接引用父values.yaml的tolertaions设置</span><br><span class="line">如果想要在父values中单独判断，</span><br><span class="line">那只需要把这个变量改成.Values.apigateway.tolerations就行</span><br><span class="line"></span><br><span class="line">6.部署</span><br><span class="line">helm install <span class="built_in">test</span> ./</span><br><span class="line"></span><br><span class="line">如图</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">5</span>.添加一些字段
+比如我这台机器是单点k8s，我就需要打污点，那么怎么做呢
+我在statefulset.yaml中加入
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">if</span> .Values.tolerations <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      tolerations:
+        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- toYaml .Values.tolerations <span class="token operator">|</span> nindent <span class="token number">8</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+这里直接引用父values.yaml的tolertaions设置
+如果想要在父values中单独判断，
+那只需要把这个变量改成.Values.apigateway.tolerations就行
+
+<span class="token number">6</span>.部署
+helm <span class="token function">install</span> <span class="token builtin class-name">test</span> ./
+
+如图
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/12/1e7bcf202b6e61eddd4669e7e767c89d.png"></p>
 
@@ -6570,36 +6666,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7064,13 +7130,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8111,13 +8177,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8570,14 +8636,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8585,14 +8651,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

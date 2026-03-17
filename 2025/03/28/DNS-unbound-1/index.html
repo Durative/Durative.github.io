@@ -497,18 +497,165 @@
 <p><strong>DNS缓存服务器：</strong></p>
 <p>缓存名称服务器将DNS查询结果存储在本地缓存中，并在它们的ttl过期时从缓存中删除资源记录。通常设置缓存名称服务器以代表本地网络上的客户端执行查询。这大大提高了DNS名称解析的效率，减少DNS流量在互联网上。随着缓存的增长，DNS性能会随着缓存名称服务器从其本地缓存响应越来越多的客户端查询而提高。有几个包可用于配置缓存名称服务器，包括bind、dnsmasq和unbound</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250327192611247.png"></p>
-<h1 id="搭建DNS缓存服务器"><a href="#搭建DNS缓存服务器" class="headerlink" title="搭建DNS缓存服务器"></a>搭建<strong>DNS缓存服务器</strong></h1><h2 id="配置缓存服务器1"><a href="#配置缓存服务器1" class="headerlink" title="配置缓存服务器1"></a>配置缓存服务器1</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">缓存服务器1</span></span><br><span class="line">nmcli con add con-name static-eth1 ifname eth1 type ethernet ipv4.addresses 1.1.1.1/24 ipv4.method man</span><br><span class="line">nmcli con add con-name static-eth2 ifname eth2 type ethernet ipv4.addresses 2.2.2.1/24 ipv4.method man</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">安装unbound</span></span><br><span class="line">yum -y install unbound</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">unbound配置文件字段</span></span><br><span class="line">vim /etc/unbound/unbound.conf</span><br><span class="line">interface: 0.0.0.0  # 绑定到所有网卡</span><br><span class="line">access-control: 0.0.0.0/0 allow # 允许所有人能查询</span><br><span class="line">forward-zone:</span><br><span class="line">        name: &quot;.&quot;</span><br><span class="line">        forward-host: 114.114.114.114</span><br><span class="line">访问.这个域的(所有查询)，就转发到114.114.114.114</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">生成密钥</span></span><br><span class="line">unbound-control-setup</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">配置文件检查</span></span><br><span class="line">unbound-checkconf</span><br><span class="line">unbound-checkconf: no errors in /etc/unbound/unbound.conf</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash">systemctl restart unbound</span></span><br><span class="line">netstat -tunlp | grep 53</span><br><span class="line">tcp        0      0 0.0.0.0:53              0.0.0.0:*               LISTEN      14805/unbound</span><br><span class="line">udp        0      0 0.0.0.0:53              0.0.0.0:*                           14805/unbound</span><br><span class="line">udp        0      0 0.0.0.0:53              0.0.0.0:*                           14805/unbound</span><br><span class="line">udp        0      0 0.0.0.0:53              0.0.0.0:*                           14805/unbound</span><br><span class="line">udp        0      0 0.0.0.0:53              0.0.0.0:*                           14805/unbound</span><br></pre></td></tr></table></figure>
+<h1 id="搭建DNS缓存服务器"><a href="#搭建DNS缓存服务器" class="headerlink" title="搭建DNS缓存服务器"></a>搭建<strong>DNS缓存服务器</strong></h1><h2 id="配置缓存服务器1"><a href="#配置缓存服务器1" class="headerlink" title="配置缓存服务器1"></a>配置缓存服务器1</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 缓存服务器1</span>
+nmcli con <span class="token function">add</span> con-name static-eth1 ifname eth1 <span class="token builtin class-name">type</span> ethernet ipv4.addresses <span class="token number">1.1</span>.1.1/24 ipv4.method <span class="token function">man</span>
+nmcli con <span class="token function">add</span> con-name static-eth2 ifname eth2 <span class="token builtin class-name">type</span> ethernet ipv4.addresses <span class="token number">2.2</span>.2.1/24 ipv4.method <span class="token function">man</span>
 
-<h2 id="解析测试"><a href="#解析测试" class="headerlink" title="解析测试"></a>解析测试</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">dns-client1 网络配置</span></span><br><span class="line">nmcli con add con-name eth0 ifname eth0 ipv4.address 1.1.1.2/24 type ethernet ipv4.method man</span><br><span class="line">nmcli con up eth0</span><br><span class="line">ping 1.1.1.1</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">dns-client1 指定dns地址</span></span><br><span class="line">vi /etc/resolv.conf</span><br><span class="line">nameserver 1.1.1.1</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">解析测试，dns服务器返回为SERVFAIL</span></span><br><span class="line">dig @127.0.0.1 baidu.com +ttlid</span><br><span class="line">; &lt;&lt;&gt;&gt; DiG 9.16.23-RH &lt;&lt;&gt;&gt; @127.0.0.1 baidu.com +ttlid</span><br><span class="line">; (1 server found)</span><br><span class="line">;; global options: +cmd</span><br><span class="line">;; Got answer:</span><br><span class="line">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: SERVFAIL, id: 34127</span><br><span class="line">;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1</span><br><span class="line"></span><br><span class="line">;; OPT PSEUDOSECTION:</span><br><span class="line">; EDNS: version: 0, flags:; udp: 1232</span><br><span class="line">;; QUESTION SECTION:</span><br><span class="line">;baidu.com.                     IN      A</span><br><span class="line"></span><br><span class="line">;; Query time: 1 msec</span><br><span class="line">;; SERVER: 127.0.0.1#53(127.0.0.1)</span><br><span class="line">;; WHEN: Thu Mar 27 09:48:00 EDT 2025</span><br><span class="line">;; MSG SIZE  rcvd: 38</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">解析测试，已经缓存到了</span></span><br><span class="line">unbound-control dump_cache</span><br><span class="line">START_RRSET_CACHE</span><br><span class="line">;rrset 132 2 0 5 0</span><br><span class="line">baidu.com.      132     IN      A       110.242.68.66</span><br><span class="line">baidu.com.      132     IN      A       39.156.66.10</span><br><span class="line">END_RRSET_CACHE</span><br><span class="line">START_MSG_CACHE</span><br><span class="line">msg baidu.com. IN A 33152 1 132 0 1 0 0</span><br><span class="line">baidu.com. IN A 0</span><br><span class="line">END_MSG_CACHE</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<span class="token comment"># 安装unbound</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> unbound
+
+<span class="token comment"># unbound配置文件字段</span>
+<span class="token function">vim</span> /etc/unbound/unbound.conf
+interface: <span class="token number">0.0</span>.0.0  <span class="token comment"># 绑定到所有网卡</span>
+access-control: <span class="token number">0.0</span>.0.0/0 allow <span class="token comment"># 允许所有人能查询</span>
+forward-zone:
+        name: <span class="token string">"."</span>
+        forward-host: <span class="token number">114.114</span>.114.114
+访问.这个域的<span class="token punctuation">(</span>所有查询<span class="token punctuation">)</span>，就转发到114.114.114.114
+
+<span class="token comment"># 生成密钥</span>
+unbound-control-setup
+
+<span class="token comment"># 配置文件检查</span>
+unbound-checkconf
+unbound-checkconf: no errors <span class="token keyword">in</span> /etc/unbound/unbound.conf
+
+<span class="token comment"># </span>
+systemctl restart unbound
+<span class="token function">netstat</span> <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">53</span>
+tcp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:53              <span class="token number">0.0</span>.0.0:*               LISTEN      <span class="token number">14805</span>/unbound
+udp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:53              <span class="token number">0.0</span>.0.0:*                           <span class="token number">14805</span>/unbound
+udp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:53              <span class="token number">0.0</span>.0.0:*                           <span class="token number">14805</span>/unbound
+udp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:53              <span class="token number">0.0</span>.0.0:*                           <span class="token number">14805</span>/unbound
+udp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">0.0</span>.0.0:53              <span class="token number">0.0</span>.0.0:*                           <span class="token number">14805</span>/unbound<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="解析测试"><a href="#解析测试" class="headerlink" title="解析测试"></a>解析测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># dns-client1 网络配置</span>
+nmcli con <span class="token function">add</span> con-name eth0 ifname eth0 ipv4.address <span class="token number">1.1</span>.1.2/24 <span class="token builtin class-name">type</span> ethernet ipv4.method <span class="token function">man</span>
+nmcli con up eth0
+<span class="token function">ping</span> <span class="token number">1.1</span>.1.1
+
+<span class="token comment"># dns-client1 指定dns地址</span>
+<span class="token function">vi</span> /etc/resolv.conf
+nameserver <span class="token number">1.1</span>.1.1
+
+<span class="token comment"># 解析测试，dns服务器返回为SERVFAIL</span>
+<span class="token function">dig</span> @127.0.0.1 baidu.com +ttlid
+<span class="token punctuation">;</span> <span class="token operator">&lt;&lt;</span><span class="token operator">>></span> DiG <span class="token number">9.16</span>.23-RH <span class="token operator">&lt;&lt;</span><span class="token operator">>></span> @127.0.0.1 baidu.com +ttlid
+<span class="token punctuation">;</span> <span class="token punctuation">(</span><span class="token number">1</span> server found<span class="token punctuation">)</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> global options: +cmd
+<span class="token punctuation">;</span><span class="token punctuation">;</span> Got answer:
+<span class="token punctuation">;</span><span class="token punctuation">;</span> -<span class="token operator">>></span>HEADER<span class="token operator">&lt;&lt;-</span> opcode: QUERY, status: SERVFAIL, id: <span class="token number">34127</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> flags: qr rd ra<span class="token punctuation">;</span> QUERY: <span class="token number">1</span>, ANSWER: <span class="token number">0</span>, AUTHORITY: <span class="token number">0</span>, ADDITIONAL: <span class="token number">1</span>
+
+<span class="token punctuation">;</span><span class="token punctuation">;</span> OPT PSEUDOSECTION:
+<span class="token punctuation">;</span> EDNS: version: <span class="token number">0</span>, flags:<span class="token punctuation">;</span> udp: <span class="token number">1232</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> QUESTION SECTION:
+<span class="token punctuation">;</span>baidu.com.                     IN      A
+
+<span class="token punctuation">;</span><span class="token punctuation">;</span> Query time: <span class="token number">1</span> msec
+<span class="token punctuation">;</span><span class="token punctuation">;</span> SERVER: <span class="token number">127.0</span>.0.1<span class="token comment">#53(127.0.0.1)</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> WHEN: Thu Mar <span class="token number">27</span> 09:48:00 EDT <span class="token number">2025</span>
+<span class="token punctuation">;</span><span class="token punctuation">;</span> MSG SIZE  rcvd: <span class="token number">38</span>
+
+<span class="token comment"># 解析测试，已经缓存到了</span>
+unbound-control dump_cache
+START_RRSET_CACHE
+<span class="token punctuation">;</span>rrset <span class="token number">132</span> <span class="token number">2</span> <span class="token number">0</span> <span class="token number">5</span> <span class="token number">0</span>
+baidu.com.      <span class="token number">132</span>     IN      A       <span class="token number">110.242</span>.68.66
+baidu.com.      <span class="token number">132</span>     IN      A       <span class="token number">39.156</span>.66.10
+END_RRSET_CACHE
+START_MSG_CACHE
+msg baidu.com. IN A <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">132</span> <span class="token number">0</span> <span class="token number">1</span> <span class="token number">0</span> <span class="token number">0</span>
+baidu.com. IN A <span class="token number">0</span>
+END_MSG_CACHE
+EOF<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>其原因是114.114.114.114认为1.1.1.1不安全，所以拒绝将这条记录传递给1.1.1.2</p>
 <p><strong>解决方法</strong></p>
 <p>关闭DNSSEC也可以，但不推荐</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">添加参数，跳过对 com. 域的 DNSSEC 验证</span><br><span class="line">domain-insecure: &quot;com.&quot;</span><br><span class="line"></span><br><span class="line">或关闭DNSSEC(不建议)</span><br><span class="line">module-config: &quot;iterator&quot;</span><br><span class="line"></span><br><span class="line">systemctl restart unbound</span><br><span class="line"></span><br><span class="line">此时缓存服务器1获取缓存</span><br><span class="line">unbound-control dump_cache | grep baidu</span><br><span class="line">baidu.com.      544     IN      MX      20 mx.baidu.com.</span><br><span class="line">baidu.com.      544     IN      MX      10 mx.maillb.baidu.com.</span><br><span class="line">www.baidu.com.  236     IN      A       153.3.238.127</span><br><span class="line">www.baidu.com.  236     IN      A       153.3.238.28</span><br><span class="line">baidu.com.      2785    IN      SOA     dns.baidu.com. sa.baidu.com. 2012149411 300 300 2592000 7200</span><br><span class="line">baidu.com.      513     IN      A       110.242.68.66</span><br><span class="line">baidu.com.      513     IN      A       39.156.66.10</span><br><span class="line">msg baidu.com. IN MX 33152 1 544 3 1 0 0</span><br><span class="line">baidu.com. IN MX 0</span><br><span class="line">msg baidu.com. IN AAAA 33152 1 2785 3 0 1 0</span><br><span class="line">baidu.com. IN SOA 4</span><br><span class="line">msg baidu.com. IN A 33152 1 513 3 1 0 0</span><br><span class="line">baidu.com. IN A 0</span><br><span class="line">msg www.baidu.com. IN A 33152 1 236 3 1 0 0</span><br><span class="line">www.baidu.com. IN A 0</span><br><span class="line"></span><br><span class="line">dns客户端可以获取dns地址</span><br><span class="line">[root@dns-client-1 ~]# host baidu.com</span><br><span class="line">baidu.com has address 39.156.66.10</span><br><span class="line">baidu.com has address 110.242.68.66</span><br><span class="line">baidu.com mail is handled by 10 mx.maillb.baidu.com.</span><br><span class="line">baidu.com mail is handled by 20 mx.baidu.com.</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">添加参数，跳过对 com. 域的 DNSSEC 验证
+domain-insecure: <span class="token string">"com."</span>
 
-<h1 id="缓存服务器级联测试"><a href="#缓存服务器级联测试" class="headerlink" title="缓存服务器级联测试"></a>缓存服务器级联测试</h1><h2 id="配置缓存服务器2"><a href="#配置缓存服务器2" class="headerlink" title="配置缓存服务器2"></a>配置缓存服务器2</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">缓存服务器2</span></span><br><span class="line">nmcli con add con-name static-eth0 ifname eth0 type ethernet ipv4.addresses 2.2.2.2/24 ipv4.method man</span><br><span class="line">nmcli con add con-name static-eth1 ifname eth1 type ethernet ipv4.addresses 3.3.3.1/24 ipv4.method man</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">dns-client-2略过，总之是3.3.3.2</span></span><br><span class="line"></span><br><span class="line">yum -y install unbound</span><br><span class="line">vim /etc/resolv.conf</span><br><span class="line">删除系统自带的dns解析地址</span><br><span class="line"></span><br><span class="line">在/etc/unbound/unbound.conf中指定dns服务器为2.2.2.1，并对.com取消DNSSEC检查</span><br><span class="line">interface: 0.0.0.0</span><br><span class="line">access-control: 0.0.0.0/0 allow</span><br><span class="line">forward-zone:</span><br><span class="line">        name: &quot;.&quot;</span><br><span class="line">        forward-addr: 2.2.2.1</span><br><span class="line">domain-insecure: &quot;com.&quot;</span><br><span class="line"></span><br><span class="line">unbound-control-setup</span><br><span class="line">unbound-checkconf</span><br><span class="line">systemctl restart unbound</span><br></pre></td></tr></table></figure>
+或关闭DNSSEC<span class="token punctuation">(</span>不建议<span class="token punctuation">)</span>
+module-config: <span class="token string">"iterator"</span>
 
-<h2 id="解析测试-1"><a href="#解析测试-1" class="headerlink" title="解析测试"></a>解析测试</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">缓存服务器1</span><br><span class="line">[root@cacheing-nameserver-1 ~]# host www.baidu.com</span><br><span class="line">www.baidu.com has address 153.3.238.127</span><br><span class="line">www.baidu.com has address 153.3.238.28</span><br><span class="line">www.baidu.com has IPv6 address 2408:873d:22:18cb:0:ff:b037:e6d8</span><br><span class="line">www.baidu.com has IPv6 address 2408:873d:22:1a91:0:ff:b013:cf81</span><br><span class="line">www.baidu.com is an alias for www.a.shifen.com.</span><br><span class="line">[root@cacheing-nameserver-1 ~]# unbound-control dump_cache | grep baidu</span><br><span class="line">www.baidu.com.  290     IN      AAAA    2408:873d:22:18cb:0:ff:b037:e6d8</span><br><span class="line">www.baidu.com.  290     IN      AAAA    2408:873d:22:1a91:0:ff:b013:cf81</span><br><span class="line">www.baidu.com.  591     IN      CNAME   www.a.shifen.com.</span><br><span class="line">www.baidu.com.  289     IN      A       153.3.238.127</span><br><span class="line">www.baidu.com.  289     IN      A       153.3.238.28</span><br><span class="line">a.shifen.com.   591     IN      SOA     ns1.a.shifen.com. baidu_dns_master.baidu.com. 2503280022 5 5 2592000 3600</span><br><span class="line">msg www.baidu.com. IN AAAA 33152 1 290 3 1 0 0</span><br><span class="line">www.baidu.com. IN AAAA 0</span><br><span class="line">msg www.baidu.com. IN MX 33152 1 591 3 1 1 0</span><br><span class="line">www.baidu.com. IN CNAME 0</span><br><span class="line">msg www.baidu.com. IN A 33152 1 289 3 1 0 0</span><br><span class="line">www.baidu.com. IN A 0</span><br><span class="line"></span><br><span class="line">dns客户端2</span><br><span class="line">[root@dns-clinet-2 ~]# host baidu.com</span><br><span class="line">baidu.com has address 110.242.68.66</span><br><span class="line">baidu.com has address 39.156.66.10</span><br><span class="line">baidu.com mail is handled by 20 mx.baidu.com.</span><br><span class="line">baidu.com mail is handled by 10 mx.maillb.baidu.com.</span><br><span class="line"></span><br><span class="line">说明此时dns客户端2已经可以通过缓存服务器2访问缓存服务器1，然后获取到ip地址解析了</span><br></pre></td></tr></table></figure>
+systemctl restart unbound
+
+此时缓存服务器1获取缓存
+unbound-control dump_cache <span class="token operator">|</span> <span class="token function">grep</span> baidu
+baidu.com.      <span class="token number">544</span>     IN      MX      <span class="token number">20</span> mx.baidu.com.
+baidu.com.      <span class="token number">544</span>     IN      MX      <span class="token number">10</span> mx.maillb.baidu.com.
+www.baidu.com.  <span class="token number">236</span>     IN      A       <span class="token number">153.3</span>.238.127
+www.baidu.com.  <span class="token number">236</span>     IN      A       <span class="token number">153.3</span>.238.28
+baidu.com.      <span class="token number">2785</span>    IN      SOA     dns.baidu.com. sa.baidu.com. <span class="token number">2012149411</span> <span class="token number">300</span> <span class="token number">300</span> <span class="token number">2592000</span> <span class="token number">7200</span>
+baidu.com.      <span class="token number">513</span>     IN      A       <span class="token number">110.242</span>.68.66
+baidu.com.      <span class="token number">513</span>     IN      A       <span class="token number">39.156</span>.66.10
+msg baidu.com. IN MX <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">544</span> <span class="token number">3</span> <span class="token number">1</span> <span class="token number">0</span> <span class="token number">0</span>
+baidu.com. IN MX <span class="token number">0</span>
+msg baidu.com. IN AAAA <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">2785</span> <span class="token number">3</span> <span class="token number">0</span> <span class="token number">1</span> <span class="token number">0</span>
+baidu.com. IN SOA <span class="token number">4</span>
+msg baidu.com. IN A <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">513</span> <span class="token number">3</span> <span class="token number">1</span> <span class="token number">0</span> <span class="token number">0</span>
+baidu.com. IN A <span class="token number">0</span>
+msg www.baidu.com. IN A <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">236</span> <span class="token number">3</span> <span class="token number">1</span> <span class="token number">0</span> <span class="token number">0</span>
+www.baidu.com. IN A <span class="token number">0</span>
+
+dns客户端可以获取dns地址
+<span class="token punctuation">[</span>root@dns-client-1 ~<span class="token punctuation">]</span><span class="token comment"># host baidu.com</span>
+baidu.com has address <span class="token number">39.156</span>.66.10
+baidu.com has address <span class="token number">110.242</span>.68.66
+baidu.com mail is handled by <span class="token number">10</span> mx.maillb.baidu.com.
+baidu.com mail is handled by <span class="token number">20</span> mx.baidu.com.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="缓存服务器级联测试"><a href="#缓存服务器级联测试" class="headerlink" title="缓存服务器级联测试"></a>缓存服务器级联测试</h1><h2 id="配置缓存服务器2"><a href="#配置缓存服务器2" class="headerlink" title="配置缓存服务器2"></a>配置缓存服务器2</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 缓存服务器2</span>
+nmcli con <span class="token function">add</span> con-name static-eth0 ifname eth0 <span class="token builtin class-name">type</span> ethernet ipv4.addresses <span class="token number">2.2</span>.2.2/24 ipv4.method <span class="token function">man</span>
+nmcli con <span class="token function">add</span> con-name static-eth1 ifname eth1 <span class="token builtin class-name">type</span> ethernet ipv4.addresses <span class="token number">3.3</span>.3.1/24 ipv4.method <span class="token function">man</span>
+<span class="token comment"># dns-client-2略过，总之是3.3.3.2</span>
+
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> unbound
+<span class="token function">vim</span> /etc/resolv.conf
+删除系统自带的dns解析地址
+
+在/etc/unbound/unbound.conf中指定dns服务器为2.2.2.1，并对.com取消DNSSEC检查
+interface: <span class="token number">0.0</span>.0.0
+access-control: <span class="token number">0.0</span>.0.0/0 allow
+forward-zone:
+        name: <span class="token string">"."</span>
+        forward-addr: <span class="token number">2.2</span>.2.1
+domain-insecure: <span class="token string">"com."</span>
+
+unbound-control-setup
+unbound-checkconf
+systemctl restart unbound<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="解析测试-1"><a href="#解析测试-1" class="headerlink" title="解析测试"></a>解析测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">缓存服务器1
+<span class="token punctuation">[</span>root@cacheing-nameserver-1 ~<span class="token punctuation">]</span><span class="token comment"># host www.baidu.com</span>
+www.baidu.com has address <span class="token number">153.3</span>.238.127
+www.baidu.com has address <span class="token number">153.3</span>.238.28
+www.baidu.com has IPv6 address <span class="token number">2408</span>:873d:22:18cb:0:ff:b037:e6d8
+www.baidu.com has IPv6 address <span class="token number">2408</span>:873d:22:1a91:0:ff:b013:cf81
+www.baidu.com is an <span class="token builtin class-name">alias</span> <span class="token keyword">for</span> www.a.shifen.com.
+<span class="token punctuation">[</span>root@cacheing-nameserver-1 ~<span class="token punctuation">]</span><span class="token comment"># unbound-control dump_cache | grep baidu</span>
+www.baidu.com.  <span class="token number">290</span>     IN      AAAA    <span class="token number">2408</span>:873d:22:18cb:0:ff:b037:e6d8
+www.baidu.com.  <span class="token number">290</span>     IN      AAAA    <span class="token number">2408</span>:873d:22:1a91:0:ff:b013:cf81
+www.baidu.com.  <span class="token number">591</span>     IN      CNAME   www.a.shifen.com.
+www.baidu.com.  <span class="token number">289</span>     IN      A       <span class="token number">153.3</span>.238.127
+www.baidu.com.  <span class="token number">289</span>     IN      A       <span class="token number">153.3</span>.238.28
+a.shifen.com.   <span class="token number">591</span>     IN      SOA     ns1.a.shifen.com. baidu_dns_master.baidu.com. <span class="token number">2503280022</span> <span class="token number">5</span> <span class="token number">5</span> <span class="token number">2592000</span> <span class="token number">3600</span>
+msg www.baidu.com. IN AAAA <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">290</span> <span class="token number">3</span> <span class="token number">1</span> <span class="token number">0</span> <span class="token number">0</span>
+www.baidu.com. IN AAAA <span class="token number">0</span>
+msg www.baidu.com. IN MX <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">591</span> <span class="token number">3</span> <span class="token number">1</span> <span class="token number">1</span> <span class="token number">0</span>
+www.baidu.com. IN CNAME <span class="token number">0</span>
+msg www.baidu.com. IN A <span class="token number">33152</span> <span class="token number">1</span> <span class="token number">289</span> <span class="token number">3</span> <span class="token number">1</span> <span class="token number">0</span> <span class="token number">0</span>
+www.baidu.com. IN A <span class="token number">0</span>
+
+dns客户端2
+<span class="token punctuation">[</span>root@dns-clinet-2 ~<span class="token punctuation">]</span><span class="token comment"># host baidu.com</span>
+baidu.com has address <span class="token number">110.242</span>.68.66
+baidu.com has address <span class="token number">39.156</span>.66.10
+baidu.com mail is handled by <span class="token number">20</span> mx.baidu.com.
+baidu.com mail is handled by <span class="token number">10</span> mx.maillb.baidu.com.
+
+说明此时dns客户端2已经可以通过缓存服务器2访问缓存服务器1，然后获取到ip地址解析了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6567,36 +6714,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7061,13 +7178,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8108,13 +8225,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8567,14 +8684,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8582,14 +8699,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

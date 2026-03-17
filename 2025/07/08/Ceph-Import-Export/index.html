@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="导入（Import）和导出（Export）操作是管理和迁移 RBD 镜像数据的关键手段 作用：1.使用实际数据量测试新版本2.使用实际的数据量运行质量保证流程3.实现业务连续性场景4.从生产块设备解耦备份进程 导入导出操作123456789101112131415161718参数	作用--export-format	指定导出格式（1 或 2，默认 2）--image-format	导入时指定 RB">
+    <meta name="description" content="导入（Import）和导出（Export）操作是管理和迁移 RBD 镜像数据的关键手段 作用：1.使用实际数据量测试新版本2.使用实际的数据量运行质量保证流程3.实现业务连续性场景4.从生产块设备解耦备份进程 导入导出操作参数	作用 --export-format	指定导出格式（1 或 2，默认 2） --image-format	导入时指定 RBD 格式（必须匹配） --compress-alg">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Ceph-Import-Export">
 <meta property="og:url" content="https://akemi.zj.cn/2025/07/08/Ceph-Import-Export/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="导入（Import）和导出（Export）操作是管理和迁移 RBD 镜像数据的关键手段 作用：1.使用实际数据量测试新版本2.使用实际的数据量运行质量保证流程3.实现业务连续性场景4.从生产块设备解耦备份进程 导入导出操作123456789101112131415161718参数	作用--export-format	指定导出格式（1 或 2，默认 2）--image-format	导入时指定 RB">
+<meta property="og:description" content="导入（Import）和导出（Export）操作是管理和迁移 RBD 镜像数据的关键手段 作用：1.使用实际数据量测试新版本2.使用实际的数据量运行质量保证流程3.实现业务连续性场景4.从生产块设备解耦备份进程 导入导出操作参数	作用 --export-format	指定导出格式（1 或 2，默认 2） --image-format	导入时指定 RBD 格式（必须匹配） --compress-alg">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-07-08T13:03:25.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:06:24.139Z">
@@ -492,14 +492,57 @@
     <article class="article-entry">
         <p><strong>导入（Import）和导出（Export）操作是管理和迁移 RBD 镜像数据的关键手段</strong></p>
 <p>作用：<br>1.使用实际数据量测试新版本<br>2.使用实际的数据量运行质量保证流程<br>3.实现业务连续性场景<br>4.从生产块设备解耦备份进程</p>
-<h2 id="导入导出操作"><a href="#导入导出操作" class="headerlink" title="导入导出操作"></a>导入导出操作</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">参数	作用</span><br><span class="line">--export-format	指定导出格式（1 或 2，默认 2）</span><br><span class="line">--image-format	导入时指定 RBD 格式（必须匹配）</span><br><span class="line">--compress-algorithm	压缩算法（如 lz4, zstd）</span><br><span class="line">--object-size	导入时指定对象大小（如 4M, 8M）</span><br><span class="line">--stripe-unit	条带化单元大小（优化性能）</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导出整个镜像（默认 raw 格式）</span></span><br><span class="line">rbd <span class="built_in">export</span> &lt;pool&gt;/&lt;image-name&gt; &lt;output-file&gt; </span><br><span class="line"></span><br><span class="line"><span class="comment"># 导出特定快照</span></span><br><span class="line">rbd <span class="built_in">export</span> &lt;pool&gt;/&lt;image-name&gt;@&lt;snapshot-name&gt; &lt;output-file&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入为 RBD 镜像</span></span><br><span class="line">rbd import &lt;input-file&gt; &lt;pool&gt;/&lt;new-image-name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定镜像格式（必需与文件实际格式一致）</span></span><br><span class="line">rbd import --image-format 2 &lt;input-file&gt; &lt;pool&gt;/&lt;new-image&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="导入导出操作"><a href="#导入导出操作" class="headerlink" title="导入导出操作"></a>导入导出操作</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">参数	作用
+--export-format	指定导出格式（1 或 <span class="token number">2</span>，默认 <span class="token number">2</span>）
+--image-format	导入时指定 RBD 格式（必须匹配）
+--compress-algorithm	压缩算法（如 lz4, zstd）
+--object-size	导入时指定对象大小（如 4M, 8M）
+--stripe-unit	条带化单元大小（优化性能）
+
+<span class="token comment"># 导出整个镜像（默认 raw 格式）</span>
+rbd <span class="token builtin class-name">export</span> <span class="token operator">&lt;</span>pool<span class="token operator">></span>/<span class="token operator">&lt;</span>image-name<span class="token operator">></span> <span class="token operator">&lt;</span>output-file<span class="token operator">></span> 
+
+<span class="token comment"># 导出特定快照</span>
+rbd <span class="token builtin class-name">export</span> <span class="token operator">&lt;</span>pool<span class="token operator">></span>/<span class="token operator">&lt;</span>image-name<span class="token operator">></span>@<span class="token operator">&lt;</span>snapshot-name<span class="token operator">></span> <span class="token operator">&lt;</span>output-file<span class="token operator">></span>
+
+<span class="token comment"># 导入为 RBD 镜像</span>
+rbd <span class="token function">import</span> <span class="token operator">&lt;</span>input-file<span class="token operator">></span> <span class="token operator">&lt;</span>pool<span class="token operator">></span>/<span class="token operator">&lt;</span>new-image-name<span class="token operator">></span>
+
+<span class="token comment"># 指定镜像格式（必需与文件实际格式一致）</span>
+rbd <span class="token function">import</span> --image-format <span class="token number">2</span> <span class="token operator">&lt;</span>input-file<span class="token operator">></span> <span class="token operator">&lt;</span>pool<span class="token operator">></span>/<span class="token operator">&lt;</span>new-image<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>导入导出镜像（快照）更改</strong></p>
 <p>和增量备份差不多</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">带快照的情况下：</span><br><span class="line">初始全备 (T0)</span><br><span class="line">rbd snap create myvol@snap_base</span><br><span class="line">rbd <span class="built_in">export</span> myvol@snap_base full.bin</span><br><span class="line">full.bin是只读的，不会修改</span><br><span class="line"></span><br><span class="line">第一次增量 (T1)</span><br><span class="line">rbd snap create myvol@snap1</span><br><span class="line">rbd export-diff myvol@snap1 --from-snap snap_base inc1.bin</span><br><span class="line"></span><br><span class="line">使用snap1与snap_base进行对比，增量出一个新文件inc1.bin</span><br><span class="line"></span><br><span class="line">第二次增量 (T2)</span><br><span class="line">rbd snap create myvol@snap2</span><br><span class="line">rbd export-diff myvol@snap2 --from-snap snap1 inc2.bin  </span><br><span class="line"></span><br><span class="line">使用snap2与snap1进行对比，增量出一个新文件inc2.bin</span><br><span class="line"></span><br><span class="line">恢复流程</span><br><span class="line">rbd import full.bin newvol                <span class="comment"># 创建基础镜像</span></span><br><span class="line">rbd snap create newvol@snap_base          <span class="comment"># 必须重建同名基准快照</span></span><br><span class="line">rbd import-diff inc1.bin newvol           <span class="comment"># 合并第一次增量</span></span><br><span class="line">rbd import-diff inc2.bin newvol           <span class="comment"># 合并第二次增量</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">带快照的情况下：
+初始全备 <span class="token punctuation">(</span>T0<span class="token punctuation">)</span>
+rbd snap create myvol@snap_base
+rbd <span class="token builtin class-name">export</span> myvol@snap_base full.bin
+full.bin是只读的，不会修改
+
+第一次增量 <span class="token punctuation">(</span>T1<span class="token punctuation">)</span>
+rbd snap create myvol@snap1
+rbd export-diff myvol@snap1 --from-snap snap_base inc1.bin
+
+使用snap1与snap_base进行对比，增量出一个新文件inc1.bin
+
+第二次增量 <span class="token punctuation">(</span>T2<span class="token punctuation">)</span>
+rbd snap create myvol@snap2
+rbd export-diff myvol@snap2 --from-snap snap1 inc2.bin  
+
+使用snap2与snap1进行对比，增量出一个新文件inc2.bin
+
+恢复流程
+rbd <span class="token function">import</span> full.bin newvol                <span class="token comment"># 创建基础镜像</span>
+rbd snap create newvol@snap_base          <span class="token comment"># 必须重建同名基准快照</span>
+rbd import-diff inc1.bin newvol           <span class="token comment"># 合并第一次增量</span>
+rbd import-diff inc2.bin newvol           <span class="token comment"># 合并第二次增量</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>使用管道</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">rbd <span class="built_in">export</span> rbd/img1 - | rbd import - rbd/img2</span><br><span class="line"></span><br><span class="line">将rbd/img1导出，并导入到rbd/img2，相当于复制了一份</span><br><span class="line">避免了创建临时镜像文件（如 export-file.bin）</span><br><span class="line">整个操作是单条命令，要么完全成功要么失败</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">rbd <span class="token builtin class-name">export</span> rbd/img1 - <span class="token operator">|</span> rbd <span class="token function">import</span> - rbd/img2
+
+将rbd/img1导出，并导入到rbd/img2，相当于复制了一份
+避免了创建临时镜像文件（如 export-file.bin）
+整个操作是单条命令，要么完全成功要么失败<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6558,36 +6601,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7052,13 +7065,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8099,13 +8112,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8558,14 +8571,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8573,14 +8586,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

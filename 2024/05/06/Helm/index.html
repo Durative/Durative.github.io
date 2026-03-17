@@ -632,27 +632,424 @@
 <td>1.4.x - 1.3.x</td>
 </tr>
 </tbody></table>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">wget https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz</span><br><span class="line"><span class="comment">#或者直接下载，然后上传至k8s的master节点</span></span><br><span class="line"></span><br><span class="line">tar -xf helm-v3.14.4-linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cd</span> linux-amd64/</span><br><span class="line"><span class="built_in">ls</span></span><br><span class="line">helm  LICENSE  README.md</span><br><span class="line"></span><br><span class="line">helm version</span><br><span class="line">version.BuildInfo&#123;Version:<span class="string">&quot;v3.14.4&quot;</span>, GitCommit:<span class="string">&quot;81c902a123462fd4052bc5e9aa9c513c4c8fc142&quot;</span>, GitTreeState:<span class="string">&quot;clean&quot;</span>, GoVersion:<span class="string">&quot;go1.21.9&quot;</span>&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
+<span class="token function">wget</span> https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
+<span class="token comment">#或者直接下载，然后上传至k8s的master节点</span>
 
-<h1 id="chart仓库管理"><a href="#chart仓库管理" class="headerlink" title="chart仓库管理"></a>chart仓库管理</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#添加chart仓库</span></span><br><span class="line">helm repo add aliyun https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts</span><br><span class="line">helm repo add bitnami https://charts.bitnami.com/bitnami</span><br><span class="line"></span><br><span class="line">helm repo list</span><br><span class="line">NAME    URL</span><br><span class="line">aliyun  https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts</span><br><span class="line">bitnami https://charts.bitnami.com/bitnami</span><br><span class="line"></span><br><span class="line"><span class="comment">#升级仓库</span></span><br><span class="line">helm repo update</span><br><span class="line"></span><br><span class="line"><span class="comment">#删除仓库</span></span><br><span class="line">helm repo remove aliyun</span><br><span class="line"></span><br><span class="line"><span class="comment">#搜索chart图表</span></span><br><span class="line">helm search repo aliyun</span><br></pre></td></tr></table></figure>
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> helm-v3.14.4-linux-amd64.tar.gz
+<span class="token builtin class-name">cd</span> linux-amd64/
+<span class="token function">ls</span>
+helm  LICENSE  README.md
 
-<h1 id="helm使用"><a href="#helm使用" class="headerlink" title="helm使用"></a>helm使用</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#搜索并下载</span></span><br><span class="line">helm search repo aliyun | grep memcached</span><br><span class="line">aliyun/mcrouter                 0.1.0           0.36.0          Mcrouter is a memcached protocol router <span class="keyword">for</span> sca...</span><br><span class="line">aliyun/memcached                2.0.1                           Free &amp; open <span class="built_in">source</span>, high-performance, distribut...</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看chart信息</span></span><br><span class="line">helm show chart aliyun/memcached</span><br><span class="line"></span><br><span class="line"><span class="comment">#拉取chart</span></span><br><span class="line">helm pull aliyun/memcached</span><br><span class="line"><span class="comment">#memcached-2.0.1.tgz</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#使用chart</span></span><br><span class="line">tar -xf memcached-2.0.1.tgz</span><br><span class="line"><span class="built_in">cd</span> memcached/</span><br><span class="line"><span class="built_in">ls</span></span><br><span class="line">Chart.yaml  README.md  templates  values.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment">#这个chart的信息</span></span><br><span class="line"><span class="built_in">cat</span> Chart.yaml</span><br><span class="line">description: Free &amp; open <span class="built_in">source</span>, high-performance, distributed memory object caching</span><br><span class="line">  system.</span><br><span class="line">engine: gotpl</span><br><span class="line">home: http://memcached.org/</span><br><span class="line">icon: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/1024px-Memcached.svg.png</span><br><span class="line">keywords:</span><br><span class="line">- memcached</span><br><span class="line">- cache</span><br><span class="line">maintainers:</span><br><span class="line">- email: gtaylor@gc-taylor.com</span><br><span class="line">  name: Greg Taylor</span><br><span class="line">name: memcached</span><br><span class="line">sources:</span><br><span class="line">- https://github.com/docker-library/memcached</span><br><span class="line">version: 2.0.1</span><br><span class="line"></span><br><span class="line"><span class="comment">#chart的yaml</span></span><br><span class="line"><span class="built_in">cd</span> templates/</span><br><span class="line"><span class="built_in">ls</span></span><br><span class="line">_helpers.tpl  NOTES.txt  pdb.yaml  statefulset.yaml  svc.yaml</span><br></pre></td></tr></table></figure>
+helm version
+version.BuildInfo<span class="token punctuation">&#123;</span>Version:<span class="token string">"v3.14.4"</span>, GitCommit:<span class="token string">"81c902a123462fd4052bc5e9aa9c513c4c8fc142"</span>, GitTreeState:<span class="token string">"clean"</span>, GoVersion:<span class="token string">"go1.21.9"</span><span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h1 id="chart使用与部署"><a href="#chart使用与部署" class="headerlink" title="chart使用与部署"></a>chart使用与部署</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">查看value.yaml文件，得到镜像为memcached:1.4.36-alpine</span><br><span class="line"></span><br><span class="line">在node节点上拉取一下这个镜像并导入</span><br><span class="line">docker save memcached:1.4.36-alpine -o memcache1.4.36.tar.gz</span><br><span class="line">scp memcache1.4.36.tar.gz ws-k8s-node2:~</span><br><span class="line">scp memcache1.4.36.tar.gz ws-k8s-node3:~</span><br><span class="line"></span><br><span class="line">ctr -n=k8s.io image import memcache1.4.36.tar.gz</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改statefulset文件</span></span><br><span class="line">修改apiVersion: apps/v1；</span><br><span class="line">如果节点数少，需要删除亲和性相关的内容</span><br><span class="line">添加selector匹配标签，将后面的labels复制过去</span><br><span class="line"></span><br><span class="line"><span class="built_in">rm</span> -rf templates/pdb.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装</span></span><br><span class="line">helm install memcached ./</span><br><span class="line"></span><br><span class="line">NAME: memcached</span><br><span class="line">LAST DEPLOYED: Thu May  2 21:19:47 2024</span><br><span class="line">NAMESPACE: default</span><br><span class="line">STATUS: deployed</span><br><span class="line">REVISION: 1</span><br><span class="line">TEST SUITE: None</span><br><span class="line">NOTES:</span><br><span class="line">Memcached can be accessed via port 11211 on the following DNS name from within your cluster:</span><br><span class="line">memcached-memcached.default.svc.cluster.local</span><br><span class="line"></span><br><span class="line"><span class="comment">#If you&#x27;d like to test your instance, forward the port locally:</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">export</span> POD_NAME=$(kubectl get pods --namespace default -l <span class="string">&quot;app=memcached-memcached&quot;</span> -o jsonpath=<span class="string">&quot;&#123;.items[0].metadata.name&#125;&quot;</span>)</span><br><span class="line">  kubectl port-forward <span class="variable">$POD_NAME</span> 11211</span><br><span class="line"></span><br><span class="line">In another tab, attempt to <span class="built_in">set</span> a key:</span><br><span class="line"></span><br><span class="line">  $ <span class="built_in">echo</span> -e <span class="string">&#x27;set mykey 0 60 5\r\nhello\r&#x27;</span> | nc localhost 11211</span><br><span class="line"></span><br><span class="line">You should see:</span><br><span class="line"></span><br><span class="line">  STORED</span><br><span class="line"><span class="comment">#查看状态</span></span><br><span class="line">kubectl get  pods</span><br><span class="line">NAME                    READY   STATUS    RESTARTS   AGE</span><br><span class="line">memcached-memcached-0   1/1     Running   0          13m</span><br><span class="line">memcached-memcached-1   1/1     Running   0          13m</span><br><span class="line">memcached-memcached-2   1/1     Running   0          13m</span><br><span class="line"></span><br><span class="line"><span class="comment">#根据提示进行测试</span></span><br><span class="line">yum -y install nc</span><br><span class="line"><span class="built_in">export</span> POD_NAME=$(kubectl get pods --namespace default -l <span class="string">&quot;app=memcached-memcached&quot;</span> -o jsonpath=<span class="string">&quot;&#123;.items[0].metadata.name&#125;&quot;</span>)</span><br><span class="line">kubectl port-forward <span class="variable">$POD_NAME</span> 11211</span><br><span class="line"><span class="comment">#第二终端</span></span><br><span class="line"><span class="built_in">echo</span> -e <span class="string">&#x27;set mykey 0 60 5\r\nhello\r&#x27;</span> | nc localhost 11211</span><br><span class="line"><span class="comment">#STORED</span></span><br><span class="line">返回一个STORED说明正常安装了</span><br></pre></td></tr></table></figure>
+<h1 id="chart仓库管理"><a href="#chart仓库管理" class="headerlink" title="chart仓库管理"></a>chart仓库管理</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#添加chart仓库</span>
+helm repo <span class="token function">add</span> aliyun https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+helm repo <span class="token function">add</span> bitnami https://charts.bitnami.com/bitnami
+
+helm repo list
+NAME    URL
+aliyun  https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+bitnami https://charts.bitnami.com/bitnami
+
+<span class="token comment">#升级仓库</span>
+helm repo update
+
+<span class="token comment">#删除仓库</span>
+helm repo remove aliyun
+
+<span class="token comment">#搜索chart图表</span>
+helm search repo aliyun<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="helm使用"><a href="#helm使用" class="headerlink" title="helm使用"></a>helm使用</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#搜索并下载</span>
+helm search repo aliyun <span class="token operator">|</span> <span class="token function">grep</span> memcached
+aliyun/mcrouter                 <span class="token number">0.1</span>.0           <span class="token number">0.36</span>.0          Mcrouter is a memcached protocol router <span class="token keyword">for</span> sca<span class="token punctuation">..</span>.
+aliyun/memcached                <span class="token number">2.0</span>.1                           Free <span class="token operator">&amp;</span> <span class="token function">open</span> source, high-performance, distribut<span class="token punctuation">..</span>.
+
+<span class="token comment">#查看chart信息</span>
+helm show chart aliyun/memcached
+
+<span class="token comment">#拉取chart</span>
+helm pull aliyun/memcached
+<span class="token comment">#memcached-2.0.1.tgz</span>
+
+<span class="token comment">#使用chart</span>
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> memcached-2.0.1.tgz
+<span class="token builtin class-name">cd</span> memcached/
+<span class="token function">ls</span>
+Chart.yaml  README.md  templates  values.yaml
+
+<span class="token comment">#这个chart的信息</span>
+<span class="token function">cat</span> Chart.yaml
+description: Free <span class="token operator">&amp;</span> <span class="token function">open</span> source, high-performance, distributed memory object caching
+  system.
+engine: gotpl
+home: http://memcached.org/
+icon: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/1024px-Memcached.svg.png
+keywords:
+- memcached
+- cache
+maintainers:
+- email: gtaylor@gc-taylor.com
+  name: Greg Taylor
+name: memcached
+sources:
+- https://github.com/docker-library/memcached
+version: <span class="token number">2.0</span>.1
+
+<span class="token comment">#chart的yaml</span>
+<span class="token builtin class-name">cd</span> templates/
+<span class="token function">ls</span>
+_helpers.tpl  NOTES.txt  pdb.yaml  statefulset.yaml  svc.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="chart使用与部署"><a href="#chart使用与部署" class="headerlink" title="chart使用与部署"></a>chart使用与部署</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看value.yaml文件，得到镜像为memcached:1.4.36-alpine
+
+在node节点上拉取一下这个镜像并导入
+<span class="token function">docker</span> save memcached:1.4.36-alpine <span class="token parameter variable">-o</span> memcache1.4.36.tar.gz
+<span class="token function">scp</span> memcache1.4.36.tar.gz ws-k8s-node2:~
+<span class="token function">scp</span> memcache1.4.36.tar.gz ws-k8s-node3:~
+
+ctr <span class="token parameter variable">-n</span><span class="token operator">=</span>k8s.io image <span class="token function">import</span> memcache1.4.36.tar.gz
+
+<span class="token comment">#修改statefulset文件</span>
+修改apiVersion: apps/v1；
+如果节点数少，需要删除亲和性相关的内容
+添加selector匹配标签，将后面的labels复制过去
+
+<span class="token function">rm</span> <span class="token parameter variable">-rf</span> templates/pdb.yaml
+
+<span class="token comment">#安装</span>
+helm <span class="token function">install</span> memcached ./
+
+NAME: memcached
+LAST DEPLOYED: Thu May  <span class="token number">2</span> <span class="token number">21</span>:19:47 <span class="token number">2024</span>
+NAMESPACE: default
+STATUS: deployed
+REVISION: <span class="token number">1</span>
+TEST SUITE: None
+NOTES:
+Memcached can be accessed via port <span class="token number">11211</span> on the following DNS name from within your cluster:
+memcached-memcached.default.svc.cluster.local
+
+<span class="token comment">#If you'd like to test your instance, forward the port locally:</span>
+
+  <span class="token builtin class-name">export</span> <span class="token assign-left variable">POD_NAME</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get pods <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-l</span> <span class="token string">"app=memcached-memcached"</span> <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].metadata.name&#125;"</span><span class="token variable">)</span></span>
+  kubectl port-forward <span class="token variable">$POD_NAME</span> <span class="token number">11211</span>
+
+In another tab, attempt to <span class="token builtin class-name">set</span> a key:
+
+  $ <span class="token builtin class-name">echo</span> <span class="token parameter variable">-e</span> <span class="token string">'set mykey 0 60 5\r\nhello\r'</span> <span class="token operator">|</span> <span class="token function">nc</span> localhost <span class="token number">11211</span>
+
+You should see:
+
+  STORED
+<span class="token comment">#查看状态</span>
+kubectl get  pods
+NAME                    READY   STATUS    RESTARTS   AGE
+memcached-memcached-0   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          13m
+memcached-memcached-1   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          13m
+memcached-memcached-2   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          13m
+
+<span class="token comment">#根据提示进行测试</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">nc</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">POD_NAME</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get pods <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-l</span> <span class="token string">"app=memcached-memcached"</span> <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].metadata.name&#125;"</span><span class="token variable">)</span></span>
+kubectl port-forward <span class="token variable">$POD_NAME</span> <span class="token number">11211</span>
+<span class="token comment">#第二终端</span>
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-e</span> <span class="token string">'set mykey 0 60 5\r\nhello\r'</span> <span class="token operator">|</span> <span class="token function">nc</span> localhost <span class="token number">11211</span>
+<span class="token comment">#STORED</span>
+返回一个STORED说明正常安装了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="自定义chart模板使用与管理"><a href="#自定义chart模板使用与管理" class="headerlink" title="自定义chart模板使用与管理"></a>自定义chart模板使用与管理</h1><p>创建一个新的chart 名为app1</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">helm  create app1</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> app1/</span><br><span class="line">tree .</span><br><span class="line">.</span><br><span class="line">├── charts</span><br><span class="line">├── Chart.yaml <span class="comment"># chart的描述文件</span></span><br><span class="line">├── templates <span class="comment"># 资源清单文件</span></span><br><span class="line">│   ├── deployment.yaml</span><br><span class="line">│   ├── _helpers.tpl</span><br><span class="line">│   ├── hpa.yaml</span><br><span class="line">│   ├── ingress.yaml</span><br><span class="line">│   ├── NOTES.txt <span class="comment"># 说明文件</span></span><br><span class="line">│   ├── serviceaccount.yaml</span><br><span class="line">│   ├── service.yaml</span><br><span class="line">│   └── tests</span><br><span class="line">│       └── test-connection.yaml</span><br><span class="line">└── values.yaml <span class="comment"># 变量文件</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> Chart.yaml</span><br><span class="line">apiVersion: v2</span><br><span class="line">name: app1</span><br><span class="line">description: A Helm chart <span class="keyword">for</span> Kubernetes <span class="comment">#描述文件</span></span><br><span class="line"><span class="built_in">type</span>: application</span><br><span class="line">version: 0.1.0 <span class="comment">#chart版本</span></span><br><span class="line">appVersion: <span class="string">&quot;1.16.0&quot;</span> <span class="comment">#被_helpers.tpl引用，最后成为了镜像版本</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> deployment中</span><br><span class="line">include开头的都是使用_helpers.tpl文件的变量</span><br><span class="line">.Value开头的变量都用values.yaml里的变量</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> _helpers.tpl</span><br><span class="line">这是一个使用go语言编写的变量定义的模板</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm  create app1
 
-<h2 id="配置文件go模板的一些注释"><a href="#配置文件go模板的一些注释" class="headerlink" title="配置文件go模板的一些注释"></a>配置文件go模板的一些注释</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  &#123;&#123;- <span class="keyword">if</span> not .Values.autoscaling.enabled &#125;&#125; </span><br><span class="line">  <span class="comment">#如果values.yaml中，autoscaling.enabled 的值不是 true，则输出下面的语句</span></span><br><span class="line">  replicas: &#123;&#123; .Values.replicaCount &#125;&#125;</span><br><span class="line">  &#123;&#123;- end &#125;&#125;</span><br><span class="line">  </span><br><span class="line">...</span><br><span class="line">      &#123;&#123;- with .Values.podAnnotations &#125;&#125;</span><br><span class="line">      <span class="comment">#如果values.yaml中，有podAnnotations字段，则将其转换为yaml格式输出</span></span><br><span class="line">      annotations:</span><br><span class="line">        &#123;&#123;- toYaml . | nindent 8 &#125;&#125;</span><br><span class="line">      &#123;&#123;- end &#125;&#125;</span><br><span class="line">      <span class="comment">#nindent就是空格</span></span><br><span class="line">...</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      &#123;&#123;- include <span class="string">&quot;app1.selectorLabels&quot;</span> . | nindent 6 &#125;&#125;</span><br><span class="line">      <span class="comment"># 插入模板app1.selectorLabels</span></span><br><span class="line">...</span><br><span class="line">          image: <span class="string">&quot;&#123;&#123; .Values.image.repository &#125;&#125;:&#123;&#123; .Values.image.tag | default .Chart.AppVersion &#125;&#125;&quot;</span></span><br><span class="line">				<span class="comment">#如果Values.image.tag未定义，则默认使用Chart.AppVersion</span></span><br><span class="line">...</span><br><span class="line">     &#123;&#123;- with .Values.volumes &#125;&#125;</span><br><span class="line">      volumes:</span><br><span class="line">        &#123;&#123;- toYaml . | nindent 8 &#125;&#125;</span><br><span class="line">      &#123;&#123;- end &#125;&#125;</span><br><span class="line">      <span class="comment"># 如果有设置Values.volumes，就会将其内容转换成yaml格式放进去</span></span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token builtin class-name">cd</span> app1/
+tree <span class="token builtin class-name">.</span>
+<span class="token builtin class-name">.</span>
+├── charts
+├── Chart.yaml <span class="token comment"># chart的描述文件</span>
+├── templates <span class="token comment"># 资源清单文件</span>
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt <span class="token comment"># 说明文件</span>
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml <span class="token comment"># 变量文件</span>
 
-<h2 id="使用自定义chart模板"><a href="#使用自定义chart模板" class="headerlink" title="使用自定义chart模板"></a>使用自定义chart模板</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">先根据deployment.yaml中image的设置去调整，另外的设置就先不调</span><br><span class="line">修改values.yaml文件</span><br><span class="line">image:</span><br><span class="line">  repository: nginx</span><br><span class="line">  pullPolicy: IfNotPresent</span><br><span class="line">  <span class="comment"># Overrides the image tag whose default is the chart appVersion.</span></span><br><span class="line">  tag: <span class="string">&quot;latest&quot;</span></span><br><span class="line">就用latest的nginx好了</span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">找到service.yaml文件中的模板</span><br><span class="line">找到service的<span class="built_in">type</span></span><br><span class="line">  <span class="built_in">type</span>: &#123;&#123; .Values.service.type &#125;&#125;</span><br><span class="line">修改values.yaml为NodePort，方便测试</span><br><span class="line"></span><br><span class="line"><span class="comment">#测试yaml文件是否有问题</span></span><br><span class="line">helm lint ~/helm/app1/</span><br><span class="line"></span><br><span class="line">==&gt; Linting /root/helm/app1/</span><br><span class="line">[INFO] Chart.yaml: icon is recommended</span><br><span class="line"></span><br><span class="line">1 chart(s) linted, 0 chart(s) failed</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装</span></span><br><span class="line">helm install nginx .</span><br><span class="line">NAME: nginx</span><br><span class="line">LAST DEPLOYED: Thu May  2 23:36:20 2024</span><br><span class="line">NAMESPACE: default</span><br><span class="line">STATUS: deployed</span><br><span class="line">REVISION: 1</span><br><span class="line">NOTES:</span><br><span class="line">1. Get the application URL by running these commands:</span><br><span class="line">  <span class="built_in">export</span> NODE_PORT=$(kubectl get --namespace default -o jsonpath=<span class="string">&quot;&#123;.spec.ports[0].nodePort&#125;&quot;</span> services nginx-app1)</span><br><span class="line">  <span class="built_in">export</span> NODE_IP=$(kubectl get nodes --namespace default -o jsonpath=<span class="string">&quot;&#123;.items[0].status.addresses[0].address&#125;&quot;</span>)</span><br><span class="line">  <span class="built_in">echo</span> http://<span class="variable">$NODE_IP</span>:<span class="variable">$NODE_PORT</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#查看状态</span></span><br><span class="line">kubectl get pods -owide</span><br><span class="line">NAME                          READY   STATUS        RESTARTS   AGE     IP               NODE           NOMINATED NODE   READINESS GATES</span><br><span class="line">nginx-app1-6c8ddfccb5-wbbwb   1/1     Running       0          13s     10.244.193.143   ws-k8s-node3   &lt;none&gt;           &lt;none&gt;</span><br><span class="line"></span><br><span class="line">kubectl get deploy</span><br><span class="line">NAME         READY   UP-TO-DATE   AVAILABLE   AGE</span><br><span class="line">nginx-app1   1/1     1            1           65s</span><br><span class="line"></span><br><span class="line">kubectl get deploy --show-labels</span><br><span class="line">NAME         READY   UP-TO-DATE   AVAILABLE   AGE     LABELS</span><br><span class="line">nginx-app1   1/1     1            1           9m33s   app.kubernetes.io/instance=nginx,app.kubernetes.io/managed-by=Helm,app.kubernetes.io/name=app1,app.kubernetes.io/version=1.16.0,helm.sh/chart=app1-0.1.0</span><br><span class="line"></span><br><span class="line"><span class="comment">#测试</span></span><br><span class="line"><span class="built_in">export</span> NODE_PORT=$(kubectl get --namespace default -o jsonpath=<span class="string">&quot;&#123;.spec.ports[0].nodePort&#125;&quot;</span> services nginx-app1)</span><br><span class="line"><span class="built_in">export</span> NODE_IP=$(kubectl get nodes --namespace default -o jsonpath=<span class="string">&quot;&#123;.items[0].status.addresses[0].address&#125;&quot;</span>)</span><br><span class="line"><span class="built_in">echo</span> http://<span class="variable">$NODE_IP</span>:<span class="variable">$NODE_PORT</span></span><br><span class="line">http://192.168.10.121:30634</span><br></pre></td></tr></table></figure>
+<span class="token function">cat</span> Chart.yaml
+apiVersion: v2
+name: app1
+description: A Helm chart <span class="token keyword">for</span> Kubernetes <span class="token comment">#描述文件</span>
+type: application
+version: <span class="token number">0.1</span>.0 <span class="token comment">#chart版本</span>
+appVersion: <span class="token string">"1.16.0"</span> <span class="token comment">#被_helpers.tpl引用，最后成为了镜像版本</span>
+
+<span class="token function">cat</span> deployment中
+include开头的都是使用_helpers.tpl文件的变量
+.Value开头的变量都用values.yaml里的变量
+
+<span class="token function">cat</span> _helpers.tpl
+这是一个使用go语言编写的变量定义的模板<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="配置文件go模板的一些注释"><a href="#配置文件go模板的一些注释" class="headerlink" title="配置文件go模板的一些注释"></a>配置文件go模板的一些注释</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">spec:
+  <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">if</span> not .Values.autoscaling.enabled <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span> 
+  <span class="token comment">#如果values.yaml中，autoscaling.enabled 的值不是 true，则输出下面的语句</span>
+  replicas: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.replicaCount <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  
+<span class="token punctuation">..</span>.
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- with .Values.podAnnotations <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token comment">#如果values.yaml中，有podAnnotations字段，则将其转换为yaml格式输出</span>
+      annotations:
+        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- toYaml <span class="token builtin class-name">.</span> <span class="token operator">|</span> nindent <span class="token number">8</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token comment">#nindent就是空格</span>
+<span class="token punctuation">..</span>.
+  selector:
+    matchLabels:
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- include <span class="token string">"app1.selectorLabels"</span> <span class="token builtin class-name">.</span> <span class="token operator">|</span> nindent <span class="token number">6</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token comment"># 插入模板app1.selectorLabels</span>
+<span class="token punctuation">..</span>.
+          image: <span class="token string">"&#123;&#123; .Values.image.repository &#125;&#125;:&#123;&#123; .Values.image.tag | default .Chart.AppVersion &#125;&#125;"</span>
+				<span class="token comment">#如果Values.image.tag未定义，则默认使用Chart.AppVersion</span>
+<span class="token punctuation">..</span>.
+     <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- with .Values.volumes <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      volumes:
+        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- toYaml <span class="token builtin class-name">.</span> <span class="token operator">|</span> nindent <span class="token number">8</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token comment"># 如果有设置Values.volumes，就会将其内容转换成yaml格式放进去</span>
+<span class="token punctuation">..</span>.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="使用自定义chart模板"><a href="#使用自定义chart模板" class="headerlink" title="使用自定义chart模板"></a>使用自定义chart模板</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">先根据deployment.yaml中image的设置去调整，另外的设置就先不调
+修改values.yaml文件
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  <span class="token comment"># Overrides the image tag whose default is the chart appVersion.</span>
+  tag: <span class="token string">"latest"</span>
+就用latest的nginx好了
+
+<span class="token comment">#</span>
+找到service.yaml文件中的模板
+找到service的type
+  type: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.service.type <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+修改values.yaml为NodePort，方便测试
+
+<span class="token comment">#测试yaml文件是否有问题</span>
+helm lint ~/helm/app1/
+
+<span class="token operator">==</span><span class="token operator">></span> Linting /root/helm/app1/
+<span class="token punctuation">[</span>INFO<span class="token punctuation">]</span> Chart.yaml: icon is recommended
+
+<span class="token number">1</span> chart<span class="token punctuation">(</span>s<span class="token punctuation">)</span> linted, <span class="token number">0</span> chart<span class="token punctuation">(</span>s<span class="token punctuation">)</span> failed
+
+<span class="token comment">#安装</span>
+helm <span class="token function">install</span> nginx <span class="token builtin class-name">.</span>
+NAME: nginx
+LAST DEPLOYED: Thu May  <span class="token number">2</span> <span class="token number">23</span>:36:20 <span class="token number">2024</span>
+NAMESPACE: default
+STATUS: deployed
+REVISION: <span class="token number">1</span>
+NOTES:
+<span class="token number">1</span>. Get the application URL by running these commands:
+  <span class="token builtin class-name">export</span> <span class="token assign-left variable">NODE_PORT</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.spec.ports[0].nodePort&#125;"</span> services nginx-app1<span class="token variable">)</span></span>
+  <span class="token builtin class-name">export</span> <span class="token assign-left variable">NODE_IP</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get nodes <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].status.addresses[0].address&#125;"</span><span class="token variable">)</span></span>
+  <span class="token builtin class-name">echo</span> http://<span class="token variable">$NODE_IP</span><span class="token builtin class-name">:</span><span class="token variable">$NODE_PORT</span>
+
+<span class="token comment">#查看状态</span>
+kubectl get pods <span class="token parameter variable">-owide</span>
+NAME                          READY   STATUS        RESTARTS   AGE     IP               NODE           NOMINATED NODE   READINESS GATES
+nginx-app1-6c8ddfccb5-wbbwb   <span class="token number">1</span>/1     Running       <span class="token number">0</span>          13s     <span class="token number">10.244</span>.193.143   ws-k8s-node3   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
+
+kubectl get deploy
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-app1   <span class="token number">1</span>/1     <span class="token number">1</span>            <span class="token number">1</span>           65s
+
+kubectl get deploy --show-labels
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE     LABELS
+nginx-app1   <span class="token number">1</span>/1     <span class="token number">1</span>            <span class="token number">1</span>           9m33s   app.kubernetes.io/instance<span class="token operator">=</span>nginx,app.kubernetes.io/managed-by<span class="token operator">=</span>Helm,app.kubernetes.io/name<span class="token operator">=</span>app1,app.kubernetes.io/version<span class="token operator">=</span><span class="token number">1.16</span>.0,helm.sh/chart<span class="token operator">=</span>app1-0.1.0
+
+<span class="token comment">#测试</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">NODE_PORT</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.spec.ports[0].nodePort&#125;"</span> services nginx-app1<span class="token variable">)</span></span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">NODE_IP</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get nodes <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].status.addresses[0].address&#125;"</span><span class="token variable">)</span></span>
+<span class="token builtin class-name">echo</span> http://<span class="token variable">$NODE_IP</span><span class="token builtin class-name">:</span><span class="token variable">$NODE_PORT</span>
+http://192.168.10.121:30634<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506181154.png"></p>
-<h2 id="更新service的类型，动态升级release"><a href="#更新service的类型，动态升级release" class="headerlink" title="更新service的类型，动态升级release"></a>更新service的类型，动态升级release</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade --<span class="built_in">set</span> service.type=<span class="string">&quot;ClusterIP&quot;</span> nginx .</span><br><span class="line"></span><br><span class="line">Release <span class="string">&quot;nginx&quot;</span> has been upgraded. Happy Helming!</span><br><span class="line">NAME: nginx</span><br><span class="line">LAST DEPLOYED: Thu May  2 23:59:10 2024</span><br><span class="line">NAMESPACE: default</span><br><span class="line">STATUS: deployed</span><br><span class="line">REVISION: 2</span><br><span class="line">NOTES:</span><br><span class="line">1. Get the application URL by running these commands:</span><br><span class="line">  <span class="built_in">export</span> POD_NAME=$(kubectl get pods --namespace default -l <span class="string">&quot;app.kubernetes.io/name=app1,app.kubernetes.io/instance=nginx&quot;</span> -o jsonpath=<span class="string">&quot;&#123;.items[0].metadata.name&#125;&quot;</span>)</span><br><span class="line">  <span class="built_in">export</span> CONTAINER_PORT=$(kubectl get pod --namespace default <span class="variable">$POD_NAME</span> -o jsonpath=<span class="string">&quot;&#123;.spec.containers[0].ports[0].containerPort&#125;&quot;</span>)</span><br><span class="line">  <span class="built_in">echo</span> <span class="string">&quot;Visit http://127.0.0.1:8080 to use your application&quot;</span></span><br><span class="line">  kubectl --namespace default port-forward <span class="variable">$POD_NAME</span> 8080:<span class="variable">$CONTAINER_PORT</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="built_in">export</span> POD_NAME=$(kubectl get pods --namespace default -l <span class="string">&quot;app.kubernetes.io/name=app1,app.kubernetes.io/instance=nginx&quot;</span> -o jsonpath=<span class="string">&quot;&#123;.items[0].metadata.name&#125;&quot;</span>)</span><br><span class="line"><span class="built_in">export</span> CONTAINER_PORT=$(kubectl get pod --namespace default <span class="variable">$POD_NAME</span> -o jsonpath=<span class="string">&quot;&#123;.spec.containers[0].ports[0].containerPort&#125;&quot;</span>)</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;Visit http://127.0.0.1:8080 to use your application&quot;</span></span><br><span class="line">kubectl --namespace default port-forward <span class="variable">$POD_NAME</span> 8080:<span class="variable">$CONTAINER_PORT</span></span><br><span class="line"><span class="comment">#http://127.0.0.1:8080</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#测试</span></span><br><span class="line">curl http://127.0.0.1:8080</span><br><span class="line"></span><br><span class="line"><span class="comment">#回显</span></span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;<span class="built_in">head</span>&gt;</span><br><span class="line">&lt;title&gt;Welcome to nginx!&lt;/title&gt;</span><br><span class="line">&lt;style&gt;</span><br><span class="line">html &#123; color-scheme: light dark; &#125;</span><br><span class="line">body &#123; width: 35em; margin: 0 auto;</span><br><span class="line">font-family: Tahoma, Verdana, Arial, sans-serif; &#125;</span><br><span class="line">&lt;/style&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;</span><br><span class="line">&lt;p&gt;If you see this page, the nginx web server is successfully installed and</span><br><span class="line">working. Further configuration is required.&lt;/p&gt;</span><br><span class="line"></span><br><span class="line">&lt;p&gt;For online documentation and support please refer to</span><br><span class="line">&lt;a href=<span class="string">&quot;http://nginx.org/&quot;</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;</span><br><span class="line">Commercial support is available at</span><br><span class="line">&lt;a href=<span class="string">&quot;http://nginx.com/&quot;</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;</span><br><span class="line"></span><br><span class="line">&lt;p&gt;&lt;em&gt;Thank you <span class="keyword">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br><span class="line"></span><br><span class="line">正常访问</span><br></pre></td></tr></table></figure>
+<h2 id="更新service的类型，动态升级release"><a href="#更新service的类型，动态升级release" class="headerlink" title="更新service的类型，动态升级release"></a>更新service的类型，动态升级release</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm upgrade <span class="token parameter variable">--set</span> <span class="token assign-left variable">service.type</span><span class="token operator">=</span><span class="token string">"ClusterIP"</span> nginx <span class="token builtin class-name">.</span>
 
-<h2 id="回滚"><a href="#回滚" class="headerlink" title="回滚"></a>回滚</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">查看历史版本</span><br><span class="line">helm <span class="built_in">history</span> nginx</span><br><span class="line">REVISION    UPDATED                     STATUS      CHART       APP VERSION DESCRIPTION     </span><br><span class="line">1           Thu May  2 23:36:20 2024    superseded  app1-0.1.0  1.16.0      Install complete</span><br><span class="line">2           Thu May  2 23:59:10 2024    deployed    app1-0.1.0  1.16.0      Upgrade complete</span><br><span class="line"></span><br><span class="line">回滚</span><br><span class="line">helm rollback nginx 1</span><br><span class="line">1是版本号</span><br><span class="line"><span class="comment">#Rollback was a success! Happy Helming!</span></span><br><span class="line"></span><br><span class="line">查看状态</span><br><span class="line">kubectl get svc  | grep nginx </span><br><span class="line">nginx-app1   NodePort    10.108.41.185   &lt;none&gt;        80:31882/TCP   32m</span><br><span class="line"></span><br><span class="line">又变回了NodePort类型</span><br></pre></td></tr></table></figure>
+Release <span class="token string">"nginx"</span> has been upgraded. Happy Helming<span class="token operator">!</span>
+NAME: nginx
+LAST DEPLOYED: Thu May  <span class="token number">2</span> <span class="token number">23</span>:59:10 <span class="token number">2024</span>
+NAMESPACE: default
+STATUS: deployed
+REVISION: <span class="token number">2</span>
+NOTES:
+<span class="token number">1</span>. Get the application URL by running these commands:
+  <span class="token builtin class-name">export</span> <span class="token assign-left variable">POD_NAME</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get pods <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-l</span> <span class="token string">"app.kubernetes.io/name=app1,app.kubernetes.io/instance=nginx"</span> <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].metadata.name&#125;"</span><span class="token variable">)</span></span>
+  <span class="token builtin class-name">export</span> <span class="token assign-left variable">CONTAINER_PORT</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get pod <span class="token parameter variable">--namespace</span> default $POD_NAME <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.spec.containers[0].ports[0].containerPort&#125;"</span><span class="token variable">)</span></span>
+  <span class="token builtin class-name">echo</span> <span class="token string">"Visit http://127.0.0.1:8080 to use your application"</span>
+  kubectl <span class="token parameter variable">--namespace</span> default port-forward <span class="token variable">$POD_NAME</span> <span class="token number">8080</span>:<span class="token variable">$CONTAINER_PORT</span>
 
-<h2 id="打包helm-package"><a href="#打包helm-package" class="headerlink" title="打包helm package"></a>打包helm package</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line">helm package app1/</span><br><span class="line">Successfully packaged chart and saved it to: /root/helm/app1-0.1.0.tgz</span><br><span class="line"></span><br><span class="line">生成压缩包app1-0.1.0.tgz</span><br><span class="line"></span><br><span class="line">压缩包互相传完之后解压</span><br><span class="line">再直接</span><br><span class="line">helm install nginx./</span><br><span class="line">直接完事</span><br><span class="line"></span><br><span class="line">查看chart状态：</span><br><span class="line"></span><br><span class="line">helm get manifest nginx </span><br><span class="line">---</span><br><span class="line"><span class="comment"># Source: app1/templates/serviceaccount.yaml</span></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-app1</span><br><span class="line">  labels:</span><br><span class="line">    helm.sh/chart: app1-0.1.0</span><br><span class="line">    app.kubernetes.io/name: app1</span><br><span class="line">    app.kubernetes.io/instance: nginx</span><br><span class="line">    app.kubernetes.io/version: <span class="string">&quot;1.16.0&quot;</span></span><br><span class="line">    app.kubernetes.io/managed-by: Helm</span><br><span class="line">automountServiceAccountToken: <span class="literal">true</span></span><br><span class="line">---</span><br><span class="line"><span class="comment"># Source: app1/templates/service.yaml</span></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-app1</span><br><span class="line">  labels:</span><br><span class="line">    helm.sh/chart: app1-0.1.0</span><br><span class="line">    app.kubernetes.io/name: app1</span><br><span class="line">    app.kubernetes.io/instance: nginx</span><br><span class="line">    app.kubernetes.io/version: <span class="string">&quot;1.16.0&quot;</span></span><br><span class="line">    app.kubernetes.io/managed-by: Helm</span><br><span class="line">spec:</span><br><span class="line">  <span class="built_in">type</span>: NodePort</span><br><span class="line">  ports:</span><br><span class="line">    - port: 80</span><br><span class="line">      targetPort: http</span><br><span class="line">      protocol: TCP</span><br><span class="line">      name: http</span><br><span class="line">  selector:</span><br><span class="line">    app.kubernetes.io/name: app1</span><br><span class="line">    app.kubernetes.io/instance: nginx</span><br><span class="line">---</span><br><span class="line"><span class="comment"># Source: app1/templates/deployment.yaml</span></span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-app1</span><br><span class="line">  labels:</span><br><span class="line">    helm.sh/chart: app1-0.1.0</span><br><span class="line">    app.kubernetes.io/name: app1</span><br><span class="line">    app.kubernetes.io/instance: nginx</span><br><span class="line">    app.kubernetes.io/version: <span class="string">&quot;1.16.0&quot;</span></span><br><span class="line">    app.kubernetes.io/managed-by: Helm</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app.kubernetes.io/name: app1</span><br><span class="line">      app.kubernetes.io/instance: nginx</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        helm.sh/chart: app1-0.1.0</span><br><span class="line">        app.kubernetes.io/name: app1</span><br><span class="line">        app.kubernetes.io/instance: nginx</span><br><span class="line">        app.kubernetes.io/version: <span class="string">&quot;1.16.0&quot;</span></span><br><span class="line">        app.kubernetes.io/managed-by: Helm</span><br><span class="line">    spec:</span><br><span class="line">      serviceAccountName: nginx-app1</span><br><span class="line">      securityContext:</span><br><span class="line">        &#123;&#125;</span><br><span class="line">      containers:</span><br><span class="line">        - name: app1</span><br><span class="line">          securityContext:</span><br><span class="line">            &#123;&#125;</span><br><span class="line">          image: <span class="string">&quot;nginx:latest&quot;</span></span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          ports:</span><br><span class="line">            - name: http</span><br><span class="line">              containerPort: 80</span><br><span class="line">              protocol: TCP</span><br><span class="line">          livenessProbe:</span><br><span class="line">            httpGet:</span><br><span class="line">              path: /</span><br><span class="line">              port: http</span><br><span class="line">          readinessProbe:</span><br><span class="line">            httpGet:</span><br><span class="line">              path: /</span><br><span class="line">              port: http</span><br><span class="line">          resources:</span><br><span class="line">            &#123;&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment">#</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">POD_NAME</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get pods <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-l</span> <span class="token string">"app.kubernetes.io/name=app1,app.kubernetes.io/instance=nginx"</span> <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].metadata.name&#125;"</span><span class="token variable">)</span></span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">CONTAINER_PORT</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get pod <span class="token parameter variable">--namespace</span> default $POD_NAME <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.spec.containers[0].ports[0].containerPort&#125;"</span><span class="token variable">)</span></span>
+<span class="token builtin class-name">echo</span> <span class="token string">"Visit http://127.0.0.1:8080 to use your application"</span>
+kubectl <span class="token parameter variable">--namespace</span> default port-forward <span class="token variable">$POD_NAME</span> <span class="token number">8080</span>:<span class="token variable">$CONTAINER_PORT</span>
+<span class="token comment">#http://127.0.0.1:8080</span>
+
+<span class="token comment">#测试</span>
+<span class="token function">curl</span> http://127.0.0.1:8080
+
+<span class="token comment">#回显</span>
+<span class="token operator">&lt;</span><span class="token operator">!</span>DOCTYPE html<span class="token operator">></span>
+<span class="token operator">&lt;</span>html<span class="token operator">></span>
+<span class="token operator">&lt;</span>head<span class="token operator">></span>
+<span class="token operator">&lt;</span>title<span class="token operator">></span>Welcome to nginx<span class="token operator">!</span><span class="token operator">&lt;</span>/title<span class="token operator">></span>
+<span class="token operator">&lt;</span>style<span class="token operator">></span>
+html <span class="token punctuation">&#123;</span> color-scheme: light dark<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+body <span class="token punctuation">&#123;</span> width: 35em<span class="token punctuation">;</span> margin: <span class="token number">0</span> auto<span class="token punctuation">;</span>
+font-family: Tahoma, Verdana, Arial, sans-serif<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+<span class="token operator">&lt;</span>/style<span class="token operator">></span>
+<span class="token operator">&lt;</span>/head<span class="token operator">></span>
+<span class="token operator">&lt;</span>body<span class="token operator">></span>
+<span class="token operator">&lt;</span>h<span class="token operator"><span class="token file-descriptor important">1</span>></span>Welcome to nginx<span class="token operator">!</span><span class="token operator">&lt;</span>/h<span class="token operator"><span class="token file-descriptor important">1</span>></span>
+<span class="token operator">&lt;</span>p<span class="token operator">></span>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.<span class="token operator">&lt;</span>/p<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>p<span class="token operator">></span>For online documentation and support please refer to
+<span class="token operator">&lt;</span>a <span class="token assign-left variable">href</span><span class="token operator">=</span><span class="token string">"http://nginx.org/"</span><span class="token operator">></span>nginx.org<span class="token operator">&lt;</span>/a<span class="token operator">></span>.<span class="token operator">&lt;</span>br/<span class="token operator">></span>
+Commercial support is available at
+<span class="token operator">&lt;</span>a <span class="token assign-left variable">href</span><span class="token operator">=</span><span class="token string">"http://nginx.com/"</span><span class="token operator">></span>nginx.com<span class="token operator">&lt;</span>/a<span class="token operator">></span>.<span class="token operator">&lt;</span>/p<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>p<span class="token operator">></span><span class="token operator">&lt;</span>em<span class="token operator">></span>Thank you <span class="token keyword">for</span> using nginx.<span class="token operator">&lt;</span>/em<span class="token operator">></span><span class="token operator">&lt;</span>/p<span class="token operator">></span>
+<span class="token operator">&lt;</span>/body<span class="token operator">></span>
+<span class="token operator">&lt;</span>/html<span class="token operator">></span>
+
+正常访问<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="回滚"><a href="#回滚" class="headerlink" title="回滚"></a>回滚</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看历史版本
+helm <span class="token function">history</span> nginx
+REVISION    UPDATED                     STATUS      CHART       APP VERSION DESCRIPTION     
+<span class="token number">1</span>           Thu May  <span class="token number">2</span> <span class="token number">23</span>:36:20 <span class="token number">2024</span>    superseded  app1-0.1.0  <span class="token number">1.16</span>.0      Install complete
+<span class="token number">2</span>           Thu May  <span class="token number">2</span> <span class="token number">23</span>:59:10 <span class="token number">2024</span>    deployed    app1-0.1.0  <span class="token number">1.16</span>.0      Upgrade complete
+
+回滚
+helm rollback nginx <span class="token number">1</span>
+<span class="token number">1</span>是版本号
+<span class="token comment">#Rollback was a success! Happy Helming!</span>
+
+查看状态
+kubectl get svc  <span class="token operator">|</span> <span class="token function">grep</span> nginx 
+nginx-app1   NodePort    <span class="token number">10.108</span>.41.185   <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">80</span>:31882/TCP   32m
+
+又变回了NodePort类型<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="打包helm-package"><a href="#打包helm-package" class="headerlink" title="打包helm package"></a>打包helm package</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm package app1/
+Successfully packaged chart and saved it to: /root/helm/app1-0.1.0.tgz
+
+生成压缩包app1-0.1.0.tgz
+
+压缩包互相传完之后解压
+再直接
+helm <span class="token function">install</span> nginx./
+直接完事
+
+查看chart状态：
+
+helm get manifest nginx 
+---
+<span class="token comment"># Source: app1/templates/serviceaccount.yaml</span>
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nginx-app1
+  labels:
+    helm.sh/chart: app1-0.1.0
+    app.kubernetes.io/name: app1
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/version: <span class="token string">"1.16.0"</span>
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: <span class="token boolean">true</span>
+---
+<span class="token comment"># Source: app1/templates/service.yaml</span>
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-app1
+  labels:
+    helm.sh/chart: app1-0.1.0
+    app.kubernetes.io/name: app1
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/version: <span class="token string">"1.16.0"</span>
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  ports:
+    - port: <span class="token number">80</span>
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: app1
+    app.kubernetes.io/instance: nginx
+---
+<span class="token comment"># Source: app1/templates/deployment.yaml</span>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app1
+  labels:
+    helm.sh/chart: app1-0.1.0
+    app.kubernetes.io/name: app1
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/version: <span class="token string">"1.16.0"</span>
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: <span class="token number">1</span>
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: app1
+      app.kubernetes.io/instance: nginx
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: app1-0.1.0
+        app.kubernetes.io/name: app1
+        app.kubernetes.io/instance: nginx
+        app.kubernetes.io/version: <span class="token string">"1.16.0"</span>
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: nginx-app1
+      securityContext:
+        <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+      containers:
+        - name: app1
+          securityContext:
+            <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+          image: <span class="token string">"nginx:latest"</span>
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: <span class="token number">80</span>
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 
     </article>
@@ -6713,36 +7110,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7207,13 +7574,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8254,13 +8621,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8713,14 +9080,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8728,14 +9095,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

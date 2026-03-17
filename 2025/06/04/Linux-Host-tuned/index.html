@@ -502,19 +502,69 @@
 </ul>
 <p>网络调优比较复杂，不介绍</p>
 <h2 id="虚拟机cpu调优"><a href="#虚拟机cpu调优" class="headerlink" title="虚拟机cpu调优"></a>虚拟机cpu调优</h2><p>虚机的虚拟CPU在宿主机上作为用户空间进程运行，可以使虚拟CPU进程pin在主机物理CPU上，以提高性能。可以增加CPU缓存命中率</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">virsh vcpupin &lt;vm-name&gt;</span><br><span class="line">假设物理和虚拟CPU都是两核</span><br><span class="line">VCPU   CPU Affinity</span><br><span class="line">----------------------</span><br><span class="line">0:     0-1</span><br><span class="line">1:     0-1</span><br><span class="line">表示可以在任何物理CPU上运行</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将其固定到第一个CPU下</span></span><br><span class="line">virsh vcpupin &lt;vm-name&gt; 0 0</span><br><span class="line">virsh vcpupin &lt;vm-name&gt; 1 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查CPU亲和性</span></span><br><span class="line">virsh vcpuinfo &lt;vm-name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 给qemu分配专门CPU到CPU1上</span></span><br><span class="line">virsh emulatorpin &lt;vm-name&gt; 1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">virsh</span> vcpupin <span class="token operator">&lt;</span>vm-name<span class="token operator">></span>
+假设物理和虚拟CPU都是两核
+VCPU   CPU Affinity
+----------------------
+<span class="token number">0</span>:     <span class="token number">0</span>-1
+<span class="token number">1</span>:     <span class="token number">0</span>-1
+表示可以在任何物理CPU上运行
+
+<span class="token comment"># 将其固定到第一个CPU下</span>
+<span class="token function">virsh</span> vcpupin <span class="token operator">&lt;</span>vm-name<span class="token operator">></span> <span class="token number">0</span> <span class="token number">0</span>
+<span class="token function">virsh</span> vcpupin <span class="token operator">&lt;</span>vm-name<span class="token operator">></span> <span class="token number">1</span> <span class="token number">0</span>
+
+<span class="token comment"># 检查CPU亲和性</span>
+<span class="token function">virsh</span> vcpuinfo <span class="token operator">&lt;</span>vm-name<span class="token operator">></span>
+
+<span class="token comment"># 给qemu分配专门CPU到CPU1上</span>
+<span class="token function">virsh</span> emulatorpin <span class="token operator">&lt;</span>vm-name<span class="token operator">></span> <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="虚拟机内存调优"><a href="#虚拟机内存调优" class="headerlink" title="虚拟机内存调优"></a>虚拟机内存调优</h2><h3 id="限制host内存"><a href="#限制host内存" class="headerlink" title="限制host内存"></a>限制host内存</h3><ul>
 <li>最大分配值：客户机运行时分配的最大内存</li>
 <li>当前分配值：小于或等于最大分配</li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">通过virsh dominfo查看</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整当前分配内存</span></span><br><span class="line">virsh setmem</span><br><span class="line"><span class="comment"># 将正在运行的虚拟机内存调整为 4GB</span></span><br><span class="line">virsh setmem my-vm 4096M --live</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整最大内存限制</span></span><br><span class="line">virsh setmaxmem</span><br><span class="line"><span class="comment"># 永久设置最大内存为 8GB（需重启生效）</span></span><br><span class="line">virsh setmaxmem my-vm 8192M --config</span><br><span class="line"><span class="comment"># 临时设置最大内存为 16GB（立即生效）</span></span><br><span class="line">virsh setmaxmem my-vm 16384M --live</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整内存调优参数</span></span><br><span class="line">virsh memtune</span><br><span class="line"><span class="comment"># 限制虚拟机最大内存使用为 4GB</span></span><br><span class="line">virsh memtune my-vm --hard-limit 4194304 --live</span><br><span class="line"></span><br><span class="line">hard_limit	绝对内存使用上限（物理内存+swap）</span><br><span class="line">soft_limit	内存竞争时的优先保证量</span><br><span class="line">swap_hard_limit	物理内存+swap 的总上限</span><br><span class="line">min_guarantee	保证的最小内存（需特殊配置）</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">通过virsh dominfo查看
+
+<span class="token comment"># 调整当前分配内存</span>
+<span class="token function">virsh</span> setmem
+<span class="token comment"># 将正在运行的虚拟机内存调整为 4GB</span>
+<span class="token function">virsh</span> setmem my-vm 4096M <span class="token parameter variable">--live</span>
+
+<span class="token comment"># 调整最大内存限制</span>
+<span class="token function">virsh</span> setmaxmem
+<span class="token comment"># 永久设置最大内存为 8GB（需重启生效）</span>
+<span class="token function">virsh</span> setmaxmem my-vm 8192M <span class="token parameter variable">--config</span>
+<span class="token comment"># 临时设置最大内存为 16GB（立即生效）</span>
+<span class="token function">virsh</span> setmaxmem my-vm 16384M <span class="token parameter variable">--live</span>
+
+<span class="token comment"># 调整内存调优参数</span>
+<span class="token function">virsh</span> memtune
+<span class="token comment"># 限制虚拟机最大内存使用为 4GB</span>
+<span class="token function">virsh</span> memtune my-vm --hard-limit <span class="token number">4194304</span> <span class="token parameter variable">--live</span>
+
+hard_limit	绝对内存使用上限（物理内存+swap）
+soft_limit	内存竞争时的优先保证量
+swap_hard_limit	物理内存+swap 的总上限
+min_guarantee	保证的最小内存（需特殊配置）
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="内核同页合并"><a href="#内核同页合并" class="headerlink" title="内核同页合并"></a>内核同页合并</h3><p>当客户虚拟机运行相同的操作系统或工作负载时，很有可能许多内存页具有相同的内容。</p>
 <p>内核共享内存，通过将相同的页面合并到一个内存页面来减少总内存使用量</p>
 <p>当客户端必须通过写入来修改共享内存页面时，KSM克隆共享页面以给客户端一个新的非共享副本。这个过程称为写时复制(COW-copy on write)。</p>
 <p>使用KSM需要两个服务，<strong>KSM</strong>是执行内存扫描和页面合并的服务，<strong>ksmtuned</strong>是控制KSM扫描内存的时间和力度的服务。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">KSM可调项：</span><br><span class="line">run:当设置为1时，ksm会主动扫描内存。当设置为0时，扫描被禁用。</span><br><span class="line">pages_to_scan:下一个周期中要扫描的内存页数。</span><br><span class="line">sleep_millisecs:周期之间休眠的毫秒数。</span><br><span class="line">pages_shared:共享的页面总数。</span><br><span class="line">pages_sharing:当前共享的页面数。</span><br><span class="line">full_scans:整个内存被扫描的次数。</span><br><span class="line">merge_across_nodes:来自不同NUMA节点的页面是否可以合并</span><br><span class="line"></span><br><span class="line"><span class="comment"># virsh node-memory-tune配置KSM可调项</span></span><br><span class="line">指定在扫描进程休眠10毫秒之前要扫描的页面数量</span><br><span class="line">virsh node-memory-tune --shm-pages-to-scan 100 --shm-sleep-millisecs 10</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">KSM可调项：
+run:当设置为1时，ksm会主动扫描内存。当设置为0时，扫描被禁用。
+pages_to_scan:下一个周期中要扫描的内存页数。
+sleep_millisecs:周期之间休眠的毫秒数。
+pages_shared:共享的页面总数。
+pages_sharing:当前共享的页面数。
+full_scans:整个内存被扫描的次数。
+merge_across_nodes:来自不同NUMA节点的页面是否可以合并
+
+<span class="token comment"># virsh node-memory-tune配置KSM可调项</span>
+指定在扫描进程休眠10毫秒之前要扫描的页面数量
+<span class="token function">virsh</span> node-memory-tune --shm-pages-to-scan <span class="token number">100</span> --shm-sleep-millisecs <span class="token number">10</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>要调优KSM，使用ksmtuned服务通常比手工调优更有用。使用&#x2F;etc&#x2F;ksmtuning.conf文件配置ksmtuning服务。</p>
 <h2 id="磁盘I-O调优"><a href="#磁盘I-O调优" class="headerlink" title="磁盘I&#x2F;O调优"></a>磁盘I&#x2F;O调优</h2><p>客户虚拟磁盘可以是块设备，也可以是映像文件。块设备是虚拟磁盘的首选设备。与块设备相比，基于文件的映像文件增加了I&#x2F;O操作的额外资源需求。与块设备相比，映像文件需要更多的资源进行I&#x2F;O操作，因此需要进行磁盘调优。</p>
@@ -523,16 +573,51 @@
 <p>1.使用稀疏映像文件，这会导致过度分配主机存储。（精简置备）<br>qcow2 文件在创建时不会立即占用全部空间，而是按需增长。</p>
 <p>2.将更改存储到另一个磁盘映像，而不实际影响原始映像的内容，该映像称为写时复制映像<br>修改操作不会直接写入基础镜像，而是记录到单独文件，</p>
 <p>3.支持快照。快照是指使用Redirect-on-Write引用原始图像以避免更改原始图像的图像<br><strong>快照是只读的</strong><br>快照冻结原始状态，新数据写入独立空间</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建快照</span></span><br><span class="line">virsh snapshot-create-as vm1 snap1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看快照</span></span><br><span class="line">virsh snapshot-list vm1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 虚拟机执行操作：</span></span><br><span class="line"><span class="built_in">rm</span> -f /important-file</span><br><span class="line"></span><br><span class="line"><span class="comment"># 恢复到快照</span></span><br><span class="line">virsh snapshot-revert vm1 snap1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建快照</span>
+<span class="token function">virsh</span> snapshot-create-as vm1 snap1
+
+<span class="token comment"># 查看快照</span>
+<span class="token function">virsh</span> snapshot-list vm1
+
+<span class="token comment"># 虚拟机执行操作：</span>
+<span class="token function">rm</span> <span class="token parameter variable">-f</span> /important-file
+
+<span class="token comment"># 恢复到快照</span>
+<span class="token function">virsh</span> snapshot-revert vm1 snap1
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>4.支持压缩，并允许使用zlib压缩每个集群。使用集群存储设备的内容。<br>以 64KB 为单元压缩存储</p>
 <p>5.支持集群加密</p>
 <p><strong>创建qcow2镜像</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">qemu-image create -f qcow2 -o preallocation-metadata disk.qcow2 1G</span><br><span class="line"></span><br><span class="line">预分配模式:</span><br><span class="line">preallocation=metadata:(精简置备)</span><br><span class="line">此选项在创建映像时分配元数据所需的空间，而不是用于数据。这将</span><br><span class="line">导致快速提供映像，但由于映像稀疏，所以来宾写入速度较慢。</span><br><span class="line">preallocation=falloc:(元数据)</span><br><span class="line">此选项在创建映像时分配元数据和数据所需的空间，但标记未分配的</span><br><span class="line">块。这样可以快速提供映像，但比使用元数据选项要慢。磁盘写入速度更快。</span><br><span class="line">preallocation=full:(完整制备)</span><br><span class="line">该选项在映像创建过程中分配完整的文件大小，并且不使用任何稀疏技</span><br><span class="line">术。这将导致映像的初始配置变慢。但是，在使用过程中，磁盘写性能与正常的falloc例程相同。</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-image create <span class="token parameter variable">-f</span> qcow2 <span class="token parameter variable">-o</span> preallocation-metadata disk.qcow2 1G
+
+预分配模式:
+<span class="token assign-left variable">preallocation</span><span class="token operator">=</span>metadata:<span class="token punctuation">(</span>精简置备<span class="token punctuation">)</span>
+此选项在创建映像时分配元数据所需的空间，而不是用于数据。这将
+导致快速提供映像，但由于映像稀疏，所以来宾写入速度较慢。
+<span class="token assign-left variable">preallocation</span><span class="token operator">=</span>falloc:<span class="token punctuation">(</span>元数据<span class="token punctuation">)</span>
+此选项在创建映像时分配元数据和数据所需的空间，但标记未分配的
+块。这样可以快速提供映像，但比使用元数据选项要慢。磁盘写入速度更快。
+<span class="token assign-left variable">preallocation</span><span class="token operator">=</span>full:<span class="token punctuation">(</span>完整制备<span class="token punctuation">)</span>
+该选项在映像创建过程中分配完整的文件大小，并且不使用任何稀疏技
+术。这将导致映像的初始配置变慢。但是，在使用过程中，磁盘写性能与正常的falloc例程相同。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="磁盘缓存模式"><a href="#磁盘缓存模式" class="headerlink" title="磁盘缓存模式"></a>磁盘缓存模式</h3><p>KVM允许在配置客户虚拟机时<strong>指定各种磁盘缓存</strong>。</p>
 <p>磁盘缓存模式影响如何读取和写入主机页缓存中的数据。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">cache=none（默认）</span><br><span class="line">来自客户机的磁盘I/O不缓存在主机上，而是存储在物理磁盘缓存中。这个选项通常是最好的选择，并且支持迁移。</span><br><span class="line"></span><br><span class="line">cache=writethrough(推荐)</span><br><span class="line">来自客户机的磁盘I/O被缓存到主机上，并写入到物理磁盘。只有当数据被提交到物理磁盘时，才认为写操作完成。此选项可确保数据完整性，但写入速度较慢。</span><br><span class="line"></span><br><span class="line">cache=writeback</span><br><span class="line">来自客户机的磁盘I/O缓存在主机上。只有当数据提交到主机缓存时，才认为写操作完成。主机磁盘缓存管理提交到物理磁盘。</span><br><span class="line"></span><br><span class="line">cache=directsync</span><br><span class="line">来自客户机的磁盘I/O写入物理磁盘，并在需要时绕过主机缓存。只有当数据被提交到物理磁盘时，才认为写操作完成。此选项可确保数据完整性，但写入速度较慢。此选项对于不经常刷新磁盘I/O的客户机很有用。</span><br><span class="line"></span><br><span class="line">cache=unsafe</span><br><span class="line">这种模式类似于回写，但是来自客户端的所有磁盘I/O刷新命令都被忽略。该模式不能保证数据的完整性，但会提高磁盘的性能。例如，在来宾安装期间，缓存模式是最佳选择，但在生产工作负载上不是。</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">cache</span><span class="token operator">=</span>none（默认）
+来自客户机的磁盘I/O不缓存在主机上，而是存储在物理磁盘缓存中。这个选项通常是最好的选择，并且支持迁移。
+
+<span class="token assign-left variable">cache</span><span class="token operator">=</span>writethrough<span class="token punctuation">(</span>推荐<span class="token punctuation">)</span>
+来自客户机的磁盘I/O被缓存到主机上，并写入到物理磁盘。只有当数据被提交到物理磁盘时，才认为写操作完成。此选项可确保数据完整性，但写入速度较慢。
+
+<span class="token assign-left variable">cache</span><span class="token operator">=</span>writeback
+来自客户机的磁盘I/O缓存在主机上。只有当数据提交到主机缓存时，才认为写操作完成。主机磁盘缓存管理提交到物理磁盘。
+
+<span class="token assign-left variable">cache</span><span class="token operator">=</span>directsync
+来自客户机的磁盘I/O写入物理磁盘，并在需要时绕过主机缓存。只有当数据被提交到物理磁盘时，才认为写操作完成。此选项可确保数据完整性，但写入速度较慢。此选项对于不经常刷新磁盘I/O的客户机很有用。
+
+<span class="token assign-left variable">cache</span><span class="token operator">=</span>unsafe
+这种模式类似于回写，但是来自客户端的所有磁盘I/O刷新命令都被忽略。该模式不能保证数据的完整性，但会提高磁盘的性能。例如，在来宾安装期间，缓存模式是最佳选择，但在生产工作负载上不是。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <table>
 <thead>
@@ -582,14 +667,31 @@
 </tbody></table>
 <h3 id="磁盘IO线程"><a href="#磁盘IO线程" class="headerlink" title="磁盘IO线程"></a>磁盘IO线程</h3><p>I&#x2F;O线程是受支持的磁盘设备的专用线程，用于执行块I&#x2F;O请求，以提高可伸缩性。</p>
 <p>一个主机CPU必须固定一个或两个I&#x2F;O线程，每个虚拟块设备必须配置一个I&#x2F;O线程以获得良好的性能</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">查看客户机每个IO线程数和CPU亲和性</span><br><span class="line">virsh iothreadinfo &lt;vm-name&gt;</span><br><span class="line"></span><br><span class="line">使用virsh iothreadadd命令为只读磁盘添加I/O线程。</span><br><span class="line">virsh iothreadadd &lt;vm-name&gt; 2</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看客户机每个IO线程数和CPU亲和性
+<span class="token function">virsh</span> iothreadinfo <span class="token operator">&lt;</span>vm-name<span class="token operator">></span>
+
+使用virsh iothreadadd命令为只读磁盘添加I/O线程。
+<span class="token function">virsh</span> iothreadadd <span class="token operator">&lt;</span>vm-name<span class="token operator">></span> <span class="token number">2</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="虚拟磁盘调优"><a href="#虚拟磁盘调优" class="headerlink" title="虚拟磁盘调优"></a>虚拟磁盘调优</h3><p>使用virsh blkdeviotune命令查看和设置连接到客户机的每个块设备上的吞吐量和I&#x2F;O操作的限制。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">virsh blkdeviotune &lt;vm-name&gt; vdb --total-iops-sec 1000 \</span><br><span class="line">--total-bytes-sec 20MB</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">virsh</span> blkdeviotune <span class="token operator">&lt;</span>vm-name<span class="token operator">></span> vdb --total-iops-sec <span class="token number">1000</span> <span class="token punctuation">\</span>
+--total-bytes-sec 20MB<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <h2 id="cgroup管理KVM虚拟机limit"><a href="#cgroup管理KVM虚拟机limit" class="headerlink" title="cgroup管理KVM虚拟机limit"></a>cgroup管理KVM虚拟机limit</h2><p>默认情况下，libvirtd为主机上运行的虚拟机配置控制组。使用lscgroups命令查看cgroups定义。</p>
 <p>但libvirtd守护进程提供了一个API，用于与分配给各个运行客户机的cgroup限制进行交互，所以可以直接使用<strong>virsh schedinfo命令</strong>查看和设置虚拟机的CPU相关限制。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">设置CPU限制:</span><br><span class="line"><span class="comment"># 设置CPU权重为2048（双倍份额）</span></span><br><span class="line">virsh schedinfo vm1 cpu_shares=2048</span><br><span class="line"></span><br><span class="line"><span class="comment"># 限制虚拟机最多使用50%的单核CPU</span></span><br><span class="line">virsh schedinfo vm1 vcpu_period=100000 vcpu_quota=50000</span><br><span class="line"></span><br><span class="line"><span class="comment"># 限制整个虚拟机最多使用1.5个vCPU（150%）</span></span><br><span class="line">virsh schedinfo vm1 global_quota=150000 global_period=100000</span><br><span class="line"></span><br><span class="line"><span class="comment"># 限制QEMU模拟器最多使用30%的CPU</span></span><br><span class="line">virsh schedinfo vm1 emulator_quota=30000</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">设置CPU限制:
+<span class="token comment"># 设置CPU权重为2048（双倍份额）</span>
+<span class="token function">virsh</span> schedinfo vm1 <span class="token assign-left variable">cpu_shares</span><span class="token operator">=</span><span class="token number">2048</span>
+
+<span class="token comment"># 限制虚拟机最多使用50%的单核CPU</span>
+<span class="token function">virsh</span> schedinfo vm1 <span class="token assign-left variable">vcpu_period</span><span class="token operator">=</span><span class="token number">100000</span> <span class="token assign-left variable">vcpu_quota</span><span class="token operator">=</span><span class="token number">50000</span>
+
+<span class="token comment"># 限制整个虚拟机最多使用1.5个vCPU（150%）</span>
+<span class="token function">virsh</span> schedinfo vm1 <span class="token assign-left variable">global_quota</span><span class="token operator">=</span><span class="token number">150000</span> <span class="token assign-left variable">global_period</span><span class="token operator">=</span><span class="token number">100000</span>
+
+<span class="token comment"># 限制QEMU模拟器最多使用30%的CPU</span>
+<span class="token function">virsh</span> schedinfo vm1 <span class="token assign-left variable">emulator_quota</span><span class="token operator">=</span><span class="token number">30000</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <table>
 <thead>
@@ -6720,36 +6822,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7214,13 +7286,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8261,13 +8333,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8720,14 +8792,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8735,14 +8807,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

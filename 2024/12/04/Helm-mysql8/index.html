@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="用的单点k8s，装单点mysql8 添加与下载chart模板阿里云的仓库默认提供的mysql5.7的，所以使用bitnami的仓库 但是bitnami概率被墙，所以有时需要在另外机器上下载 123helm repo add bitnami https:&#x2F;&#x2F;charts.bitnami.com&#x2F;bitnamihelm search repo bitnami | grep mysqlhelm pull">
+    <meta name="description" content="用的单点k8s，装单点mysql8 添加与下载chart模板阿里云的仓库默认提供的mysql5.7的，所以使用bitnami的仓库 但是bitnami概率被墙，所以有时需要在另外机器上下载 helm repo add bitnami https:&#x2F;&#x2F;charts.bitnami.com&#x2F;bitnami helm search repo bitnami | grep mysql helm pull">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Helm部署mysql8">
 <meta property="og:url" content="https://akemi.zj.cn/2024/12/04/Helm-mysql8/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="用的单点k8s，装单点mysql8 添加与下载chart模板阿里云的仓库默认提供的mysql5.7的，所以使用bitnami的仓库 但是bitnami概率被墙，所以有时需要在另外机器上下载 123helm repo add bitnami https:&#x2F;&#x2F;charts.bitnami.com&#x2F;bitnamihelm search repo bitnami | grep mysqlhelm pull">
+<meta property="og:description" content="用的单点k8s，装单点mysql8 添加与下载chart模板阿里云的仓库默认提供的mysql5.7的，所以使用bitnami的仓库 但是bitnami概率被墙，所以有时需要在另外机器上下载 helm repo add bitnami https:&#x2F;&#x2F;charts.bitnami.com&#x2F;bitnami helm search repo bitnami | grep mysql helm pull">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-12-03T16:29:40.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.162Z">
@@ -496,33 +496,133 @@
         <p>用的单点k8s，装单点mysql8</p>
 <h3 id="添加与下载chart模板"><a href="#添加与下载chart模板" class="headerlink" title="添加与下载chart模板"></a><strong>添加与下载chart模板</strong></h3><p>阿里云的仓库默认提供的mysql5.7的，所以使用bitnami的仓库</p>
 <p>但是bitnami概率被墙，所以有时需要在另外机器上下载</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">helm repo add bitnami https://charts.bitnami.com/bitnami</span><br><span class="line">helm search repo bitnami | grep mysql</span><br><span class="line">helm pull bitnami/mysql</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm repo <span class="token function">add</span> bitnami https://charts.bitnami.com/bitnami
+helm search repo bitnami <span class="token operator">|</span> <span class="token function">grep</span> mysql
+helm pull bitnami/mysql<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="查看chart信息与准备镜像"><a href="#查看chart信息与准备镜像" class="headerlink" title="查看chart信息与准备镜像"></a><strong>查看chart信息与准备镜像</strong></h3><p>可以看到有几个镜像需要提前准备好</p>
 <p><strong>我用了docker desktop挂代理拉的，他妈docker桌面版还和VMware互斥，我一会还得费劲巴拉把那些东西禁用，气死了。这个docker还有这个墙，死全家了真的</strong> </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">    - name: mysql</span><br><span class="line">      image: docker.io/bitnami/mysql:8.0.36-debian-12-r12</span><br><span class="line">    - name: mysqld-exporter</span><br><span class="line">      image: docker.io/bitnami/mysqld-exporter:0.15.1-debian-12-r12</span><br><span class="line">    - name: os-shell</span><br><span class="line">      image: docker.io/bitnami/os-shell:12-debian-12-r19</span><br><span class="line"></span><br><span class="line">可以先拉取好第一个，我是1.23的k8s直接用docker就行</span><br><span class="line">用containerd就拉取好之后再导入，一样的</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">    - name: mysql
+      image: docker.io/bitnami/mysql:8.0.36-debian-12-r12
+    - name: mysqld-exporter
+      image: docker.io/bitnami/mysqld-exporter:0.15.1-debian-12-r12
+    - name: os-shell
+      image: docker.io/bitnami/os-shell:12-debian-12-r19
+
+可以先拉取好第一个，我是1.23的k8s直接用docker就行
+用containerd就拉取好之后再导入，一样的<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="准备一个pv"><a href="#准备一个pv" class="headerlink" title="准备一个pv"></a><strong>准备一个pv</strong></h3><p>因为我是单节点，没有nfs供应商，pvc没法自动申请pv，所以手动搞一个</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> /data/mysql -p</span><br><span class="line">sudo <span class="built_in">chmod</span> 777 /data/mysql</span><br><span class="line"></span><br><span class="line">sudo <span class="built_in">tee</span> &gt; ~/下载/mysql-helm-8/templates/primary/pv.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: PersistentVolume</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-pv</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  capacity:</span></span><br><span class="line"><span class="string">    storage: 8Gi</span></span><br><span class="line"><span class="string">  accessModes:</span></span><br><span class="line"><span class="string">    - ReadWriteOnce</span></span><br><span class="line"><span class="string">  persistentVolumeReclaimPolicy: Retain</span></span><br><span class="line"><span class="string">  local:</span></span><br><span class="line"><span class="string">    path: /data/mysql</span></span><br><span class="line"><span class="string">  nodeAffinity:</span></span><br><span class="line"><span class="string">    required:</span></span><br><span class="line"><span class="string">      nodeSelectorTerms:</span></span><br><span class="line"><span class="string">        - matchExpressions:</span></span><br><span class="line"><span class="string">            - key: kubernetes.io/hostname</span></span><br><span class="line"><span class="string">              operator: In</span></span><br><span class="line"><span class="string">              values:</span></span><br><span class="line"><span class="string">                - ws-station</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> /data/mysql <span class="token parameter variable">-p</span>
+<span class="token function">sudo</span> <span class="token function">chmod</span> <span class="token number">777</span> /data/mysql
+
+<span class="token function">sudo</span> <span class="token function">tee</span> <span class="token operator">></span> ~/下载/mysql-helm-8/templates/primary/pv.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: /data/mysql
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - ws-station
+EOF</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="污点容忍度"><a href="#污点容忍度" class="headerlink" title="污点容忍度"></a>污点容忍度</h3><p>因为我是单节点部署，所以需要添加污点容忍，容忍主节点的污点node-role.kubernetes.io&#x2F;master</p>
 <p>所以在statefulset.spec.template.spec下修改tolerations</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">在statefulset文件中容忍是这么写的</span><br><span class="line">      tolerations: &#123;&#123;- include <span class="string">&quot;common.tplvalues.render&quot;</span> (dict <span class="string">&quot;value&quot;</span> .Values.primary.tolerations <span class="string">&quot;context&quot;</span> $) | nindent 8 &#125;&#125;</span><br><span class="line">      &#123;&#123;- end &#125;&#125;</span><br><span class="line">      &#123;&#123;- <span class="keyword">if</span> .Values.primary.priorityClassName &#125;&#125;</span><br><span class="line"></span><br><span class="line">意味着需要去Values.yaml文件下，找primary这个字段下，定义容忍规则</span><br><span class="line">加入</span><br><span class="line">  tolerations:</span><br><span class="line">    - key: <span class="string">&quot;node-role.kubernetes.io/master&quot;</span></span><br><span class="line">      operator: <span class="string">&quot;Exists&quot;</span></span><br><span class="line">      effect: <span class="string">&quot;NoSchedule&quot;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在statefulset文件中容忍是这么写的
+      tolerations: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- include <span class="token string">"common.tplvalues.render"</span> <span class="token punctuation">(</span>dict <span class="token string">"value"</span> .Values.primary.tolerations <span class="token string">"context"</span> $<span class="token punctuation">)</span> <span class="token operator">|</span> nindent <span class="token number">8</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">if</span> .Values.primary.priorityClassName <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
 
-<h2 id="创建release与验证"><a href="#创建release与验证" class="headerlink" title="创建release与验证"></a>创建release与验证</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">helm install mysql8 ./</span><br><span class="line">helm list</span><br><span class="line">NAME  	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART       	APP VERSION</span><br><span class="line">mysql8	default  	1       	2024-12-03 15:03:47.821112342 +0800 CST	deployed	mysql-10.2.1	8.0.36     </span><br><span class="line">kubectl get pods </span><br><span class="line">NAME       READY   STATUS    RESTARTS   AGE</span><br><span class="line">mysql8-0   1/1     Running   0          8m30s</span><br><span class="line"></span><br><span class="line">以下是创建完成后的提示</span><br><span class="line"><span class="built_in">echo</span> Username: root</span><br><span class="line">MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace default mysql8 -o jsonpath=<span class="string">&quot;&#123;.data.mysql-root-password&#125;&quot;</span> | <span class="built_in">base64</span> -d)</span><br><span class="line"></span><br><span class="line">To connect to your database:</span><br><span class="line">  1. Run a pod that you can use as a client:</span><br><span class="line">      kubectl run mysql8-client --<span class="built_in">rm</span> --<span class="built_in">tty</span> -i --restart=<span class="string">&#x27;Never&#x27;</span> --image  docker.io/bitnami/mysql:8.0.36-debian-12-r12 --namespace default --<span class="built_in">env</span> MYSQL_ROOT_PASSWORD=<span class="variable">$MYSQL_ROOT_PASSWORD</span> --<span class="built_in">command</span> -- bash</span><br><span class="line">  2. To connect to primary service (<span class="built_in">read</span>/write):</span><br><span class="line">mysql -h mysql8.default.svc.cluster.local -uroot -p<span class="string">&quot;<span class="variable">$MYSQL_ROOT_PASSWORD</span>&quot;</span></span><br></pre></td></tr></table></figure>
+意味着需要去Values.yaml文件下，找primary这个字段下，定义容忍规则
+加入
+  tolerations:
+    - key: <span class="token string">"node-role.kubernetes.io/master"</span>
+      operator: <span class="token string">"Exists"</span>
+      effect: <span class="token string">"NoSchedule"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="创建release与验证"><a href="#创建release与验证" class="headerlink" title="创建release与验证"></a>创建release与验证</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm <span class="token function">install</span> mysql8 ./
+helm list
+NAME  	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART       	APP VERSION
+mysql8	default  	<span class="token number">1</span>       	<span class="token number">2024</span>-12-03 <span class="token number">15</span>:03:47.821112342 +0800 CST	deployed	mysql-10.2.1	<span class="token number">8.0</span>.36     
+kubectl get pods 
+NAME       READY   STATUS    RESTARTS   AGE
+mysql8-0   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          8m30s
+
+以下是创建完成后的提示
+<span class="token builtin class-name">echo</span> Username: root
+<span class="token assign-left variable">MYSQL_ROOT_PASSWORD</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get secret <span class="token parameter variable">--namespace</span> default mysql8 <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.data.mysql-root-password&#125;"</span> <span class="token operator">|</span> base64 <span class="token parameter variable">-d</span><span class="token variable">)</span></span>
+
+To connect to your database:
+  <span class="token number">1</span>. Run a pod that you can use as a client:
+      kubectl run mysql8-client <span class="token parameter variable">--rm</span> <span class="token parameter variable">--tty</span> <span class="token parameter variable">-i</span> <span class="token parameter variable">--restart</span><span class="token operator">=</span><span class="token string">'Never'</span> <span class="token parameter variable">--image</span>  docker.io/bitnami/mysql:8.0.36-debian-12-r12 <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">--env</span> <span class="token assign-left variable">MYSQL_ROOT_PASSWORD</span><span class="token operator">=</span><span class="token variable">$MYSQL_ROOT_PASSWORD</span> <span class="token parameter variable">--command</span> -- <span class="token function">bash</span>
+  <span class="token number">2</span>. To connect to primary <span class="token function">service</span> <span class="token punctuation">(</span>read/write<span class="token punctuation">)</span>:
+mysql <span class="token parameter variable">-h</span> mysql8.default.svc.cluster.local <span class="token parameter variable">-uroot</span> -p<span class="token string">"<span class="token variable">$MYSQL_ROOT_PASSWORD</span>"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>验证</strong></p>
 <p>如上所示，两步走</p>
 <p>第一步创建一个用于交互的mysql client的pod</p>
 <p>第二步连接与登录myslq的service端点</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">1.</span><br><span class="line">这个也需要添加污点，所以就这么搞了，不重要，正常情况下都不需要，只筛选一下node就可以</span><br><span class="line">kubectl run mysql8-client --<span class="built_in">rm</span> --<span class="built_in">tty</span> -i --restart=<span class="string">&#x27;Never&#x27;</span> \</span><br><span class="line">--image docker.io/bitnami/mysql:8.0.36-debian-12-r12 --namespace default \</span><br><span class="line">--<span class="built_in">env</span> MYSQL_ROOT_PASSWORD=<span class="string">&#x27;root&#x27;</span> --overrides=<span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;apiVersion&quot;: &quot;v1&quot;,</span></span><br><span class="line"><span class="string">    &quot;spec&quot;: &#123;</span></span><br><span class="line"><span class="string">        &quot;tolerations&quot;: [</span></span><br><span class="line"><span class="string">            &#123;</span></span><br><span class="line"><span class="string">                &quot;key&quot;: &quot;node-role.kubernetes.io/master&quot;,</span></span><br><span class="line"><span class="string">                &quot;operator&quot;: &quot;Exists&quot;,</span></span><br><span class="line"><span class="string">                &quot;effect&quot;: &quot;NoSchedule&quot;</span></span><br><span class="line"><span class="string">            &#125;</span></span><br><span class="line"><span class="string">        ]</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;&#x27;</span> --<span class="built_in">command</span> -- bash</span><br><span class="line"></span><br><span class="line">2.</span><br><span class="line">在临时容器中使用mysql命令行</span><br><span class="line">I have no name!@mysql8-client:/$ mysql -h mysql8.default.svc.cluster.local -uroot -pV6shijvABr       </span><br><span class="line">mysql&gt; <span class="keyword">select</span> user,host from mysql.user;</span><br><span class="line">+------------------+-----------+</span><br><span class="line">| user             | host      |</span><br><span class="line">+------------------+-----------+</span><br><span class="line">| root             | %         |</span><br><span class="line">| mysql.infoschema | localhost |</span><br><span class="line">| mysql.session    | localhost |</span><br><span class="line">| mysql.sys        | localhost |</span><br><span class="line">+------------------+-----------+</span><br><span class="line">4 rows <span class="keyword">in</span> <span class="built_in">set</span> (0.00 sec)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.
+这个也需要添加污点，所以就这么搞了，不重要，正常情况下都不需要，只筛选一下node就可以
+kubectl run mysql8-client <span class="token parameter variable">--rm</span> <span class="token parameter variable">--tty</span> <span class="token parameter variable">-i</span> <span class="token parameter variable">--restart</span><span class="token operator">=</span><span class="token string">'Never'</span> <span class="token punctuation">\</span>
+<span class="token parameter variable">--image</span> docker.io/bitnami/mysql:8.0.36-debian-12-r12 <span class="token parameter variable">--namespace</span> default <span class="token punctuation">\</span>
+<span class="token parameter variable">--env</span> <span class="token assign-left variable">MYSQL_ROOT_PASSWORD</span><span class="token operator">=</span><span class="token string">'root'</span> <span class="token parameter variable">--overrides</span><span class="token operator">=</span><span class="token string">'&#123;
+    "apiVersion": "v1",
+    "spec": &#123;
+        "tolerations": [
+            &#123;
+                "key": "node-role.kubernetes.io/master",
+                "operator": "Exists",
+                "effect": "NoSchedule"
+            &#125;
+        ]
+    &#125;
+&#125;'</span> <span class="token parameter variable">--command</span> -- <span class="token function">bash</span>
 
-<h2 id="修改root密码与更新release"><a href="#修改root密码与更新release" class="headerlink" title="修改root密码与更新release"></a>修改root密码与更新release</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; alter user <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;%&#x27;</span> identified by <span class="string">&#x27;root&#x27;</span>;</span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br><span class="line">mysql&gt; flush privileges;</span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br><span class="line"></span><br><span class="line">NAME       READY   STATUS    RESTARTS       AGE</span><br><span class="line">mysql8-0   0/1     Running   2 (108s ago)   34m</span><br></pre></td></tr></table></figure>
+<span class="token number">2</span>.
+在临时容器中使用mysql命令行
+I have no name<span class="token operator">!</span>@mysql8-client:/$ mysql <span class="token parameter variable">-h</span> mysql8.default.svc.cluster.local <span class="token parameter variable">-uroot</span> <span class="token parameter variable">-pV6shijvABr</span>       
+mysql<span class="token operator">></span> <span class="token keyword">select</span> user,host from mysql.user<span class="token punctuation">;</span>
++------------------+-----------+
+<span class="token operator">|</span> user             <span class="token operator">|</span> <span class="token function">host</span>      <span class="token operator">|</span>
++------------------+-----------+
+<span class="token operator">|</span> root             <span class="token operator">|</span> %         <span class="token operator">|</span>
+<span class="token operator">|</span> mysql.infoschema <span class="token operator">|</span> localhost <span class="token operator">|</span>
+<span class="token operator">|</span> mysql.session    <span class="token operator">|</span> localhost <span class="token operator">|</span>
+<span class="token operator">|</span> mysql.sys        <span class="token operator">|</span> localhost <span class="token operator">|</span>
++------------------+-----------+
+<span class="token number">4</span> rows <span class="token keyword">in</span> <span class="token builtin class-name">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="修改root密码与更新release"><a href="#修改root密码与更新release" class="headerlink" title="修改root密码与更新release"></a>修改root密码与更新release</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mysql<span class="token operator">></span> alter user <span class="token string">'root'</span>@<span class="token string">'%'</span> identified by <span class="token string">'root'</span><span class="token punctuation">;</span>
+Query OK, <span class="token number">0</span> rows affected <span class="token punctuation">(</span><span class="token number">0.01</span> sec<span class="token punctuation">)</span>
+mysql<span class="token operator">></span> flush privileges<span class="token punctuation">;</span>
+Query OK, <span class="token number">0</span> rows affected <span class="token punctuation">(</span><span class="token number">0.01</span> sec<span class="token punctuation">)</span>
+
+NAME       READY   STATUS    RESTARTS       AGE
+mysql8-0   <span class="token number">0</span>/1     Running   <span class="token number">2</span> <span class="token punctuation">(</span>108s ago<span class="token punctuation">)</span>   34m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>想不到吧，哥们就在里面小改了一手root用户密码，pod直接给我报错了</p>
 <p>报错access denied</p>
 <p>原因是他使用的是value.yaml中定义好的密码，我一改他密码对不上了</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">我直接进行修改</span><br><span class="line">  rootPassword: <span class="string">&quot;root&quot;</span></span><br><span class="line"></span><br><span class="line">更新</span><br><span class="line">helm upgrade mysql8 ./ -f values.yaml </span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">我直接进行修改
+  rootPassword: <span class="token string">"root"</span>
+
+更新
+helm upgrade mysql8 ./ <span class="token parameter variable">-f</span> values.yaml <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6581,36 +6681,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7075,13 +7145,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8122,13 +8192,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8581,14 +8651,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8596,14 +8666,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

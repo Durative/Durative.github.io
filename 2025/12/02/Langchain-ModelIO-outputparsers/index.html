@@ -530,13 +530,94 @@
 </tbody></table>
 <h3 id="格式化输出-定义输出格式json"><a href="#格式化输出-定义输出格式json" class="headerlink" title="格式化输出-定义输出格式json"></a>格式化输出-定义输出格式json</h3><p>在输入的时候通过prompt template进行输入：定义输出格式：字段与类型</p>
 <p>llm在返回结果的时候，会通过输出分析器进行验证</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate,ChatMessagePromptTemplate,HumanMessagePromptTemplate,SystemMessagePromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> langchain.output_parsers <span class="keyword">import</span> PydanticOutputParser</span><br><span class="line"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel,Field,validator</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span></span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>,streaming=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义所需数据结构</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Joke</span>(<span class="title class_ inherited__">BaseModel</span>):</span><br><span class="line">    setup: <span class="built_in">str</span> = Field(description=<span class="string">&quot;提出一个问题&quot;</span>)</span><br><span class="line">    punchline: <span class="built_in">str</span> = Field(description=<span class="string">&quot;回答，生成一个笑话&quot;</span>)</span><br><span class="line">    </span><br><span class="line"><span class="comment"># 将Joke这个类赋给输出解析器</span></span><br><span class="line">parser = PydanticOutputParser(pydantic_object=Joke)</span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=<span class="string">&quot;回应用户查询。\n&#123;format_instructions&#125;\n&#123;query&#125;\n&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;query&quot;</span>],</span><br><span class="line">    partial_variables=&#123;<span class="string">&quot;format_instructions&quot;</span>: parser.get_format_instructions()&#125;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 构建一个查询，输入query变量</span></span><br><span class="line">formatted_prompt = prompt.format_prompt(query=<span class="string">&quot;说一个笑话&quot;</span>)</span><br><span class="line">response = llm.invoke(formatted_prompt)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br><span class="line"></span><br><span class="line"><span class="comment"># &#123;</span></span><br><span class="line"><span class="comment">#     &quot;setup&quot;: &quot;为什么程序员总是分不清万圣节和圣诞节？&quot;,</span></span><br><span class="line"><span class="comment">#     &quot;punchline&quot;: &quot;因为 Oct 31 等于 Dec 25。&quot;</span></span><br><span class="line"><span class="comment"># &#125;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>prompts <span class="token keyword">import</span> PromptTemplate<span class="token punctuation">,</span>ChatMessagePromptTemplate<span class="token punctuation">,</span>HumanMessagePromptTemplate<span class="token punctuation">,</span>SystemMessagePromptTemplate
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>output_parsers <span class="token keyword">import</span> PydanticOutputParser
+<span class="token keyword">from</span> pydantic <span class="token keyword">import</span> BaseModel<span class="token punctuation">,</span>Field<span class="token punctuation">,</span>validator
+<span class="token keyword">from</span> typing <span class="token keyword">import</span> List
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">,</span>streaming<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 定义所需数据结构</span>
+<span class="token keyword">class</span> <span class="token class-name">Joke</span><span class="token punctuation">(</span>BaseModel<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    setup<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> Field<span class="token punctuation">(</span>description<span class="token operator">=</span><span class="token string">"提出一个问题"</span><span class="token punctuation">)</span>
+    punchline<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> Field<span class="token punctuation">(</span>description<span class="token operator">=</span><span class="token string">"回答，生成一个笑话"</span><span class="token punctuation">)</span>
+    
+<span class="token comment"># 将Joke这个类赋给输出解析器</span>
+parser <span class="token operator">=</span> PydanticOutputParser<span class="token punctuation">(</span>pydantic_object<span class="token operator">=</span>Joke<span class="token punctuation">)</span>
+
+<span class="token comment"># </span>
+prompt <span class="token operator">=</span> PromptTemplate<span class="token punctuation">(</span>
+    template<span class="token operator">=</span><span class="token string">"回应用户查询。\n&#123;format_instructions&#125;\n&#123;query&#125;\n"</span><span class="token punctuation">,</span>
+    input_variables<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"query"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    partial_variables<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">"format_instructions"</span><span class="token punctuation">:</span> parser<span class="token punctuation">.</span>get_format_instructions<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># 构建一个查询，输入query变量</span>
+formatted_prompt <span class="token operator">=</span> prompt<span class="token punctuation">.</span>format_prompt<span class="token punctuation">(</span>query<span class="token operator">=</span><span class="token string">"说一个笑话"</span><span class="token punctuation">)</span>
+response <span class="token operator">=</span> llm<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span>formatted_prompt<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
+
+<span class="token comment"># &#123;</span>
+<span class="token comment">#     "setup": "为什么程序员总是分不清万圣节和圣诞节？",</span>
+<span class="token comment">#     "punchline": "因为 Oct 31 等于 Dec 25。"</span>
+<span class="token comment"># &#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="格式化输出-定义输出类型list"><a href="#格式化输出-定义输出类型list" class="headerlink" title="格式化输出-定义输出类型list"></a>格式化输出-定义输出类型list</h3><p>通过get_format_instructions指令在prompt阶段定义输出格式为list，并且定义输出分析器为<strong>CommaSeparatedListOutputParser</strong></p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.output_parsers <span class="keyword">import</span> CommaSeparatedListOutputParser</span><br><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个列表输出解析器</span></span><br><span class="line">output_parser = CommaSeparatedListOutputParser()</span><br><span class="line">format_instructions = output_parser.get_format_instructions()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 提示模板,并定义应该如何输出结果（引用format_instructions</span></span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=<span class="string">&quot;列出五种&#123;subject&#125;。\n&#123;format_instructions&#125;&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;subject&quot;</span>],</span><br><span class="line">    partial_variables=&#123;<span class="string">&quot;format_instructions&quot;</span>: format_instructions&#125;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">formatted_prompt = prompt.<span class="built_in">format</span>(subject=<span class="string">&quot;水果&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(output_parser.parse(llm.invoke(formatted_prompt).content))</span><br><span class="line"></span><br><span class="line"><span class="comment"># [&#x27;苹果&#x27;, &#x27;香蕉&#x27;, &#x27;橙子&#x27;, &#x27;草莓&#x27;, &#x27;葡萄&#x27;]</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>output_parsers <span class="token keyword">import</span> CommaSeparatedListOutputParser
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>prompts <span class="token keyword">import</span> PromptTemplate
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 创建一个列表输出解析器</span>
+output_parser <span class="token operator">=</span> CommaSeparatedListOutputParser<span class="token punctuation">(</span><span class="token punctuation">)</span>
+format_instructions <span class="token operator">=</span> output_parser<span class="token punctuation">.</span>get_format_instructions<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 提示模板,并定义应该如何输出结果（引用format_instructions</span>
+prompt <span class="token operator">=</span> PromptTemplate<span class="token punctuation">(</span>
+    template<span class="token operator">=</span><span class="token string">"列出五种&#123;subject&#125;。\n&#123;format_instructions&#125;"</span><span class="token punctuation">,</span>
+    input_variables<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"subject"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    partial_variables<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">"format_instructions"</span><span class="token punctuation">:</span> format_instructions<span class="token punctuation">&#125;</span>
+<span class="token punctuation">)</span>
+
+formatted_prompt <span class="token operator">=</span> prompt<span class="token punctuation">.</span><span class="token builtin">format</span><span class="token punctuation">(</span>subject<span class="token operator">=</span><span class="token string">"水果"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>output_parser<span class="token punctuation">.</span>parse<span class="token punctuation">(</span>llm<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span>formatted_prompt<span class="token punctuation">)</span><span class="token punctuation">.</span>content<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment"># ['苹果', '香蕉', '橙子', '草莓', '葡萄']</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="自动修复解析器auto-fixing-parser"><a href="#自动修复解析器auto-fixing-parser" class="headerlink" title="自动修复解析器auto-fixing parser"></a>自动修复解析器auto-fixing parser</h3><p>outputfixing parser是特殊的输出解析器。如果原始的解析器无法解析输入的字符串，就会使用一个语言模型来修复输入的字符串，使其能够被原始解析器解析</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> langchain.output_parsers <span class="keyword">import</span> PydanticOutputParser</span><br><span class="line"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel,Field</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span></span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"><span class="keyword">from</span> langchain.output_parsers <span class="keyword">import</span> OutputFixingParser</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Actor</span>(<span class="title class_ inherited__">BaseModel</span>):</span><br><span class="line">    name: <span class="built_in">str</span> = Field(description=<span class="string">&quot;演员名称&quot;</span>),</span><br><span class="line">    film_name: <span class="type">List</span>[<span class="built_in">str</span>] = Field(description=<span class="string">&quot;主演过的电影列表&quot;</span>)</span><br><span class="line">    </span><br><span class="line"><span class="comment"># 创建一个输出解析器，用于解析actor</span></span><br><span class="line">parser =  PydanticOutputParser(pydantic_object=Actor)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个错误格式化的字符串</span></span><br><span class="line">misformatted = <span class="string">&#x27;&#123;&quot;name&quot;: &quot;甄子丹&quot;, &quot;film_name&quot;: [&quot;叶问&quot;,&quot;龙虎门&quot;]&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">fix_formatted = OutputFixingParser.from_llm(parser=parser,llm=ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(fix_formatted.parse(misformatted))</span><br><span class="line"></span><br><span class="line"><span class="comment"># name=&#x27;甄子丹&#x27; film_name=[&#x27;叶问&#x27;, &#x27;龙虎门&#x27;]</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>prompts <span class="token keyword">import</span> PromptTemplate
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>output_parsers <span class="token keyword">import</span> PydanticOutputParser
+<span class="token keyword">from</span> pydantic <span class="token keyword">import</span> BaseModel<span class="token punctuation">,</span>Field
+<span class="token keyword">from</span> typing <span class="token keyword">import</span> List
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>output_parsers <span class="token keyword">import</span> OutputFixingParser
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Actor</span><span class="token punctuation">(</span>BaseModel<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    name<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> Field<span class="token punctuation">(</span>description<span class="token operator">=</span><span class="token string">"演员名称"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    film_name<span class="token punctuation">:</span> List<span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">]</span> <span class="token operator">=</span> Field<span class="token punctuation">(</span>description<span class="token operator">=</span><span class="token string">"主演过的电影列表"</span><span class="token punctuation">)</span>
+    
+<span class="token comment"># 创建一个输出解析器，用于解析actor</span>
+parser <span class="token operator">=</span>  PydanticOutputParser<span class="token punctuation">(</span>pydantic_object<span class="token operator">=</span>Actor<span class="token punctuation">)</span>
+
+<span class="token comment"># 定义一个错误格式化的字符串</span>
+misformatted <span class="token operator">=</span> <span class="token string">'&#123;"name": "甄子丹", "film_name": ["叶问","龙虎门"]&#125;'</span>
+
+fix_formatted <span class="token operator">=</span> OutputFixingParser<span class="token punctuation">.</span>from_llm<span class="token punctuation">(</span>parser<span class="token operator">=</span>parser<span class="token punctuation">,</span>llm<span class="token operator">=</span>ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>fix_formatted<span class="token punctuation">.</span>parse<span class="token punctuation">(</span>misformatted<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment"># name='甄子丹' film_name=['叶问', '龙虎门']</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6595,36 +6676,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7089,13 +7140,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8136,13 +8187,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8595,14 +8646,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8610,14 +8661,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

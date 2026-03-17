@@ -496,25 +496,62 @@
 <p>尽可能使用Webhook 身份验证&#x2F;授权</p>
 <p>修复针对etcd发现的以下违规行为：<br>Ensure  that the  –client-cert-auth argument  is set to true</p>
 <p>分为几个部分</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">**1.修改kubelet配置文件/var/lib/kubelet/config.yaml**</span><br><span class="line"></span><br><span class="line">修改为</span><br><span class="line">anonymous:</span><br><span class="line">    enabled: false</span><br><span class="line">webhook:</span><br><span class="line">    cacheTTL: 0s</span><br><span class="line">    enabled: true</span><br><span class="line">authorization:</span><br><span class="line">    mode: Webhook</span><br><span class="line"></span><br><span class="line">**2.修改etcd配置文件/etc/kubernetes/manifests/etcd.yaml**</span><br><span class="line"></span><br><span class="line">修改为</span><br><span class="line">- --client-cert-auth=true</span><br><span class="line"></span><br><span class="line">**3.重启kubelet**</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart kubelet</span><br><span class="line"></span><br><span class="line">验证</span><br><span class="line"></span><br><span class="line">kubectl get nodes</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">**1.修改kubelet配置文件&#x2F;var&#x2F;lib&#x2F;kubelet&#x2F;config.yaml**
+
+修改为
+anonymous:
+    enabled: false
+webhook:
+    cacheTTL: 0s
+    enabled: true
+authorization:
+    mode: Webhook
+
+**2.修改etcd配置文件&#x2F;etc&#x2F;kubernetes&#x2F;manifests&#x2F;etcd.yaml**
+
+修改为
+- --client-cert-auth&#x3D;true
+
+**3.重启kubelet**
+
+systemctl daemon-reload
+systemctl restart kubelet
+
+验证
+
+kubectl get nodes
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用TLS-Secret"><a href="#使用TLS-Secret" class="headerlink" title="使用TLS Secret"></a>使用TLS Secret</h2><p>Context：<br>您需要使用存储在 TLS Secret 中的 SSL 文件来保护 Web 服务器的安全访问。<br>Task：<br>在 smart-rose 命名空间中为名为 smart-rose 的现有 Deployment 创建名为 smart-rose 的 TLS<br>Secret。</p>
 <p>使用以下 SSL 文件：<br>证书：&#x2F;home&#x2F;candidate&#x2F;ksmv00201-master&#x2F;ca-cert&#x2F;smart.web.k8s.crt<br>密钥：&#x2F;home&#x2F;candidate&#x2F;ksmv00201-master&#x2F;ca-cert&#x2F;smart.web.k8s.key</p>
 <p>Deployment 已配置为使用 TLS Secret。<br>请勿修改现有的 Deployment。</p>
 <p><strong>使用命令行创建Secret</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n smart-rose create secret tls smart-rose \</span><br><span class="line">--cert=/home/candidate/ksmv00201-master/ca-cert/smart.web.k8s.crt \</span><br><span class="line">--key=/home/candidate/ksmv00201-master/ca-cert/smart.web.k8s.key</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl <span class="token parameter variable">-n</span> smart-rose create secret tls smart-rose <span class="token punctuation">\</span>
+<span class="token parameter variable">--cert</span><span class="token operator">=</span>/home/candidate/ksmv00201-master/ca-cert/smart.web.k8s.crt <span class="token punctuation">\</span>
+<span class="token parameter variable">--key</span><span class="token operator">=</span>/home/candidate/ksmv00201-master/ca-cert/smart.web.k8s.key<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>验证</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl get deployment -n smart-rose</span><br><span class="line">看deploy是否正常</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get deployment <span class="token parameter variable">-n</span> smart-rose
+看deploy是否正常<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <h2 id="优化dockerfile和deployment"><a href="#优化dockerfile和deployment" class="headerlink" title="优化dockerfile和deployment"></a>优化dockerfile和deployment</h2><p>Task：<br>1、分析和编辑给定的 Dockerfile：&#x2F;home&#x2F;candidate&#x2F;KSSC00301&#x2F;Dockerfile（基于 ubuntu:16.04<br>镜像），并修改文件中可能涉及到的安全&#x2F;最佳实践问题的一个异常。<br>2、分析和编辑给定的清单文件：&#x2F;home&#x2F;candidate&#x2F;KSSC00301&#x2F;deployment.yaml，并修改文件中有<br>安全&#x2F;最佳实践问题的一个异常。<br>提示：<br>1、请勿添加或删除配置项，只需修改现有配置的属性值让以上两个配置都不在有安全&#x2F;最佳实践问题。<br>2、如果需要非特权用户来执行任何项目，则请使用用户 ID 65535 的用户 nobody。</p>
 <p><strong>dockerfile优化</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">FROM ubuntu:16.04</span><br><span class="line">USER **nobody**</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">FROM ubuntu:16.04
+<span class="token environment constant">USER</span> **nobody**<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>deployment优化</strong></p>
 <p>开启文件系统只读模式</p>
 <p>关闭特权模式</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">readOnlyRootFilesystem: <span class="literal">true</span></span><br><span class="line">runAsUser: 65535</span><br><span class="line">...</span><br><span class="line">privileged: <span class="literal">false</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">重新应用deployment文件</span><br><span class="line">kubectl delete -f /home/candidate/KSSC00301/deployment.yaml</span><br><span class="line">kubectl apply -f /home/candidate/KSSC00301/deployment.yaml</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">..</span>.
+readOnlyRootFilesystem: <span class="token boolean">true</span>
+runAsUser: <span class="token number">65535</span>
+<span class="token punctuation">..</span>.
+privileged: <span class="token boolean">false</span>
+<span class="token punctuation">..</span>.
+
+重新应用deployment文件
+kubectl delete <span class="token parameter variable">-f</span> /home/candidate/KSSC00301/deployment.yaml
+kubectl apply <span class="token parameter variable">-f</span> /home/candidate/KSSC00301/deployment.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="deployment安全管理securityContext"><a href="#deployment安全管理securityContext" class="headerlink" title="deployment安全管理securityContext"></a>deployment安全管理securityContext</h2><p>修改运行在namespace app名称空间里名为lamp-deployment的现有 Deployment，以便其容器：<br>·使用用户ID 30000运行<br>·使用只读的根文件系统<br>·禁止特权提升</p>
 <p>您可以在&#x2F;home&#x2F;candidate&#x2F;kssc00401&#x2F;lamp-deployment.yaml中找到Deployment的清单文件。</p>
@@ -522,17 +559,27 @@
 <p>官网查找<strong>securityContext</strong></p>
 <p>找到<a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/"><strong>Configure a Security Context for a Pod or Container</strong></a></p>
 <p>在containers的列表中给<strong>每个容器</strong>添加</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">    securityContext:</span><br><span class="line">      readOnlyRootFilesystem: true</span><br><span class="line">      runAsUser: 30000</span><br><span class="line">      allowPrivilegeEscalation: false</span><br><span class="line"></span><br><span class="line">kubectl apply -f ...</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">    securityContext:
+      readOnlyRootFilesystem: true
+      runAsUser: 30000
+      allowPrivilegeEscalation: false
+
+kubectl apply -f ...<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>如果不是在容器级，而是在控制器级.spec设置也可以，但只能设置runAsUser，无法设置只读和特权</p>
 <h2 id="apiserver准入控制"><a href="#apiserver准入控制" class="headerlink" title="apiserver准入控制"></a>apiserver准入控制</h2><p>Context：<br>出于测试目的，由 kubeadm 创建的 cluster 的 Kubernetes API 服务器临时配置为允许未经身份验证<br>和未经授权的访问。<br>Task：<br>重新配置cluster的kubernetes API服务，以确保只允许经过身份验证和授权的REST请求。具体要求如下：<br>1、 禁止匿名身份验证<br>2、 使用授权模式Node,RBAC<br>3、 使用准入控制器NodeRestriction</p>
 <p>您可以使用集群位于<br>&#x2F;etc&#x2F;kubernetes&#x2F;admin.conf 的原始 kubectl 配置文件来访问受保护的集群</p>
 <p>最后删除anonymous的clusterRolebinding</p>
 <p><strong>修改&#x2F;etc&#x2F;kubernetes&#x2F;manifests&#x2F;kube-apiserver.yaml</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">--authorization-mode=Node,RBAC</span><br><span class="line">--enable-admission-plugins=NodeRestriction</span><br><span class="line">--anonymous-auth=<span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">--authorization-mode<span class="token operator">=</span>Node,RBAC
+--enable-admission-plugins<span class="token operator">=</span>NodeRestriction
+--anonymous-auth<span class="token operator">=</span>false<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p>删除clusterRolebinding</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl get clusterRolebinding \</span><br><span class="line">--kubeconfig=/etc/kubernetes/admin.conf | pgrep anonymous</span><br><span class="line"></span><br><span class="line">kubectl delete clusterRolebinding</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get clusterRolebinding <span class="token punctuation">\</span>
+<span class="token parameter variable">--kubeconfig</span><span class="token operator">=</span>/etc/kubernetes/admin.conf <span class="token operator">|</span> pgrep anonymous
+
+kubectl delete clusterRolebinding<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="镜像安全扫描"><a href="#镜像安全扫描" class="headerlink" title="镜像安全扫描"></a>镜像安全扫描</h2><p>Context：<br>cluster上设置了容器镜像扫描器，但尚未完全集成到cluster的配置中。您必须将容器镜像扫描完全集成到kubeadm配置的集群里。<br>Task：<br>在**&#x2F;etc&#x2F;kubernetes&#x2F;controlconf目录中**，有不完整的配置，以及具有HTTPS 端点的<br><a target="_blank" rel="noopener" href="https://wakanda:8080/image_policy%E7%9A%84%E5%8A%9F%E8%83%BD%E6%80%A7%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%89%AB%E6%8F%8F%E5%99%A8%EF%BC%9A">https://wakanda:8080/image_policy的功能性容器镜像扫描器：</a></p>
 <p><strong>首先</strong>，重新配置 API 服务器以启用所有准入控制插件，以支持提供的 AdmissionConfiguration 设置</p>
@@ -544,13 +591,23 @@
 <p>只需要修改前两个</p>
 <p>官网，找<strong>Admission Control in Kubernetes</strong></p>
 <p><strong>修改admissionConfig文件</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apiserver.config.k8s.io/v1</span><br><span class="line">kind: AdmissionConfiguration</span><br><span class="line">plugins:</span><br><span class="line">    configuration:</span><br><span class="line">      imagePolicy:</span><br><span class="line">        kubeConfigFile: &lt;path-to-kubeconfig-file&gt;</span><br><span class="line">        allowTTL: 50</span><br><span class="line">        denyTTL: 50</span><br><span class="line">        retryBackoff: 500</span><br><span class="line">        defaultAllow: <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+    configuration:
+      imagePolicy:
+        kubeConfigFile: <span class="token operator">&lt;</span>path-to-kubeconfig-file<span class="token operator">></span>
+        allowTTL: <span class="token number">50</span>
+        denyTTL: <span class="token number">50</span>
+        retryBackoff: <span class="token number">500</span>
+        defaultAllow: <span class="token boolean">false</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>修改KUBECONFIG</strong></p>
 <p>server: <a target="_blank" rel="noopener" href="https://wakanda:8080/image_policy">https://wakanda:8080/image_policy</a> #改成题目给的webhook地址</p>
 <p><strong>修改apiserver配置文件</strong></p>
 <p>添加</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--enable-admission-plugins=NodeRestriction,ImagePolicyWebhook</span><br><span class="line">--admission-control-config-file=/etc/kubernetes/controlconf/admission_configuration.yaml</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">--enable-admission-plugins<span class="token operator">=</span>NodeRestriction,ImagePolicyWebhook
+--admission-control-config-file<span class="token operator">=</span>/etc/kubernetes/controlconf/admission_configuration.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>验证</strong></p>
 <p>通过应用题目给的&#x2F;home&#x2F;candidate&#x2F;kssc00601&#x2F;vulnerable-resource.yaml</p>
@@ -563,23 +620,93 @@
 <p>2、禁用相互身份验证。</p>
 <p>会给一个Cilium的官网<a target="_blank" rel="noopener" href="https://cilium.io/">https://cilium.io/</a></p>
 <p>搜索Example，进入L4 Examples</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: cilium.io/v2 </span><br><span class="line">kind: CiliumNetworkPolicy </span><br><span class="line">metadata: </span><br><span class="line">	name: clium         <span class="comment"># 修改规则名称</span></span><br><span class="line">	namespace: nodecli  <span class="comment"># 选择对应ns</span></span><br><span class="line">spec: </span><br><span class="line">	endpointSelector: </span><br><span class="line">		matchLabels: </span><br><span class="line">			app: clium  <span class="comment"># 选择带有 app=clium 标签的 Pod， clium-ddrgfa-avfdx </span></span><br><span class="line">	ingress: </span><br><span class="line">	- fromEndpoints: </span><br><span class="line">		- matchLabels: </span><br><span class="line">				kubernetes.io/metadata.name: ingress-nginx-web   </span><br><span class="line">				<span class="comment">#允许来自ingress-nginx-web命名空间的 Pod</span></span><br><span class="line">		authentication:  <span class="comment">#启动身份验证 </span></span><br><span class="line">			mode: <span class="string">&quot;required&quot;</span></span><br><span class="line">	- fromEntites:     <span class="comment">#允许主机访问clium pod</span></span><br><span class="line">		- host</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: cilium.io/v2 
+kind: CiliumNetworkPolicy 
+metadata: 
+	name: clium         <span class="token comment"># 修改规则名称</span>
+	namespace: nodecli  <span class="token comment"># 选择对应ns</span>
+spec: 
+	endpointSelector: 
+		matchLabels: 
+			app: clium  <span class="token comment"># 选择带有 app=clium 标签的 Pod， clium-ddrgfa-avfdx </span>
+	ingress: 
+	- fromEndpoints: 
+		- matchLabels: 
+				kubernetes.io/metadata.name: ingress-nginx-web   
+				<span class="token comment">#允许来自ingress-nginx-web命名空间的 Pod</span>
+		authentication:  <span class="token comment">#启动身份验证 </span>
+			mode: <span class="token string">"required"</span>
+	- fromEntites:     <span class="token comment">#允许主机访问clium pod</span>
+		- <span class="token function">host</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="修改docker服务权限"><a href="#修改docker服务权限" class="headerlink" title="修改docker服务权限"></a>修改docker服务权限</h2><p>Task<br>执行以下任务，来保护kssc00801集群<br>从 docker 组中删除developer用户<br>注意: 不要从其他组中删除用户<br>重新配置并重启 Docker 守护进程，确保位于&#x2F;var&#x2F;run&#x2F;docker.sock 的套接字文件由 root 组拥有。<br>重新配置并重启 Docker 守护进程，确保它不监听任何 TCP 协议的端口。</p>
 <p><strong>解法</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">删除用户</span><br><span class="line">gpasswd -d developer docker</span><br><span class="line"></span><br><span class="line">修改sock文件-用户</span><br><span class="line">vim /usr/lib/systemd/system/docker.sock</span><br><span class="line">systemctl daemon-reload &amp;&amp; systemctl restart docker</span><br><span class="line"></span><br><span class="line"><span class="comment"># 不监听tcp协议</span></span><br><span class="line">删除-H tcp://0.0.0.0:2375</span><br><span class="line"></span><br><span class="line">修改docker的service文件-用户</span><br><span class="line">vim /usr/lib/systemd/system/docker.service</span><br><span class="line">systemctl daemon-reload &amp;&amp; systemctl restart docker</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">删除用户
+gpasswd <span class="token parameter variable">-d</span> developer <span class="token function">docker</span>
+
+修改sock文件-用户
+<span class="token function">vim</span> /usr/lib/systemd/system/docker.sock
+systemctl daemon-reload <span class="token operator">&amp;&amp;</span> systemctl restart <span class="token function">docker</span>
+
+<span class="token comment"># 不监听tcp协议</span>
+删除-H tcp://0.0.0.0:2375
+
+修改docker的service文件-用户
+<span class="token function">vim</span> /usr/lib/systemd/system/docker.service
+systemctl daemon-reload <span class="token operator">&amp;&amp;</span> systemctl restart <span class="token function">docker</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="升级k8s工作节点"><a href="#升级k8s工作节点" class="headerlink" title="升级k8s工作节点"></a>升级k8s工作节点</h2><p>Context：</p>
 <p>当前使用 kubeadm 配置的集群最近完成了一次升级。由于兼容性原因，有一个节点被保留在较旧的版本上。</p>
 <p>Task：<br>升级集群中的节点 node01，使其与control plane节点的版本保持一致。</p>
 <p>正常是以官网为参考，本题是把node01从1.31.0升级到<br>1.31.1，如果是其他版本，</p>
 <p><strong>官网查找upgrading kubeadm cluster</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">查看当前版本，保证工作节点与控制节点版本一致</span><br><span class="line">sudo apt-cache show kubeadm |grep xxx(版本)</span><br><span class="line"></span><br><span class="line">sudo apt-mark unhold kubelet &amp;&amp; \</span><br><span class="line">sudo apt-get update &amp;&amp; sudo apt-get install -y kubelet=<span class="string">&#x27;1.31.x-*&#x27;</span> &amp;&amp; \</span><br><span class="line">sudo apt-mark hold kubelet</span><br><span class="line"></span><br><span class="line">sudo systemctl daemon-reload &amp;&amp; systemctl restart kubelet</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看当前版本，保证工作节点与控制节点版本一致
+<span class="token function">sudo</span> <span class="token function">apt-cache</span> show kubeadm <span class="token operator">|</span><span class="token function">grep</span> xxx<span class="token punctuation">(</span>版本<span class="token punctuation">)</span>
+
+<span class="token function">sudo</span> apt-mark unhold kubelet <span class="token operator">&amp;&amp;</span> <span class="token punctuation">\</span>
+<span class="token function">sudo</span> <span class="token function">apt-get</span> update <span class="token operator">&amp;&amp;</span> <span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token assign-left variable">kubelet</span><span class="token operator">=</span><span class="token string">'1.31.x-*'</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">\</span>
+<span class="token function">sudo</span> apt-mark hold kubelet
+
+<span class="token function">sudo</span> systemctl daemon-reload <span class="token operator">&amp;&amp;</span> systemctl restart kubelet
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用ingress-http代理"><a href="#使用ingress-http代理" class="headerlink" title="使用ingress http代理"></a>使用ingress http代理</h2><p>Task<br>在 prod01 namespace 创建一个名为 web 的 Ingress 资源，并根据以下要求配置：<br>1）将主机 web.k8singress.local 和所有路径的流量路由到现有的 web Service。<br>2）使用已存在的 web-cert Secret 进行 TLS 终止。<br>3）将所有 HTTP 请求重定向至 HTTPS。<br>提示：可使用以下命令测试 Ingress 配置：curl -Lk <a target="_blank" rel="noopener" href="https://web.k8singress.local/">https://web.k8singress.local</a></p>
 <p><strong>官网查找ingress（有两个ingress）</strong></p>
 <p>搜tls</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">kubectl get ingressclasses <span class="comment"># 查看ingressclass类名字和端口</span></span><br><span class="line">nginx   k8s.io/ingress-nginx   &lt;none&gt;       22d</span><br><span class="line"></span><br><span class="line">创建ingress.yaml，从官网复制过来</span><br><span class="line"></span><br><span class="line">apiVersion: networking.k8s.io/v1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: web</span><br><span class="line">  namespace: prod01</span><br><span class="line">  annotations:</span><br><span class="line">    nginx.ingress.kubernetes.io/ssl-redirect: <span class="string">&quot;true&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  ingressClassName: nginx</span><br><span class="line">  tls:</span><br><span class="line">    - web.k8singress.local</span><br><span class="line">    secretName: web-cert</span><br><span class="line">  rules:</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - path: /</span><br><span class="line">        pathType: Prefix</span><br><span class="line">        backend:</span><br><span class="line">          service:</span><br><span class="line">            name: web</span><br><span class="line">            port:</span><br><span class="line">              number: 80</span><br><span class="line"></span><br><span class="line">kubectl apply -f ingress.yaml</span><br><span class="line">kubectl get ingress -n prod01</span><br><span class="line"></span><br><span class="line">最后通过请求来进行访问</span><br><span class="line">curl -Lk https://web.k8singress.<span class="built_in">local</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get ingressclasses <span class="token comment"># 查看ingressclass类名字和端口</span>
+nginx   k8s.io/ingress-nginx   <span class="token operator">&lt;</span>none<span class="token operator">></span>       22d
+
+创建ingress.yaml，从官网复制过来
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  namespace: prod01
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: <span class="token string">"true"</span>
+spec:
+  ingressClassName: nginx
+  tls:
+    - web.k8singress.local
+    secretName: web-cert
+  rules:
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: <span class="token number">80</span>
+
+kubectl apply <span class="token parameter variable">-f</span> ingress.yaml
+kubectl get ingress <span class="token parameter variable">-n</span> prod01
+
+最后通过请求来进行访问
+<span class="token function">curl</span> <span class="token parameter variable">-Lk</span> https://web.k8singress.local<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用falco扫描识别异常行为pod"><a href="#使用falco扫描识别异常行为pod" class="headerlink" title="使用falco扫描识别异常行为pod"></a>使用falco扫描识别异常行为pod</h2><p>Task<br>属于应用程序 olla的一个 Pod 出现异常，正从敏感文件 &#x2F;dev&#x2F;mem 直接读取系统内存数据。<br>首先，<strong>识别出正在访问 &#x2F;dev&#x2F;mem 的异常 Pod</strong><br>然后，将该异常 Pod 所属的 Deployment 缩减至零副本。<br>注意事项：</p>
 <ol>
@@ -589,19 +716,89 @@
 </ol>
 <p>考试的时候会给一个falco官网<a target="_blank" rel="noopener" href="https://falco.org/docs/rules/basic-elements/">https://falco.org</a><br>搜索<strong>Basic Elements of Falco Rules</strong></p>
 <p><strong>写falco配置文件</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">- list: mem_file</span><br><span class="line">  items: [/dev/mem]</span><br><span class="line">- rule: devmem</span><br><span class="line">  desc: cks</span><br><span class="line">  condition: &gt;</span><br><span class="line">		fd.name <span class="keyword">in</span> (mem_file) and</span><br><span class="line">        evt.type <span class="keyword">in</span> (open,write,<span class="built_in">read</span>,mmap,ioctl)</span><br><span class="line">  output: &gt;</span><br><span class="line">	    Process ID: %proc.pid </span><br><span class="line">	    Command: %proc.cmdline </span><br><span class="line">	    File: %fd.name</span><br><span class="line">        ID: %container.id</span><br><span class="line">  priority: NOTICE</span><br><span class="line">	logs: [file]</span><br><span class="line"></span><br><span class="line">开始扫描</span><br><span class="line">falco -M 30 -r /etc/falco/falco_rules-1.yaml &gt;&gt; devmem.log</span><br><span class="line"></span><br><span class="line">扫描出来了之后，使用kubectl scale或kubectl edit调整deployment副本数为0</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">- list: mem_file
+  items: <span class="token punctuation">[</span>/dev/mem<span class="token punctuation">]</span>
+- rule: devmem
+  desc: cks
+  condition: <span class="token operator">></span>
+		fd.name <span class="token keyword">in</span> <span class="token punctuation">(</span>mem_file<span class="token punctuation">)</span> and
+        evt.type <span class="token keyword">in</span> <span class="token punctuation">(</span>open,write,read,mmap,ioctl<span class="token punctuation">)</span>
+  output: <span class="token operator">></span>
+	    Process ID: %proc.pid 
+	    Command: %proc.cmdline 
+	    File: %fd.name
+        ID: %container.id
+  priority: NOTICE
+	logs: <span class="token punctuation">[</span>file<span class="token punctuation">]</span>
+
+开始扫描
+falco <span class="token parameter variable">-M</span> <span class="token number">30</span> <span class="token parameter variable">-r</span> /etc/falco/falco_rules-1.yaml <span class="token operator">>></span> devmem.log
+
+扫描出来了之后，使用kubectl scale或kubectl edit调整deployment副本数为0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="配置集群日志审计"><a href="#配置集群日志审计" class="headerlink" title="配置集群日志审计"></a>配置集群日志审计</h2><p>您必须为 kubeadm 配置的集群启用审计。</p>
 <p>Task<br>首先，请重新配置集群中的 APIserver 服务，以便：<br>1） &#x2F;etc&#x2F;kubernetes&#x2F;logpolicy&#x2F;sample-policy.yaml 提供了基本的策略，正在被使用<br>2）日志存储在 &#x2F;var&#x2F;log&#x2F;kubernetes&#x2F;audit-logs.txt 文件中<br>3）最多保留 3 个日志，保留时间为 5 天<br>注意：基本策略仅指定不记录的内容。</p>
 <p>其次，编辑并扩展基本策略以记录：<br>1）<strong>RequestResponse 级别的 persistentvolumes</strong> 事件<br>2）<strong>front-apps namespace 中的 configmaps</strong> 事件的请求正文<br>3）<strong>Metadata 级别的所有 namespace 中的 ConfigMap 和 Secret</strong> 的更改<br>4）Metadata 级别记录所有其他请求<br>注意：确保 APIserver使用扩展后的策略。</p>
 <p>解法：<br>官网搜索audit</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">在/etc/kubernetes/logpolicy/sample-policy.yaml中</span><br><span class="line"></span><br><span class="line">    resources:</span><br><span class="line">    - group: <span class="string">&quot;&quot;</span></span><br><span class="line">      <span class="comment"># Resource &quot;pods&quot; doesn&#x27;t match requests to any subresource of pods,</span></span><br><span class="line">      <span class="comment"># which is consistent with the RBAC policy.</span></span><br><span class="line">      resources: [<span class="string">&quot;persistentvolumes&quot;</span>]</span><br><span class="line">    resources:</span><br><span class="line">    - group: <span class="string">&quot;&quot;</span> <span class="comment"># core API group</span></span><br><span class="line">      resources: [<span class="string">&quot;configmaps&quot;</span>]</span><br><span class="line">    <span class="comment"># This rule only applies to resources in the &quot;kube-system&quot; namespace.</span></span><br><span class="line">    <span class="comment"># The empty string &quot;&quot; can be used to select non-namespaced resources.</span></span><br><span class="line">    namespaces: [<span class="string">&quot;front-apps&quot;</span>]</span><br><span class="line">    resources:</span><br><span class="line">    - group: <span class="string">&quot;&quot;</span> <span class="comment"># core API group</span></span><br><span class="line">      resources: [<span class="string">&quot;secrets&quot;</span>, <span class="string">&quot;configmaps&quot;</span>]</span><br><span class="line">    omitStages:</span><br><span class="line">    - <span class="string">&quot;RequestReceived&quot;</span></span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">修改apiserver配置文件</span><br><span class="line">/etc/kubernetes/</span><br><span class="line">- --audit-policy-file=/etc/kubernetes/logpolicy/sample-policy.yaml <span class="comment">#审计策略文件</span></span><br><span class="line">- --audit-log-path=/var/log/kubernetes/audit-logs.txt  <span class="comment">#审计日志文件 </span></span><br><span class="line">- --audit-log-maxage=5   <span class="comment">#保留5天 </span></span><br><span class="line">- --audit-log-maxbackup=3  <span class="comment">#保留 3 个日志</span></span><br><span class="line"></span><br><span class="line">重启kubelet</span><br><span class="line"></span><br><span class="line">验证方式：查看audit的<span class="built_in">log</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">tail</span> -f /var/log/kubernetes/audit-logs.txt</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在/etc/kubernetes/logpolicy/sample-policy.yaml中
+
+    resources:
+    - group: <span class="token string">""</span>
+      <span class="token comment"># Resource "pods" doesn't match requests to any subresource of pods,</span>
+      <span class="token comment"># which is consistent with the RBAC policy.</span>
+      resources: <span class="token punctuation">[</span><span class="token string">"persistentvolumes"</span><span class="token punctuation">]</span>
+    resources:
+    - group: <span class="token string">""</span> <span class="token comment"># core API group</span>
+      resources: <span class="token punctuation">[</span><span class="token string">"configmaps"</span><span class="token punctuation">]</span>
+    <span class="token comment"># This rule only applies to resources in the "kube-system" namespace.</span>
+    <span class="token comment"># The empty string "" can be used to select non-namespaced resources.</span>
+    namespaces: <span class="token punctuation">[</span><span class="token string">"front-apps"</span><span class="token punctuation">]</span>
+    resources:
+    - group: <span class="token string">""</span> <span class="token comment"># core API group</span>
+      resources: <span class="token punctuation">[</span><span class="token string">"secrets"</span>, <span class="token string">"configmaps"</span><span class="token punctuation">]</span>
+    omitStages:
+    - <span class="token string">"RequestReceived"</span>
+    
+    
+修改apiserver配置文件
+/etc/kubernetes/
+- --audit-policy-file<span class="token operator">=</span>/etc/kubernetes/logpolicy/sample-policy.yaml <span class="token comment">#审计策略文件</span>
+- --audit-log-path<span class="token operator">=</span>/var/log/kubernetes/audit-logs.txt  <span class="token comment">#审计日志文件 </span>
+- --audit-log-maxage<span class="token operator">=</span><span class="token number">5</span>   <span class="token comment">#保留5天 </span>
+- --audit-log-maxbackup<span class="token operator">=</span><span class="token number">3</span>  <span class="token comment">#保留 3 个日志</span>
+
+重启kubelet
+
+验证方式：查看audit的log
+
+<span class="token function">tail</span> <span class="token parameter variable">-f</span> /var/log/kubernetes/audit-logs.txt<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="使用网络策略Networkpolicy"><a href="#使用网络策略Networkpolicy" class="headerlink" title="使用网络策略Networkpolicy"></a>使用网络策略Networkpolicy</h2><p>您需要通过 NetworkPolicy 来管理现有的 Deployments ，实现控制跨越不同namespace的流量。 </p>
 <p>Task<br><strong>首先</strong>，在 prod  namespace中创建一个名为 deny 的 NetworkPolicy，以阻止所有的入口流量。<br><strong>其次</strong>，在 data 命名空间中创建一个名为 allow-from-prod 的 NetworkPolicy，以允许仅来自 prod<br>namespace 的 Pod 流量进入。使用 prod namespace的标签来允许流量。</p>
 <p><strong>提示</strong>：prod  namespace标记 env: prod<br>data  namespace标记 env: data</p>
 <p>官方网站查找 Network Policies</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">apiVersion: networking.k8s.io/v1</span><br><span class="line">kind: NetworkPolicy</span><br><span class="line">metadata:</span><br><span class="line">  name: deny</span><br><span class="line">  namespace: prod</span><br><span class="line">spec:</span><br><span class="line">  podSelector: &#123;&#125;</span><br><span class="line">  policyTypes:</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.k8s.io/v1</span><br><span class="line">kind: NetworkPolicy</span><br><span class="line">metadata:</span><br><span class="line">  name: allow-from-prod</span><br><span class="line">  namespace: data</span><br><span class="line">spec:</span><br><span class="line">  podSelector: &#123;&#125;</span><br><span class="line">  policyTypes:</span><br><span class="line">  ingress:</span><br><span class="line">    - namespaceSelector:</span><br><span class="line">        matchLabels:</span><br><span class="line">          <span class="built_in">env</span>: prod</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny
+  namespace: prod
+spec:
+  podSelector: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+  policyTypes:
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-prod
+  namespace: data
+spec:
+  podSelector: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+  policyTypes:
+  ingress:
+    - namespaceSelector:
+        matchLabels:
+          env: prod<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="SA异常"><a href="#SA异常" class="headerlink" title="SA异常"></a>SA异常</h2><p>Context<br>在安全审计中发现，某个 Deployment 存在不符合安全要求的服务账号令牌，这可能会引发安全漏洞。<br>Task<br><strong>首先</strong>，需要修改 monitor namespace 中现有的 stats-monitor-sa ServiceAccount，禁止自动挂载API 凭据。<br><strong>接着</strong>，修改 monitor namespace 中现有的 stats-monitor Deployment，确保 ServiceAccount 令牌挂载到 &#x2F;var&#x2F;run&#x2F;secrets&#x2F;kubernetes.io&#x2F;serviceaccount&#x2F;token 路径。</p>
 <p>通过名为 token 的投射卷注入该令牌。确保令牌以只读模式挂载</p>
@@ -609,10 +806,19 @@
 <p><strong>官网搜索service account</strong></p>
 <p>寻找Configure service account for pods</p>
 <p>就可以找到字段</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">automountServiceAccountToken:false</span></span><br><span class="line"><span class="string">禁止自动挂载API凭据</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">automountServiceAccountToken<span class="token punctuation">:</span><span class="token boolean important">false</span>
+禁止自动挂载API凭据<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p>添加只读挂载的字段</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">  volumeMounts:</span><br><span class="line">  - mountPath: /var/run/secrets/kubernetes.io/serviceaccount/token</span><br><span class="line">    name: token</span><br><span class="line">    readOnly: <span class="literal">true</span></span><br><span class="line">volumes:</span><br><span class="line">  projected:</span><br><span class="line">    sources:</span><br><span class="line">    - serviceAccountToken:</span><br><span class="line">        path: token</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">  volumeMounts:
+  - mountPath: /var/run/secrets/kubernetes.io/serviceaccount/token
+    name: token
+    readOnly: <span class="token boolean">true</span>
+volumes:
+  projected:
+    sources:
+    - serviceAccountToken:
+        path: token<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="基于bom创建SPDX文档"><a href="#基于bom创建SPDX文档" class="headerlink" title="基于bom创建SPDX文档"></a>基于bom创建SPDX文档</h2><p>Task：<br>在 alpine namespace 中的 alpine Deployment 中，运行着三个不同版本的 Alpine 镜像容器。<br><strong>首先</strong>，需要找出哪个 Alpine 镜像中包含了版本为 3.1.4-r5 的 libcrypto3 软件包。<br><strong>其次</strong>，使用预安装的 bom 工具，在 &#x2F;home&#x2F;candidate&#x2F;kssc00150&#x2F;alpine.spdx 文件中为找出的镜像版本生成 SPDX 文档。<br>最后， 更新 alpine Deployment，删除使用上述找到镜像版本的容器。<br>Deployment 的清单文件可以在&#x2F;home&#x2F;candidate&#x2F;kssc00150&#x2F;alipine-deployment.yaml 中找到。</p>
 <p><strong>解法</strong></p>
@@ -626,7 +832,13 @@
 <p>violates PodSecurity “restricted:latest”:</p>
 <p>allowPrivilegeEscalation !&#x3D; false (container “nginx” must set<br><strong>securityContext.allowPrivilegeEscalation&#x3D;false</strong>),<br><strong>securityContext.capabilities.drop&#x3D;[“ALL”]</strong> is required,<br><strong>securityContext.runAsNonRoot&#x3D;true</strong> is required,<br><strong>securityContext.seccompProfile.type</strong> must be set to <strong>“RuntimeDefault” or “Localhost”</strong></p>
 <p><strong>根据报错内容，进行字段添加</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">securityContext: </span><br><span class="line">  allowPrivilegeEscalation: <span class="literal">false</span>          <span class="comment"># 禁止权限提升 </span></span><br><span class="line">  capabilities: </span><br><span class="line">    drop: [<span class="string">&quot;ALL&quot;</span>]                          <span class="comment"># 删除所有 capabilities </span></span><br><span class="line">  runAsNonRoot: <span class="literal">true</span>                       <span class="comment"># 以非 root 用户运行 </span></span><br><span class="line">  seccompProfile: </span><br><span class="line">    <span class="built_in">type</span>: RuntimeDefault                   <span class="comment"># 使用默认 seccomp 配置</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">securityContext: 
+  allowPrivilegeEscalation: <span class="token boolean">false</span>          <span class="token comment"># 禁止权限提升 </span>
+  capabilities: 
+    drop: <span class="token punctuation">[</span><span class="token string">"ALL"</span><span class="token punctuation">]</span>                          <span class="token comment"># 删除所有 capabilities </span>
+  runAsNonRoot: <span class="token boolean">true</span>                       <span class="token comment"># 以非 root 用户运行 </span>
+  seccompProfile: 
+    type: RuntimeDefault                   <span class="token comment"># 使用默认 seccomp 配置</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6685,36 +6897,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7179,13 +7361,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8226,13 +8408,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8685,14 +8867,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8700,14 +8882,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

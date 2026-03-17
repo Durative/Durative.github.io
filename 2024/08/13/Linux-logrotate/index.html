@@ -494,7 +494,43 @@
 <p>一些脚本可以使用自定义输出重定向的方式，对日志做切割</p>
 <p>而logrotate适合针对某个固定的输出日志进行切割，比如access.log<br>如果不去动它就会越来越大，而且也需要通过时间来对其进行筛选</p>
 <p><strong>logrotate.conf</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">#全局的配置文件，如果局部配置文件中没有指定，就会按全局的来</span><br><span class="line">weekly   # 每周执行一次</span><br><span class="line">rotate 4 # 保留4个备份文件</span><br><span class="line">create 0640 root www  # 执行时创建新日志文件，权限为0640，属主root，属组www</span><br><span class="line">minsize 10M # 轮转时，日志大小超过10M才进行轮转</span><br><span class="line">include /etc/logrotate.d # 子配置文件</span><br><span class="line">errors &quot;/var/log/logrotate_error&quot; # 错误日志位置</span><br><span class="line">missingok # 忽略找不到的日志文件</span><br><span class="line">compress  # 使用gzip压缩</span><br><span class="line">mail someone@example.com  #轮转完成后发送给邮箱</span><br><span class="line"></span><br><span class="line">#局部配置文件</span><br><span class="line">这些文件一般会放在子配置目录下</span><br><span class="line">/etc/logrotate.d/</span><br><span class="line">├── bootlog</span><br><span class="line">├── chrony</span><br><span class="line">├── firewalld</span><br><span class="line">├── syslog</span><br><span class="line">├── wpa_supplicant</span><br><span class="line">└── yum</span><br><span class="line"></span><br><span class="line">/var/log/firewalld &#123;</span><br><span class="line">    weekly</span><br><span class="line">    missingok</span><br><span class="line">    rotate 4</span><br><span class="line">    copytruncate # 无缝轮转（清空源文件内容而不是删除）</span><br><span class="line">    minsize 1M</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">写一个针对access.log的局部配置</span><br><span class="line">/usr/local/nginx/log/access.log &#123;</span><br><span class="line">	dayly</span><br><span class="line">	missingok</span><br><span class="line">	rotate 7</span><br><span class="line">	create 0640 root root</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">#全局的配置文件，如果局部配置文件中没有指定，就会按全局的来
+weekly   # 每周执行一次
+rotate 4 # 保留4个备份文件
+create 0640 root www  # 执行时创建新日志文件，权限为0640，属主root，属组www
+minsize 10M # 轮转时，日志大小超过10M才进行轮转
+include &#x2F;etc&#x2F;logrotate.d # 子配置文件
+errors &quot;&#x2F;var&#x2F;log&#x2F;logrotate_error&quot; # 错误日志位置
+missingok # 忽略找不到的日志文件
+compress  # 使用gzip压缩
+mail someone@example.com  #轮转完成后发送给邮箱
+
+#局部配置文件
+这些文件一般会放在子配置目录下
+&#x2F;etc&#x2F;logrotate.d&#x2F;
+├── bootlog
+├── chrony
+├── firewalld
+├── syslog
+├── wpa_supplicant
+└── yum
+
+&#x2F;var&#x2F;log&#x2F;firewalld &#123;
+    weekly
+    missingok
+    rotate 4
+    copytruncate # 无缝轮转（清空源文件内容而不是删除）
+    minsize 1M
+&#125;
+
+写一个针对access.log的局部配置
+&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;log&#x2F;access.log &#123;
+	dayly
+	missingok
+	rotate 7
+	create 0640 root root
+&#125;
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6553,36 +6589,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7047,13 +7053,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8094,13 +8100,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8553,14 +8559,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8568,14 +8574,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

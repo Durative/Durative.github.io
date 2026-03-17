@@ -498,11 +498,24 @@
 <p>Task<br>创建一个名为deployment-clusterrole的clusterrole，该clusterrole只允许对Deployment、Daemonset、Statefulset具有create权限，在现有的 namespace app-team1中创建一个名为cicd-token的新 ServiceAccount。<br>限于 namespace app-team1中，将新的ClusterRole deployment-clusterrole绑定到新的 ServiceAccount cicd-token。</p>
 <p>ClusterRolebinding无法指定名称空间，在整个Cluster内都生效。</p>
 <p>Rolebinding可以指定在ns内生效</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">kubectl create clusterrole deployment-clusterrole \</span><br><span class="line">--verb=create --resource=deployments,daemonsets,statefulsets</span><br><span class="line"></span><br><span class="line">kubectl create serviceaccount cicd-token -n app-team1</span><br><span class="line"></span><br><span class="line">kubectl create rolebinding deployment-binding -n app-team1 \</span><br><span class="line">--clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python">kubectl create clusterrole deployment<span class="token operator">-</span>clusterrole \
+<span class="token operator">-</span><span class="token operator">-</span>verb<span class="token operator">=</span>create <span class="token operator">-</span><span class="token operator">-</span>resource<span class="token operator">=</span>deployments<span class="token punctuation">,</span>daemonsets<span class="token punctuation">,</span>statefulsets
+
+kubectl create serviceaccount cicd<span class="token operator">-</span>token <span class="token operator">-</span>n app<span class="token operator">-</span>team1
+
+kubectl create rolebinding deployment<span class="token operator">-</span>binding <span class="token operator">-</span>n app<span class="token operator">-</span>team1 \
+<span class="token operator">-</span><span class="token operator">-</span>clusterrole<span class="token operator">=</span>deployment<span class="token operator">-</span>clusterrole <span class="token operator">-</span><span class="token operator">-</span>serviceaccount<span class="token operator">=</span>app<span class="token operator">-</span>team1<span class="token punctuation">:</span>cicd<span class="token operator">-</span>token
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="节点维护-node节点不可用"><a href="#节点维护-node节点不可用" class="headerlink" title="节点维护-node节点不可用"></a>节点维护-node节点不可用</h2><p><a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/safely-drain-node/#configure-poddisruptionbudget">安全地清空一个节点 | Kubernetes</a>（搜索关键词 drain）</p>
 <p>Task：<br>将ek8s-node-1节点设置为不可用，然后重新调度该节点上的所有Pod</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">设置节点不可用</span><br><span class="line">kubectl cordon k8s-node</span><br><span class="line"></span><br><span class="line">kubectl drain k8s-node --<span class="built_in">help</span> 查看帮助</span><br><span class="line"></span><br><span class="line">将node上的pod都驱逐走</span><br><span class="line">kubectl drain k8s-node --delete-emptydir-data --ignore-daemonsets --force</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python">设置节点不可用
+kubectl cordon k8s<span class="token operator">-</span>node
+
+kubectl drain k8s<span class="token operator">-</span>node <span class="token operator">-</span><span class="token operator">-</span><span class="token builtin">help</span> 查看帮助
+
+将node上的pod都驱逐走
+kubectl drain k8s<span class="token operator">-</span>node <span class="token operator">-</span><span class="token operator">-</span>delete<span class="token operator">-</span>emptydir<span class="token operator">-</span>data <span class="token operator">-</span><span class="token operator">-</span>ignore<span class="token operator">-</span>daemonsets <span class="token operator">-</span><span class="token operator">-</span>force<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250307095553736.png"></p>
 <h2 id="k8s版本升级"><a href="#k8s版本升级" class="headerlink" title="k8s版本升级"></a>k8s版本升级</h2><p><a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/">升级 kubeadm 集群 | Kubernetes</a></p>
@@ -511,7 +524,40 @@
 <p>现有的Kubernetes 集群正在运行版本1.23.1。<strong>仅将master节点</strong>上的所有 Kubernetes控制平面和节点组件升级到版本1.23.2。<br>请不要升级工作节点，etcd，container 管理器，CNI插件， DNS服务或任何其他插件。</p>
 <p>考点：如何离线主机，并升级控制面板和升级节点</p>
 <p>（注意，考试时的集群可能为1.23.0，会让你从1.23.0升级为1.23.1。甚至是1.22.1升级为1.22.2。所以敲命令时，具体要升级的版本，要注意，根据题目要求更改。）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">1.驱逐master节点的pod，保护起来</span><br><span class="line">kubectl drain k8s-master --delete-emptydir-data --ignore-daemonsets --force</span><br><span class="line"></span><br><span class="line">2.根据提示登录到控制节点</span><br><span class="line">ssh k8s-master</span><br><span class="line"></span><br><span class="line">3.查看要安装的版本的完整版本号 为1.23.2-00</span><br><span class="line">apt-cache show kubeadm | grep 1.23.2</span><br><span class="line"><span class="comment">#Version: 1.23.2-00</span></span><br><span class="line"><span class="comment">#Filename: pool/kubeadm_1.23.2-00_amd64_f3593ab00d33e8c0a19e24c7a8c81e74a02e601d0f1c61559a5fb87658b53563.deb</span></span><br><span class="line"></span><br><span class="line">4.根据官网命令执行，升级kubeadm</span><br><span class="line">sudo apt-mark unhold kubeadm &amp;&amp; \</span><br><span class="line">sudo apt-get update &amp;&amp; sudo apt-get install -y kubeadm=<span class="string">&#x27;1.23.2-00&#x27;</span> &amp;&amp; \</span><br><span class="line">sudo apt-mark hold kubeadm</span><br><span class="line"></span><br><span class="line">sudo kubeadm upgrade plan 确认计划</span><br><span class="line">kubeadm upgrade apply v1.23.2 --etcd-upgrade=<span class="literal">false</span> 排除升级etcd</span><br><span class="line">kubeadm version 查看版本</span><br><span class="line"></span><br><span class="line">5.根据官网 升级kubelet和kubectl</span><br><span class="line">sudo apt-mark unhold kubelet kubectl &amp;&amp; \</span><br><span class="line">sudo apt-get update &amp;&amp; sudo apt-get install -y kubelet=<span class="string">&#x27;1.23.2-00&#x27;</span> kubectl=<span class="string">&#x27;1.23.2-00&#x27;</span> &amp;&amp; \</span><br><span class="line">sudo apt-mark hold kubelet kubectl</span><br><span class="line"></span><br><span class="line">或者直接升级</span><br><span class="line">apt-get install kubelet=1.23.2-00</span><br><span class="line">apt-get install kubectl=1.23.2-00</span><br><span class="line"></span><br><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl restart kubelet</span><br><span class="line"></span><br><span class="line">6.恢复master节点</span><br><span class="line">kubectl uncordon k8s-master</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.驱逐master节点的pod，保护起来
+kubectl drain k8s-master --delete-emptydir-data --ignore-daemonsets <span class="token parameter variable">--force</span>
+
+<span class="token number">2</span>.根据提示登录到控制节点
+<span class="token function">ssh</span> k8s-master
+
+<span class="token number">3</span>.查看要安装的版本的完整版本号 为1.23.2-00
+<span class="token function">apt-cache</span> show kubeadm <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">1.23</span>.2
+<span class="token comment">#Version: 1.23.2-00</span>
+<span class="token comment">#Filename: pool/kubeadm_1.23.2-00_amd64_f3593ab00d33e8c0a19e24c7a8c81e74a02e601d0f1c61559a5fb87658b53563.deb</span>
+
+<span class="token number">4</span>.根据官网命令执行，升级kubeadm
+<span class="token function">sudo</span> apt-mark unhold kubeadm <span class="token operator">&amp;&amp;</span> <span class="token punctuation">\</span>
+<span class="token function">sudo</span> <span class="token function">apt-get</span> update <span class="token operator">&amp;&amp;</span> <span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token assign-left variable">kubeadm</span><span class="token operator">=</span><span class="token string">'1.23.2-00'</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">\</span>
+<span class="token function">sudo</span> apt-mark hold kubeadm
+
+<span class="token function">sudo</span> kubeadm upgrade plan 确认计划
+kubeadm upgrade apply v1.23.2 --etcd-upgrade<span class="token operator">=</span>false 排除升级etcd
+kubeadm version 查看版本
+
+<span class="token number">5</span>.根据官网 升级kubelet和kubectl
+<span class="token function">sudo</span> apt-mark unhold kubelet kubectl <span class="token operator">&amp;&amp;</span> <span class="token punctuation">\</span>
+<span class="token function">sudo</span> <span class="token function">apt-get</span> update <span class="token operator">&amp;&amp;</span> <span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token assign-left variable">kubelet</span><span class="token operator">=</span><span class="token string">'1.23.2-00'</span> <span class="token assign-left variable">kubectl</span><span class="token operator">=</span><span class="token string">'1.23.2-00'</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">\</span>
+<span class="token function">sudo</span> apt-mark hold kubelet kubectl
+
+或者直接升级
+<span class="token function">apt-get</span> <span class="token function">install</span> <span class="token assign-left variable">kubelet</span><span class="token operator">=</span><span class="token number">1.23</span>.2-00
+<span class="token function">apt-get</span> <span class="token function">install</span> <span class="token assign-left variable">kubectl</span><span class="token operator">=</span><span class="token number">1.23</span>.2-00
+
+<span class="token function">sudo</span> systemctl daemon-reload
+<span class="token function">sudo</span> systemctl restart kubelet
+
+<span class="token number">6</span>.恢复master节点
+kubectl uncordon k8s-master<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="etcd备份还原"><a href="#etcd备份还原" class="headerlink" title="etcd备份还原"></a>etcd备份还原</h2><p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/">https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/</a></p>
 <p>关键词 upgrade-etcd</p>
@@ -523,7 +569,23 @@
 <p>客户端证书: &#x2F;opt&#x2F;KUIN00601&#x2F;etcd-client.crt</p>
 <p>客户端密钥: &#x2F;opt&#x2F;KUIN00601&#x2F;etcd-client.key</p>
 <p>为给定实例创建快照预计能在几秒钟内完成。 如果该操作似乎挂起，则命令可能有问题。用 CTRL + C 来取消操作，然后重试。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">1.安装etcdctl命令</span><br><span class="line">上传etcd的压缩包，将其复制到/bin下</span><br><span class="line"></span><br><span class="line">2.根据官网给的命令操作</span><br><span class="line">查看帮助</span><br><span class="line">ETCDCTL_API=3 etcdctl -h</span><br><span class="line"></span><br><span class="line">进行快照</span><br><span class="line">ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \</span><br><span class="line">  --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt\</span><br><span class="line">   --key=/etc/kubernetes/pki/etcd/server.key snapshot save [/srv/data/etcd-snapshot.db](https://127.0.0.1:2379上的现有 etcd 实例创建快照并将快照保存到 /srv/data/etcd-snapshot.db)</span><br><span class="line"></span><br><span class="line">3.还原</span><br><span class="line">sudo etcdctl --endpoints=<span class="string">&quot;https://127.0.0.1:2379&quot;</span> \</span><br><span class="line">--cacert=/opt/KUIN000601/ca.crt --cert=/opt/KUIN000601/etcd-client.crt \</span><br><span class="line">--key=/opt/KUIN000601/etcd-client.key   snapshot \</span><br><span class="line">restore /var/lib/backup/etcd-snapshot-previous.db</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.安装etcdctl命令
+上传etcd的压缩包，将其复制到/bin下
+
+<span class="token number">2</span>.根据官网给的命令操作
+查看帮助
+<span class="token assign-left variable">ETCDCTL_API</span><span class="token operator">=</span><span class="token number">3</span> etcdctl <span class="token parameter variable">-h</span>
+
+进行快照
+<span class="token assign-left variable">ETCDCTL_API</span><span class="token operator">=</span><span class="token number">3</span> etcdctl <span class="token parameter variable">--endpoints</span><span class="token operator">=</span>https://127.0.0.1:2379 <span class="token punctuation">\</span>
+  <span class="token parameter variable">--cacert</span><span class="token operator">=</span>/etc/kubernetes/pki/etcd/ca.crt <span class="token parameter variable">--cert</span><span class="token operator">=</span>/etc/kubernetes/pki/etcd/server.crt<span class="token punctuation">\</span>
+   <span class="token parameter variable">--key</span><span class="token operator">=</span>/etc/kubernetes/pki/etcd/server.key snapshot save <span class="token punctuation">[</span>/srv/data/etcd-snapshot.db<span class="token punctuation">]</span><span class="token punctuation">(</span>https://127.0.0.1:2379上的现有 etcd 实例创建快照并将快照保存到 /srv/data/etcd-snapshot.db<span class="token punctuation">)</span>
+
+<span class="token number">3</span>.还原
+<span class="token function">sudo</span> etcdctl <span class="token parameter variable">--endpoints</span><span class="token operator">=</span><span class="token string">"https://127.0.0.1:2379"</span> <span class="token punctuation">\</span>
+<span class="token parameter variable">--cacert</span><span class="token operator">=</span>/opt/KUIN000601/ca.crt <span class="token parameter variable">--cert</span><span class="token operator">=</span>/opt/KUIN000601/etcd-client.crt <span class="token punctuation">\</span>
+<span class="token parameter variable">--key</span><span class="token operator">=</span>/opt/KUIN000601/etcd-client.key   snapshot <span class="token punctuation">\</span>
+restore /var/lib/backup/etcd-snapshot-previous.db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="NetworkPolicy"><a href="#NetworkPolicy" class="headerlink" title="NetworkPolicy"></a>NetworkPolicy</h2><p>关键词Network Policy</p>
 <p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">https://kubernetes.io/docs/concepts/services-networking/network-policies/</a></p>
@@ -533,11 +595,42 @@
 <p>进一步确保新的NetworkPolicy：</p>
 <p><strong>不允许</strong>对没有在监听端口9000的Pods的访问</p>
 <p><strong>不允许</strong>非来自 namespace echo中的Pods的访问</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span><span class="string">.给ns</span> <span class="string">echo打一个标签echo，需要一个独特的标签来标记。考试的时候已经创建好了</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">label</span> <span class="string">ns</span> <span class="string">echo</span> <span class="string">project=echo</span></span><br><span class="line"></span><br><span class="line"><span class="number">2</span><span class="string">.创建一个NetworkPolicy</span></span><br><span class="line"><span class="string">vim</span> <span class="string">networkpolicy.yaml</span></span><br><span class="line"><span class="string">先把官方的yaml文件复制下来然后修改</span></span><br><span class="line"> <span class="string">:set</span> <span class="string">paste</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NetworkPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">allow-port-from-namespace</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">podSelector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span> <span class="string">my-app</span></span><br><span class="line">  <span class="attr">policyTypes:</span> <span class="comment">#策略只留入栈</span></span><br><span class="line">  <span class="attr">ingress:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">namespaceSelector:</span></span><br><span class="line">        <span class="attr">matchLabels:</span></span><br><span class="line">          <span class="attr">project:</span> <span class="string">echo</span> <span class="comment">#指定ns的标签</span></span><br><span class="line">    <span class="attr">ports:</span> </span><br><span class="line">    <span class="bullet">-</span> <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">      <span class="attr">port:</span> <span class="number">9000</span> <span class="comment"># 指定端口</span></span><br><span class="line">  <span class="comment"># 删除出栈设置</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">networkpolicy.yaml</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">1.给ns echo打一个标签echo，需要一个独特的标签来标记。考试的时候已经创建好了
+kubectl label ns echo project=echo
+
+2.创建一个NetworkPolicy
+vim networkpolicy.yaml
+先把官方的yaml文件复制下来然后修改
+ <span class="token punctuation">:</span>set paste
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.k8s.io/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> NetworkPolicy
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> allow<span class="token punctuation">-</span>port<span class="token punctuation">-</span>from<span class="token punctuation">-</span>namespace
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> default
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">podSelector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app
+  <span class="token key atrule">policyTypes</span><span class="token punctuation">:</span> <span class="token comment">#策略只留入栈</span>
+  <span class="token key atrule">ingress</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">namespaceSelector</span><span class="token punctuation">:</span>
+        <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
+          <span class="token key atrule">project</span><span class="token punctuation">:</span> echo <span class="token comment">#指定ns的标签</span>
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span> 
+    <span class="token punctuation">-</span> <span class="token key atrule">protocol</span><span class="token punctuation">:</span> TCP
+      <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9000</span> <span class="token comment"># 指定端口</span>
+  <span class="token comment"># 删除出栈设置</span>
+kubectl apply <span class="token punctuation">-</span>f networkpolicy.yaml
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="创建service"><a href="#创建service" class="headerlink" title="创建service"></a>创建service</h2><p><strong>Task</strong></p>
 <p>重新配置一个已经存在的front-end的deployment，在名字为nginx的容器里面添加一个端口配置，名字为http，暴露端口号为80，然后创建一个service，名字为front-end-svc，暴露该deployment的http端口，并且service的类型为NodePort。</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span><span class="string">.修改一个已经创建的deploy资源</span></span><br><span class="line"><span class="string">在template后面添加一个port，80端口，别名http</span></span><br><span class="line"></span><br><span class="line"><span class="number">2</span><span class="string">.创建service，暴露http端口</span></span><br><span class="line"><span class="string">可以直接用expose来快速创建service</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">expose</span> <span class="string">deployment</span> <span class="string">front-end</span> <span class="string">--port=80</span> <span class="string">--target-port=http</span> <span class="string">\</span></span><br><span class="line"><span class="string">--name=front-end-svc</span> <span class="string">--type=NodePort</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">1.修改一个已经创建的deploy资源
+在template后面添加一个port，80端口，别名http
+
+2.创建service，暴露http端口
+可以直接用expose来快速创建service
+kubectl expose deployment front<span class="token punctuation">-</span>end <span class="token punctuation">-</span><span class="token punctuation">-</span>port=80 <span class="token punctuation">-</span><span class="token punctuation">-</span>target<span class="token punctuation">-</span>port=http \
+<span class="token punctuation">-</span><span class="token punctuation">-</span>name=front<span class="token punctuation">-</span>end<span class="token punctuation">-</span>svc <span class="token punctuation">-</span><span class="token punctuation">-</span>type=NodePort<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="创建ingress"><a href="#创建ingress" class="headerlink" title="创建ingress"></a>创建ingress</h2><p><a target="_blank" rel="noopener" href="http://kubernetes.io/docs/concepts/services-networking/ingress/#the-ingress-resource">http://kubernetes.io/docs/concepts/services-networking/ingress/#the-ingress-resource</a></p>
 <p>关键词：ingress，找到default ingress class</p>
@@ -548,41 +641,175 @@
 <p>使用服务端口 5678在路径 &#x2F;hello 上公开服务（service） hello</p>
 <p>可以使用以下命令检查服务 hello的可用性，该命令应返回 hello：</p>
 <p>curl -kL <INTERNAL_IP>&#x2F;hello</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span><span class="string">.创建一个ingressclass类，在官网可以找到模板进行修改（只修改ns即可</span></span><br><span class="line"></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">IngressClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app.kubernetes.io/component:</span> <span class="string">controller</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ing-internal</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">ingressclass.kubernetes.io/is-default-class:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">controller:</span> <span class="string">k8s.io/ingress-nginx</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> </span><br><span class="line"></span><br><span class="line"><span class="number">2</span><span class="string">.创建一个ingress</span></span><br><span class="line"><span class="string">官网也有模板,ingressClassName要和上面的一致</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">pong</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="string">/</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ing-internal</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">ingressClassName:</span> <span class="string">nginx-example</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">      <span class="attr">paths:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/hello</span></span><br><span class="line">        <span class="attr">pathType:</span> <span class="string">Prefix</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">service:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">hello</span></span><br><span class="line">            <span class="attr">port:</span></span><br><span class="line">              <span class="attr">number:</span> <span class="number">5678</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> </span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">1.创建一个ingressclass类，在官网可以找到模板进行修改（只修改ns即可
+
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.k8s.io/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> IngressClass
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app.kubernetes.io/component</span><span class="token punctuation">:</span> controller
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> ing<span class="token punctuation">-</span>internal
+  <span class="token key atrule">annotations</span><span class="token punctuation">:</span>
+    <span class="token key atrule">ingressclass.kubernetes.io/is-default-class</span><span class="token punctuation">:</span> <span class="token string">"true"</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">controller</span><span class="token punctuation">:</span> k8s.io/ingress<span class="token punctuation">-</span>nginx
+kubectl apply <span class="token punctuation">-</span>f 
+
+2.创建一个ingress
+官网也有模板<span class="token punctuation">,</span>ingressClassName要和上面的一致
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.k8s.io/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Ingress
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> pong
+  <span class="token key atrule">annotations</span><span class="token punctuation">:</span>
+    <span class="token key atrule">nginx.ingress.kubernetes.io/rewrite-target</span><span class="token punctuation">:</span> /
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> ing<span class="token punctuation">-</span>internal
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">ingressClassName</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>example
+  <span class="token key atrule">rules</span><span class="token punctuation">:</span>
+      <span class="token key atrule">paths</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">path</span><span class="token punctuation">:</span> /hello
+        <span class="token key atrule">pathType</span><span class="token punctuation">:</span> Prefix
+        <span class="token key atrule">backend</span><span class="token punctuation">:</span>
+          <span class="token key atrule">service</span><span class="token punctuation">:</span>
+            <span class="token key atrule">name</span><span class="token punctuation">:</span> hello
+            <span class="token key atrule">port</span><span class="token punctuation">:</span>
+              <span class="token key atrule">number</span><span class="token punctuation">:</span> <span class="token number">5678</span>
+kubectl apply <span class="token punctuation">-</span>f <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="deployment扩缩容"><a href="#deployment扩缩容" class="headerlink" title="deployment扩缩容"></a>deployment扩缩容</h2><p>TASK：</p>
 <p>扩容deployment的pod到6个</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl scale --replicas=6 deployment &lt;dp名&gt;</span><br><span class="line">kubectl edit也可以</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl scale <span class="token parameter variable">--replicas</span><span class="token operator">=</span><span class="token number">6</span> deployment <span class="token operator">&lt;</span>dp名<span class="token operator">></span>
+kubectl edit也可以<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <h2 id="pod创建"><a href="#pod创建" class="headerlink" title="pod创建"></a>pod创建</h2><p>Task：<br>创建一个Pod，名字为nginx-kusc00401，镜像地址是nginx，调度到具有disk&#x3D;spinning标签的节点上</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-kusc00401</span><br><span class="line">  labels:</span><br><span class="line">    role: nginx-kusc00401</span><br><span class="line">spec:</span><br><span class="line">  nodeSelector:</span><br><span class="line">    disk: spinning</span><br><span class="line">  containers:</span><br><span class="line">    - name: nginx</span><br><span class="line">      image: nginx</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-kusc00401
+  labels:
+    role: nginx-kusc00401
+spec:
+  nodeSelector:
+    disk: spinning
+  containers:
+    - name: nginx
+      image: nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="ready节点状态检查"><a href="#ready节点状态检查" class="headerlink" title="ready节点状态检查"></a>ready节点状态检查</h2><p>TSAK</p>
 <p>检查集群中有多少节点为Ready状态（不包括被打上 Taint：NoSchedule 的节点），之后将数量写到&#x2F;opt&#x2F;KUSC00402&#x2F;kusc00402.txt</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">kubectl get nodes | grep -i ready | <span class="built_in">wc</span> -l</span><br><span class="line"></span><br><span class="line">kubectl describe nodes | grep -i taint | grep -vi nosch | <span class="built_in">wc</span> -l</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> x &gt;  /opt/KUSC00402/kusc00402.txt</span><br><span class="line">-v 排除在外</span><br><span class="line">-c 统计条数</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
+kubectl get nodes <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> ready <span class="token operator">|</span> <span class="token function">wc</span> <span class="token parameter variable">-l</span>
+
+kubectl describe nodes <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> taint <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-vi</span> nosch <span class="token operator">|</span> <span class="token function">wc</span> <span class="token parameter variable">-l</span>
+
+<span class="token builtin class-name">echo</span> x <span class="token operator">></span>  /opt/KUSC00402/kusc00402.txt
+<span class="token parameter variable">-v</span> 排除在外
+<span class="token parameter variable">-c</span> 统计条数<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="一个pod里封装多个容器"><a href="#一个pod里封装多个容器" class="headerlink" title="一个pod里封装多个容器"></a>一个pod里封装多个容器</h2><p>Task</p>
 <p>创建一个Pod，名字为kucc1，这个Pod包含4容器，为nginx、redis、memcached、consul</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: kucc1</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">    name: nginx</span><br><span class="line">    name: redis</span><br><span class="line">    name: memcached</span><br><span class="line">    name: consul</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: v1
+kind: Pod
+metadata:
+  name: kucc1
+spec:
+  containers:
+    name: nginx
+    name: redis
+    name: memcached
+    name: consul<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="pv和pvc绑定"><a href="#pv和pvc绑定" class="headerlink" title="pv和pvc绑定"></a>pv和pvc绑定</h2><p>Task<br>创建一个pv，名字为app-config，大小为2Gi，访问权限为ReadWriteMany。Volume的类型为hostPath，路径为&#x2F;srv&#x2F;app-config</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: PersistentVolume</span><br><span class="line">metadata:</span><br><span class="line">  name: app-config</span><br><span class="line">spec:</span><br><span class="line">  capacity:</span><br><span class="line">    storage: 2Gi</span><br><span class="line">  accessModes:</span><br><span class="line">  hostPath:</span><br><span class="line">    path: <span class="string">&quot;/srv/app-config&quot;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-config
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+  hostPath:
+    path: <span class="token string">"/srv/app-config"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>Task：<br>创建一个名字为pv-volume的pvc，指定storageClass为csi-hostpath-sc，大小为10Mi<br>然后创建一个Pod，名字为web-server，镜像为nginx，并且挂载该PVC至&#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html，挂载的权限为ReadWriteOnce。之后通过kubectl edit或者kubectl path将pvc改成70Mi，并且记录修改记录。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: PersistentVolumeClaim</span><br><span class="line">metadata:</span><br><span class="line">  name: pv-volume</span><br><span class="line">spec:</span><br><span class="line">  accessModes:</span><br><span class="line">  resources:</span><br><span class="line">    requests:</span><br><span class="line">      storage: 10Mi</span><br><span class="line">  storageClassName: csi-hostpath-sc</span><br><span class="line"></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line">  name: web-server</span><br><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">    - name: nginx</span><br><span class="line">      image: nginx</span><br><span class="line">      volumeMounts:</span><br><span class="line">      - mountPath: <span class="string">&quot;/usr/share/nginx/html&quot;</span></span><br><span class="line">        name: pv-volume</span><br><span class="line">  volumes:</span><br><span class="line">    - name: pv-volume</span><br><span class="line">      persistentVolumeClaim:</span><br><span class="line">        claimName: pv-volume</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pv-volume
+spec:
+  accessModes:
+  resources:
+    requests:
+      storage: 10Mi
+  storageClassName: csi-hostpath-sc
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-server
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      volumeMounts:
+      - mountPath: <span class="token string">"/usr/share/nginx/html"</span>
+        name: pv-volume
+  volumes:
+    - name: pv-volume
+      persistentVolumeClaim:
+        claimName: pv-volume<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="查看日志"><a href="#查看日志" class="headerlink" title="查看日志"></a>查看日志</h2><p>Task：<br>监控名为foobar的Pod的日志，并过滤出具有unable-access-website 信息的行，然后将写入到 &#x2F;opt&#x2F;KUTR00101&#x2F;foobar</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs foobar | grep unable-access-website &gt; /opt/KUTR00101/foobar</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl logs foobar <span class="token operator">|</span> <span class="token function">grep</span> unable-access-website <span class="token operator">></span> /opt/KUTR00101/foobar<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <h2 id="Sidecar代理"><a href="#Sidecar代理" class="headerlink" title="Sidecar代理"></a>Sidecar代理</h2><p>Context：<br>将一个现有的 Pod 集成到 Kubernetes 的内置日志记录体系结构中（例如 kubectl logs）。<br>添加 streaming sidecar 容器是实现此要求的一种好方法。</p>
 <p>Task：<br>使用busybox Image来将名为sidecar的sidecar容器添加到现有的Pod legacy-app上，新的sidecar容器必须运行以下命令：<br>&#x2F;bin&#x2F;sh -c tail -n+1 -f &#x2F;var&#x2F;log&#x2F;legacy-app.log<br>使用volume挂载&#x2F;var&#x2F;log&#x2F;目录，确保sidecar能访问&#x2F;var&#x2F;log&#x2F;legacy-app.log文件</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">1.创建c-sidecar的容器（考试环境中不需要</span><br><span class="line">kubectl apply -f c-sidecar.yaml</span><br><span class="line"></span><br><span class="line">2.导出yaml文件，并删减</span><br><span class="line">kubectl get pods legacy-app -oyaml &gt; sidecar.yaml</span><br><span class="line"></span><br><span class="line">annotations部分、creationTimestamp,status部分删除</span><br><span class="line"></span><br><span class="line">3.添加新的容器</span><br><span class="line">    image: busybox</span><br><span class="line">    args: [/bin/sh, -c, <span class="string">&#x27;tail -n+1 -F /var/log/legacy-app.log&#x27;</span>]</span><br><span class="line">    volumeMounts:</span><br><span class="line">    - name: logs</span><br><span class="line">      mountPath: /var/log</span><br><span class="line">  volumes:</span><br><span class="line">    emptyDir: &#123;&#125;</span><br><span class="line"></span><br><span class="line">kubectl delete -f c-sidecar.yaml</span><br><span class="line">kubectl apply -f sidecar.yaml</span><br><span class="line"></span><br><span class="line">4.查看日志</span><br><span class="line">sudo kubectl logs legacy-app -c sidecar</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.创建c-sidecar的容器（考试环境中不需要
+kubectl apply <span class="token parameter variable">-f</span> c-sidecar.yaml
+
+<span class="token number">2</span>.导出yaml文件，并删减
+kubectl get pods legacy-app <span class="token parameter variable">-oyaml</span> <span class="token operator">></span> sidecar.yaml
+
+annotations部分、creationTimestamp,status部分删除
+
+<span class="token number">3</span>.添加新的容器
+    image: busybox
+    args: <span class="token punctuation">[</span>/bin/sh, -c, <span class="token string">'tail -n+1 -F /var/log/legacy-app.log'</span><span class="token punctuation">]</span>
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log
+  volumes:
+    emptyDir: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+kubectl delete <span class="token parameter variable">-f</span> c-sidecar.yaml
+kubectl apply <span class="token parameter variable">-f</span> sidecar.yaml
+
+<span class="token number">4</span>.查看日志
+<span class="token function">sudo</span> kubectl logs legacy-app <span class="token parameter variable">-c</span> sidecar
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="查看pod的cpu利用率"><a href="#查看pod的cpu利用率" class="headerlink" title="查看pod的cpu利用率"></a>查看pod的cpu利用率</h2><p>Task：<br>找出标签是name&#x3D;cpu-user的Pod，并过滤出使用CPU最高的Pod，然后把它的名字写在已经存在的&#x2F;opt&#x2F;KUTR00401&#x2F;KUTR00401.txt文件里（注意他没有说指定namespace。所以需要使用-A指定所以namespace）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">1.模拟环境准备（考试中已经有了</span><br><span class="line">kubectl apply -f cpu-1.yaml</span><br><span class="line">kubectl apply -f cpu-2.yaml</span><br><span class="line">kubectl apply -f metrics.yaml</span><br><span class="line"></span><br><span class="line">kubectl top pod</span><br><span class="line"></span><br><span class="line">2.</span><br><span class="line">kubectl top pod -l name=cpu-user --sort-by=cpu -A</span><br><span class="line">NAMESPACE     NAME    CPU(cores)   MEMORY(bytes)</span><br><span class="line">kube-system   cpu-1   2m           90Mi</span><br><span class="line">default       cpu-2   0m           6Mi</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;cpu-1&quot;</span> &gt;&gt; /opt/KUTR00401/KUTR00401.txt</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.模拟环境准备（考试中已经有了
+kubectl apply <span class="token parameter variable">-f</span> cpu-1.yaml
+kubectl apply <span class="token parameter variable">-f</span> cpu-2.yaml
+kubectl apply <span class="token parameter variable">-f</span> metrics.yaml
+
+kubectl <span class="token function">top</span> pod
+
+<span class="token number">2</span>.
+kubectl <span class="token function">top</span> pod <span class="token parameter variable">-l</span> <span class="token assign-left variable">name</span><span class="token operator">=</span>cpu-user --sort-by<span class="token operator">=</span>cpu <span class="token parameter variable">-A</span>
+NAMESPACE     NAME    CPU<span class="token punctuation">(</span>cores<span class="token punctuation">)</span>   MEMORY<span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+kube-system   cpu-1   2m           90Mi
+default       cpu-2   0m           6Mi
+
+<span class="token builtin class-name">echo</span> <span class="token string">"cpu-1"</span> <span class="token operator">>></span> /opt/KUTR00401/KUTR00401.txt
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="kubelet故障排查"><a href="#kubelet故障排查" class="headerlink" title="kubelet故障排查"></a>kubelet故障排查</h2><p>Task:<br>一个名为 <strong>wk8s-node-0</strong> 的 Kubernetes 工作节点处于 <strong>NotReady</strong> 状态。调查其原因，并执行适当的步骤使节点进入 <strong>Ready</strong> 状态，确保任何更改都是永久性的。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">直接重启kubelet即可</span><br><span class="line">systemctl daemon-reload &amp;&amp; systemctl restart kubelet</span><br><span class="line">systemctl <span class="built_in">enable</span> kubelet --now</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">直接重启kubelet即可
+systemctl daemon-reload <span class="token operator">&amp;&amp;</span> systemctl restart kubelet
+systemctl <span class="token builtin class-name">enable</span> kubelet <span class="token parameter variable">--now</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6641,36 +6868,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7135,13 +7332,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8182,13 +8379,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8641,14 +8838,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8656,14 +8853,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

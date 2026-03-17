@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="基于systemctl检查nginx服务状态1234567891011121314151617181920212223242526272829303132333435import subprocess# nginx配置检查def check_nginx_config():    try:        subprocess.run([&#x27;nginx&#x27;, &#x27;-t&amp;#x27">
+    <meta name="description" content="基于systemctl检查nginx服务状态import subprocess  # nginx配置检查 def check_nginx_config():     try:         subprocess.run([&#39;nginx&#39;, &#39;-t&#39;],capture_output&#x3D;True,text&#x3D;True,check&#x3D;True)         print(&quot;Checking nginx c">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Python基于多种方式检测linux服务运行状态(进程筛选、systemctl、API)">
 <meta property="og:url" content="https://akemi.zj.cn/2024/11/19/Python-check-status/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="基于systemctl检查nginx服务状态1234567891011121314151617181920212223242526272829303132333435import subprocess# nginx配置检查def check_nginx_config():    try:        subprocess.run([&#x27;nginx&#x27;, &#x27;-t&amp;#x27">
+<meta property="og:description" content="基于systemctl检查nginx服务状态import subprocess  # nginx配置检查 def check_nginx_config():     try:         subprocess.run([&#39;nginx&#39;, &#39;-t&#39;],capture_output&#x3D;True,text&#x3D;True,check&#x3D;True)         print(&quot;Checking nginx c">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-11-19T12:44:01.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.186Z">
@@ -490,17 +490,199 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <h1 id="基于systemctl检查nginx服务状态"><a href="#基于systemctl检查nginx服务状态" class="headerlink" title="基于systemctl检查nginx服务状态"></a>基于systemctl检查nginx服务状态</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">import subprocess</span><br><span class="line"></span><br><span class="line"><span class="comment"># nginx配置检查</span></span><br><span class="line">def check_nginx_config():</span><br><span class="line">    try:</span><br><span class="line">        subprocess.run([<span class="string">&#x27;nginx&#x27;</span>, <span class="string">&#x27;-t&#x27;</span>],capture_output=True,text=True,check=True)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Checking nginx configuration successfully&quot;</span>)</span><br><span class="line">    except subprocess.CalledProcessError as e:</span><br><span class="line">        <span class="built_in">print</span>(e.stderr)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检测nginx是否运行，返回一个值，让重启函数判断</span></span><br><span class="line">def check_nginx_process():</span><br><span class="line">    try:</span><br><span class="line">        result = subprocess.run([<span class="string">&#x27;systemctl&#x27;</span>, <span class="string">&#x27;is-active&#x27;</span>, <span class="string">&#x27;nginx&#x27;</span>],capture_output=True,text=True,check=True)</span><br><span class="line">        <span class="built_in">return</span> result.stdout.strip() == <span class="string">&#x27;active&#x27;</span></span><br><span class="line">    <span class="comment"># 如果返回rc非0，就报错</span></span><br><span class="line">    except subprocess.CalledProcessError:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;nginx status failed&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果nginx没有运行，进行重启的重启函数</span></span><br><span class="line">def restart_nginx():</span><br><span class="line">    try:</span><br><span class="line">        subprocess.run([<span class="string">&#x27;systemctl&#x27;</span>,<span class="string">&#x27;restart&#x27;</span>,<span class="string">&#x27;nginx&#x27;</span>],check=True)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;nginx has been restarted&quot;</span>)</span><br><span class="line">    except subprocess.CalledProcessError as e:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Failed to restart nginx&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(e.stderr)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    check_nginx_config()</span><br><span class="line">    <span class="keyword">if</span> not check_nginx_process():</span><br><span class="line">        restart_nginx()</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;nginx is already running&#x27;</span>)</span><br></pre></td></tr></table></figure>
+        <h1 id="基于systemctl检查nginx服务状态"><a href="#基于systemctl检查nginx服务状态" class="headerlink" title="基于systemctl检查nginx服务状态"></a>基于systemctl检查nginx服务状态</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">import</span> subprocess
 
-<h1 id="基于grep筛选监控tomcat服务状态"><a href="#基于grep筛选监控tomcat服务状态" class="headerlink" title="基于grep筛选监控tomcat服务状态"></a>基于grep筛选监控tomcat服务状态</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">import subprocess</span><br><span class="line">import time</span><br><span class="line"></span><br><span class="line">def is_tomcat_running():</span><br><span class="line">    try:</span><br><span class="line">        result=subprocess.run(<span class="string">&quot;ps aux | grep tomcat | grep -v grep | grep -v python&quot;</span>,</span><br><span class="line">                              shell=True,check=True,text=True,capture_output=True)</span><br><span class="line">        <span class="keyword">if</span> result.stdout:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;tomcat is running&quot;</span>)</span><br><span class="line">            <span class="built_in">return</span> True</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;tomcat is not running&quot;</span>)</span><br><span class="line">            <span class="built_in">return</span> False</span><br><span class="line"></span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;tomcat status error&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br><span class="line"></span><br><span class="line">def start_tomcat():</span><br><span class="line">    try:</span><br><span class="line">        tomcat_start_command=<span class="string">&quot;/usr/bin/tomcat/bin/catalina.sh&quot;</span></span><br><span class="line">        result=subprocess.run(tomcat_start_command,</span><br><span class="line">                              shell=True,check=True,text=True)</span><br><span class="line">        <span class="keyword">if</span> result.returncode == 0:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;tomcat started successfully&quot;</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;tomcat started failed&quot;</span>)</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;tomcat started failed:&#123;e&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line">def monitor_tomcat(interval):</span><br><span class="line">    <span class="keyword">while</span> True:</span><br><span class="line">        <span class="keyword">if</span> not is_tomcat_running():</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;tomcat failed,try to start tomcat&quot;</span>)</span><br><span class="line">            start_tomcat()</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;tomcat is running&quot;</span>)</span><br><span class="line">            time.sleep(interval)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    monitor_tomcat(5)</span><br></pre></td></tr></table></figure>
+<span class="token comment"># nginx配置检查</span>
+def check_nginx_config<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        subprocess.run<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'nginx'</span>, <span class="token string">'-t'</span><span class="token punctuation">]</span>,capture_output<span class="token operator">=</span>True,text<span class="token operator">=</span>True,check<span class="token operator">=</span>True<span class="token punctuation">)</span>
+        print<span class="token punctuation">(</span><span class="token string">"Checking nginx configuration successfully"</span><span class="token punctuation">)</span>
+    except subprocess.CalledProcessError as e:
+        print<span class="token punctuation">(</span>e.stderr<span class="token punctuation">)</span>
 
-<h1 id="基于API检测es服务状态"><a href="#基于API检测es服务状态" class="headerlink" title="基于API检测es服务状态"></a>基于API检测es服务状态</h1><h2 id="es安装"><a href="#es安装" class="headerlink" title="es安装"></a>es安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">yum install java-11-openjdk-devel -y</span><br><span class="line"> </span><br><span class="line">java --version</span><br><span class="line"><span class="comment">#openjdk 11.0.25 2024-10-15 LTS</span></span><br><span class="line"><span class="comment">#OpenJDK Runtime Environment (Red_Hat-11.0.25.0.9-1) (build 11.0.25+9-LTS)</span></span><br><span class="line"><span class="comment">#OpenJDK 64-Bit Server VM (Red_Hat-11.0.25.0.9-1) (build 11.0.25+9-LTS, mixed mode, sharing)</span></span><br><span class="line"></span><br><span class="line">如果安装了多个java环境，可以通过alternatives --config java来手动选择系统默认环境</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/yum.repos.d/elasticsearch.repo &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[elasticsearch-8.x] </span></span><br><span class="line"><span class="string">name=Elasticsearch repository for 8.x packages </span></span><br><span class="line"><span class="string">baseurl=https://artifacts.elastic.co/packages/8.x/yum </span></span><br><span class="line"><span class="string">gpgcheck=1 </span></span><br><span class="line"><span class="string">gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch </span></span><br><span class="line"><span class="string">enabled=1 </span></span><br><span class="line"><span class="string">autorefresh=1</span></span><br><span class="line"><span class="string">type=rpm-md</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">yum install elasticsearch -y</span><br><span class="line"></span><br><span class="line">速度很慢，我下载了半个小时才下载完</span><br></pre></td></tr></table></figure>
+<span class="token comment"># 检测nginx是否运行，返回一个值，让重启函数判断</span>
+def check_nginx_process<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        result <span class="token operator">=</span> subprocess.run<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'systemctl'</span>, <span class="token string">'is-active'</span>, <span class="token string">'nginx'</span><span class="token punctuation">]</span>,capture_output<span class="token operator">=</span>True,text<span class="token operator">=</span>True,check<span class="token operator">=</span>True<span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> result.stdout.strip<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">'active'</span>
+    <span class="token comment"># 如果返回rc非0，就报错</span>
+    except subprocess.CalledProcessError:
+        print<span class="token punctuation">(</span><span class="token string">"nginx status failed"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> False
 
-<h2 id="修改es配置文件"><a href="#修改es配置文件" class="headerlink" title="修改es配置文件"></a>修改es配置文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 修改绑定地址到本地、修改端口</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^#network.host:.*/network.host: 0.0.0.0/g&#x27;</span> /etc/elasticsearch/elasticsearch.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/^#http.port:.*/http.port: 9200/g&#x27;</span> /etc/elasticsearch/elasticsearch.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭es安全加密</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^xpack.security.enabled:.*/xpack.security.enabled: false/g&#x27;</span> /etc/elasticsearch/elasticsearch.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整jvm容器，使其能提供足够的内存</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;-Xms2g&quot;</span> &gt;&gt; /etc/elasticsearch/jvm.options</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;-Xmx2g&quot;</span> &gt;&gt; /etc/elasticsearch/jvm.options</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启es</span></span><br><span class="line">systemctl <span class="built_in">enable</span> elasticsearch.service --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># curl测试</span></span><br><span class="line">curl -X GET localhost:9200</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span> : <span class="string">&quot;python&quot;</span>,</span><br><span class="line">  <span class="string">&quot;cluster_name&quot;</span> : <span class="string">&quot;elasticsearch&quot;</span>,</span><br><span class="line">  <span class="string">&quot;cluster_uuid&quot;</span> : <span class="string">&quot;GuInJXNZQYy3kvsD1BHfiA&quot;</span>,</span><br><span class="line">  <span class="string">&quot;version&quot;</span> : &#123;</span><br><span class="line">    <span class="string">&quot;number&quot;</span> : <span class="string">&quot;8.16.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;build_flavor&quot;</span> : <span class="string">&quot;default&quot;</span>,</span><br><span class="line">    <span class="string">&quot;build_type&quot;</span> : <span class="string">&quot;rpm&quot;</span>,</span><br><span class="line">    <span class="string">&quot;build_hash&quot;</span> : <span class="string">&quot;12ff76a92922609df4aba61a368e7adf65589749&quot;</span>,</span><br><span class="line">    <span class="string">&quot;build_date&quot;</span> : <span class="string">&quot;2024-11-08T10:05:56.292914697Z&quot;</span>,</span><br><span class="line">    <span class="string">&quot;build_snapshot&quot;</span> : <span class="literal">false</span>,</span><br><span class="line">    <span class="string">&quot;lucene_version&quot;</span> : <span class="string">&quot;9.12.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;minimum_wire_compatibility_version&quot;</span> : <span class="string">&quot;7.17.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;minimum_index_compatibility_version&quot;</span> : <span class="string">&quot;7.0.0&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;tagline&quot;</span> : <span class="string">&quot;You Know, for Search&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 如果nginx没有运行，进行重启的重启函数</span>
+def restart_nginx<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        subprocess.run<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'systemctl'</span>,<span class="token string">'restart'</span>,<span class="token string">'nginx'</span><span class="token punctuation">]</span>,check<span class="token operator">=</span>True<span class="token punctuation">)</span>
+        print<span class="token punctuation">(</span><span class="token string">"nginx has been restarted"</span><span class="token punctuation">)</span>
+    except subprocess.CalledProcessError as e:
+        print<span class="token punctuation">(</span><span class="token string">"Failed to restart nginx"</span><span class="token punctuation">)</span>
+        print<span class="token punctuation">(</span>e.stderr<span class="token punctuation">)</span>
 
-<h2 id="es常用操作"><a href="#es常用操作" class="headerlink" title="es常用操作"></a>es常用操作</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看插件信息</span></span><br><span class="line">curl -X GET localhost:9200/_cat/plugins?v</span><br><span class="line">name component version</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看分片信息</span></span><br><span class="line">curl -X GET localhost:9200/_cat/shards?v</span><br><span class="line">index shard prirep state docs store dataset ip node</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看索引列表</span></span><br><span class="line">curl -X GET localhost:9200/_cat/indices?v</span><br><span class="line">health status index uuid pri rep docs.count docs.deleted store.size pri.store.size dataset.size</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建索引</span></span><br><span class="line">curl -X PUT localhost:9200/my_index</span><br><span class="line"><span class="comment">#&#123;&quot;acknowledged&quot;:true,&quot;shards_acknowledged&quot;:true,&quot;index&quot;:&quot;my_index&quot;&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除索引</span></span><br><span class="line">curl -X DELETE localhost:9200/my_index</span><br><span class="line">&#123;<span class="string">&quot;acknowledged&quot;</span>:<span class="literal">true</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 插入文档——用json格式插入</span></span><br><span class="line">curl -X POST <span class="string">&quot;localhost:9200/articles/_doc/1&quot;</span> -H <span class="string">&quot;Content-Type: application/json&quot;</span> -d <span class="string">&#x27;&#123;&quot;title&quot;: &quot;这是我的第一篇文档&quot;,&quot;content&quot;:&quot;这是第一篇文档的内容&quot;&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询我刚刚插入的文档</span></span><br><span class="line">curl http://192.168.10.114:9200/articles/_doc/1</span><br><span class="line">&#123;<span class="string">&quot;_index&quot;</span>:<span class="string">&quot;articles&quot;</span>,<span class="string">&quot;_id&quot;</span>:<span class="string">&quot;1&quot;</span>,<span class="string">&quot;_version&quot;</span>:1,<span class="string">&quot;_seq_no&quot;</span>:0,<span class="string">&quot;_primary_term&quot;</span>:1,<span class="string">&quot;found&quot;</span>:<span class="literal">true</span>,<span class="string">&quot;_source&quot;</span>:&#123;<span class="string">&quot;title&quot;</span>: <span class="string">&quot;这是我的第一篇文档&quot;</span>,<span class="string">&quot;content&quot;</span>:<span class="string">&quot;这是第一篇文档的内容&quot;</span>&#125;&#125;</span><br></pre></td></tr></table></figure>
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token builtin class-name">:</span>
+    check_nginx_config<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> not check_nginx_process<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+        restart_nginx<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    else:
+        print<span class="token punctuation">(</span><span class="token string">'nginx is already running'</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="通过API方式检测es运行状态"><a href="#通过API方式检测es运行状态" class="headerlink" title="通过API方式检测es运行状态"></a>通过API方式检测es运行状态</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line">import subprocess</span><br><span class="line">import time</span><br><span class="line"></span><br><span class="line">def check_es_status():</span><br><span class="line">    try:</span><br><span class="line">        response=requests.get(<span class="string">&#x27;http://192.168.10.114:9200/_cluster/health&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span> response.status_code == 200:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;es is running&quot;</span>)</span><br><span class="line">            <span class="built_in">return</span> True</span><br><span class="line">    except requests.exceptions.RequestException as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;es status error:&#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br><span class="line"></span><br><span class="line">def restart_es():</span><br><span class="line">    try:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;trying to restart es&quot;</span>)</span><br><span class="line">        subprocess.run([<span class="string">&#x27;systemctl&#x27;</span>,<span class="string">&#x27;restart&#x27;</span>,<span class="string">&#x27;elasticsearch&#x27;</span>],check=True)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;es is restarting successfully&quot;</span>)</span><br><span class="line">    except subprocess.CalledProcessError as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;failed to restart es:&#123;e&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="keyword">while</span> True:</span><br><span class="line">        <span class="keyword">if</span> not check_es_status():</span><br><span class="line">            restart_es()</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;es is running&quot;</span>)</span><br><span class="line">            time.sleep(3)</span><br></pre></td></tr></table></figure>
+<h1 id="基于grep筛选监控tomcat服务状态"><a href="#基于grep筛选监控tomcat服务状态" class="headerlink" title="基于grep筛选监控tomcat服务状态"></a>基于grep筛选监控tomcat服务状态</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">import</span> subprocess
+<span class="token function">import</span> <span class="token function">time</span>
+
+def is_tomcat_running<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        <span class="token assign-left variable">result</span><span class="token operator">=</span>subprocess.run<span class="token punctuation">(</span><span class="token string">"ps aux | grep tomcat | grep -v grep | grep -v python"</span>,
+                              <span class="token assign-left variable">shell</span><span class="token operator">=</span>True,check<span class="token operator">=</span>True,text<span class="token operator">=</span>True,capture_output<span class="token operator">=</span>True<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> result.stdout:
+            print<span class="token punctuation">(</span><span class="token string">"tomcat is running"</span><span class="token punctuation">)</span>
+            <span class="token builtin class-name">return</span> True
+        else:
+            print<span class="token punctuation">(</span><span class="token string">"tomcat is not running"</span><span class="token punctuation">)</span>
+            <span class="token builtin class-name">return</span> False
+
+    except Exception as e:
+        print<span class="token punctuation">(</span><span class="token string">"tomcat status error"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> False
+
+def start_tomcat<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        <span class="token assign-left variable">tomcat_start_command</span><span class="token operator">=</span><span class="token string">"/usr/bin/tomcat/bin/catalina.sh"</span>
+        <span class="token assign-left variable">result</span><span class="token operator">=</span>subprocess.run<span class="token punctuation">(</span>tomcat_start_command,
+                              <span class="token assign-left variable">shell</span><span class="token operator">=</span>True,check<span class="token operator">=</span>True,text<span class="token operator">=</span>True<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> result.returncode <span class="token operator">==</span> <span class="token number">0</span>:
+            print<span class="token punctuation">(</span><span class="token string">"tomcat started successfully"</span><span class="token punctuation">)</span>
+        else:
+            print<span class="token punctuation">(</span><span class="token string">"tomcat started failed"</span><span class="token punctuation">)</span>
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"tomcat started failed:&#123;e&#125;"</span><span class="token punctuation">)</span>
+
+def monitor_tomcat<span class="token punctuation">(</span>interval<span class="token punctuation">)</span>:
+    <span class="token keyword">while</span> True:
+        <span class="token keyword">if</span> not is_tomcat_running<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+            print<span class="token punctuation">(</span><span class="token string">"tomcat failed,try to start tomcat"</span><span class="token punctuation">)</span>
+            start_tomcat<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        else:
+            print<span class="token punctuation">(</span><span class="token string">"tomcat is running"</span><span class="token punctuation">)</span>
+            time.sleep<span class="token punctuation">(</span>interval<span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token builtin class-name">:</span>
+    monitor_tomcat<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="基于API检测es服务状态"><a href="#基于API检测es服务状态" class="headerlink" title="基于API检测es服务状态"></a>基于API检测es服务状态</h1><h2 id="es安装"><a href="#es安装" class="headerlink" title="es安装"></a>es安装</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token function">install</span> java-11-openjdk-devel <span class="token parameter variable">-y</span>
+ 
+<span class="token function">java</span> <span class="token parameter variable">--version</span>
+<span class="token comment">#openjdk 11.0.25 2024-10-15 LTS</span>
+<span class="token comment">#OpenJDK Runtime Environment (Red_Hat-11.0.25.0.9-1) (build 11.0.25+9-LTS)</span>
+<span class="token comment">#OpenJDK 64-Bit Server VM (Red_Hat-11.0.25.0.9-1) (build 11.0.25+9-LTS, mixed mode, sharing)</span>
+
+如果安装了多个java环境，可以通过alternatives <span class="token parameter variable">--config</span> java来手动选择系统默认环境
+
+<span class="token function">cat</span> <span class="token operator">></span> /etc/yum.repos.d/elasticsearch.repo <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[elasticsearch-8.x] 
+name=Elasticsearch repository for 8.x packages 
+baseurl=https://artifacts.elastic.co/packages/8.x/yum 
+gpgcheck=1 
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch 
+enabled=1 
+autorefresh=1
+type=rpm-md
+EOF</span>
+
+yum <span class="token function">install</span> elasticsearch <span class="token parameter variable">-y</span>
+
+速度很慢，我下载了半个小时才下载完<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="修改es配置文件"><a href="#修改es配置文件" class="headerlink" title="修改es配置文件"></a>修改es配置文件</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 修改绑定地址到本地、修改端口</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^#network.host:.*/network.host: 0.0.0.0/g'</span> /etc/elasticsearch/elasticsearch.yml
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^#http.port:.*/http.port: 9200/g'</span> /etc/elasticsearch/elasticsearch.yml
+
+<span class="token comment"># 关闭es安全加密</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^xpack.security.enabled:.*/xpack.security.enabled: false/g'</span> /etc/elasticsearch/elasticsearch.yml
+
+<span class="token comment"># 调整jvm容器，使其能提供足够的内存</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"-Xms2g"</span> <span class="token operator">>></span> /etc/elasticsearch/jvm.options
+<span class="token builtin class-name">echo</span> <span class="token string">"-Xmx2g"</span> <span class="token operator">>></span> /etc/elasticsearch/jvm.options
+
+<span class="token comment"># 重启es</span>
+systemctl <span class="token builtin class-name">enable</span> elasticsearch.service <span class="token parameter variable">--now</span>
+
+<span class="token comment"># curl测试</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> GET localhost:9200
+<span class="token punctuation">&#123;</span>
+  <span class="token string">"name"</span> <span class="token builtin class-name">:</span> <span class="token string">"python"</span>,
+  <span class="token string">"cluster_name"</span> <span class="token builtin class-name">:</span> <span class="token string">"elasticsearch"</span>,
+  <span class="token string">"cluster_uuid"</span> <span class="token builtin class-name">:</span> <span class="token string">"GuInJXNZQYy3kvsD1BHfiA"</span>,
+  <span class="token string">"version"</span> <span class="token builtin class-name">:</span> <span class="token punctuation">&#123;</span>
+    <span class="token string">"number"</span> <span class="token builtin class-name">:</span> <span class="token string">"8.16.0"</span>,
+    <span class="token string">"build_flavor"</span> <span class="token builtin class-name">:</span> <span class="token string">"default"</span>,
+    <span class="token string">"build_type"</span> <span class="token builtin class-name">:</span> <span class="token string">"rpm"</span>,
+    <span class="token string">"build_hash"</span> <span class="token builtin class-name">:</span> <span class="token string">"12ff76a92922609df4aba61a368e7adf65589749"</span>,
+    <span class="token string">"build_date"</span> <span class="token builtin class-name">:</span> <span class="token string">"2024-11-08T10:05:56.292914697Z"</span>,
+    <span class="token string">"build_snapshot"</span> <span class="token builtin class-name">:</span> false,
+    <span class="token string">"lucene_version"</span> <span class="token builtin class-name">:</span> <span class="token string">"9.12.0"</span>,
+    <span class="token string">"minimum_wire_compatibility_version"</span> <span class="token builtin class-name">:</span> <span class="token string">"7.17.0"</span>,
+    <span class="token string">"minimum_index_compatibility_version"</span> <span class="token builtin class-name">:</span> <span class="token string">"7.0.0"</span>
+  <span class="token punctuation">&#125;</span>,
+  <span class="token string">"tagline"</span> <span class="token builtin class-name">:</span> <span class="token string">"You Know, for Search"</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="es常用操作"><a href="#es常用操作" class="headerlink" title="es常用操作"></a>es常用操作</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看插件信息</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> GET localhost:9200/_cat/plugins?v
+name component version
+
+<span class="token comment"># 查看分片信息</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> GET localhost:9200/_cat/shards?v
+index shard prirep state docs store dataset <span class="token function">ip</span> <span class="token function">node</span>
+
+<span class="token comment"># 查看索引列表</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> GET localhost:9200/_cat/indices?v
+health status index uuid pri rep docs.count docs.deleted store.size pri.store.size dataset.size
+
+<span class="token comment"># 创建索引</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> PUT localhost:9200/my_index
+<span class="token comment">#&#123;"acknowledged":true,"shards_acknowledged":true,"index":"my_index"&#125;</span>
+
+<span class="token comment"># 删除索引</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> DELETE localhost:9200/my_index
+<span class="token punctuation">&#123;</span><span class="token string">"acknowledged"</span>:true<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># 插入文档——用json格式插入</span>
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> POST <span class="token string">"localhost:9200/articles/_doc/1"</span> <span class="token parameter variable">-H</span> <span class="token string">"Content-Type: application/json"</span> <span class="token parameter variable">-d</span> <span class="token string">'&#123;"title": "这是我的第一篇文档","content":"这是第一篇文档的内容"&#125;'</span>
+
+<span class="token comment"># 查询我刚刚插入的文档</span>
+<span class="token function">curl</span> http://192.168.10.114:9200/articles/_doc/1
+<span class="token punctuation">&#123;</span><span class="token string">"_index"</span><span class="token builtin class-name">:</span><span class="token string">"articles"</span>,<span class="token string">"_id"</span><span class="token builtin class-name">:</span><span class="token string">"1"</span>,<span class="token string">"_version"</span>:1,<span class="token string">"_seq_no"</span>:0,<span class="token string">"_primary_term"</span>:1,<span class="token string">"found"</span>:true,<span class="token string">"_source"</span>:<span class="token punctuation">&#123;</span><span class="token string">"title"</span><span class="token builtin class-name">:</span> <span class="token string">"这是我的第一篇文档"</span>,<span class="token string">"content"</span><span class="token builtin class-name">:</span><span class="token string">"这是第一篇文档的内容"</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="通过API方式检测es运行状态"><a href="#通过API方式检测es运行状态" class="headerlink" title="通过API方式检测es运行状态"></a>通过API方式检测es运行状态</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">import</span> requests
+<span class="token function">import</span> subprocess
+<span class="token function">import</span> <span class="token function">time</span>
+
+def check_es_status<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        <span class="token assign-left variable">response</span><span class="token operator">=</span>requests.get<span class="token punctuation">(</span><span class="token string">'http://192.168.10.114:9200/_cluster/health'</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> response.status_code <span class="token operator">==</span> <span class="token number">200</span>:
+            print<span class="token punctuation">(</span><span class="token string">"es is running"</span><span class="token punctuation">)</span>
+            <span class="token builtin class-name">return</span> True
+    except requests.exceptions.RequestException as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"es status error:&#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> False
+
+def restart_es<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    try:
+        print<span class="token punctuation">(</span><span class="token string">"trying to restart es"</span><span class="token punctuation">)</span>
+        subprocess.run<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'systemctl'</span>,<span class="token string">'restart'</span>,<span class="token string">'elasticsearch'</span><span class="token punctuation">]</span>,check<span class="token operator">=</span>True<span class="token punctuation">)</span>
+        print<span class="token punctuation">(</span><span class="token string">"es is restarting successfully"</span><span class="token punctuation">)</span>
+    except subprocess.CalledProcessError as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"failed to restart es:&#123;e&#125;"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token builtin class-name">:</span>
+    <span class="token keyword">while</span> True:
+        <span class="token keyword">if</span> not check_es_status<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+            restart_es<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        else:
+            print<span class="token punctuation">(</span><span class="token string">"es is running"</span><span class="token punctuation">)</span>
+            time.sleep<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6559,36 +6741,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7053,13 +7205,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8100,13 +8252,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8559,14 +8711,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8574,14 +8726,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

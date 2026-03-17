@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="概念介绍 MGR至少两个，以提供高可用性第一个MGR被认为是active的，其他为备用MGR  主MGR会周期发送信标，默认超时时间30s，修改mon_mgr_beacon_grace参数来调整 1234567ceph mgr stat&#123;    &quot;epoch&quot;: 37,    &quot;available&quot;: true,    &quot;active_n">
+    <meta name="description" content="概念介绍 MGR至少两个，以提供高可用性第一个MGR被认为是active的，其他为备用MGR  主MGR会周期发送信标，默认超时时间30s，修改mon_mgr_beacon_grace参数来调整 ceph mgr stat &#123;     &quot;epoch&quot;: 37,     &quot;available&quot;: true,     &quot;active_name&quot;: &quot;cephadm-3.zwfiyn&quot;,">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MGR进行集群监控和维护">
 <meta property="og:url" content="https://akemi.zj.cn/2025/07/14/Ceph-MGR/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="概念介绍 MGR至少两个，以提供高可用性第一个MGR被认为是active的，其他为备用MGR  主MGR会周期发送信标，默认超时时间30s，修改mon_mgr_beacon_grace参数来调整 1234567ceph mgr stat&#123;    &quot;epoch&quot;: 37,    &quot;available&quot;: true,    &quot;active_n">
+<meta property="og:description" content="概念介绍 MGR至少两个，以提供高可用性第一个MGR被认为是active的，其他为备用MGR  主MGR会周期发送信标，默认超时时间30s，修改mon_mgr_beacon_grace参数来调整 ceph mgr stat &#123;     &quot;epoch&quot;: 37,     &quot;available&quot;: true,     &quot;active_name&quot;: &quot;cephadm-3.zwfiyn&quot;,">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-07-14T11:25:45.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.196Z">
@@ -494,24 +494,245 @@
 <li>MGR至少两个，以提供高可用性<br>第一个MGR被认为是active的，其他为备用MGR</li>
 </ul>
 <p>主MGR会周期发送信标，默认超时时间30s，修改mon_mgr_beacon_grace参数来调整</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ceph mgr <span class="built_in">stat</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;epoch&quot;</span>: 37,</span><br><span class="line">    <span class="string">&quot;available&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">&quot;active_name&quot;</span>: <span class="string">&quot;cephadm-3.zwfiyn&quot;</span>,</span><br><span class="line">    <span class="string">&quot;num_standby&quot;</span>: 3</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph mgr <span class="token function">stat</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token string">"epoch"</span><span class="token builtin class-name">:</span> <span class="token number">37</span>,
+    <span class="token string">"available"</span><span class="token builtin class-name">:</span> true,
+    <span class="token string">"active_name"</span><span class="token builtin class-name">:</span> <span class="token string">"cephadm-3.zwfiyn"</span>,
+    <span class="token string">"num_standby"</span><span class="token builtin class-name">:</span> <span class="token number">3</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <ul>
 <li>MGR是模块化架构<br>可以根据需求启用或禁用模块</li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">查看可用和启用的模块</span><br><span class="line">ceph mgr module <span class="built_in">ls</span></span><br><span class="line">MODULE</span><br><span class="line">balancer           on (always on)</span><br><span class="line">crash              on (always on)</span><br><span class="line">devicehealth       on (always on)</span><br><span class="line">orchestrator       on (always on)</span><br><span class="line">pg_autoscaler      on (always on)</span><br><span class="line">progress           on (always on)</span><br><span class="line">rbd_support        on (always on)</span><br><span class="line">status             on (always on)</span><br><span class="line">telemetry          on (always on)</span><br><span class="line">volumes            on (always on)</span><br><span class="line">cephadm            on</span><br><span class="line">dashboard          on</span><br><span class="line">iostat             on</span><br><span class="line">nfs                on</span><br><span class="line">prometheus         on</span><br><span class="line">restful            on</span><br><span class="line">alerts             -</span><br><span class="line">influx             -</span><br><span class="line">insights           -</span><br><span class="line">k8sevents          -</span><br><span class="line">localpool          -</span><br><span class="line">mds_autoscaler     -</span><br><span class="line">mirroring          -</span><br><span class="line">osd_perf_query     -</span><br><span class="line">osd_support        -</span><br><span class="line">rgw                -</span><br><span class="line">rook               -</span><br><span class="line">selftest           -</span><br><span class="line">snap_schedule      -</span><br><span class="line">stats              -</span><br><span class="line">telegraf           -</span><br><span class="line">test_orchestrator  -</span><br><span class="line">zabbix             -</span><br><span class="line"></span><br><span class="line">查看已发布地址</span><br><span class="line">ceph mgr services</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;dashboard&quot;</span>: <span class="string">&quot;https://192.168.10.143:8443/&quot;</span>,</span><br><span class="line">    <span class="string">&quot;prometheus&quot;</span>: <span class="string">&quot;http://192.168.10.143:9283/&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">其中dashboard是默认开启的</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看可用和启用的模块
+ceph mgr module <span class="token function">ls</span>
+MODULE
+balancer           on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+crash              on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+devicehealth       on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+orchestrator       on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+pg_autoscaler      on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+progress           on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+rbd_support        on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+status             on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+telemetry          on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+volumes            on <span class="token punctuation">(</span>always on<span class="token punctuation">)</span>
+cephadm            on
+dashboard          on
+iostat             on
+nfs                on
+prometheus         on
+restful            on
+alerts             -
+influx             -
+insights           -
+k8sevents          -
+localpool          -
+mds_autoscaler     -
+mirroring          -
+osd_perf_query     -
+osd_support        -
+rgw                -
+rook               -
+selftest           -
+snap_schedule      -
+stats              -
+telegraf           -
+test_orchestrator  -
+zabbix             -
 
-<h2 id="健康检查命令"><a href="#健康检查命令" class="headerlink" title="健康检查命令"></a><strong>健康检查命令</strong></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">快速返回集群状态是否正常</span><br><span class="line">ceph health</span><br><span class="line">HEALTH_OK</span><br><span class="line">HEALTH_WARN</span><br><span class="line">HEALTH_ERR</span><br><span class="line"></span><br><span class="line">如果处于错误或警告状态，获取更多信息</span><br><span class="line">ceph health detail</span><br><span class="line"></span><br><span class="line">实时监控</span><br><span class="line">ceph -w</span><br><span class="line"></span><br><span class="line">查看集群日志</span><br><span class="line">ceph <span class="built_in">log</span> last [&lt;num:int&gt;] [&lt;level:debug|info|sec|warn|error&gt;] [&lt;channel:*|cluster|audit|cephadm&gt;]</span><br><span class="line"></span><br><span class="line">可以查看多种等级和服务的日志</span><br><span class="line">ceph <span class="built_in">log</span> last audit</span><br><span class="line">2025-07-10T10:32:16.744351+0000 mon.cephadm-3 (mon.0) 292692 : audit [INF] from=<span class="string">&#x27;mgr.14200 192.168.10.143:0/3306424811&#x27;</span> entity=<span class="string">&#x27;mgr.cephadm-3.zwfiyn&#x27;</span></span><br><span class="line">2025-07-10T10:32:17.997508+0000 mon.cephadm-3 (mon.0) 292693 : audit [INF] from=<span class="string">&#x27;mgr.14200 192.168.10.143:0/3306424811&#x27;</span> entity=<span class="string">&#x27;mgr.cephadm-3.zwfiyn&#x27;</span></span><br></pre></td></tr></table></figure>
+查看已发布地址
+ceph mgr services
+<span class="token punctuation">&#123;</span>
+    <span class="token string">"dashboard"</span><span class="token builtin class-name">:</span> <span class="token string">"https://192.168.10.143:8443/"</span>,
+    <span class="token string">"prometheus"</span><span class="token builtin class-name">:</span> <span class="token string">"http://192.168.10.143:9283/"</span>
+<span class="token punctuation">&#125;</span>
+
+其中dashboard是默认开启的<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="健康检查命令"><a href="#健康检查命令" class="headerlink" title="健康检查命令"></a><strong>健康检查命令</strong></h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">快速返回集群状态是否正常
+ceph health
+HEALTH_OK
+HEALTH_WARN
+HEALTH_ERR
+
+如果处于错误或警告状态，获取更多信息
+ceph health detail
+
+实时监控
+ceph <span class="token parameter variable">-w</span>
+
+查看集群日志
+ceph log last <span class="token punctuation">[</span><span class="token operator">&lt;</span>num:int<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">[</span><span class="token operator">&lt;</span>level:debug<span class="token operator">|</span>info<span class="token operator">|</span>sec<span class="token operator">|</span>warn<span class="token operator">|</span>error<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">[</span><span class="token operator">&lt;</span>channel:*<span class="token operator">|</span>cluster<span class="token operator">|</span>audit<span class="token operator">|</span>cephadm<span class="token operator">></span><span class="token punctuation">]</span>
+
+可以查看多种等级和服务的日志
+ceph log last audit
+<span class="token number">2025</span>-07-10T10:32:16.744351+0000 mon.cephadm-3 <span class="token punctuation">(</span>mon.0<span class="token punctuation">)</span> <span class="token number">292692</span> <span class="token builtin class-name">:</span> audit <span class="token punctuation">[</span>INF<span class="token punctuation">]</span> <span class="token assign-left variable">from</span><span class="token operator">=</span><span class="token string">'mgr.14200 192.168.10.143:0/3306424811'</span> <span class="token assign-left variable">entity</span><span class="token operator">=</span><span class="token string">'mgr.cephadm-3.zwfiyn'</span>
+<span class="token number">2025</span>-07-10T10:32:17.997508+0000 mon.cephadm-3 <span class="token punctuation">(</span>mon.0<span class="token punctuation">)</span> <span class="token number">292693</span> <span class="token builtin class-name">:</span> audit <span class="token punctuation">[</span>INF<span class="token punctuation">]</span> <span class="token assign-left variable">from</span><span class="token operator">=</span><span class="token string">'mgr.14200 192.168.10.143:0/3306424811'</span> <span class="token assign-left variable">entity</span><span class="token operator">=</span><span class="token string">'mgr.cephadm-3.zwfiyn'</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="管理Ceph服务"><a href="#管理Ceph服务" class="headerlink" title="管理Ceph服务"></a>管理Ceph服务</h2><p>集群守护进程由$daemon类型和守护进程$id指定</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$daemon</span>的类型有mon, mgr, mds, osd, rgw, rdb-mirror，crash，ceph-mirror</span><br><span class="line"></span><br><span class="line">MON，MGR，RGW的<span class="variable">$id</span>是主机名</span><br><span class="line">OSD的<span class="variable">$id</span>就是OSD的ID               比如0~23</span><br><span class="line">MDS的<span class="variable">$id</span>是文件系统名后跟主机名     比如cephfs.node05</span><br><span class="line"></span><br><span class="line">列出所有集群守护进程</span><br><span class="line">ceph orch ps</span><br><span class="line"></span><br><span class="line">使用--daemon_type=DAEMON选筛选特定守护进程</span><br><span class="line">ceph orch ps --daemon_type=osd</span><br><span class="line">NAME   HOST       PORTS  STATUS         REFRESHED  AGE  MEM USE  MEM LIM  VERSION  IMAGE ID      CONTAINER ID</span><br><span class="line">osd.0  cephadm-3         running (13d)   118s ago  13d     649M    4096M  17.2.8   259b35566514  1f95dbaebbee</span><br><span class="line">osd.1  cephadm-3         running (13d)   118s ago  13d     719M    4096M  17.2.8   259b35566514  362323dddb54</span><br><span class="line">osd.2  cephadm-3         running (13d)   118s ago  13d     692M    4096M  17.2.8   259b35566514  3b0b783bb7de</span><br><span class="line">osd.3  cephadm-2         running (13d)   117s ago  13d     618M    4096M  17.2.8   259b35566514  b264677293a3</span><br><span class="line">osd.4  cephadm-1         running (13d)   118s ago  13d     599M    4096M  17.2.8   259b35566514  bcc1be4e4d72</span><br><span class="line">osd.5  cephadm-2         running (13d)   117s ago  13d     717M    4096M  17.2.8   259b35566514  7bb8614175a4</span><br><span class="line">osd.6  cephadm-1         running (13d)   118s ago  13d     602M    4096M  17.2.8   259b35566514  4defe8190a41</span><br><span class="line">osd.7  cephadm-2         running (13d)   117s ago  13d     722M    4096M  17.2.8   259b35566514  13b444da41b6</span><br><span class="line">osd.8  cephadm-1         running (13d)   118s ago  13d     879M    4096M  17.2.8   259b35566514  746950dd7060</span><br><span class="line"></span><br><span class="line">使用systemctl重启ceph进程</span><br><span class="line">直接在主机上使用systemctl管理：</span><br><span class="line">systemctl list-units <span class="string">&#x27;ceph*&#x27;</span></span><br><span class="line">UNIT                                                LOAD   ACTIVE SUB     DESCRIPTION</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@crash.cephadm-1.service loaded active running Ceph crash.&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@iscsi.iscsi.cephadm-1.spcmkp.service loaded active runnin&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mds.ws-cephfs.cephadm-1.cvcevd.service loaded active runn&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mgr.cephadm-1.cedioe.service loaded active running Ceph m&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mon.cephadm-1.service loaded active running Ceph mon.ceph&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@nfs.cephfs-nfs.0.0.cephadm-1.tbqbkw.service loaded active&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@node-exporter.cephadm-1.service loaded active running Cep&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.4.service loaded active running Ceph osd.4 <span class="keyword">for</span> 8b2788&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.6.service loaded active running Ceph osd.6 <span class="keyword">for</span> 8b2788&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.8.service loaded active running Ceph osd.8 <span class="keyword">for</span> 8b2788&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@rgw.realm.zone.cephadm-1.caxyqu.service loaded active run&gt;</span><br><span class="line">ceph-8b27889e-52af-11f0-bedb-bc2411f9a113.target    loaded active active  Ceph cluster 8b27889e-52a&gt;</span><br><span class="line">ceph.target                                         loaded active active  All Ceph clusters and ser&gt;</span><br><span class="line"></span><br><span class="line">systemctl restart ceph.target</span><br><span class="line"></span><br><span class="line">使用ceph orch重启ceph进程</span><br><span class="line">orch <span class="built_in">ls</span></span><br><span class="line">NAME                     PORTS        RUNNING  REFRESHED  AGE  PLACEMENT</span><br><span class="line">alertmanager             ?:9093,9094      1/1  8m ago     2w   count:1</span><br><span class="line">crash                                     4/4  8m ago     2w   *</span><br><span class="line">grafana                  ?:3000           1/1  8m ago     2w   count:1</span><br><span class="line">iscsi.iscsi              ?:5000           3/3  6m ago     20h  cephadm-1;cephadm-2;cephadm-3</span><br><span class="line">mds.ws-cephfs                             3/3  6m ago     15h  cephadm-1;cephadm-2;cephadm-3</span><br><span class="line">mgr                                       4/4  8m ago     20h  ansible;cephadm-1;cephadm-2;cephadm-3</span><br><span class="line">mon                                       3/3  6m ago     20h  cephadm-1;cephadm-2;cephadm-3</span><br><span class="line">nfs.cephfs-nfs           ?:2049           3/3  6m ago     22h  cephadm-1;cephadm-2;cephadm-3</span><br><span class="line">node-exporter            ?:9100           4/4  8m ago     2w   *</span><br><span class="line">osd.default_drive_group                     9  6m ago     20h  count:3;label:ssd-node;cephadm-*</span><br><span class="line">prometheus               ?:9095           1/1  8m ago     2w   count:1</span><br><span class="line">rgw.realm.zone           ?:8080           4/4  6m ago     20h  cephadm-1;cephadm-2;cephadm-3;count:4</span><br><span class="line"></span><br><span class="line">重启某个服务的所有进程</span><br><span class="line">ceph orch restart alertmanager</span><br><span class="line"></span><br><span class="line">重启某个服务的单个进程</span><br><span class="line">ceph orch daemon restart osd.1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token variable">$daemon</span>的类型有mon, mgr, mds, osd, rgw, rdb-mirror，crash，ceph-mirror
+
+MON，MGR，RGW的<span class="token variable">$id</span>是主机名
+OSD的<span class="token variable">$id</span>就是OSD的ID               比如0~23
+MDS的<span class="token variable">$id</span>是文件系统名后跟主机名     比如cephfs.node05
+
+列出所有集群守护进程
+ceph orch <span class="token function">ps</span>
+
+使用--daemon_type<span class="token operator">=</span>DAEMON选筛选特定守护进程
+ceph orch <span class="token function">ps</span> <span class="token parameter variable">--daemon_type</span><span class="token operator">=</span>osd
+NAME   HOST       PORTS  STATUS         REFRESHED  AGE  MEM USE  MEM LIM  VERSION  IMAGE ID      CONTAINER ID
+osd.0  cephadm-3         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   118s ago  13d     649M    4096M  <span class="token number">17.2</span>.8   259b35566514  1f95dbaebbee
+osd.1  cephadm-3         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   118s ago  13d     719M    4096M  <span class="token number">17.2</span>.8   259b35566514  362323dddb54
+osd.2  cephadm-3         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   118s ago  13d     692M    4096M  <span class="token number">17.2</span>.8   259b35566514  3b0b783bb7de
+osd.3  cephadm-2         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   117s ago  13d     618M    4096M  <span class="token number">17.2</span>.8   259b35566514  b264677293a3
+osd.4  cephadm-1         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   118s ago  13d     599M    4096M  <span class="token number">17.2</span>.8   259b35566514  bcc1be4e4d72
+osd.5  cephadm-2         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   117s ago  13d     717M    4096M  <span class="token number">17.2</span>.8   259b35566514  7bb8614175a4
+osd.6  cephadm-1         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   118s ago  13d     602M    4096M  <span class="token number">17.2</span>.8   259b35566514  4defe8190a41
+osd.7  cephadm-2         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   117s ago  13d     722M    4096M  <span class="token number">17.2</span>.8   259b35566514  13b444da41b6
+osd.8  cephadm-1         running <span class="token punctuation">(</span>13d<span class="token punctuation">)</span>   118s ago  13d     879M    4096M  <span class="token number">17.2</span>.8   259b35566514  746950dd7060
+
+使用systemctl重启ceph进程
+直接在主机上使用systemctl管理：
+systemctl list-units <span class="token string">'ceph*'</span>
+UNIT                                                LOAD   ACTIVE SUB     DESCRIPTION
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@crash.cephadm-1.service loaded active running Ceph crash.<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@iscsi.iscsi.cephadm-1.spcmkp.service loaded active runnin<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mds.ws-cephfs.cephadm-1.cvcevd.service loaded active runn<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mgr.cephadm-1.cedioe.service loaded active running Ceph m<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mon.cephadm-1.service loaded active running Ceph mon.ceph<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@nfs.cephfs-nfs.0.0.cephadm-1.tbqbkw.service loaded active<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@node-exporter.cephadm-1.service loaded active running Cep<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.4.service loaded active running Ceph osd.4 <span class="token keyword">for</span> 8b278<span class="token operator"><span class="token file-descriptor important">8</span>></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.6.service loaded active running Ceph osd.6 <span class="token keyword">for</span> 8b278<span class="token operator"><span class="token file-descriptor important">8</span>></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.8.service loaded active running Ceph osd.8 <span class="token keyword">for</span> 8b278<span class="token operator"><span class="token file-descriptor important">8</span>></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@rgw.realm.zone.cephadm-1.caxyqu.service loaded active run<span class="token operator">></span>
+ceph-8b27889e-52af-11f0-bedb-bc2411f9a113.target    loaded active active  Ceph cluster 8b27889e-52a<span class="token operator">></span>
+ceph.target                                         loaded active active  All Ceph clusters and ser<span class="token operator">></span>
+
+systemctl restart ceph.target
+
+使用ceph orch重启ceph进程
+orch <span class="token function">ls</span>
+NAME                     PORTS        RUNNING  REFRESHED  AGE  PLACEMENT
+alertmanager             ?:9093,9094      <span class="token number">1</span>/1  8m ago     2w   count:1
+crash                                     <span class="token number">4</span>/4  8m ago     2w   *
+grafana                  ?:3000           <span class="token number">1</span>/1  8m ago     2w   count:1
+iscsi.iscsi              ?:5000           <span class="token number">3</span>/3  6m ago     20h  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3
+mds.ws-cephfs                             <span class="token number">3</span>/3  6m ago     15h  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3
+mgr                                       <span class="token number">4</span>/4  8m ago     20h  ansible<span class="token punctuation">;</span>cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3
+mon                                       <span class="token number">3</span>/3  6m ago     20h  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3
+nfs.cephfs-nfs           ?:2049           <span class="token number">3</span>/3  6m ago     22h  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3
+node-exporter            ?:9100           <span class="token number">4</span>/4  8m ago     2w   *
+osd.default_drive_group                     <span class="token number">9</span>  6m ago     20h  count:3<span class="token punctuation">;</span>label:ssd-node<span class="token punctuation">;</span>cephadm-*
+prometheus               ?:9095           <span class="token number">1</span>/1  8m ago     2w   count:1
+rgw.realm.zone           ?:8080           <span class="token number">4</span>/4  6m ago     20h  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3<span class="token punctuation">;</span>count:4
+
+重启某个服务的所有进程
+ceph orch restart alertmanager
+
+重启某个服务的单个进程
+ceph orch daemon restart osd.1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="集群重启"><a href="#集群重启" class="headerlink" title="集群重启"></a>集群重启</h2><p>优雅重启集群，ceph通过tag来控制集群行为</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">标签	</span><br><span class="line">noup	     阻止OSD从down状态自动恢复为up状态</span><br><span class="line">           一般OSD如果网络延时，会互相打这tag</span><br><span class="line">nodown	   阻止 OSD 被标记为 down 状态（即使实际已宕机）</span><br><span class="line">noout	     阻止OSD被自动标记为out（防止OSD被踢出集群）</span><br><span class="line">					 防止CRUSH在osd停止时自动重新平衡集群</span><br><span class="line">noin	     阻止新 OSD 自动加入集群</span><br><span class="line">norecover	 禁止数据恢复操作</span><br><span class="line">nobackfill	禁止数据回填操作，数据丢失后按位进行数据恢复</span><br><span class="line">norebalance 阻止重新平衡操作的运行</span><br><span class="line">noscrub	   禁止普通数据校验（scrub）</span><br><span class="line">nodeep-scrub	禁止深度数据校验（deep-scrub）</span><br><span class="line"></span><br><span class="line">集群关闭</span><br><span class="line">执行以下步骤关闭整个集群。</span><br><span class="line">1.禁止客户端访问集群。</span><br><span class="line">2.在继续之前，请确保集群处于正常状态(HEALTH_OK)，并且所有pg都处于活动+clean状态。</span><br><span class="line">3.关闭cephfs。</span><br><span class="line">4.设置noout, norecover, norebalance, nobackfill, nodown和pause标志。</span><br><span class="line">5.关闭所有RGW (Ceph Object gateway)和iSCSI gateway。</span><br><span class="line">6.逐个关闭OSD。</span><br><span class="line">7.逐个关闭MON节点和MGR节点</span><br><span class="line">8.关闭admin节点。</span><br><span class="line"></span><br><span class="line">集群启动</span><br><span class="line">集群上电的操作步骤如下:</span><br><span class="line">1.集群节点依次上电:admin节点、MON节点和MGR节点、OSD节点、MDS节点。</span><br><span class="line">2.清除noout, norecover, norebalance, nobackfill, nodown和pause标志。</span><br><span class="line">3.打开Ceph对象网关和iSCSI网关。</span><br><span class="line">4.打开cephfs。</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">标签	
+noup	     阻止OSD从down状态自动恢复为up状态
+           一般OSD如果网络延时，会互相打这tag
+nodown	   阻止 OSD 被标记为 down 状态（即使实际已宕机）
+noout	     阻止OSD被自动标记为out（防止OSD被踢出集群）
+					 防止CRUSH在osd停止时自动重新平衡集群
+noin	     阻止新 OSD 自动加入集群
+norecover	 禁止数据恢复操作
+nobackfill	禁止数据回填操作，数据丢失后按位进行数据恢复
+norebalance 阻止重新平衡操作的运行
+noscrub	   禁止普通数据校验（scrub）
+nodeep-scrub	禁止深度数据校验（deep-scrub）
 
-<h2 id="ceph集群监控"><a href="#ceph集群监控" class="headerlink" title="ceph集群监控"></a>ceph集群监控</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ceph mon <span class="built_in">stat</span></span><br><span class="line">ceph quorum_status -f json-pretty</span><br><span class="line"></span><br><span class="line">查看服务日志</span><br><span class="line">journalctl -u ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.1.service</span><br><span class="line">journalctl -u ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mgr.ansible.ovfsfi.service</span><br></pre></td></tr></table></figure>
+集群关闭
+执行以下步骤关闭整个集群。
+<span class="token number">1</span>.禁止客户端访问集群。
+<span class="token number">2</span>.在继续之前，请确保集群处于正常状态<span class="token punctuation">(</span>HEALTH_OK<span class="token punctuation">)</span>，并且所有pg都处于活动+clean状态。
+<span class="token number">3</span>.关闭cephfs。
+<span class="token number">4</span>.设置noout, norecover, norebalance, nobackfill, nodown和pause标志。
+<span class="token number">5</span>.关闭所有RGW <span class="token punctuation">(</span>Ceph Object gateway<span class="token punctuation">)</span>和iSCSI gateway。
+<span class="token number">6</span>.逐个关闭OSD。
+<span class="token number">7</span>.逐个关闭MON节点和MGR节点
+<span class="token number">8</span>.关闭admin节点。
 
-<h3 id="OSD状态监控"><a href="#OSD状态监控" class="headerlink" title="OSD状态监控"></a>OSD状态监控</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">1.osd当前状态</span><br><span class="line">2.OSD容量限制信息</span><br><span class="line">3.pg状态</span><br><span class="line"></span><br><span class="line">查看空间相关的告警信息</span><br><span class="line">ceph health</span><br><span class="line">ceph status</span><br><span class="line"></span><br><span class="line">查看容量信息</span><br><span class="line">ceph osd <span class="built_in">df</span></span><br><span class="line">ID  CLASS  WEIGHT   REWEIGHT  SIZE     RAW USE  DATA     OMAP    META     AVAIL    %USE  VAR   PGS  STATUS</span><br><span class="line"> 4    hdd  0.05859   1.00000   60 GiB  1.3 GiB  452 MiB   1 KiB  873 MiB   59 GiB  2.16  1.04  130      up</span><br><span class="line"> 6    hdd  0.05859   1.00000   60 GiB  1.3 GiB  419 MiB   1 KiB  885 MiB   59 GiB  2.12  1.03  117      up</span><br><span class="line"> 8    hdd  0.05859   1.00000   60 GiB  1.5 GiB  380 MiB   1 KiB  1.1 GiB   58 GiB  2.52  1.22  122      up</span><br><span class="line"> 3    hdd  0.05859   1.00000   60 GiB  1.1 GiB  270 MiB   1 KiB  871 MiB   59 GiB  1.86  0.90  129      up</span><br><span class="line"> 5    hdd  0.05859   1.00000   60 GiB  1.4 GiB  553 MiB   1 KiB  890 MiB   59 GiB  2.35  1.14  129      up</span><br><span class="line"> 7    hdd  0.05859   1.00000   60 GiB  1.3 GiB  428 MiB   1 KiB  891 MiB   59 GiB  2.15  1.04  111      up</span><br><span class="line"> 0    hdd  0.05859   1.00000   60 GiB  1.2 GiB  328 MiB   1 KiB  881 MiB   59 GiB  1.97  0.95  125      up</span><br><span class="line"> 1    hdd  0.05859   1.00000   60 GiB  796 MiB  451 MiB  13 KiB  345 MiB   59 GiB  1.30  0.63  132      up</span><br><span class="line"> 2    hdd  0.05859   1.00000   60 GiB  1.3 GiB  472 MiB   1 KiB  871 MiB   59 GiB  2.19  1.06  112      up</span><br><span class="line">                       TOTAL  540 GiB   11 GiB  3.7 GiB  27 KiB  7.5 GiB  529 GiB  2.07             </span><br><span class="line">MIN/MAX VAR: 0.63/1.22  STDDEV: 0.33</span><br><span class="line"></span><br><span class="line">查看osd读写延迟</span><br><span class="line">ceph osd perf</span><br><span class="line">osd  commit_latency(ms)  apply_latency(ms)</span><br><span class="line">  8                   4                  4</span><br><span class="line">  7                   4                  4</span><br><span class="line">  6                   4                  4</span><br><span class="line">  5                   4                  4</span><br><span class="line">  4                   0                  0</span><br><span class="line">  3                   3                  3</span><br><span class="line">  2                   5                  5</span><br><span class="line">  1                   0                  0</span><br><span class="line">  0                   4                  4</span><br><span class="line"></span><br><span class="line">ceph status</span><br><span class="line">...</span><br><span class="line">    osd:         9 osds: 9 up (since 2d), 9 <span class="keyword">in</span> (since 2w)</span><br><span class="line">...</span><br><span class="line">down或up: 表示osd能否与mon通信</span><br><span class="line">out或<span class="keyword">in</span>: 表示osd是否参与集群数据放置</span><br><span class="line">osd正常运行就是up+<span class="keyword">in</span></span><br><span class="line"></span><br><span class="line">短暂的网络中断，可能会导致osd报告为down，在一段时间之后</span><br><span class="line">集群会报告其down+out，失败的osd上的PG会被迁移到其他OSD上</span><br><span class="line"></span><br><span class="line">如果osd恢复到up状态，并且是<span class="keyword">in</span>状态，集群会根据新OSD重新分配PG</span><br><span class="line">并重新平衡集群中的对象</span><br><span class="line"></span><br><span class="line">相关参数：</span><br><span class="line">osd_heartbeat_interval</span><br><span class="line">osd_heartbeat_grace</span><br><span class="line">mon_osd_min_down_reporters</span><br><span class="line">mon_osd_min_down_reports</span><br><span class="line">mon_osd_down_out_subtree_limit</span><br><span class="line">osd_mon_report_interval_min</span><br><span class="line">osd_mon_report_interval_max</span><br></pre></td></tr></table></figure>
+集群启动
+集群上电的操作步骤如下:
+<span class="token number">1</span>.集群节点依次上电:admin节点、MON节点和MGR节点、OSD节点、MDS节点。
+<span class="token number">2</span>.清除noout, norecover, norebalance, nobackfill, nodown和pause标志。
+<span class="token number">3</span>.打开Ceph对象网关和iSCSI网关。
+<span class="token number">4</span>.打开cephfs。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="ceph集群监控"><a href="#ceph集群监控" class="headerlink" title="ceph集群监控"></a>ceph集群监控</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph mon <span class="token function">stat</span>
+ceph quorum_status <span class="token parameter variable">-f</span> json-pretty
+
+查看服务日志
+journalctl <span class="token parameter variable">-u</span> ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@osd.1.service
+journalctl <span class="token parameter variable">-u</span> ceph-8b27889e-52af-11f0-bedb-bc2411f9a113@mgr.ansible.ovfsfi.service<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="OSD状态监控"><a href="#OSD状态监控" class="headerlink" title="OSD状态监控"></a>OSD状态监控</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.osd当前状态
+<span class="token number">2</span>.OSD容量限制信息
+<span class="token number">3</span>.pg状态
+
+查看空间相关的告警信息
+ceph health
+ceph status
+
+查看容量信息
+ceph osd <span class="token function">df</span>
+ID  CLASS  WEIGHT   REWEIGHT  SIZE     RAW USE  DATA     OMAP    META     AVAIL    %USE  VAR   PGS  STATUS
+ <span class="token number">4</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.3</span> GiB  <span class="token number">452</span> MiB   <span class="token number">1</span> KiB  <span class="token number">873</span> MiB   <span class="token number">59</span> GiB  <span class="token number">2.16</span>  <span class="token number">1.04</span>  <span class="token number">130</span>      up
+ <span class="token number">6</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.3</span> GiB  <span class="token number">419</span> MiB   <span class="token number">1</span> KiB  <span class="token number">885</span> MiB   <span class="token number">59</span> GiB  <span class="token number">2.12</span>  <span class="token number">1.03</span>  <span class="token number">117</span>      up
+ <span class="token number">8</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.5</span> GiB  <span class="token number">380</span> MiB   <span class="token number">1</span> KiB  <span class="token number">1.1</span> GiB   <span class="token number">58</span> GiB  <span class="token number">2.52</span>  <span class="token number">1.22</span>  <span class="token number">122</span>      up
+ <span class="token number">3</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.1</span> GiB  <span class="token number">270</span> MiB   <span class="token number">1</span> KiB  <span class="token number">871</span> MiB   <span class="token number">59</span> GiB  <span class="token number">1.86</span>  <span class="token number">0.90</span>  <span class="token number">129</span>      up
+ <span class="token number">5</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.4</span> GiB  <span class="token number">553</span> MiB   <span class="token number">1</span> KiB  <span class="token number">890</span> MiB   <span class="token number">59</span> GiB  <span class="token number">2.35</span>  <span class="token number">1.14</span>  <span class="token number">129</span>      up
+ <span class="token number">7</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.3</span> GiB  <span class="token number">428</span> MiB   <span class="token number">1</span> KiB  <span class="token number">891</span> MiB   <span class="token number">59</span> GiB  <span class="token number">2.15</span>  <span class="token number">1.04</span>  <span class="token number">111</span>      up
+ <span class="token number">0</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.2</span> GiB  <span class="token number">328</span> MiB   <span class="token number">1</span> KiB  <span class="token number">881</span> MiB   <span class="token number">59</span> GiB  <span class="token number">1.97</span>  <span class="token number">0.95</span>  <span class="token number">125</span>      up
+ <span class="token number">1</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">796</span> MiB  <span class="token number">451</span> MiB  <span class="token number">13</span> KiB  <span class="token number">345</span> MiB   <span class="token number">59</span> GiB  <span class="token number">1.30</span>  <span class="token number">0.63</span>  <span class="token number">132</span>      up
+ <span class="token number">2</span>    hdd  <span class="token number">0.05859</span>   <span class="token number">1.00000</span>   <span class="token number">60</span> GiB  <span class="token number">1.3</span> GiB  <span class="token number">472</span> MiB   <span class="token number">1</span> KiB  <span class="token number">871</span> MiB   <span class="token number">59</span> GiB  <span class="token number">2.19</span>  <span class="token number">1.06</span>  <span class="token number">112</span>      up
+                       TOTAL  <span class="token number">540</span> GiB   <span class="token number">11</span> GiB  <span class="token number">3.7</span> GiB  <span class="token number">27</span> KiB  <span class="token number">7.5</span> GiB  <span class="token number">529</span> GiB  <span class="token number">2.07</span>             
+MIN/MAX VAR: <span class="token number">0.63</span>/1.22  STDDEV: <span class="token number">0.33</span>
+
+查看osd读写延迟
+ceph osd perf
+osd  commit_latency<span class="token punctuation">(</span>ms<span class="token punctuation">)</span>  apply_latency<span class="token punctuation">(</span>ms<span class="token punctuation">)</span>
+  <span class="token number">8</span>                   <span class="token number">4</span>                  <span class="token number">4</span>
+  <span class="token number">7</span>                   <span class="token number">4</span>                  <span class="token number">4</span>
+  <span class="token number">6</span>                   <span class="token number">4</span>                  <span class="token number">4</span>
+  <span class="token number">5</span>                   <span class="token number">4</span>                  <span class="token number">4</span>
+  <span class="token number">4</span>                   <span class="token number">0</span>                  <span class="token number">0</span>
+  <span class="token number">3</span>                   <span class="token number">3</span>                  <span class="token number">3</span>
+  <span class="token number">2</span>                   <span class="token number">5</span>                  <span class="token number">5</span>
+  <span class="token number">1</span>                   <span class="token number">0</span>                  <span class="token number">0</span>
+  <span class="token number">0</span>                   <span class="token number">4</span>                  <span class="token number">4</span>
+
+ceph status
+<span class="token punctuation">..</span>.
+    osd:         <span class="token number">9</span> osds: <span class="token number">9</span> up <span class="token punctuation">(</span>since 2d<span class="token punctuation">)</span>, <span class="token number">9</span> <span class="token keyword">in</span> <span class="token punctuation">(</span>since 2w<span class="token punctuation">)</span>
+<span class="token punctuation">..</span>.
+down或up: 表示osd能否与mon通信
+out或in: 表示osd是否参与集群数据放置
+osd正常运行就是up+in
+
+短暂的网络中断，可能会导致osd报告为down，在一段时间之后
+集群会报告其down+out，失败的osd上的PG会被迁移到其他OSD上
+
+如果osd恢复到up状态，并且是in状态，集群会根据新OSD重新分配PG
+并重新平衡集群中的对象
+
+相关参数：
+osd_heartbeat_interval
+osd_heartbeat_grace
+mon_osd_min_down_reporters
+mon_osd_min_down_reports
+mon_osd_down_out_subtree_limit
+osd_mon_report_interval_min
+osd_mon_report_interval_max<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <table>
 <thead>
@@ -566,7 +787,16 @@
 </tr>
 </tbody></table>
 <h3 id="OSD容量监控"><a href="#OSD容量监控" class="headerlink" title="OSD容量监控"></a>OSD容量监控</h3><p>ceph提供了一些参数，防止由于集群中存储空间不足而导致的数据丢失</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ceph osd set-nearfull-ratio</span><br><span class="line">ceph osd set-backfillfull-ratio</span><br><span class="line">ceph osd set-full-ratio</span><br><span class="line">可以分别设置参数</span><br><span class="line">mon_osd_nearfull_ratio</span><br><span class="line">mon_osd_backfillfull_ratio</span><br><span class="line">mon_osd_full_ratio</span><br><span class="line"></span><br><span class="line">默认比率设置适用于小型集群</span><br><span class="line">生产集群通常需要更低的比率</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph osd set-nearfull-ratio
+ceph osd set-backfillfull-ratio
+ceph osd set-full-ratio
+可以分别设置参数
+mon_osd_nearfull_ratio
+mon_osd_backfillfull_ratio
+mon_osd_full_ratio
+
+默认比率设置适用于小型集群
+生产集群通常需要更低的比率<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <table>
 <thead>
@@ -6824,36 +7054,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7318,13 +7518,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8365,13 +8565,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8824,14 +9024,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8839,14 +9039,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="云环境与本地主机的区别本地环境大多是使用LVM做的，也就是像这样 12345678910[root@1panel ~]# lsblkNAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTSsda                      8:0    0   500G  0 disk├─sda1                   8">
+    <meta name="description" content="云环境与本地主机的区别本地环境大多是使用LVM做的，也就是像这样 [root@1panel ~]# lsblk NAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS sda                      8:0    0   500G  0 disk ├─sda1                   8:1    0">
 <meta property="og:type" content="article">
 <meta property="og:title" content="云环境主机根分区扩容">
 <meta property="og:url" content="https://akemi.zj.cn/2025/08/12/root-extend-cloud/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="云环境与本地主机的区别本地环境大多是使用LVM做的，也就是像这样 12345678910[root@1panel ~]# lsblkNAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTSsda                      8:0    0   500G  0 disk├─sda1                   8">
+<meta property="og:description" content="云环境与本地主机的区别本地环境大多是使用LVM做的，也就是像这样 [root@1panel ~]# lsblk NAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS sda                      8:0    0   500G  0 disk ├─sda1                   8:1    0">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-08-12T10:24:19.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.781Z">
@@ -494,19 +494,41 @@
                 <main class="main post-page">
     <article class="article-entry">
         <h3 id="云环境与本地主机的区别"><a href="#云环境与本地主机的区别" class="headerlink" title="云环境与本地主机的区别"></a><strong>云环境与本地主机的区别</strong></h3><p>本地环境大多是使用LVM做的，也就是像这样</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@1panel ~]<span class="comment"># lsblk</span></span><br><span class="line">NAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS</span><br><span class="line">sda                      8:0    0   500G  0 disk</span><br><span class="line">├─sda1                   8:1    0     1G  0 part /boot</span><br><span class="line">├─sda2                   8:2    0    49G  0 part</span><br><span class="line">│ ├─almalinux_192-root 253:0    0 495.1G  0 lvm  /</span><br><span class="line">│ └─almalinux_192-swap 253:1    0   3.9G  0 lvm  [SWAP]</span><br><span class="line">└─sda3                   8:3    0   450G  0 part</span><br><span class="line">  └─almalinux_192-root 253:0    0 495.1G  0 lvm  /</span><br><span class="line">sdb                      8:16   0   500G  0 disk</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@1panel ~<span class="token punctuation">]</span><span class="token comment"># lsblk</span>
+NAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda                      <span class="token number">8</span>:0    <span class="token number">0</span>   500G  <span class="token number">0</span> disk
+├─sda1                   <span class="token number">8</span>:1    <span class="token number">0</span>     1G  <span class="token number">0</span> part /boot
+├─sda2                   <span class="token number">8</span>:2    <span class="token number">0</span>    49G  <span class="token number">0</span> part
+│ ├─almalinux_192-root <span class="token number">253</span>:0    <span class="token number">0</span> <span class="token number">495</span>.1G  <span class="token number">0</span> lvm  /
+│ └─almalinux_192-swap <span class="token number">253</span>:1    <span class="token number">0</span>   <span class="token number">3</span>.9G  <span class="token number">0</span> lvm  <span class="token punctuation">[</span>SWAP<span class="token punctuation">]</span>
+└─sda3                   <span class="token number">8</span>:3    <span class="token number">0</span>   450G  <span class="token number">0</span> part
+  └─almalinux_192-root <span class="token number">253</span>:0    <span class="token number">0</span> <span class="token number">495</span>.1G  <span class="token number">0</span> lvm  /
+sdb                      <span class="token number">8</span>:16   <span class="token number">0</span>   500G  <span class="token number">0</span> disk<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>而云环境直接使用分区挂载</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@iZbp12ci725btzla58yu6kZ ~]<span class="comment"># lsblk</span></span><br><span class="line">NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">vda    253:0    0   40G  0 disk</span><br><span class="line">├─vda1 253:1    0    1M  0 part</span><br><span class="line">├─vda2 253:2    0  100M  0 part /boot/efi</span><br><span class="line">└─vda3 253:3    0 39.9G  0 part /</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@iZbp12ci725btzla58yu6kZ ~<span class="token punctuation">]</span><span class="token comment"># lsblk</span>
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    <span class="token number">253</span>:0    <span class="token number">0</span>   40G  <span class="token number">0</span> disk
+├─vda1 <span class="token number">253</span>:1    <span class="token number">0</span>    1M  <span class="token number">0</span> part
+├─vda2 <span class="token number">253</span>:2    <span class="token number">0</span>  100M  <span class="token number">0</span> part /boot/efi
+└─vda3 <span class="token number">253</span>:3    <span class="token number">0</span> <span class="token number">39</span>.9G  <span class="token number">0</span> part /<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这个区别就导致云主机没法通过像本地主机那样的LVM扩容的方式进行扩容</p>
 <h3 id="扩容云主机根分区"><a href="#扩容云主机根分区" class="headerlink" title="扩容云主机根分区"></a>扩容云主机根分区</h3><p>首先在云控制台上对磁盘进行扩容，这个略过了</p>
 <p>整个扩容流程实际上更加简单</p>
 <p><strong>如果系统使用的是中文</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装扩容工具</span></span><br><span class="line"><span class="built_in">type</span> growpart || sudo yum install -y cloud-utils-growpart</span><br><span class="line"></span><br><span class="line"><span class="comment"># 确保工具版本</span></span><br><span class="line">yum update -y cloud-utils-growpart</span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接扩容</span></span><br><span class="line">growpart /dev/vda 1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 安装扩容工具</span>
+<span class="token builtin class-name">type</span> growpart <span class="token operator">||</span> <span class="token function">sudo</span> yum <span class="token function">install</span> <span class="token parameter variable">-y</span> cloud-utils-growpart
+
+<span class="token comment"># 确保工具版本</span>
+yum update <span class="token parameter variable">-y</span> cloud-utils-growpart
+
+<span class="token comment"># 直接扩容</span>
+growpart /dev/vda <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>非英文环境下，growpart –version的输出可能包含中文字符，导致使用awk提取字符失败</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 非英文环境扩容</span></span><br><span class="line">LC_ALL=en_US.UTF-8 growpart /dev/vda 1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 非英文环境扩容</span>
+<span class="token assign-left variable"><span class="token environment constant">LC_ALL</span></span><span class="token operator">=</span>en_US.UTF-8 growpart /dev/vda <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6565,36 +6587,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7059,13 +7051,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8106,13 +8098,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8565,14 +8557,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8580,14 +8572,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

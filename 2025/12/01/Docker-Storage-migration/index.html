@@ -494,12 +494,92 @@
 <p>毕竟docker默认情况下，是将数据存放在&#x2F;var&#x2F;lib下的，占根目录的空间</p>
 <p>收到开发反馈说这个k8s节点经常遇到临时存储不够的情况</p>
 <p>使用<code>ncdu / --exclude /data --exclude /mnt</code> 在排除挂载的空间之后扫描了一下根目录下的文件，结果删除了一堆log之后，ncdu显示只用了40G，实际上用了100多个G</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">sudo journalctl --disk-usage</span><br><span class="line"><span class="comment"># 日志也没占用什么空间</span></span><br><span class="line">Archived <span class="keyword">and</span> active journals take up <span class="number">2.9</span>G <span class="keyword">in</span> the file system.</span><br><span class="line"></span><br><span class="line"><span class="comment"># 看了下/var/下站的最多</span></span><br><span class="line">sudo du -sh /usr /var /opt /snap /home /data /boot</span><br><span class="line">16G	/usr</span><br><span class="line">114G	/var</span><br><span class="line"><span class="number">8.4</span>G	/opt</span><br><span class="line"><span class="number">8.5</span>G	/snap</span><br><span class="line">226G	/home</span><br><span class="line">158G	/data</span><br><span class="line">194M	/boot</span><br><span class="line"></span><br><span class="line"><span class="comment"># 看一眼docker占用</span></span><br><span class="line">docker system df</span><br><span class="line">TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE</span><br><span class="line">Images          <span class="number">32</span>        <span class="number">2</span>         <span class="number">11.08</span>GB   <span class="number">5.656</span>GB (<span class="number">51</span>%)</span><br><span class="line">Containers      <span class="number">2</span>         <span class="number">2</span>         <span class="number">276.5</span>MB   0B (<span class="number">0</span>%)</span><br><span class="line">Local Volumes   <span class="number">14</span>        <span class="number">1</span>         <span class="number">70.79</span>GB   <span class="number">980.2</span>MB (<span class="number">1</span>%)</span><br><span class="line">Build Cache     <span class="number">31</span>        <span class="number">0</span>         <span class="number">311.1</span>MB   <span class="number">311.1</span>MB</span><br><span class="line"></span><br><span class="line">docker system df -v</span><br><span class="line">Images space usage:</span><br><span class="line"></span><br><span class="line">REPOSITORY                                                        TAG                           IMAGE ID       CREATED         SIZE      SHARED SIZE   UNIQUE SIZE   CONTAINERS</span><br><span class="line">registry2                                                         backup                        2b893ab365df   <span class="number">2</span> weeks ago     <span class="number">25.4</span>MB    <span class="number">25.44</span>MB       0B            <span class="number">0</span></span><br><span class="line">xxxxx</span><br><span class="line">Containers space usage:</span><br><span class="line"></span><br><span class="line">CONTAINER ID   IMAGE                                                                  COMMAND                   LOCAL VOLUMES   SIZE      CREATED        STATUS        NAMES</span><br><span class="line">dabec99b0609   registry:<span class="number">2</span>                                                             <span class="string">&quot;/entrypoint.sh /etc…&quot;</span>   <span class="number">1</span>               0B        <span class="number">5</span> months ago   Up <span class="number">8</span> days     registry2</span><br><span class="line"></span><br><span class="line">Local Volumes space usage:</span><br><span class="line"></span><br><span class="line">VOLUME NAME                                                        LINKS     SIZE</span><br><span class="line"><span class="number">98793e9</span>1065d2d274f57f8bd9147607b86a9caefb4b3fe152ed1aa29120ea765   <span class="number">0</span>         0B</span><br><span class="line">e9c10d6727913682bc4c0cd76bf3c69ae234ab1aa7f40699ba25e0c1ac4d6dbe   <span class="number">0</span>         0B</span><br><span class="line">f2f9881bfcbd4b7ea6a05d29fb5fd6b2ed2db5c13ce8bdbceae89c31743c1832   <span class="number">0</span>         0B</span><br><span class="line"><span class="number">26</span>107f7c3e8c73c51db4ddb71fd7aebfeefafd0688380f1988a2bf01059623c6   <span class="number">0</span>         0B</span><br><span class="line">5b8d8a32aa97a8f8d804f38cf64b23605ac61b617f195c3f4aedadee8a29e601   <span class="number">0</span>         0B</span><br><span class="line">7f94a19a4caf26f7c8e343cef2a3de92b01502de448304b3de111e2987070338   <span class="number">0</span>         0B</span><br><span class="line">09d2724f32128edecf137193d7ead873fa91b9c03e649efbbe6c3c424cd87114   <span class="number">0</span>         0B</span><br><span class="line">fa4712f2b368456ee519bfdd384b97484b891a84335d6aa35ea0c1f8124cc620   <span class="number">0</span>         0B</span><br><span class="line">5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790   <span class="number">1</span>         <span class="number">69.81</span>GB</span><br><span class="line">996382fc26991266de5510f0d53ac8040451e55f51136beb1d9f1a0ff5a00b9b   <span class="number">0</span>         0B</span><br><span class="line">bd282d6dc523171d96845384fbb7d8c4dda94945639286040c73dfe582edde9c   <span class="number">0</span>         <span class="number">980.2</span>MB</span><br><span class="line">3ad7d780120ad29d7b29763e309ee58226b3a9cba6ecde63ab8da3cd8b17a018   <span class="number">0</span>         0B</span><br><span class="line">95c9901058ab3c5290e0b90e9815c6f2d9a6e88a8d8adb48153b66f2a838443b   <span class="number">0</span>         0B</span><br><span class="line">cc3d1da4d0e36a70e63332ce795c036a7939841ba5d690a204fb45ebfc70e1f4   <span class="number">0</span>         0B</span><br><span class="line"></span><br><span class="line">Build cache usage: <span class="number">311.1</span>MB</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python">sudo journalctl <span class="token operator">-</span><span class="token operator">-</span>disk<span class="token operator">-</span>usage
+<span class="token comment"># 日志也没占用什么空间</span>
+Archived <span class="token keyword">and</span> active journals take up <span class="token number">2</span><span class="token punctuation">.</span>9G <span class="token keyword">in</span> the <span class="token builtin">file</span> system<span class="token punctuation">.</span>
+
+<span class="token comment"># 看了下/var/下站的最多</span>
+sudo du <span class="token operator">-</span>sh <span class="token operator">/</span>usr <span class="token operator">/</span>var <span class="token operator">/</span>opt <span class="token operator">/</span>snap <span class="token operator">/</span>home <span class="token operator">/</span>data <span class="token operator">/</span>boot
+16G	<span class="token operator">/</span>usr
+114G	<span class="token operator">/</span>var
+<span class="token number">8</span><span class="token punctuation">.</span>4G	<span class="token operator">/</span>opt
+<span class="token number">8</span><span class="token punctuation">.</span>5G	<span class="token operator">/</span>snap
+226G	<span class="token operator">/</span>home
+158G	<span class="token operator">/</span>data
+194M	<span class="token operator">/</span>boot
+
+<span class="token comment"># 看一眼docker占用</span>
+docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          <span class="token number">32</span>        <span class="token number">2</span>         <span class="token number">11</span><span class="token punctuation">.</span>08GB   <span class="token number">5</span><span class="token punctuation">.</span>656GB <span class="token punctuation">(</span><span class="token number">51</span><span class="token operator">%</span><span class="token punctuation">)</span>
+Containers      <span class="token number">2</span>         <span class="token number">2</span>         <span class="token number">276</span><span class="token punctuation">.</span>5MB   0B <span class="token punctuation">(</span><span class="token number">0</span><span class="token operator">%</span><span class="token punctuation">)</span>
+Local Volumes   <span class="token number">14</span>        <span class="token number">1</span>         <span class="token number">70</span><span class="token punctuation">.</span>79GB   <span class="token number">980</span><span class="token punctuation">.</span>2MB <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">%</span><span class="token punctuation">)</span>
+Build Cache     <span class="token number">31</span>        <span class="token number">0</span>         <span class="token number">311</span><span class="token punctuation">.</span>1MB   <span class="token number">311</span><span class="token punctuation">.</span>1MB
+
+docker system df <span class="token operator">-</span>v
+Images space usage<span class="token punctuation">:</span>
+
+REPOSITORY                                                        TAG                           IMAGE ID       CREATED         SIZE      SHARED SIZE   UNIQUE SIZE   CONTAINERS
+registry2                                                         backup                        2b893ab365df   <span class="token number">2</span> weeks ago     <span class="token number">25</span><span class="token punctuation">.</span>4MB    <span class="token number">25</span><span class="token punctuation">.</span>44MB       0B            <span class="token number">0</span>
+xxxxx
+Containers space usage<span class="token punctuation">:</span>
+
+CONTAINER ID   IMAGE                                                                  COMMAND                   LOCAL VOLUMES   SIZE      CREATED        STATUS        NAMES
+dabec99b0609   registry<span class="token punctuation">:</span><span class="token number">2</span>                                                             <span class="token string">"/entrypoint.sh /etc…"</span>   <span class="token number">1</span>               0B        <span class="token number">5</span> months ago   Up <span class="token number">8</span> days     registry2
+
+Local Volumes space usage<span class="token punctuation">:</span>
+
+VOLUME NAME                                                        LINKS     SIZE
+98793e91065d2d274f57f8bd9147607b86a9caefb4b3fe152ed1aa29120ea765   <span class="token number">0</span>         0B
+e9c10d6727913682bc4c0cd76bf3c69ae234ab1aa7f40699ba25e0c1ac4d6dbe   <span class="token number">0</span>         0B
+f2f9881bfcbd4b7ea6a05d29fb5fd6b2ed2db5c13ce8bdbceae89c31743c1832   <span class="token number">0</span>         0B
+26107f7c3e8c73c51db4ddb71fd7aebfeefafd0688380f1988a2bf01059623c6   <span class="token number">0</span>         0B
+5b8d8a32aa97a8f8d804f38cf64b23605ac61b617f195c3f4aedadee8a29e601   <span class="token number">0</span>         0B
+7f94a19a4caf26f7c8e343cef2a3de92b01502de448304b3de111e2987070338   <span class="token number">0</span>         0B
+09d2724f32128edecf137193d7ead873fa91b9c03e649efbbe6c3c424cd87114   <span class="token number">0</span>         0B
+fa4712f2b368456ee519bfdd384b97484b891a84335d6aa35ea0c1f8124cc620   <span class="token number">0</span>         0B
+5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790   <span class="token number">1</span>         <span class="token number">69</span><span class="token punctuation">.</span>81GB
+996382fc26991266de5510f0d53ac8040451e55f51136beb1d9f1a0ff5a00b9b   <span class="token number">0</span>         0B
+bd282d6dc523171d96845384fbb7d8c4dda94945639286040c73dfe582edde9c   <span class="token number">0</span>         <span class="token number">980</span><span class="token punctuation">.</span>2MB
+3ad7d780120ad29d7b29763e309ee58226b3a9cba6ecde63ab8da3cd8b17a018   <span class="token number">0</span>         0B
+95c9901058ab3c5290e0b90e9815c6f2d9a6e88a8d8adb48153b66f2a838443b   <span class="token number">0</span>         0B
+cc3d1da4d0e36a70e63332ce795c036a7939841ba5d690a204fb45ebfc70e1f4   <span class="token number">0</span>         0B
+
+Build cache usage<span class="token punctuation">:</span> <span class="token number">311</span><span class="token punctuation">.</span>1MB
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可见registry2的容器使用的local volume占用了69个G，这一层叫5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790</p>
 <p><strong>存储迁移</strong></p>
 <p>那么目标就是将存储层迁移到&#x2F;data上，并且打一个软链</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 停止容器</span></span><br><span class="line">docker stop registry2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将存储层进行一手备份</span></span><br><span class="line">sudo cp -r \ </span><br><span class="line">/var/lib/docker/volumes/5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790 \</span><br><span class="line">/data/registry_data.bak</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将存储层进行移动</span></span><br><span class="line">sudo mv /var/lib/docker/volumes/5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790 \</span><br><span class="line">/data/registry_data</span><br><span class="line"></span><br><span class="line"><span class="comment"># 打一个软链</span></span><br><span class="line">sudo ln -s /data/registry_data /var/lib/docker/volumes/5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看软链</span></span><br><span class="line">sudo ls -l /var/lib/docker/volumes/</span><br><span class="line">总用量 <span class="number">84</span></span><br><span class="line">...</span><br><span class="line">5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790 -&gt; /data/registry_data</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新启动</span></span><br><span class="line">docker start registry2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进行重新拉取镜像的测试</span></span><br><span class="line">docker rmi easzlab.io.local:<span class="number">5000</span>/bitnami/minio:<span class="number">2025.4</span><span class="number">.22</span>-debian-<span class="number">12</span>-r1</span><br><span class="line">docker pull easzlab.io.local:<span class="number">5000</span>/bitnami/minio:<span class="number">2025.4</span><span class="number">.22</span>-debian-<span class="number">12</span>-r1</span><br><span class="line"></span><br><span class="line">能拉取到就说明容器已经正常运行</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token comment"># 停止容器</span>
+docker stop registry2
+
+<span class="token comment"># 将存储层进行一手备份</span>
+sudo cp <span class="token operator">-</span>r \ 
+<span class="token operator">/</span>var<span class="token operator">/</span>lib<span class="token operator">/</span>docker<span class="token operator">/</span>volumes<span class="token operator">/</span>5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790 \
+<span class="token operator">/</span>data<span class="token operator">/</span>registry_data<span class="token punctuation">.</span>bak
+
+<span class="token comment"># 将存储层进行移动</span>
+sudo mv <span class="token operator">/</span>var<span class="token operator">/</span>lib<span class="token operator">/</span>docker<span class="token operator">/</span>volumes<span class="token operator">/</span>5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790 \
+<span class="token operator">/</span>data<span class="token operator">/</span>registry_data
+
+<span class="token comment"># 打一个软链</span>
+sudo ln <span class="token operator">-</span>s <span class="token operator">/</span>data<span class="token operator">/</span>registry_data <span class="token operator">/</span>var<span class="token operator">/</span>lib<span class="token operator">/</span>docker<span class="token operator">/</span>volumes<span class="token operator">/</span>5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790
+
+<span class="token comment"># 查看软链</span>
+sudo ls <span class="token operator">-</span>l <span class="token operator">/</span>var<span class="token operator">/</span>lib<span class="token operator">/</span>docker<span class="token operator">/</span>volumes<span class="token operator">/</span>
+总用量 <span class="token number">84</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+5d0b8eec88dcf18b23a4f2e5d16b6e4a9e4c78eadfc0a57363c8f96f0838b790 <span class="token operator">-</span><span class="token operator">></span> <span class="token operator">/</span>data<span class="token operator">/</span>registry_data
+
+<span class="token comment"># 重新启动</span>
+docker start registry2
+
+<span class="token comment"># 进行重新拉取镜像的测试</span>
+docker rmi easzlab<span class="token punctuation">.</span>io<span class="token punctuation">.</span>local<span class="token punctuation">:</span><span class="token number">5000</span><span class="token operator">/</span>bitnami<span class="token operator">/</span>minio<span class="token punctuation">:</span><span class="token number">2025.4</span><span class="token number">.22</span><span class="token operator">-</span>debian<span class="token operator">-</span><span class="token number">12</span><span class="token operator">-</span>r1
+docker pull easzlab<span class="token punctuation">.</span>io<span class="token punctuation">.</span>local<span class="token punctuation">:</span><span class="token number">5000</span><span class="token operator">/</span>bitnami<span class="token operator">/</span>minio<span class="token punctuation">:</span><span class="token number">2025.4</span><span class="token number">.22</span><span class="token operator">-</span>debian<span class="token operator">-</span><span class="token number">12</span><span class="token operator">-</span>r1
+
+能拉取到就说明容器已经正常运行<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6558,36 +6638,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7052,13 +7102,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8099,13 +8149,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8558,14 +8608,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8573,14 +8623,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

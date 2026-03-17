@@ -531,24 +531,264 @@
 <p>Ceph Manager 的主要功能包括：<br>1.监控：收集和汇总集群性能和状态信息，如 I&#x2F;O 操作的性能指标、磁盘使⽤情况、节点健康状况等。<br>2.仪表盘：提供基于 Web 的⽤户界⾯，允许⽤户查看集群状态和执⾏某些管理操作。<br>3.插件⽀持：⽀持各种插件，如监控集成（Prometheus, Zabbix等）、告警、⽇志记录等。</p>
 <h1 id="ceph部署"><a href="#ceph部署" class="headerlink" title="ceph部署"></a>ceph部署</h1><h2 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h2><p>虚拟化操作系统PVE-8.1-2<br>Centos7.9.2009<br>4vCPU 4G内存<br>启动盘50G+3块100G 精简置备<br>ceph版本v15.2.1</p>
 <p>192.168.10.141 ceph-node1<br>192.168.10.142 ceph-node2<br>192.168.10.143 ceph-node3</p>
-<h2 id="节点初始化配置"><a href="#节点初始化配置" class="headerlink" title="节点初始化配置"></a>节点初始化配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">节点初始化配置</span><br><span class="line"></span><br><span class="line">setenforce 0</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">yum -y install chrony vim </span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span></span><br><span class="line"><span class="string">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span></span><br><span class="line"><span class="string">192.168.10.121 ws-k8s-master1</span></span><br><span class="line"><span class="string">192.168.10.141 ceph-node1</span></span><br><span class="line"><span class="string">192.168.10.142 ceph-node2</span></span><br><span class="line"><span class="string">192.168.10.143 ceph-node3&quot;</span> &gt; /etc/hosts</span><br></pre></td></tr></table></figure>
+<h2 id="节点初始化配置"><a href="#节点初始化配置" class="headerlink" title="节点初始化配置"></a>节点初始化配置</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">节点初始化配置
 
-<h2 id="node安装ceph"><a href="#node安装ceph" class="headerlink" title="node安装ceph"></a>node安装ceph</h2><h3 id="每个节点安装"><a href="#每个节点安装" class="headerlink" title="每个节点安装"></a>每个节点安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">yum -y install epel-release</span><br><span class="line">yum -y install deltarpm yum-plugin-priorities yum-utils ntpdate python-setuptools python-pip gcc gcc-c++ autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel zip unzip ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5-devel libidn libidn-devel openssl openssh openssl-devel nss_ldap openldap openldap-devel openldap-clients openldap-servers libxslt-devel libevent-devel ntp libtool-ltdl bison libtool vim-enhanced python wget lsof iptraf strace lrzsz kernel-devel kernel-headers pam-devel tcl tk cmake ncurses-devel bison setuptool popt-devel net-snmp screen perl-devel pcre-devel net-snmp screen tcpdump rsync sysstat man iptables sudo libconfig git bind-utils tmux elinks numactl iftop bwm-ng net-tools expect snappy leveldb gdisk python-argparse gperftools-libs conntrack ipset jq libseccomp socat sshpass</span><br><span class="line">wget https://download.ceph.com/rpm-nautilus/el7/noarch/ceph-release-1-1.el7.noarch.rpm --no-check-certificate</span><br><span class="line">rpm -ivh ceph-release-1-1.el7.noarch.rpm --force</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改ceph源</span></span><br><span class="line">sed -i <span class="string">&#x27;s#download.ceph.com#mirrors.tuna.tsinghua.edu.cn/ceph#&#x27;</span> /etc/yum.repos.d/ceph.repo</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装ceph相关组件</span></span><br><span class="line">yum install -y ceph-mon ceph-radosgw ceph-mds ceph-mgr ceph-osd ceph-common ceph</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+setenforce <span class="token number">0</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=disabled/'</span> /etc/selinux/config
+systemctl disable firewalld.service <span class="token parameter variable">--now</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> chrony <span class="token function">vim</span> 
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^server/#server/g'</span> /etc/chrony.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'1s/^/server cn.pool.ntp.org iburst\n/'</span> /etc/chrony.conf
 
-<h3 id="node1安装"><a href="#node1安装" class="headerlink" title="node1安装"></a>node1安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#node1</span></span><br><span class="line">hostnamectl set-hostname ceph-node1 &amp;&amp; bash</span><br><span class="line">nmcli con modify ens18 ifname ens18 ipv4.method manual ipv4.addresses 192.168.10.141/24 \</span><br><span class="line">ipv4.gateway 192.168.10.1 ipv4.dns 192.168.1.1</span><br><span class="line">nmcli con up ens18</span><br><span class="line"></span><br><span class="line"><span class="comment">#ssh互信</span></span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id ceph-node1</span><br><span class="line">ssh-copy-id ceph-node2</span><br><span class="line">ssh-copy-id ceph-node3</span><br><span class="line"></span><br><span class="line"><span class="comment">#node1安装部署工具</span></span><br><span class="line">yum -y install ceph-deploy</span><br><span class="line"><span class="built_in">mkdir</span> /ceph_cluster</span><br><span class="line"><span class="built_in">cd</span> /ceph_cluster</span><br><span class="line"></span><br><span class="line"><span class="comment">#node1使用deploy初始化配置node1-3</span></span><br><span class="line">ceph-deploy new ceph-node1 ceph-node2 ceph-node3</span><br><span class="line"></span><br><span class="line"><span class="comment">#生成monitor角色 强行同步</span></span><br><span class="line">ceph-deploy --overwrite-conf mon create-initial</span><br><span class="line"></span><br><span class="line"><span class="comment">#会生成一堆相关的keyring密钥文件</span></span><br><span class="line"><span class="built_in">ls</span></span><br><span class="line">ceph.bootstrap-mds.keyring			<span class="comment">#引导启动 mds 的密钥文件</span></span><br><span class="line">ceph.bootstrap-mgr.keyring			<span class="comment">#引导启动 mgr 的密钥文件</span></span><br><span class="line">ceph.bootstrap-osd.keyring			<span class="comment">#引导启动 osd 的密钥文件</span></span><br><span class="line">ceph.bootstrap-rgw.keyring			<span class="comment">#引导启动 rgw 的密钥文件</span></span><br><span class="line">ceph.client.admin.keyring			<span class="comment">#ceph客户端和管理端通信的认证密钥，拥有ceph集群的所有权限</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#节点纳管</span></span><br><span class="line">ceph-deploy admin ceph-node1 ceph-node2 ceph-node3</span><br><span class="line"></span><br><span class="line">修改ceph.conf配置文件</span><br><span class="line"><span class="built_in">cat</span> /etc/ceph/ceph.conf</span><br><span class="line">[global]</span><br><span class="line">fsid = 30c9d277-1f46-4f97-b93e-b08327427c09</span><br><span class="line">mon_initial_members = ceph-node1, ceph-node2, ceph-node3</span><br><span class="line">mon_host = 192.168.10.141,192.168.10.142,192.168.10.143</span><br><span class="line">auth_cluster_required = cephx</span><br><span class="line">auth_service_required = cephx</span><br><span class="line">auth_client_required = cephx</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token builtin class-name">echo</span> <span class="token string">"
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.10.121 ws-k8s-master1
+192.168.10.141 ceph-node1
+192.168.10.142 ceph-node2
+192.168.10.143 ceph-node3"</span> <span class="token operator">></span> /etc/hosts<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="node安装ceph"><a href="#node安装ceph" class="headerlink" title="node安装ceph"></a>node安装ceph</h2><h3 id="每个节点安装"><a href="#每个节点安装" class="headerlink" title="每个节点安装"></a>每个节点安装</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> epel-release
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> deltarpm yum-plugin-priorities yum-utils ntpdate python-setuptools python-pip gcc gcc-c++ autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel <span class="token function">bzip2</span> bzip2-devel <span class="token function">zip</span> <span class="token function">unzip</span> ncurses ncurses-devel <span class="token function">curl</span> curl-devel e2fsprogs e2fsprogs-devel krb5-devel libidn libidn-devel openssl openssh openssl-devel nss_ldap openldap openldap-devel openldap-clients openldap-servers libxslt-devel libevent-devel ntp libtool-ltdl bison libtool vim-enhanced python <span class="token function">wget</span> <span class="token function">lsof</span> iptraf <span class="token function">strace</span> lrzsz kernel-devel kernel-headers pam-devel tcl tk cmake ncurses-devel bison setuptool popt-devel net-snmp <span class="token function">screen</span> perl-devel pcre-devel net-snmp <span class="token function">screen</span> tcpdump <span class="token function">rsync</span> sysstat <span class="token function">man</span> iptables <span class="token function">sudo</span> libconfig <span class="token function">git</span> bind-utils tmux elinks numactl iftop bwm-ng net-tools <span class="token function">expect</span> snappy leveldb gdisk python-argparse gperftools-libs conntrack ipset jq libseccomp socat sshpass
+<span class="token function">wget</span> https://download.ceph.com/rpm-nautilus/el7/noarch/ceph-release-1-1.el7.noarch.rpm --no-check-certificate
+<span class="token function">rpm</span> <span class="token parameter variable">-ivh</span> ceph-release-1-1.el7.noarch.rpm <span class="token parameter variable">--force</span>
+
+<span class="token comment">#修改ceph源</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#download.ceph.com#mirrors.tuna.tsinghua.edu.cn/ceph#'</span> /etc/yum.repos.d/ceph.repo
+
+<span class="token comment">#安装ceph相关组件</span>
+yum <span class="token function">install</span> <span class="token parameter variable">-y</span> ceph-mon ceph-radosgw ceph-mds ceph-mgr ceph-osd ceph-common ceph
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="node1安装"><a href="#node1安装" class="headerlink" title="node1安装"></a>node1安装</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#node1</span>
+hostnamectl set-hostname ceph-node1 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+nmcli con modify ens18 ifname ens18 ipv4.method manual ipv4.addresses <span class="token number">192.168</span>.10.141/24 <span class="token punctuation">\</span>
+ipv4.gateway <span class="token number">192.168</span>.10.1 ipv4.dns <span class="token number">192.168</span>.1.1
+nmcli con up ens18
+
+<span class="token comment">#ssh互信</span>
+ssh-keygen
+ssh-copy-id ceph-node1
+ssh-copy-id ceph-node2
+ssh-copy-id ceph-node3
+
+<span class="token comment">#node1安装部署工具</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> ceph-deploy
+<span class="token function">mkdir</span> /ceph_cluster
+<span class="token builtin class-name">cd</span> /ceph_cluster
+
+<span class="token comment">#node1使用deploy初始化配置node1-3</span>
+ceph-deploy new ceph-node1 ceph-node2 ceph-node3
+
+<span class="token comment">#生成monitor角色 强行同步</span>
+ceph-deploy --overwrite-conf mon create-initial
+
+<span class="token comment">#会生成一堆相关的keyring密钥文件</span>
+<span class="token function">ls</span>
+ceph.bootstrap-mds.keyring			<span class="token comment">#引导启动 mds 的密钥文件</span>
+ceph.bootstrap-mgr.keyring			<span class="token comment">#引导启动 mgr 的密钥文件</span>
+ceph.bootstrap-osd.keyring			<span class="token comment">#引导启动 osd 的密钥文件</span>
+ceph.bootstrap-rgw.keyring			<span class="token comment">#引导启动 rgw 的密钥文件</span>
+ceph.client.admin.keyring			<span class="token comment">#ceph客户端和管理端通信的认证密钥，拥有ceph集群的所有权限</span>
+
+
+<span class="token comment">#节点纳管</span>
+ceph-deploy admin ceph-node1 ceph-node2 ceph-node3
+
+修改ceph.conf配置文件
+<span class="token function">cat</span> /etc/ceph/ceph.conf
+<span class="token punctuation">[</span>global<span class="token punctuation">]</span>
+fsid <span class="token operator">=</span> 30c9d277-1f46-4f97-b93e-b08327427c09
+mon_initial_members <span class="token operator">=</span> ceph-node1, ceph-node2, ceph-node3
+mon_host <span class="token operator">=</span> <span class="token number">192.168</span>.10.141,192.168.10.142,192.168.10.143
+auth_cluster_required <span class="token operator">=</span> cephx
+auth_service_required <span class="token operator">=</span> cephx
+auth_client_required <span class="token operator">=</span> cephx
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="安装完成查看状态"><a href="#安装完成查看状态" class="headerlink" title="安装完成查看状态"></a>安装完成查看状态</h3><p>#查看状态<br>ceph -s<br>  cluster:<br>    id:     30c9d277-1f46-4f97-b93e-b08327427c09<br>    health: HEALTH_WARN<br>            OSD count 0 &lt; osd_pool_default_size 3<br>            mons are allowing insecure global_id reclaim<br>            clock skew detected on mon.ceph-node3, mon.ceph-node1</p>
 <p>  services:<br>    mon: 3 daemons, quorum ceph-node2,ceph-node3,ceph-node1 (age 4m)<br>    mgr: ceph-node1(active, since 67s), standbys: ceph-node2, ceph-node3<br>    osd: 0 osds: 0 up, 0 in</p>
 <p>  data:<br>    pools:   0 pools, 0 pgs<br>    objects: 0 objects, 0 B<br>    usage:   0 B used, 0 B &#x2F; 0 B avail<br>    pgs:</p>
-<h2 id="ceph-OSD初始化"><a href="#ceph-OSD初始化" class="headerlink" title="ceph OSD初始化"></a>ceph OSD初始化</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda               8:0    0   50G  0 disk</span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0   49G  0 part</span><br><span class="line">  ├─centos-root 253:0    0 45.1G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0  3.9G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0  100G  0 disk</span><br><span class="line">sdc               8:32   0  100G  0 disk</span><br><span class="line">sdd               8:48   0  100G  0 disk</span><br><span class="line">sr0              11:0    1  4.5G  0 rom</span><br><span class="line"></span><br><span class="line"><span class="comment">#部署OSD进程 - 添加磁盘到存储集群</span></span><br><span class="line">ceph-deploy osd create --data /dev/sdb ceph-node1</span><br><span class="line">ceph-deploy osd create --data /dev/sdc ceph-node1</span><br><span class="line">ceph-deploy osd create --data /dev/sdd ceph-node1</span><br><span class="line">ceph-deploy osd create --data /dev/sdb ceph-node2</span><br><span class="line">ceph-deploy osd create --data /dev/sdc ceph-node2</span><br><span class="line">ceph-deploy osd create --data /dev/sdd ceph-node2</span><br><span class="line">ceph-deploy osd create --data /dev/sdb ceph-node3</span><br><span class="line">ceph-deploy osd create --data /dev/sdc ceph-node3</span><br><span class="line">ceph-deploy osd create --data /dev/sdd ceph-node3</span><br><span class="line"></span><br><span class="line"> ceph -s</span><br><span class="line">  cluster:</span><br><span class="line">    <span class="built_in">id</span>:     30c9d277-1f46-4f97-b93e-b08327427c09 <span class="comment">#集群ID</span></span><br><span class="line">    health: HEALTH_WARN  <span class="comment">#健康状态</span></span><br><span class="line">            mons are allowing insecure global_id reclaim</span><br><span class="line">            clock skew detected on mon.ceph-node3, mon.ceph-node1</span><br><span class="line"></span><br><span class="line">  services:  </span><br><span class="line">    mon: 3 daemons, quorum ceph-node2,ceph-node3,ceph-node1 (age 8m) <span class="comment">#mon节点信息</span></span><br><span class="line">    mgr: ceph-node1(active, since 5m), standbys: ceph-node2, ceph-node3 <span class="comment">#mgr节点信息</span></span><br><span class="line">    osd: 9 osds: 9 up (since 7s), 9 <span class="keyword">in</span> (since 7s) <span class="comment">#OSD信息</span></span><br><span class="line"></span><br><span class="line">  task status:</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   0 pools, 0 pgs <span class="comment">#存储池信息</span></span><br><span class="line">    objects: 0 objects, 0 B <span class="comment">#对象信息</span></span><br><span class="line">    usage:   9.0 GiB used, 891 GiB / 900 GiB avail <span class="comment">#使用情况信息，每块磁盘默认预留1G放元数据</span></span><br><span class="line">    pgs:</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看osd状态</span></span><br><span class="line">ceph-deploy osd list ceph-node1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="ceph-OSD初始化"><a href="#ceph-OSD初始化" class="headerlink" title="ceph OSD初始化"></a>ceph OSD初始化</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">lsblk
+NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda               <span class="token number">8</span>:0    <span class="token number">0</span>   50G  <span class="token number">0</span> disk
+├─sda1            <span class="token number">8</span>:1    <span class="token number">0</span>    1G  <span class="token number">0</span> part /boot
+└─sda2            <span class="token number">8</span>:2    <span class="token number">0</span>   49G  <span class="token number">0</span> part
+  ├─centos-root <span class="token number">253</span>:0    <span class="token number">0</span> <span class="token number">45</span>.1G  <span class="token number">0</span> lvm  /
+  └─centos-swap <span class="token number">253</span>:1    <span class="token number">0</span>  <span class="token number">3</span>.9G  <span class="token number">0</span> lvm  <span class="token punctuation">[</span>SWAP<span class="token punctuation">]</span>
+sdb               <span class="token number">8</span>:16   <span class="token number">0</span>  100G  <span class="token number">0</span> disk
+sdc               <span class="token number">8</span>:32   <span class="token number">0</span>  100G  <span class="token number">0</span> disk
+sdd               <span class="token number">8</span>:48   <span class="token number">0</span>  100G  <span class="token number">0</span> disk
+sr0              <span class="token number">11</span>:0    <span class="token number">1</span>  <span class="token number">4</span>.5G  <span class="token number">0</span> rom
 
-<h2 id="ceph-Dashboard图形化仪表台"><a href="#ceph-Dashboard图形化仪表台" class="headerlink" title="ceph-Dashboard图形化仪表台"></a>ceph-Dashboard图形化仪表台</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">yum install -y ceph-mgr-dashboard</span><br><span class="line"><span class="comment">#部署ceph-web管理（可以多个部署，web也有主备区别）</span></span><br><span class="line">ceph-deploy mgr create ceph-node1</span><br><span class="line"></span><br><span class="line"><span class="comment">#仪表台配置</span></span><br><span class="line">ceph mgr module <span class="built_in">enable</span> dashboard --force</span><br><span class="line"></span><br><span class="line"><span class="comment">#设置监听地址和端口</span></span><br><span class="line">ceph config <span class="built_in">set</span> mgr mgr/dashboard/server_addr 0.0.0.0</span><br><span class="line">ceph config <span class="built_in">set</span> mgr mgr/dashboard/server_port 8000</span><br><span class="line"></span><br><span class="line"><span class="comment">#重启dashboard</span></span><br><span class="line">ceph mgr module <span class="built_in">disable</span> dashboard</span><br><span class="line">ceph mgr module <span class="built_in">enable</span> dashboard --force</span><br><span class="line"></span><br><span class="line"><span class="comment">#是设置dashboard用户名密码</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;Admin@1234!&#x27;</span> &gt; dashboard_passwd.txt</span><br><span class="line">ceph dashboard ac-user-create admin administrator -i dashboard_passwd.txt</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<span class="token comment">#部署OSD进程 - 添加磁盘到存储集群</span>
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdb ceph-node1
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdc ceph-node1
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdd ceph-node1
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdb ceph-node2
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdc ceph-node2
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdd ceph-node2
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdb ceph-node3
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdc ceph-node3
+ceph-deploy osd create <span class="token parameter variable">--data</span> /dev/sdd ceph-node3
+
+ ceph <span class="token parameter variable">-s</span>
+  cluster:
+    id:     30c9d277-1f46-4f97-b93e-b08327427c09 <span class="token comment">#集群ID</span>
+    health: HEALTH_WARN  <span class="token comment">#健康状态</span>
+            mons are allowing insecure global_id reclaim
+            clock skew detected on mon.ceph-node3, mon.ceph-node1
+
+  services:  
+    mon: <span class="token number">3</span> daemons, quorum ceph-node2,ceph-node3,ceph-node1 <span class="token punctuation">(</span>age 8m<span class="token punctuation">)</span> <span class="token comment">#mon节点信息</span>
+    mgr: ceph-node1<span class="token punctuation">(</span>active, since 5m<span class="token punctuation">)</span>, standbys: ceph-node2, ceph-node3 <span class="token comment">#mgr节点信息</span>
+    osd: <span class="token number">9</span> osds: <span class="token number">9</span> up <span class="token punctuation">(</span>since 7s<span class="token punctuation">)</span>, <span class="token number">9</span> <span class="token keyword">in</span> <span class="token punctuation">(</span>since 7s<span class="token punctuation">)</span> <span class="token comment">#OSD信息</span>
+
+  task status:
+
+  data:
+    pools:   <span class="token number">0</span> pools, <span class="token number">0</span> pgs <span class="token comment">#存储池信息</span>
+    objects: <span class="token number">0</span> objects, <span class="token number">0</span> B <span class="token comment">#对象信息</span>
+    usage:   <span class="token number">9.0</span> GiB used, <span class="token number">891</span> GiB / <span class="token number">900</span> GiB avail <span class="token comment">#使用情况信息，每块磁盘默认预留1G放元数据</span>
+    pgs:
+
+<span class="token comment">#查看osd状态</span>
+ceph-deploy osd list ceph-node1
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="ceph-Dashboard图形化仪表台"><a href="#ceph-Dashboard图形化仪表台" class="headerlink" title="ceph-Dashboard图形化仪表台"></a>ceph-Dashboard图形化仪表台</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token function">install</span> <span class="token parameter variable">-y</span> ceph-mgr-dashboard
+<span class="token comment">#部署ceph-web管理（可以多个部署，web也有主备区别）</span>
+ceph-deploy mgr create ceph-node1
+
+<span class="token comment">#仪表台配置</span>
+ceph mgr module <span class="token builtin class-name">enable</span> dashboard <span class="token parameter variable">--force</span>
+
+<span class="token comment">#设置监听地址和端口</span>
+ceph config <span class="token builtin class-name">set</span> mgr mgr/dashboard/server_addr <span class="token number">0.0</span>.0.0
+ceph config <span class="token builtin class-name">set</span> mgr mgr/dashboard/server_port <span class="token number">8000</span>
+
+<span class="token comment">#重启dashboard</span>
+ceph mgr module disable dashboard
+ceph mgr module <span class="token builtin class-name">enable</span> dashboard <span class="token parameter variable">--force</span>
+
+<span class="token comment">#是设置dashboard用户名密码</span>
+<span class="token builtin class-name">echo</span> <span class="token string">'Admin@1234!'</span> <span class="token operator">></span> dashboard_passwd.txt
+ceph dashboard ac-user-create admin administrator <span class="token parameter variable">-i</span> dashboard_passwd.txt
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501171418.png"></p>
-<h1 id="ceph-rbd管理与卷的映射"><a href="#ceph-rbd管理与卷的映射" class="headerlink" title="ceph-rbd管理与卷的映射"></a>ceph-rbd管理与卷的映射</h1><h2 id="基本管理"><a href="#基本管理" class="headerlink" title="基本管理"></a>基本管理</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建一个存储池，名字为pool_01</span></span><br><span class="line">ceph osd pool create pool_01 128 128</span><br><span class="line"></span><br><span class="line"><span class="comment">#设置存储池为块存储池RBD类型</span></span><br><span class="line"> ceph osd pool application <span class="built_in">enable</span> pool_01 rbd</span><br><span class="line"> </span><br><span class="line"><span class="comment">#查看状态</span></span><br><span class="line">rados lspools</span><br><span class="line">ceph <span class="built_in">df</span>                          <span class="comment">#可以看到ID和可用空间</span></span><br><span class="line">ceph -s</span><br><span class="line">ceph osd pool get pool_01 size      <span class="comment">#默认三副本</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool_01 size 2    <span class="comment">#修改副本数</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool_01 pgp_num 64 <span class="comment">#修改pgp数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#开启允许删除存储池</span></span><br><span class="line">ceph tell mon.\* injectargs <span class="string">&#x27;--mon-allow-pool-delete=true&#x27;</span></span><br><span class="line"><span class="comment">#关闭允许删除存储池</span></span><br><span class="line">ceph tell mon.\* injectargs <span class="string">&#x27;--mon-allow-pool-delete=false&#x27;</span></span><br><span class="line"><span class="comment">#删除存储池</span></span><br><span class="line">ceph osd pool delete pool_01 pool_01 --yes-i-really-really-mean-it</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="RBD管理与映射"><a href="#RBD管理与映射" class="headerlink" title="RBD管理与映射"></a>RBD管理与映射</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建卷</span></span><br><span class="line">rbd create pool_01/disk1 --size 10G</span><br><span class="line">rbd <span class="built_in">ls</span> -p pool_01</span><br><span class="line">rbd info pool_01/disk1</span><br><span class="line">rbd image <span class="string">&#x27;disk1&#x27;</span>:</span><br><span class="line">        size 10 GiB <span class="keyword">in</span> 2560 objects    <span class="comment">#颗粒度信息：分割为2560个对象</span></span><br><span class="line">        order 22 (4 MiB objects)       <span class="comment">#4M作为一个对象</span></span><br><span class="line">        snapshot_count: 0</span><br><span class="line">        <span class="built_in">id</span>: 38e4a2960771</span><br><span class="line">        block_name_prefix: rbd_data.38e4a2960771</span><br><span class="line">        format: 2</span><br><span class="line">        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten</span><br><span class="line">        op_features: </span><br><span class="line">        flags: </span><br><span class="line">        create_timestamp: Mon Mar 18 10:11:24 2024</span><br><span class="line">        access_timestamp: Mon Mar 18 10:11:24 2024</span><br><span class="line">        modify_timestamp: Mon Mar 18 10:11:24 2024</span><br><span class="line">[</span><br><span class="line">细颗粒度可以储存更多信息，但查询速度会变慢</span><br><span class="line"></span><br><span class="line"><span class="comment">#order22代表一个object是2^22的大小，就是4M</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#创建另一个卷，指定order为21，此时一个object就是2M</span></span><br><span class="line">rbd create --size 1G --order 21 pool_01/disk2</span><br><span class="line"><span class="comment">#也可以不用指定order，直接指定，--order要被废弃了</span></span><br><span class="line">rbd create --size 1G --object-size 1M pool_01/disk3</span><br><span class="line"></span><br><span class="line">rbd info pool_01/disk2</span><br><span class="line">rbd image <span class="string">&#x27;disk2&#x27;</span>:</span><br><span class="line">        size 1 GiB <span class="keyword">in</span> 512 objects</span><br><span class="line">        order 21 (2 MiB objects)</span><br><span class="line">        snapshot_count: 0</span><br><span class="line">        <span class="built_in">id</span>: 116d7fac892a</span><br><span class="line">        block_name_prefix: rbd_data.116d7fac892a</span><br><span class="line">        format: 2</span><br><span class="line">        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten</span><br><span class="line">        op_features: </span><br><span class="line">        flags: </span><br><span class="line">        create_timestamp: Mon Mar 18 10:15:29 2024</span><br><span class="line">        access_timestamp: Mon Mar 18 10:15:29 2024</span><br><span class="line">        modify_timestamp: Mon Mar 18 10:15:29 2024</span><br><span class="line"></span><br><span class="line"><span class="comment">#删除卷</span></span><br><span class="line">rbd <span class="built_in">rm</span> pool_01/disk1</span><br><span class="line">rbd <span class="built_in">rm</span> pool_01/disk2</span><br><span class="line">rbd <span class="built_in">rm</span> pool_01/disk3</span><br></pre></td></tr></table></figure>
+<h1 id="ceph-rbd管理与卷的映射"><a href="#ceph-rbd管理与卷的映射" class="headerlink" title="ceph-rbd管理与卷的映射"></a>ceph-rbd管理与卷的映射</h1><h2 id="基本管理"><a href="#基本管理" class="headerlink" title="基本管理"></a>基本管理</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#创建一个存储池，名字为pool_01</span>
+ceph osd pool create pool_01 <span class="token number">128</span> <span class="token number">128</span>
 
-<h3 id="卷映射"><a href="#卷映射" class="headerlink" title="卷映射"></a>卷映射</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br><span class="line">NAME                                                                                                  MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda                                                                                                     8:0    0   50G  0 disk </span><br><span class="line">├─sda1                                                                                                  8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2                                                                                                  8:2    0   49G  0 part </span><br><span class="line">  ├─centos-root                                                                                       253:0    0 45.1G  0 lvm  /</span><br><span class="line">  └─centos-swap                                                                                       253:1    0  3.9G  0 lvm  [SWAP]</span><br><span class="line">sdb                                                                                                     8:16   0  100G  0 disk </span><br><span class="line">└─ceph--a4c0f4de--3e33--4b4a--baad--d963051938dd-osd--block--d9c62f90--ad93--41ee--b53f--3695198c9935 253:2    0  100G  0 lvm  </span><br><span class="line">sdc                                                                                                     8:32   0  100G  0 disk </span><br><span class="line">└─ceph--bcb89fc2--215e--41aa--b3d3--81c346933e63-osd--block--e989ef38--aef1--41c4--b427--f171cef6b88c 253:3    0  100G  0 lvm  </span><br><span class="line">sdd                                                                                                     8:48   0  100G  0 disk </span><br><span class="line">└─ceph--2cf83101--f989--4a4b--bf13--257f399a9b24-osd--block--ce7869ba--31bf--4e39--8898--0b4fb32d5131 253:4    0  100G  0 lvm  </span><br><span class="line">sr0                                                                                                    11:0    1  4.5G  0 rom  </span><br><span class="line"><span class="comment">#此时sdb sdc sdd被ceph纳管状态，主机无法直接使用</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#创建卷</span></span><br><span class="line"><span class="comment">#ceph osd pool create pool_01 128 128</span></span><br><span class="line">rbd create pool_01/disk1 --size 10G</span><br><span class="line"><span class="comment">#直接映射会报错</span></span><br><span class="line">rbd map pool_01/disk1</span><br><span class="line">rbd: sysfs write failed</span><br><span class="line">RBD image feature <span class="built_in">set</span> mismatch. You can <span class="built_in">disable</span> features unsupported by the kernel with <span class="string">&quot;rbd feature disable pool_01/disk1 object-map fast-diff deep-flatten&quot;</span>.</span><br><span class="line">In some cases useful info is found <span class="keyword">in</span> syslog - try <span class="string">&quot;dmesg | tail&quot;</span>.</span><br><span class="line">rbd: map failed: (6) No such device or address</span><br><span class="line"></span><br><span class="line"><span class="comment">#忽略rbd特性并映射卷</span></span><br><span class="line">rbd feature <span class="built_in">disable</span> pool_01/disk1 object-map fast-diff deep-flatten</span><br><span class="line"></span><br><span class="line"><span class="comment">#映射给本机</span></span><br><span class="line">rbd map pool_01/disk1</span><br><span class="line"><span class="comment">#/dev/rbd0 提示映射到了rbd0</span></span><br><span class="line">lsblk | grep rbd</span><br><span class="line">rbd0            252:0    0   10G  0 disk</span><br><span class="line"></span><br><span class="line"><span class="comment">#本地格式化与挂载</span></span><br><span class="line">mkfs.ext4 /dev/rbd0</span><br><span class="line"><span class="built_in">mkdir</span> /ceph_volume01</span><br><span class="line"><span class="comment">#持久化挂载</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;/dev/rbd0 /ceph_volume01 ext4 defaults,_netdev 0 0&quot;</span> &gt;&gt; /etc/fstab</span><br><span class="line">mount -a</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th | grep rbd</span><br><span class="line">/dev/rbd0               ext4      9.8G   37M  9.2G   1% /ceph_volume01</span><br></pre></td></tr></table></figure>
+<span class="token comment">#设置存储池为块存储池RBD类型</span>
+ ceph osd pool application <span class="token builtin class-name">enable</span> pool_01 rbd
+ 
+<span class="token comment">#查看状态</span>
+rados lspools
+ceph <span class="token function">df</span>                          <span class="token comment">#可以看到ID和可用空间</span>
+ceph <span class="token parameter variable">-s</span>
+ceph osd pool get pool_01 size      <span class="token comment">#默认三副本</span>
+ceph osd pool <span class="token builtin class-name">set</span> pool_01 size <span class="token number">2</span>    <span class="token comment">#修改副本数</span>
+ceph osd pool <span class="token builtin class-name">set</span> pool_01 pgp_num <span class="token number">64</span> <span class="token comment">#修改pgp数量</span>
+
+<span class="token comment">#开启允许删除存储池</span>
+ceph tell mon.<span class="token punctuation">\</span>* injectargs <span class="token string">'--mon-allow-pool-delete=true'</span>
+<span class="token comment">#关闭允许删除存储池</span>
+ceph tell mon.<span class="token punctuation">\</span>* injectargs <span class="token string">'--mon-allow-pool-delete=false'</span>
+<span class="token comment">#删除存储池</span>
+ceph osd pool delete pool_01 pool_01 --yes-i-really-really-mean-it
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="RBD管理与映射"><a href="#RBD管理与映射" class="headerlink" title="RBD管理与映射"></a>RBD管理与映射</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#创建卷</span>
+rbd create pool_01/disk1 <span class="token parameter variable">--size</span> 10G
+rbd <span class="token function">ls</span> <span class="token parameter variable">-p</span> pool_01
+rbd info pool_01/disk1
+rbd image <span class="token string">'disk1'</span><span class="token builtin class-name">:</span>
+        size <span class="token number">10</span> GiB <span class="token keyword">in</span> <span class="token number">2560</span> objects    <span class="token comment">#颗粒度信息：分割为2560个对象</span>
+        order <span class="token number">22</span> <span class="token punctuation">(</span><span class="token number">4</span> MiB objects<span class="token punctuation">)</span>       <span class="token comment">#4M作为一个对象</span>
+        snapshot_count: <span class="token number">0</span>
+        id: 38e4a2960771
+        block_name_prefix: rbd_data.38e4a2960771
+        format: <span class="token number">2</span>
+        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten
+        op_features: 
+        flags: 
+        create_timestamp: Mon Mar <span class="token number">18</span> <span class="token number">10</span>:11:24 <span class="token number">2024</span>
+        access_timestamp: Mon Mar <span class="token number">18</span> <span class="token number">10</span>:11:24 <span class="token number">2024</span>
+        modify_timestamp: Mon Mar <span class="token number">18</span> <span class="token number">10</span>:11:24 <span class="token number">2024</span>
+<span class="token punctuation">[</span>
+细颗粒度可以储存更多信息，但查询速度会变慢
+
+<span class="token comment">#order22代表一个object是2^22的大小，就是4M</span>
+
+<span class="token comment">#创建另一个卷，指定order为21，此时一个object就是2M</span>
+rbd create <span class="token parameter variable">--size</span> 1G <span class="token parameter variable">--order</span> <span class="token number">21</span> pool_01/disk2
+<span class="token comment">#也可以不用指定order，直接指定，--order要被废弃了</span>
+rbd create <span class="token parameter variable">--size</span> 1G --object-size 1M pool_01/disk3
+
+rbd info pool_01/disk2
+rbd image <span class="token string">'disk2'</span><span class="token builtin class-name">:</span>
+        size <span class="token number">1</span> GiB <span class="token keyword">in</span> <span class="token number">512</span> objects
+        order <span class="token number">21</span> <span class="token punctuation">(</span><span class="token number">2</span> MiB objects<span class="token punctuation">)</span>
+        snapshot_count: <span class="token number">0</span>
+        id: 116d7fac892a
+        block_name_prefix: rbd_data.116d7fac892a
+        format: <span class="token number">2</span>
+        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten
+        op_features: 
+        flags: 
+        create_timestamp: Mon Mar <span class="token number">18</span> <span class="token number">10</span>:15:29 <span class="token number">2024</span>
+        access_timestamp: Mon Mar <span class="token number">18</span> <span class="token number">10</span>:15:29 <span class="token number">2024</span>
+        modify_timestamp: Mon Mar <span class="token number">18</span> <span class="token number">10</span>:15:29 <span class="token number">2024</span>
+
+<span class="token comment">#删除卷</span>
+rbd <span class="token function">rm</span> pool_01/disk1
+rbd <span class="token function">rm</span> pool_01/disk2
+rbd <span class="token function">rm</span> pool_01/disk3<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="卷映射"><a href="#卷映射" class="headerlink" title="卷映射"></a>卷映射</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">lsblk
+NAME                                                                                                  MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                                                                                                     <span class="token number">8</span>:0    <span class="token number">0</span>   50G  <span class="token number">0</span> disk 
+├─sda1                                                                                                  <span class="token number">8</span>:1    <span class="token number">0</span>    1G  <span class="token number">0</span> part /boot
+└─sda2                                                                                                  <span class="token number">8</span>:2    <span class="token number">0</span>   49G  <span class="token number">0</span> part 
+  ├─centos-root                                                                                       <span class="token number">253</span>:0    <span class="token number">0</span> <span class="token number">45</span>.1G  <span class="token number">0</span> lvm  /
+  └─centos-swap                                                                                       <span class="token number">253</span>:1    <span class="token number">0</span>  <span class="token number">3</span>.9G  <span class="token number">0</span> lvm  <span class="token punctuation">[</span>SWAP<span class="token punctuation">]</span>
+sdb                                                                                                     <span class="token number">8</span>:16   <span class="token number">0</span>  100G  <span class="token number">0</span> disk 
+└─ceph--a4c0f4de--3e33--4b4a--baad--d963051938dd-osd--block--d9c62f90--ad93--41ee--b53f--3695198c9935 <span class="token number">253</span>:2    <span class="token number">0</span>  100G  <span class="token number">0</span> lvm  
+sdc                                                                                                     <span class="token number">8</span>:32   <span class="token number">0</span>  100G  <span class="token number">0</span> disk 
+└─ceph--bcb89fc2--215e--41aa--b3d3--81c346933e63-osd--block--e989ef38--aef1--41c4--b427--f171cef6b88c <span class="token number">253</span>:3    <span class="token number">0</span>  100G  <span class="token number">0</span> lvm  
+sdd                                                                                                     <span class="token number">8</span>:48   <span class="token number">0</span>  100G  <span class="token number">0</span> disk 
+└─ceph--2cf83101--f989--4a4b--bf13--257f399a9b24-osd--block--ce7869ba--31bf--4e39--8898--0b4fb32d5131 <span class="token number">253</span>:4    <span class="token number">0</span>  100G  <span class="token number">0</span> lvm  
+sr0                                                                                                    <span class="token number">11</span>:0    <span class="token number">1</span>  <span class="token number">4</span>.5G  <span class="token number">0</span> rom  
+<span class="token comment">#此时sdb sdc sdd被ceph纳管状态，主机无法直接使用</span>
+
+<span class="token comment">#创建卷</span>
+<span class="token comment">#ceph osd pool create pool_01 128 128</span>
+rbd create pool_01/disk1 <span class="token parameter variable">--size</span> 10G
+<span class="token comment">#直接映射会报错</span>
+rbd map pool_01/disk1
+rbd: sysfs <span class="token function">write</span> failed
+RBD image feature <span class="token builtin class-name">set</span> mismatch. You can disable features unsupported by the kernel with <span class="token string">"rbd feature disable pool_01/disk1 object-map fast-diff deep-flatten"</span><span class="token builtin class-name">.</span>
+In some cases useful info is found <span class="token keyword">in</span> syslog - try <span class="token string">"dmesg | tail"</span><span class="token builtin class-name">.</span>
+rbd: map failed: <span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">)</span> No such device or address
+
+<span class="token comment">#忽略rbd特性并映射卷</span>
+rbd feature disable pool_01/disk1 object-map fast-diff deep-flatten
+
+<span class="token comment">#映射给本机</span>
+rbd map pool_01/disk1
+<span class="token comment">#/dev/rbd0 提示映射到了rbd0</span>
+lsblk <span class="token operator">|</span> <span class="token function">grep</span> rbd
+rbd0            <span class="token number">252</span>:0    <span class="token number">0</span>   10G  <span class="token number">0</span> disk
+
+<span class="token comment">#本地格式化与挂载</span>
+mkfs.ext4 /dev/rbd0
+<span class="token function">mkdir</span> /ceph_volume01
+<span class="token comment">#持久化挂载</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"/dev/rbd0 /ceph_volume01 ext4 defaults,_netdev 0 0"</span> <span class="token operator">>></span> /etc/fstab
+<span class="token function">mount</span> <span class="token parameter variable">-a</span>
+
+<span class="token function">df</span> <span class="token parameter variable">-Th</span> <span class="token operator">|</span> <span class="token function">grep</span> rbd
+/dev/rbd0               ext4      <span class="token number">9</span>.8G   37M  <span class="token number">9</span>.2G   <span class="token number">1</span>% /ceph_volume01<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h1 id="ceph-cephfs管理"><a href="#ceph-cephfs管理" class="headerlink" title="ceph-cephfs管理"></a>ceph-cephfs管理</h1><p>注意点：（为什么k8s需要使用cephfs而不是rbd的方式进行挂载？<br>rbd块存储一般用于存储的池化部署，用以给OpenStack、pve等云平台提供后端的存储<br>但rbd无法同时挂载到多个节点（不支持同时写入），所以在ceph对接k8s时需要通过cephfs进行对接</p>
 <p>一个cephfs至少要求<strong>两个librados存储池，一个为data，一个为metadata</strong>。当配置这两个存储池时，注意：</p>
@@ -556,13 +796,149 @@
 <li>为metadata pool设置较高级别的副本级别，因为metadata的损坏可能导致整个文件系统不用</li>
 <li>建议，metadata pool使用低延时存储，比如SSD，因为metadata会直接影响客户端的响应速度。</li>
 </ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建ceph文件系统</span></span><br><span class="line">1.创建MDS元数据服务管理，MDS是ceph-fs的关键服务组件，用来存放元数据服务</span><br><span class="line">ceph-deploy mds create ceph-node1 ceph-node2 ceph-node3</span><br><span class="line"></span><br><span class="line">2.创建第一个存储池cephfs-data</span><br><span class="line">ceph osd pool create cephfs_data 128</span><br><span class="line"><span class="comment">#pool &#x27;cephfs_data&#x27; created</span></span><br><span class="line"></span><br><span class="line">3.创建metadata存储池</span><br><span class="line">ceph osd pool create cephfs_metadata 128</span><br><span class="line"><span class="comment">#关于创建存储池</span></span><br><span class="line"><span class="comment">#确定 pg_num 取值是强制性的，因为不能自动计算。下面是几个常用的值：</span></span><br><span class="line"><span class="comment">#*少于 5 个 OSD 时可把 pg_num 设置为 128</span></span><br><span class="line"><span class="comment">#*OSD 数量在 5 到 10 个时，可把 pg_num 设置为 512</span></span><br><span class="line"><span class="comment">#*OSD 数量在 10 到 50 个时，可把 pg_num 设置为 4096</span></span><br><span class="line"><span class="comment">#*OSD 数量大于 50 时，你得理解权衡方法、以及如何自己计算 pg_num 取值</span></span><br><span class="line"></span><br><span class="line">4.基于创建的两个存储池来创建文件系统</span><br><span class="line">ceph fs new ws-ceph-fs cephfs_metadata cephfs_data</span><br><span class="line"></span><br><span class="line"><span class="comment">#查看fs状态</span></span><br><span class="line">ceph fs <span class="built_in">ls</span></span><br><span class="line"></span><br><span class="line">name: ws-ceph-fs, metadata pool: cephfs_metadata, data pools: [cephfs_data]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#创建ceph文件系统</span>
+<span class="token number">1</span>.创建MDS元数据服务管理，MDS是ceph-fs的关键服务组件，用来存放元数据服务
+ceph-deploy mds create ceph-node1 ceph-node2 ceph-node3
 
-<h1 id="ceph管理命令汇总与配置文件说明"><a href="#ceph管理命令汇总与配置文件说明" class="headerlink" title="ceph管理命令汇总与配置文件说明"></a>ceph管理命令汇总与配置文件说明</h1><h2 id="配置文件ceph-conf"><a href="#配置文件ceph-conf" class="headerlink" title="配置文件ceph.conf"></a>配置文件ceph.conf</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ceph.conf</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 时钟漂移阈值：</span></span><br><span class="line">		mon clock drift allowed = 0.500</span><br><span class="line">		mon clock drift warn backoff = 10</span><br><span class="line"><span class="comment"># 全局配置</span></span><br><span class="line">[global]</span><br><span class="line">    fsid = YOUR_CLUSTER_FSID  <span class="comment"># 集群的唯一标识符</span></span><br><span class="line">    mon_initial_members = MON_NODE1, MON_NODE2, MON_NODE3  <span class="comment"># 初始监视器节点的主机名或IP地址</span></span><br><span class="line">    mon_host = MON_NODE1, MON_NODE2, MON_NODE3  <span class="comment"># 监视器节点的主机名或IP地址</span></span><br><span class="line">    auth_cluster_required = cephx  <span class="comment"># 集群级别的认证需求</span></span><br><span class="line">    auth_service_required = cephx  <span class="comment"># 服务级别的认证需求</span></span><br><span class="line">    auth_client_required = cephx  <span class="comment"># 客户端级别的认证需求</span></span><br><span class="line">    osd_journal_size = 1024  <span class="comment"># OSD的日志大小（MB）</span></span><br><span class="line">    filestore_xattr_use_omap = <span class="literal">true</span>  <span class="comment"># 启用基于OMAP的扩展属性存储</span></span><br><span class="line">    osd_pool_default_size = 3  <span class="comment"># 默认的副本数，**可以通过修改这个使两备份的集群生效**</span></span><br><span class="line">    osd_pool_default_min_size = 2  <span class="comment"># 默认的最小副本数</span></span><br><span class="line">    osd_pool_default_pg_num = 128  <span class="comment"># 默认的PG数量</span></span><br><span class="line">    osd_pool_default_pgp_num = 128  <span class="comment"># 默认的PGP数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># OSD配置</span></span><br><span class="line">[osd]</span><br><span class="line">    osd_journal_size = 1024  <span class="comment"># OSD的日志大小（MB）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 池配置</span></span><br><span class="line">[pool]</span><br><span class="line">    pg_num_min = 8  <span class="comment"># 每个池的最小PG数量</span></span><br><span class="line">    pg_num_max = 4096  <span class="comment"># 每个池的最大PG数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 监视器配置</span></span><br><span class="line">[mon]</span><br><span class="line">    mon_osd_full_ratio = 0.95  <span class="comment"># 当OSD使用率达到该阈值时，触发警告</span></span><br><span class="line">    mon_osd_nearfull_ratio = 0.85  <span class="comment"># 当OSD使用率达到该阈值时，触发警告</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 客户端配置</span></span><br><span class="line">[client]</span><br><span class="line">    rbd_cache = <span class="literal">true</span>  <span class="comment"># 启用客户端的RBD缓存</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 日志配置</span></span><br><span class="line">[<span class="built_in">log</span>]</span><br><span class="line">    file = /var/log/ceph/ceph.log  <span class="comment"># 日志文件路径</span></span><br><span class="line">    max_new = 10000  <span class="comment"># 每个日志文件的最大大小（KB）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调试配置</span></span><br><span class="line">[debug]</span><br><span class="line">    debug_default = 0  <span class="comment"># 默认调试级别</span></span><br><span class="line">    debug_mon = 20  <span class="comment"># 监视器模块的调试级别</span></span><br><span class="line">    debug_osd = 20  <span class="comment"># OSD模块的调试级别</span></span><br></pre></td></tr></table></figure>
+<span class="token number">2</span>.创建第一个存储池cephfs-data
+ceph osd pool create cephfs_data <span class="token number">128</span>
+<span class="token comment">#pool 'cephfs_data' created</span>
 
-<h2 id="管理命令汇总"><a href="#管理命令汇总" class="headerlink" title="管理命令汇总"></a>管理命令汇总</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群操作</span></span><br><span class="line">ceph -s                          <span class="comment"># 显示集群的状态摘要</span></span><br><span class="line">ceph health                      <span class="comment"># 显示集群的健康状态</span></span><br><span class="line">ceph quorum_status               <span class="comment"># 显示当前的投票状态和选举的监视器节点</span></span><br><span class="line">ceph osd <span class="built_in">stat</span>                    <span class="comment"># 显示 OSD 的状态和统计信息</span></span><br><span class="line">ceph <span class="built_in">df</span>                          <span class="comment"># 显示集群的存储容量和使用情况</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 存储池操作</span></span><br><span class="line">ceph osd pool create &lt;pool_name&gt; &lt;pg_num&gt; &lt;pgp_num&gt; &lt;pool_type&gt;  <span class="comment"># 创建存储池</span></span><br><span class="line">ceph osd pool delete &lt;pool_name&gt; &lt;pool_name&gt; --yes-i-really-really-mean-it  <span class="comment"># 删除存储池</span></span><br><span class="line">ceph osd pool get &lt;pool_name&gt; &lt;key&gt;                           <span class="comment"># 获取存储池的属性</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> &lt;pool_name&gt; &lt;key&gt; &lt;value&gt;                   <span class="comment"># 设置存储池的属性</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> &lt;pool_name&gt; &lt;app_name&gt;        <span class="comment"># 启用存储池的应用程序</span></span><br><span class="line">ceph osd pool application <span class="built_in">disable</span> &lt;pool_name&gt; &lt;app_name&gt;       <span class="comment"># 禁用存储池的应用程序</span></span><br><span class="line">ceph osd pool <span class="built_in">ls</span>                                                <span class="comment"># 列出所有存储池</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># OSD 操作</span></span><br><span class="line">ceph osd tree                    <span class="comment"># 显示 OSD 树</span></span><br><span class="line">ceph osd lspools                 <span class="comment"># 列出所有 OSD 池</span></span><br><span class="line">ceph osd crush show-tunables     <span class="comment"># 显示 CRUSH 映射的可调节参数</span></span><br><span class="line">ceph osd <span class="built_in">set</span> &lt;osd_id&gt; &lt;key&gt; &lt;value&gt;                           <span class="comment"># 设置 OSD 的属性</span></span><br><span class="line">ceph osd set-require-min-compat-client &lt;release_name&gt;         <span class="comment"># 设置所需的最低客户端兼容性版本</span></span><br><span class="line">ceph osd out &lt;osd_id&gt;                                          <span class="comment"># 使 OSD 离线</span></span><br><span class="line">ceph osd <span class="keyword">in</span> &lt;osd_id&gt;                                           <span class="comment"># 使 OSD 上线</span></span><br><span class="line">ceph osd crush reweight &lt;osd_id&gt; &lt;weight&gt;                      <span class="comment"># 设置 OSD 的权重</span></span><br><span class="line">ceph osd find &lt;osd_id&gt;                                          <span class="comment"># 查找 OSD 的位置</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># MON 操作</span></span><br><span class="line">ceph mon_status                 <span class="comment"># 显示监视器的状态信息</span></span><br><span class="line">ceph mon <span class="built_in">stat</span>                   <span class="comment"># 显示监视器的统计信息</span></span><br><span class="line">ceph mon dump                   <span class="comment"># 显示监视器的配置信息</span></span><br><span class="line">ceph mon getmap -o &lt;file_name&gt;  <span class="comment"># 导出监视器映射到文件</span></span><br><span class="line">ceph mon add &lt;mon_name&gt; &lt;mon_ip&gt;  <span class="comment"># 添加新的监视器</span></span><br><span class="line">ceph mon remove &lt;mon_name&gt;       <span class="comment"># 移除现有的监视器</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># MDS 操作</span></span><br><span class="line">ceph mds <span class="built_in">stat</span>                   <span class="comment"># 显示 MDS 的状态信息</span></span><br><span class="line">ceph mds dump                   <span class="comment"># 显示 MDS 的配置信息</span></span><br><span class="line">ceph fs <span class="built_in">ls</span>                      <span class="comment"># 列出所有文件系统</span></span><br><span class="line">ceph fs status                  <span class="comment"># 显示文件系统的状态</span></span><br><span class="line">ceph fs <span class="built_in">set</span> &lt;fs_name&gt; &lt;key&gt; &lt;value&gt;  <span class="comment"># 设置文件系统的属性</span></span><br><span class="line">ceph fs set_max_mds &lt;max_mds&gt;   <span class="comment"># 设置文件系统的最大 MDS 数量</span></span><br><span class="line">ceph fs add_data_pool &lt;fs_name&gt; &lt;pool_name&gt;  <span class="comment"># 添加数据池到文件系统</span></span><br><span class="line">ceph fs rm_data_pool &lt;fs_name&gt; &lt;pool_name&gt;   <span class="comment"># 从文件系统中删除数据池</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># RADOS 操作</span></span><br><span class="line">rados <span class="built_in">df</span>                        <span class="comment"># 显示 RADOS 存储集群的容量和使用情况</span></span><br><span class="line">rados lspools                   <span class="comment"># 列出所有 RADOS 池</span></span><br><span class="line">rados <span class="built_in">ls</span> &lt;pool_name&gt;            <span class="comment"># 列出指定 RADOS 池中的对象</span></span><br><span class="line">rados <span class="built_in">stat</span> &lt;pool_name&gt; &lt;object_name&gt;  <span class="comment"># 显示指定对象的信息</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># RBD 操作</span></span><br><span class="line">rbd create &lt;image_name&gt; --size &lt;size&gt; --pool &lt;pool_name&gt;  <span class="comment"># 创建 RBD 镜像</span></span><br><span class="line">rbd <span class="built_in">ls</span> &lt;pool_name&gt;              <span class="comment"># 列出指定池中的 RBD 镜像</span></span><br><span class="line">rbd info &lt;image_name&gt;           <span class="comment"># 显示 RBD 镜像的信息</span></span><br><span class="line">rbd resize &lt;image_name&gt; --很抱歉，由于文本格式的限制，无法在单个回答中提供所有的命令。请按照以下链接访问完整的 Ceph 管理命令合集：</span><br><span class="line"></span><br><span class="line">[Ceph 管理命令合集](https://docs.ceph.com/docs/master/rados/operations/administration/)</span><br></pre></td></tr></table></figure>
+<span class="token number">3</span>.创建metadata存储池
+ceph osd pool create cephfs_metadata <span class="token number">128</span>
+<span class="token comment">#关于创建存储池</span>
+<span class="token comment">#确定 pg_num 取值是强制性的，因为不能自动计算。下面是几个常用的值：</span>
+<span class="token comment">#*少于 5 个 OSD 时可把 pg_num 设置为 128</span>
+<span class="token comment">#*OSD 数量在 5 到 10 个时，可把 pg_num 设置为 512</span>
+<span class="token comment">#*OSD 数量在 10 到 50 个时，可把 pg_num 设置为 4096</span>
+<span class="token comment">#*OSD 数量大于 50 时，你得理解权衡方法、以及如何自己计算 pg_num 取值</span>
 
-<h1 id="pve-debian-安装ceph"><a href="#pve-debian-安装ceph" class="headerlink" title="pve(debian)安装ceph"></a>pve(debian)安装ceph</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#每个节点</span></span><br><span class="line"><span class="comment">#安装ceph，以无订阅软件源进行安装</span></span><br><span class="line">pveceph install --repository no-subscription</span><br><span class="line"></span><br><span class="line"><span class="comment">#初始化集群存储网络</span></span><br><span class="line">pveceph init --network 192.168.10.0/24</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建mon</span></span><br><span class="line">pveceph createmon</span><br></pre></td></tr></table></figure>
+<span class="token number">4</span>.基于创建的两个存储池来创建文件系统
+ceph fs new ws-ceph-fs cephfs_metadata cephfs_data
+
+<span class="token comment">#查看fs状态</span>
+ceph fs <span class="token function">ls</span>
+
+name: ws-ceph-fs, metadata pool: cephfs_metadata, data pools: <span class="token punctuation">[</span>cephfs_data<span class="token punctuation">]</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="ceph管理命令汇总与配置文件说明"><a href="#ceph管理命令汇总与配置文件说明" class="headerlink" title="ceph管理命令汇总与配置文件说明"></a>ceph管理命令汇总与配置文件说明</h1><h2 id="配置文件ceph-conf"><a href="#配置文件ceph-conf" class="headerlink" title="配置文件ceph.conf"></a>配置文件ceph.conf</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ceph.conf</span>
+
+<span class="token comment"># 时钟漂移阈值：</span>
+		mon clock drift allowed <span class="token operator">=</span> <span class="token number">0.500</span>
+		mon clock drift warn backoff <span class="token operator">=</span> <span class="token number">10</span>
+<span class="token comment"># 全局配置</span>
+<span class="token punctuation">[</span>global<span class="token punctuation">]</span>
+    fsid <span class="token operator">=</span> YOUR_CLUSTER_FSID  <span class="token comment"># 集群的唯一标识符</span>
+    mon_initial_members <span class="token operator">=</span> MON_NODE1, MON_NODE2, MON_NODE3  <span class="token comment"># 初始监视器节点的主机名或IP地址</span>
+    mon_host <span class="token operator">=</span> MON_NODE1, MON_NODE2, MON_NODE3  <span class="token comment"># 监视器节点的主机名或IP地址</span>
+    auth_cluster_required <span class="token operator">=</span> cephx  <span class="token comment"># 集群级别的认证需求</span>
+    auth_service_required <span class="token operator">=</span> cephx  <span class="token comment"># 服务级别的认证需求</span>
+    auth_client_required <span class="token operator">=</span> cephx  <span class="token comment"># 客户端级别的认证需求</span>
+    osd_journal_size <span class="token operator">=</span> <span class="token number">1024</span>  <span class="token comment"># OSD的日志大小（MB）</span>
+    filestore_xattr_use_omap <span class="token operator">=</span> <span class="token boolean">true</span>  <span class="token comment"># 启用基于OMAP的扩展属性存储</span>
+    osd_pool_default_size <span class="token operator">=</span> <span class="token number">3</span>  <span class="token comment"># 默认的副本数，**可以通过修改这个使两备份的集群生效**</span>
+    osd_pool_default_min_size <span class="token operator">=</span> <span class="token number">2</span>  <span class="token comment"># 默认的最小副本数</span>
+    osd_pool_default_pg_num <span class="token operator">=</span> <span class="token number">128</span>  <span class="token comment"># 默认的PG数量</span>
+    osd_pool_default_pgp_num <span class="token operator">=</span> <span class="token number">128</span>  <span class="token comment"># 默认的PGP数量</span>
+
+<span class="token comment"># OSD配置</span>
+<span class="token punctuation">[</span>osd<span class="token punctuation">]</span>
+    osd_journal_size <span class="token operator">=</span> <span class="token number">1024</span>  <span class="token comment"># OSD的日志大小（MB）</span>
+
+<span class="token comment"># 池配置</span>
+<span class="token punctuation">[</span>pool<span class="token punctuation">]</span>
+    pg_num_min <span class="token operator">=</span> <span class="token number">8</span>  <span class="token comment"># 每个池的最小PG数量</span>
+    pg_num_max <span class="token operator">=</span> <span class="token number">4096</span>  <span class="token comment"># 每个池的最大PG数量</span>
+
+<span class="token comment"># 监视器配置</span>
+<span class="token punctuation">[</span>mon<span class="token punctuation">]</span>
+    mon_osd_full_ratio <span class="token operator">=</span> <span class="token number">0.95</span>  <span class="token comment"># 当OSD使用率达到该阈值时，触发警告</span>
+    mon_osd_nearfull_ratio <span class="token operator">=</span> <span class="token number">0.85</span>  <span class="token comment"># 当OSD使用率达到该阈值时，触发警告</span>
+
+<span class="token comment"># 客户端配置</span>
+<span class="token punctuation">[</span>client<span class="token punctuation">]</span>
+    rbd_cache <span class="token operator">=</span> <span class="token boolean">true</span>  <span class="token comment"># 启用客户端的RBD缓存</span>
+
+<span class="token comment"># 日志配置</span>
+<span class="token punctuation">[</span>log<span class="token punctuation">]</span>
+    <span class="token function">file</span> <span class="token operator">=</span> /var/log/ceph/ceph.log  <span class="token comment"># 日志文件路径</span>
+    max_new <span class="token operator">=</span> <span class="token number">10000</span>  <span class="token comment"># 每个日志文件的最大大小（KB）</span>
+
+<span class="token comment"># 调试配置</span>
+<span class="token punctuation">[</span>debug<span class="token punctuation">]</span>
+    debug_default <span class="token operator">=</span> <span class="token number">0</span>  <span class="token comment"># 默认调试级别</span>
+    debug_mon <span class="token operator">=</span> <span class="token number">20</span>  <span class="token comment"># 监视器模块的调试级别</span>
+    debug_osd <span class="token operator">=</span> <span class="token number">20</span>  <span class="token comment"># OSD模块的调试级别</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="管理命令汇总"><a href="#管理命令汇总" class="headerlink" title="管理命令汇总"></a>管理命令汇总</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 集群操作</span>
+ceph <span class="token parameter variable">-s</span>                          <span class="token comment"># 显示集群的状态摘要</span>
+ceph health                      <span class="token comment"># 显示集群的健康状态</span>
+ceph quorum_status               <span class="token comment"># 显示当前的投票状态和选举的监视器节点</span>
+ceph osd <span class="token function">stat</span>                    <span class="token comment"># 显示 OSD 的状态和统计信息</span>
+ceph <span class="token function">df</span>                          <span class="token comment"># 显示集群的存储容量和使用情况</span>
+
+<span class="token comment"># 存储池操作</span>
+ceph osd pool create <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>pg_num<span class="token operator">></span> <span class="token operator">&lt;</span>pgp_num<span class="token operator">></span> <span class="token operator">&lt;</span>pool_type<span class="token operator">></span>  <span class="token comment"># 创建存储池</span>
+ceph osd pool delete <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> --yes-i-really-really-mean-it  <span class="token comment"># 删除存储池</span>
+ceph osd pool get <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>key<span class="token operator">></span>                           <span class="token comment"># 获取存储池的属性</span>
+ceph osd pool <span class="token builtin class-name">set</span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>key<span class="token operator">></span> <span class="token operator">&lt;</span>value<span class="token operator">></span>                   <span class="token comment"># 设置存储池的属性</span>
+ceph osd pool application <span class="token builtin class-name">enable</span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>app_name<span class="token operator">></span>        <span class="token comment"># 启用存储池的应用程序</span>
+ceph osd pool application disable <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>app_name<span class="token operator">></span>       <span class="token comment"># 禁用存储池的应用程序</span>
+ceph osd pool <span class="token function">ls</span>                                                <span class="token comment"># 列出所有存储池</span>
+
+<span class="token comment"># OSD 操作</span>
+ceph osd tree                    <span class="token comment"># 显示 OSD 树</span>
+ceph osd lspools                 <span class="token comment"># 列出所有 OSD 池</span>
+ceph osd crush show-tunables     <span class="token comment"># 显示 CRUSH 映射的可调节参数</span>
+ceph osd <span class="token builtin class-name">set</span> <span class="token operator">&lt;</span>osd_id<span class="token operator">></span> <span class="token operator">&lt;</span>key<span class="token operator">></span> <span class="token operator">&lt;</span>value<span class="token operator">></span>                           <span class="token comment"># 设置 OSD 的属性</span>
+ceph osd set-require-min-compat-client <span class="token operator">&lt;</span>release_name<span class="token operator">></span>         <span class="token comment"># 设置所需的最低客户端兼容性版本</span>
+ceph osd out <span class="token operator">&lt;</span>osd_id<span class="token operator">></span>                                          <span class="token comment"># 使 OSD 离线</span>
+ceph osd <span class="token keyword">in</span> <span class="token operator">&lt;</span>osd_id<span class="token operator">></span>                                           <span class="token comment"># 使 OSD 上线</span>
+ceph osd crush reweight <span class="token operator">&lt;</span>osd_id<span class="token operator">></span> <span class="token operator">&lt;</span>weight<span class="token operator">></span>                      <span class="token comment"># 设置 OSD 的权重</span>
+ceph osd <span class="token function">find</span> <span class="token operator">&lt;</span>osd_id<span class="token operator">></span>                                          <span class="token comment"># 查找 OSD 的位置</span>
+
+<span class="token comment"># MON 操作</span>
+ceph mon_status                 <span class="token comment"># 显示监视器的状态信息</span>
+ceph mon <span class="token function">stat</span>                   <span class="token comment"># 显示监视器的统计信息</span>
+ceph mon dump                   <span class="token comment"># 显示监视器的配置信息</span>
+ceph mon getmap <span class="token parameter variable">-o</span> <span class="token operator">&lt;</span>file_name<span class="token operator">></span>  <span class="token comment"># 导出监视器映射到文件</span>
+ceph mon <span class="token function">add</span> <span class="token operator">&lt;</span>mon_name<span class="token operator">></span> <span class="token operator">&lt;</span>mon_ip<span class="token operator">></span>  <span class="token comment"># 添加新的监视器</span>
+ceph mon remove <span class="token operator">&lt;</span>mon_name<span class="token operator">></span>       <span class="token comment"># 移除现有的监视器</span>
+
+<span class="token comment"># MDS 操作</span>
+ceph mds <span class="token function">stat</span>                   <span class="token comment"># 显示 MDS 的状态信息</span>
+ceph mds dump                   <span class="token comment"># 显示 MDS 的配置信息</span>
+ceph fs <span class="token function">ls</span>                      <span class="token comment"># 列出所有文件系统</span>
+ceph fs status                  <span class="token comment"># 显示文件系统的状态</span>
+ceph fs <span class="token builtin class-name">set</span> <span class="token operator">&lt;</span>fs_name<span class="token operator">></span> <span class="token operator">&lt;</span>key<span class="token operator">></span> <span class="token operator">&lt;</span>value<span class="token operator">></span>  <span class="token comment"># 设置文件系统的属性</span>
+ceph fs set_max_mds <span class="token operator">&lt;</span>max_mds<span class="token operator">></span>   <span class="token comment"># 设置文件系统的最大 MDS 数量</span>
+ceph fs add_data_pool <span class="token operator">&lt;</span>fs_name<span class="token operator">></span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span>  <span class="token comment"># 添加数据池到文件系统</span>
+ceph fs rm_data_pool <span class="token operator">&lt;</span>fs_name<span class="token operator">></span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span>   <span class="token comment"># 从文件系统中删除数据池</span>
+
+<span class="token comment"># RADOS 操作</span>
+rados <span class="token function">df</span>                        <span class="token comment"># 显示 RADOS 存储集群的容量和使用情况</span>
+rados lspools                   <span class="token comment"># 列出所有 RADOS 池</span>
+rados <span class="token function">ls</span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span>            <span class="token comment"># 列出指定 RADOS 池中的对象</span>
+rados <span class="token function">stat</span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span> <span class="token operator">&lt;</span>object_name<span class="token operator">></span>  <span class="token comment"># 显示指定对象的信息</span>
+
+<span class="token comment"># RBD 操作</span>
+rbd create <span class="token operator">&lt;</span>image_name<span class="token operator">></span> <span class="token parameter variable">--size</span> <span class="token operator">&lt;</span>size<span class="token operator">></span> <span class="token parameter variable">--pool</span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span>  <span class="token comment"># 创建 RBD 镜像</span>
+rbd <span class="token function">ls</span> <span class="token operator">&lt;</span>pool_name<span class="token operator">></span>              <span class="token comment"># 列出指定池中的 RBD 镜像</span>
+rbd info <span class="token operator">&lt;</span>image_name<span class="token operator">></span>           <span class="token comment"># 显示 RBD 镜像的信息</span>
+rbd resize <span class="token operator">&lt;</span>image_name<span class="token operator">></span> --很抱歉，由于文本格式的限制，无法在单个回答中提供所有的命令。请按照以下链接访问完整的 Ceph 管理命令合集：
+
+<span class="token punctuation">[</span>Ceph 管理命令合集<span class="token punctuation">]</span><span class="token punctuation">(</span>https://docs.ceph.com/docs/master/rados/operations/administration/<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="pve-debian-安装ceph"><a href="#pve-debian-安装ceph" class="headerlink" title="pve(debian)安装ceph"></a>pve(debian)安装ceph</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#每个节点</span>
+<span class="token comment">#安装ceph，以无订阅软件源进行安装</span>
+pveceph <span class="token function">install</span> <span class="token parameter variable">--repository</span> no-subscription
+
+<span class="token comment">#初始化集群存储网络</span>
+pveceph init <span class="token parameter variable">--network</span> <span class="token number">192.168</span>.10.0/24
+
+<span class="token comment">#创建mon</span>
+pveceph createmon<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>此时再打开PVE界面能够看到ceph已激活<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501172427.png"></p>
 
@@ -6624,36 +7000,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7118,13 +7464,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8165,13 +8511,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8624,14 +8970,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8639,14 +8985,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

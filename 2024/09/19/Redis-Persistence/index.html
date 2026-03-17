@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="RDB持久化与AOF持久化RDB持久化（快照持久化）将当前数据保存到磁盘AOF持久化（主流）将每次执行的写命令保存到磁盘，mysql的iblogfile也是类似的原理优点：实时性更好，意外丢失的数据更少缺点：占用cpu，aof文件占用磁盘空间 RDB持久化手动触发：通过save和bgsave进行保存自动触发：通过配置redis.conf的save命令进行触发 1234save 900 1">
+    <meta name="description" content="RDB持久化与AOF持久化RDB持久化（快照持久化）将当前数据保存到磁盘AOF持久化（主流）将每次执行的写命令保存到磁盘，mysql的iblogfile也是类似的原理优点：实时性更好，意外丢失的数据更少缺点：占用cpu，aof文件占用磁盘空间 RDB持久化手动触发：通过save和bgsave进行保存自动触发：通过配置redis.conf的save命令进行触发 save 900 1">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Redis持久化">
 <meta property="og:url" content="https://akemi.zj.cn/2024/09/19/Redis-Persistence/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="RDB持久化与AOF持久化RDB持久化（快照持久化）将当前数据保存到磁盘AOF持久化（主流）将每次执行的写命令保存到磁盘，mysql的iblogfile也是类似的原理优点：实时性更好，意外丢失的数据更少缺点：占用cpu，aof文件占用磁盘空间 RDB持久化手动触发：通过save和bgsave进行保存自动触发：通过配置redis.conf的save命令进行触发 1234save 900 1">
+<meta property="og:description" content="RDB持久化与AOF持久化RDB持久化（快照持久化）将当前数据保存到磁盘AOF持久化（主流）将每次执行的写命令保存到磁盘，mysql的iblogfile也是类似的原理优点：实时性更好，意外丢失的数据更少缺点：占用cpu，aof文件占用磁盘空间 RDB持久化手动触发：通过save和bgsave进行保存自动触发：通过配置redis.conf的save命令进行触发 save 900 1">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/f98fcbc7776428befce85ebbacd47f9e.png">
 <meta property="article:published_time" content="2024-09-19T14:07:55.000Z">
@@ -494,7 +494,10 @@
     <article class="article-entry">
         <h2 id="RDB持久化与AOF持久化"><a href="#RDB持久化与AOF持久化" class="headerlink" title="RDB持久化与AOF持久化"></a>RDB持久化与AOF持久化</h2><p>RDB持久化（快照持久化）<br>将当前数据保存到磁盘<br>AOF持久化（主流）<br>将每次执行的写命令保存到磁盘，mysql的iblogfile也是类似的原理<br>优点：实时性更好，意外丢失的数据更少<br>缺点：占用cpu，aof文件占用磁盘空间</p>
 <h3 id="RDB持久化"><a href="#RDB持久化" class="headerlink" title="RDB持久化"></a>RDB持久化</h3><p>手动触发：通过save和bgsave进行保存<br>自动触发：通过配置redis.conf的save命令进行触发</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">save 900 1         # 900 秒内如果至少有 1 个 key 的值变化，则保存</span><br><span class="line">save 300 10        # 300 秒内如果至少有 10 个 key 的值变化，则保存</span><br><span class="line">save 60 10000      # 60 秒内如果至少有 10000 个 key 的值变化，则保存</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-none"><code class="language-none">save 900 1         # 900 秒内如果至少有 1 个 key 的值变化，则保存
+save 300 10        # 300 秒内如果至少有 10 个 key 的值变化，则保存
+save 60 10000      # 60 秒内如果至少有 10000 个 key 的值变化，则保存
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>RDB文件</strong><br>RDB文件是经过LZF压缩的二进制文件<br>其存储路径和文件名都在redis.conf<br>默认为redis目录下的dump.rdb<br>RDB文件的压缩是针对字符串进行的，字符串达到20字节才会进行<br>RDB文件在服务器启动时会自动加载，但优先级低于AOF，会优先加载AOF<br>载入RDB文件时处于阻塞状态<br>载入RDB文件时，会对RDB进行校验，如果文件损坏，就会报错启动失败<br><strong>RDB持久化配置</strong><code>stop-writes-on-bgsave-error yes</code><br>当bgsave出现错误时，停止写入，避免数据大量丢失；如果已经对主机做了监控，可以设置为no<br><code>rdbcompression yes</code>是否开启RDB文件压缩，建议开启<br><code>rdbchecksum yes</code>是否开启校验，会降低性能，建议开启<br><code>dir dbfilename</code> 文件存放目录与文件名</p>
 <h3 id="AOF持久化"><a href="#AOF持久化" class="headerlink" title="AOF持久化"></a>AOF持久化</h3><p>默认开启RDB持久化，关闭AOF<br><code>appendonly yes</code>开启AOF持久化</p>
@@ -507,7 +510,14 @@
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/f98fcbc7776428befce85ebbacd47f9e.png"></p>
 <p>3.2AOF重写缓冲区，重写时间写入的命令，会写入重写缓存区<br>5.2将重写缓冲区数据写入新AOF文件</p>
 <h3 id="AOF校验机制"><a href="#AOF校验机制" class="headerlink" title="AOF校验机制"></a><strong>AOF校验机制</strong></h3><p>当AOF开启时会优先载入AOF文件，并对AOF文件进行校验<br>1.如果AOF文件损坏，则会打印错误，启动失败<br>2.如果AOF文件尾部不完整，打印错误<br>参数aof-load-truncated 开启后(默认开启)，如果不完整，会输出警告但启动成功</p>
-<h3 id="AOF配置总结"><a href="#AOF配置总结" class="headerlink" title="AOF配置总结"></a><strong>AOF配置总结</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">appendonly no 是否开启AOF</span><br><span class="line">appendfilename AOF文件名</span><br><span class="line">dir 文件目录</span><br><span class="line">appendfsync everysec fsync的持久化策略</span><br><span class="line">no-appendfsync-on-rewrite no AOF重写期间是否禁止fsync；如果开启该选项，可以减轻文件重写时CPU和硬盘的负载（尤其是硬盘），但是可能会丢失AOF重写期间的数据；需要在负载和安全性之间进行平衡</span><br><span class="line">auto-aof-rewrite-percentage 100 文件重写触发条件</span><br><span class="line">auto-aof-rewrite-min-size 64mb  文件重写触发条件</span><br><span class="line">aof-load-truncated yes          如果AOF文件结尾损坏，Redis启动时是否仍载入AOF文件</span><br></pre></td></tr></table></figure>
+<h3 id="AOF配置总结"><a href="#AOF配置总结" class="headerlink" title="AOF配置总结"></a><strong>AOF配置总结</strong></h3><pre class="line-numbers language-none"><code class="language-none">appendonly no 是否开启AOF
+appendfilename AOF文件名
+dir 文件目录
+appendfsync everysec fsync的持久化策略
+no-appendfsync-on-rewrite no AOF重写期间是否禁止fsync；如果开启该选项，可以减轻文件重写时CPU和硬盘的负载（尤其是硬盘），但是可能会丢失AOF重写期间的数据；需要在负载和安全性之间进行平衡
+auto-aof-rewrite-percentage 100 文件重写触发条件
+auto-aof-rewrite-min-size 64mb  文件重写触发条件
+aof-load-truncated yes          如果AOF文件结尾损坏，Redis启动时是否仍载入AOF文件<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="redis持久化方案选择"><a href="#redis持久化方案选择" class="headerlink" title="redis持久化方案选择"></a>redis持久化方案选择</h2><p>1.完全放弃安全性，如redis作为DB数据的cache，那无论是单机还是主从都可以不进行持久化<br>2.单机环境下，可以接受10分钟以上的数据丢失，选择RDB性能更好，如果只能接受秒级丢失，选择AOF<br>3.多数情况下，配置主从环境，从节点可以实现热备，也可以读写分离分担redis请求，以及master宕机后继续提供服务</p>
 <p><strong>综合使用AOF和RDB两种持久化机制</strong><br>用AOF来保证数据不丢失，作为数据恢复的第一选择，用RDB来做不同程度的冷备，在AOF文件都丢失或损坏不可用的时候，还可以使用RDB来进行快速的数据恢复。</p>
@@ -6572,36 +6582,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7066,13 +7046,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8113,13 +8093,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8572,14 +8552,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8587,14 +8567,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

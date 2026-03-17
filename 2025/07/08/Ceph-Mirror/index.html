@@ -499,11 +499,77 @@
 <p>以pool或者image为单位进行mirror</p>
 <p><strong>镜像异步模式</strong></p>
 <p>1.journal-based mirror<br>使用日志镜像特性来保证一致性，根据日志进行恢复<br>2.snapshot-based mirror<br>基于快照的镜像，使用定期调度或手动创建的RBD镜像快照</p>
-<h2 id="管理复制"><a href="#管理复制" class="headerlink" title="管理复制"></a>管理复制</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">1.镜像同步</span><br><span class="line">如果集群状态不一致，rbd-mirror守护进程不会尝试同步不一样的镜像</span><br><span class="line">需要使用命令重新同步镜像</span><br><span class="line">rbd mirror image resync mypool/myimage</span><br><span class="line"></span><br><span class="line">2.开启或关闭镜像mirror特性（整个pool）</span><br><span class="line">rbd mirror image <span class="built_in">enable</span></span><br><span class="line">rbd mirror image <span class="built_in">disable</span></span><br><span class="line"></span><br><span class="line">3.使用基于快照的mirror snapshot-based mirror</span><br><span class="line">rbd mirror image <span class="built_in">disable</span> mypool/myimage</span><br><span class="line">rbd mirror image <span class="built_in">enable</span> mypool/myimage</span><br></pre></td></tr></table></figure>
+<h2 id="管理复制"><a href="#管理复制" class="headerlink" title="管理复制"></a>管理复制</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.镜像同步
+如果集群状态不一致，rbd-mirror守护进程不会尝试同步不一样的镜像
+需要使用命令重新同步镜像
+rbd mirror image resync mypool/myimage
 
-<h2 id="配置复制—单向异步mirror"><a href="#配置复制—单向异步mirror" class="headerlink" title="配置复制—单向异步mirror"></a>配置复制—单向异步mirror</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">为了实现RBDmirror并开启rbd-mirror守护进程来发现邻居集群</span><br><span class="line">必须要有一个注册的peer并创建一个用户账号</span><br><span class="line">rbd mirror pool peer bootstrap create</span><br><span class="line"></span><br><span class="line">配置过程：</span><br><span class="line">1.在A和B两个集群中创建同名的池</span><br><span class="line">2.创建或修改启用了exclusivce-lock和日志记录功能的RBD镜像</span><br><span class="line">3.在池上启用pool-mode/image-mode mirror</span><br><span class="line">4.在A集群中使用bootstrap存储集群注册，并保存bootstrap token</span><br><span class="line">5.部署rbd-mirror</span><br><span class="line">单向复制: 只在备份集群上运行</span><br><span class="line">双向复制：在两个集群上都运行</span><br><span class="line">6.在备份集群中导入bootstrap token</span><br><span class="line">单向复制：使用--direction rx-only参数</span><br><span class="line"></span><br><span class="line">主节点:</span><br><span class="line">ceph osd pool create rbd 32 32</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> rbd rbd</span><br><span class="line">rbd pool init -p rbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启用 exclusive-lock（独占锁）和 journaling（日志）特性</span></span><br><span class="line">rbd create my-image --size 1024 --pool rbd \</span><br><span class="line">--image-featrue=exclusive-lock,journaling</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 &#x27;rbd&#x27; 存储池上启用镜像功能，使用 &#x27;pool&#x27; 模式</span></span><br><span class="line">rbd mirror pool <span class="built_in">enable</span> rbd pool</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成用于从集群引导的 token</span></span><br><span class="line"><span class="comment"># --site-name 指定主站点名称为 &#x27;prod&#x27;</span></span><br><span class="line">rbd mirror pool peer bootstrap create --site-name prod \ </span><br><span class="line">rbd &gt; /mnt/bootstrap_token_prod</span><br><span class="line"></span><br><span class="line">从节点:</span><br><span class="line">ceph osd pool create rbd 32 32</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> rbd rbd</span><br><span class="line">rbd pool init -p rbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用cephadm在指定节点部署rbd-mirror守护进程</span></span><br><span class="line"><span class="comment"># --placement 指定部署在 backup-node.example.com 节点</span></span><br><span class="line">ceph orch apply rbd-mirror --placement=backup-node.example.com</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入主集群生成的 bootstrap token</span></span><br><span class="line"><span class="comment"># --site-name 设置从站点名称为 &#x27;backup&#x27;</span></span><br><span class="line"><span class="comment"># --direction rx-only 设置镜像方向为仅接收（单向镜像）</span></span><br><span class="line">ceph orch apply rbd-mirror --placement=backup-node.example.com</span><br><span class="line">rbd mirror pool peer bootstrap import --site-name backup \</span><br><span class="line">--direction rx-only rbd /mnt/bootstrap_token_prod</span><br></pre></td></tr></table></figure>
+<span class="token number">2</span>.开启或关闭镜像mirror特性（整个pool）
+rbd mirror image <span class="token builtin class-name">enable</span>
+rbd mirror image disable
 
-<h2 id="故障切换流程"><a href="#故障切换流程" class="headerlink" title="故障切换流程"></a>故障切换流程</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">如果主mirror已经不可用了，需要重新启用对RBD的访问</span><br><span class="line"></span><br><span class="line">1.停止对主RBD的访问</span><br><span class="line">2.降级RBD主镜像</span><br><span class="line">rbd mirror image demote pool-name/image-name</span><br><span class="line">3.提升RBD从镜像</span><br><span class="line">rbd mirror image promote pool-name/image-name</span><br><span class="line">4.恢复对RBD镜像的访问，重新启动应用程序和虚机</span><br><span class="line"></span><br><span class="line">如果遇到断电等意外情况，必须备份集群中的ceph mon提升非主镜像，使用--force参数</span><br></pre></td></tr></table></figure>
+<span class="token number">3</span>.使用基于快照的mirror snapshot-based mirror
+rbd mirror image disable mypool/myimage
+rbd mirror image <span class="token builtin class-name">enable</span> mypool/myimage<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="配置复制—单向异步mirror"><a href="#配置复制—单向异步mirror" class="headerlink" title="配置复制—单向异步mirror"></a>配置复制—单向异步mirror</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">为了实现RBDmirror并开启rbd-mirror守护进程来发现邻居集群
+必须要有一个注册的peer并创建一个用户账号
+rbd mirror pool peer bootstrap create
+
+配置过程：
+<span class="token number">1</span>.在A和B两个集群中创建同名的池
+<span class="token number">2</span>.创建或修改启用了exclusivce-lock和日志记录功能的RBD镜像
+<span class="token number">3</span>.在池上启用pool-mode/image-mode mirror
+<span class="token number">4</span>.在A集群中使用bootstrap存储集群注册，并保存bootstrap token
+<span class="token number">5</span>.部署rbd-mirror
+单向复制: 只在备份集群上运行
+双向复制：在两个集群上都运行
+<span class="token number">6</span>.在备份集群中导入bootstrap token
+单向复制：使用--direction rx-only参数
+
+主节点:
+ceph osd pool create rbd <span class="token number">32</span> <span class="token number">32</span>
+ceph osd pool application <span class="token builtin class-name">enable</span> rbd rbd
+rbd pool init <span class="token parameter variable">-p</span> rbd
+
+<span class="token comment"># 启用 exclusive-lock（独占锁）和 journaling（日志）特性</span>
+rbd create my-image <span class="token parameter variable">--size</span> <span class="token number">1024</span> <span class="token parameter variable">--pool</span> rbd <span class="token punctuation">\</span>
+--image-featrue<span class="token operator">=</span>exclusive-lock,journaling
+
+<span class="token comment"># 在 'rbd' 存储池上启用镜像功能，使用 'pool' 模式</span>
+rbd mirror pool <span class="token builtin class-name">enable</span> rbd pool
+
+<span class="token comment"># 生成用于从集群引导的 token</span>
+<span class="token comment"># --site-name 指定主站点名称为 'prod'</span>
+rbd mirror pool peer bootstrap create --site-name prod <span class="token punctuation">\</span> 
+rbd <span class="token operator">></span> /mnt/bootstrap_token_prod
+
+从节点:
+ceph osd pool create rbd <span class="token number">32</span> <span class="token number">32</span>
+ceph osd pool application <span class="token builtin class-name">enable</span> rbd rbd
+rbd pool init <span class="token parameter variable">-p</span> rbd
+
+<span class="token comment"># 使用cephadm在指定节点部署rbd-mirror守护进程</span>
+<span class="token comment"># --placement 指定部署在 backup-node.example.com 节点</span>
+ceph orch apply rbd-mirror <span class="token parameter variable">--placement</span><span class="token operator">=</span>backup-node.example.com
+
+<span class="token comment"># 导入主集群生成的 bootstrap token</span>
+<span class="token comment"># --site-name 设置从站点名称为 'backup'</span>
+<span class="token comment"># --direction rx-only 设置镜像方向为仅接收（单向镜像）</span>
+ceph orch apply rbd-mirror <span class="token parameter variable">--placement</span><span class="token operator">=</span>backup-node.example.com
+rbd mirror pool peer bootstrap <span class="token function">import</span> --site-name backup <span class="token punctuation">\</span>
+<span class="token parameter variable">--direction</span> rx-only rbd /mnt/bootstrap_token_prod<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="故障切换流程"><a href="#故障切换流程" class="headerlink" title="故障切换流程"></a>故障切换流程</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">如果主mirror已经不可用了，需要重新启用对RBD的访问
+
+<span class="token number">1</span>.停止对主RBD的访问
+<span class="token number">2</span>.降级RBD主镜像
+rbd mirror image demote pool-name/image-name
+<span class="token number">3</span>.提升RBD从镜像
+rbd mirror image promote pool-name/image-name
+<span class="token number">4</span>.恢复对RBD镜像的访问，重新启动应用程序和虚机
+
+如果遇到断电等意外情况，必须备份集群中的ceph mon提升非主镜像，使用--force参数<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6562,36 +6628,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7056,13 +7092,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8103,13 +8139,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8562,14 +8598,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8577,14 +8613,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

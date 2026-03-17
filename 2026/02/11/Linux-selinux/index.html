@@ -496,23 +496,191 @@
         <p>没有selinux的linux使用自主访问控制，即自己给自己权限，如果某个具有root权限的程序被攻破，那么攻击者就可以为所欲为</p>
 <p>有selinux的linux引入了强制访问控制，即使一个程序以root权限运行，它的行为也必须也必须遵守selinux策略规则，他只能访问策略明确允许他访问的文件、端口和资源</p>
 <p>selinux是一个极其强大的安全层，虽然在初期可能因为其复杂性给管理员带来调整，但理解其概念和工作原理后，能极大提升系统的整体安全性，生产环境推荐在充分测试后，使其保持在enforcing模式</p>
-<h2 id="selinux介绍"><a href="#selinux介绍" class="headerlink" title="selinux介绍"></a>selinux介绍</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">1.查看文件的安全上下文</span><br><span class="line"><span class="built_in">ls</span> -Z /etc/passwd</span><br><span class="line">system_u:object_r:passwd_file_t:s0 /etc/passwd</span><br><span class="line"></span><br><span class="line">2.查看进程安全上下文</span><br><span class="line">ps -Z -C sshd</span><br><span class="line">LABEL                               PID TTY          TIME CMD</span><br><span class="line">system_u:system_r:sshd_t:s0-s0:c0.c1023 924 ?    00:00:00 sshd</span><br><span class="line">system_u:system_r:sshd_t:s0-s0:c0.c1023 3897703 ? 00:00:00 sshd</span><br><span class="line">unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 3897707 ? 00:00:00 sshd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安全上下文的格式</span></span><br><span class="line">user:role:<span class="built_in">type</span>[:sensitivity[:category]]</span><br><span class="line"></span><br><span class="line">user: selinux用户,如system_u,表示系统用户</span><br><span class="line">role: 角色,如object_r代表文件角色,system_r表示进程角色</span><br><span class="line"><span class="built_in">type</span>: 类型,最常用最重要的部分,selinux的访问控制主要基于进程的<span class="built_in">type</span>和文件的<span class="built_in">type</span>是否匹配策略规则</span><br><span class="line">sensitivity: 可选,敏感度，控制信息机密级别，s0最低，s1-s15逐渐升高</span><br><span class="line">category: 可选,类别,用于细粒度访问控制</span><br><span class="line"></span><br><span class="line">大部分情况下只需要关注<span class="built_in">type</span>字段</span><br><span class="line"></span><br><span class="line"><span class="comment"># selinux的三种模式</span></span><br><span class="line">1.Enforcing</span><br><span class="line">强制模式，默认的安全模式，会强制执行，拒绝并记录到日志中</span><br><span class="line"></span><br><span class="line">2.Permissive</span><br><span class="line">宽容模式，不会强制执行，但会记录到日志中，主要用于故障排除和策略调试</span><br><span class="line"></span><br><span class="line">3.disabled</span><br><span class="line">禁用模式，selinux完全关闭</span><br><span class="line"></span><br><span class="line"><span class="comment"># selinux的策略</span></span><br><span class="line">策略指的是一套预定义的规则，告诉selinux哪个进程的<span class="built_in">type</span>可以访问哪个文件夹的<span class="built_in">type</span>等。主流Linux发行版都读自带了一套非常完善且严格的预定义策略</span><br><span class="line">1.targeted 目标策略（默认策略）</span><br><span class="line">为与选定的系统服务如httpd ftpd等提供保护，实现安全性和可用性的平衡</span><br><span class="line"></span><br><span class="line">2.MLS 多级安全策略</span><br><span class="line">非常复杂和严格，常用于政府、军事等保密性要求高的环境</span><br></pre></td></tr></table></figure>
+<h2 id="selinux介绍"><a href="#selinux介绍" class="headerlink" title="selinux介绍"></a>selinux介绍</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.查看文件的安全上下文
+<span class="token function">ls</span> <span class="token parameter variable">-Z</span> /etc/passwd
+system_u:object_r:passwd_file_t:s0 /etc/passwd
 
-<h3 id="如何处理selinux引起的问题思路"><a href="#如何处理selinux引起的问题思路" class="headerlink" title="如何处理selinux引起的问题思路"></a>如何处理selinux引起的问题思路</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">1.检查日志</span><br><span class="line">查看/var/log/audit/audit/log或使用sealert工具</span><br><span class="line">sealert -a /var/log/audit/audit.log</span><br><span class="line"></span><br><span class="line">2.临时解决（使用宽容模式分析）</span><br><span class="line">如果问题紧急，可以临时将模式改为permissive，重现问题然后分析日志，找到原因后再改回enforcing</span><br><span class="line"></span><br><span class="line">3.永久解决方案</span><br><span class="line">(1)修复文件安全上下文</span><br><span class="line">如果文件被放错了地方或上下文不正确，使用<span class="built_in">chcon</span>命令临时修改</span><br><span class="line">或使用restorecon命令恢复为默认上下文</span><br><span class="line"></span><br><span class="line">(2)恢复默认上下文</span><br><span class="line">restorecon -Rv file</span><br><span class="line"></span><br><span class="line">(3)修改布尔值</span><br><span class="line">selinux有很多0 1的开关，可以动态调整，比如允许apache允许家目录</span><br><span class="line"></span><br><span class="line">(4)查看布尔值状态</span><br><span class="line">getsebool -a | grep httpd</span><br><span class="line">httpd_anon_write --&gt; off</span><br><span class="line">httpd_builtin_scripting --&gt; on</span><br><span class="line">httpd_can_check_spam --&gt; off</span><br><span class="line">httpd_can_connect_ftp --&gt; off</span><br><span class="line">httpd_can_connect_ldap --&gt; off</span><br><span class="line">httpd_can_connect_mythtv --&gt; off</span><br><span class="line">httpd_can_connect_zabbix --&gt; off</span><br><span class="line"></span><br><span class="line">(5)修改布尔值</span><br><span class="line">setsebool -P httpd_enable_homedirs on</span><br><span class="line"></span><br><span class="line">(6)自定义策略模块，一般开发搞</span><br></pre></td></tr></table></figure>
+<span class="token number">2</span>.查看进程安全上下文
+<span class="token function">ps</span> <span class="token parameter variable">-Z</span> <span class="token parameter variable">-C</span> sshd
+LABEL                               PID TTY          TIME CMD
+system_u:system_r:sshd_t:s0-s0:c0.c1023 <span class="token number">924</span> ?    00:00:00 sshd
+system_u:system_r:sshd_t:s0-s0:c0.c1023 <span class="token number">3897703</span> ? 00:00:00 sshd
+unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 <span class="token number">3897707</span> ? 00:00:00 sshd
 
-<h3 id="selinux工作模式"><a href="#selinux工作模式" class="headerlink" title="selinux工作模式"></a>selinux工作模式</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前工作模式</span></span><br><span class="line">sestatus</span><br><span class="line">SELinux status:                 enabled</span><br><span class="line">SELinuxfs mount:                /sys/fs/selinux</span><br><span class="line">SELinux root directory:         /etc/selinux</span><br><span class="line">Loaded policy name:             targeted</span><br><span class="line">Current mode:                   enforcing <span class="comment"># 临时模式</span></span><br><span class="line">Mode from config file:          enforcing</span><br><span class="line">Policy MLS status:              enabled</span><br><span class="line">Policy deny_unknown status:     allowed</span><br><span class="line">Memory protection checking:     actual (secure)</span><br><span class="line">Max kernel policy version:      33</span><br><span class="line"></span><br><span class="line"><span class="comment"># 临时调整工作模式，只能在enforcing和permissive模式之间切换</span></span><br><span class="line">setenforce 0/1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 永久修改</span></span><br><span class="line">/etc/selinux/config</span><br><span class="line">SELINUX=enforcing/permissive/disabled</span><br><span class="line"></span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=permissive&#x27;</span> /etc/selinux/config</span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">当从disabled切换为enforcing或permissive时，所有文件都会在第一次重启后重新打标签，但可能会花费很长时间</span><br><span class="line">如果配置文件.autorelabel不存在，系统可能无法正常启动</span><br><span class="line">（所以在进行root密码破解的时候，在修改完密码之后，需要在根目录创建</span><br><span class="line">.autorelabel文件</span><br></pre></td></tr></table></figure>
+<span class="token comment"># 安全上下文的格式</span>
+user:role:type<span class="token punctuation">[</span>:sensitivity<span class="token punctuation">[</span>:category<span class="token punctuation">]</span><span class="token punctuation">]</span>
 
-<h2 id="selinux安全上下文设置"><a href="#selinux安全上下文设置" class="headerlink" title="selinux安全上下文设置"></a>selinux安全上下文设置</h2><h3 id="文件-进程安全上下文"><a href="#文件-进程安全上下文" class="headerlink" title="文件&#x2F;进程安全上下文"></a>文件&#x2F;进程安全上下文</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看文件的安全上下文</span></span><br><span class="line"><span class="built_in">ls</span> -Z /var/www/html/</span><br><span class="line">unconfined_u:object_r:httpd_sys_content_t:s0 index.html</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看目录安全上下文</span></span><br><span class="line"><span class="built_in">ls</span> -Z /var/www/html/ -d</span><br><span class="line">system_u:object_r:httpd_sys_content_t:s0 /var/www/html/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看进程的安全上下文</span></span><br><span class="line">ps -ef -Z | grep nginx</span><br><span class="line">system_u:system_r:spc_t:s0      1001      669148  669121  0 Jan08 ?        00:00:34 /usr/bin/nginx-prometheus-exporter --web.listen-address=:9102 --nginx.scrape-uri=http://192.168.10.100/nginx-status</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看系统预定义的文件类型规则semanage fcontext -l</span></span><br><span class="line">semanage fcontext -l | grep /var/www</span><br><span class="line">/var/www(/.*)?                                     all files          system_u:object_r:httpd_sys_content_t:s0</span><br><span class="line">/var/www(/.*)?/logs(/.*)?                          all files          system_u:object_r:httpd_log_t:s0</span><br><span class="line">/var/www/[^/]*/cgi-bin(/.*)?                       all files          system_u:object_r:httpd_sys_script_exec_t:s0</span><br><span class="line"></span><br><span class="line">/var/www(/.*)? 所有文件及子目录</span><br><span class="line">/var/www(/.*)?/logs(/.*)? 将<span class="built_in">log</span>目录特别拿出来定义另外的安全上下文</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改文件安全上下文</span></span><br><span class="line">1.<span class="built_in">chcon</span> 临时修改</span><br><span class="line"><span class="built_in">chcon</span> 用于临时修改上下文，适合测试场景</span><br><span class="line"><span class="built_in">chcon</span> [选项] 目标上下文 文件/目录</span><br><span class="line">-t 仅修改<span class="built_in">type</span>字段（最常用</span><br><span class="line">-u 修改user字段</span><br><span class="line">-r 修改role字段</span><br><span class="line">-R 递归修改目录及子文件</span><br><span class="line"></span><br><span class="line"><span class="built_in">chcon</span> -t httpd_log_t /var/www/test/access.log</span><br><span class="line"></span><br><span class="line">2.semanage fcontext + restorecon 永久修改安全上下文</span><br><span class="line">semanage fcontext会将文件、目录的上下文规则写入selinux配置文件</span><br><span class="line">/etc/selinux/targeted/context/files/file_contexts.local</span><br><span class="line">restorecon根据文件中的规则，刷新配置</span><br><span class="line"></span><br><span class="line"><span class="comment"># 针对特定文件添加安全上下文规则，并应用</span></span><br><span class="line">semanage fcontext -a -t httpd_sys_content_t <span class="string">&quot;/var/www/html/test.html</span></span><br><span class="line"><span class="string">restorecon -Rv /var/www/html/test.html</span></span><br></pre></td></tr></table></figure>
+user: selinux用户,如system_u,表示系统用户
+role: 角色,如object_r代表文件角色,system_r表示进程角色
+type: 类型,最常用最重要的部分,selinux的访问控制主要基于进程的type和文件的type是否匹配策略规则
+sensitivity: 可选,敏感度，控制信息机密级别，s0最低，s1-s15逐渐升高
+category: 可选,类别,用于细粒度访问控制
+
+大部分情况下只需要关注type字段
+
+<span class="token comment"># selinux的三种模式</span>
+<span class="token number">1</span>.Enforcing
+强制模式，默认的安全模式，会强制执行，拒绝并记录到日志中
+
+<span class="token number">2</span>.Permissive
+宽容模式，不会强制执行，但会记录到日志中，主要用于故障排除和策略调试
+
+<span class="token number">3</span>.disabled
+禁用模式，selinux完全关闭
+
+<span class="token comment"># selinux的策略</span>
+策略指的是一套预定义的规则，告诉selinux哪个进程的type可以访问哪个文件夹的type等。主流Linux发行版都读自带了一套非常完善且严格的预定义策略
+<span class="token number">1</span>.targeted 目标策略（默认策略）
+为与选定的系统服务如httpd ftpd等提供保护，实现安全性和可用性的平衡
+
+<span class="token number">2</span>.MLS 多级安全策略
+非常复杂和严格，常用于政府、军事等保密性要求高的环境<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="如何处理selinux引起的问题思路"><a href="#如何处理selinux引起的问题思路" class="headerlink" title="如何处理selinux引起的问题思路"></a>如何处理selinux引起的问题思路</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.检查日志
+查看/var/log/audit/audit/log或使用sealert工具
+sealert <span class="token parameter variable">-a</span> /var/log/audit/audit.log
+
+<span class="token number">2</span>.临时解决（使用宽容模式分析）
+如果问题紧急，可以临时将模式改为permissive，重现问题然后分析日志，找到原因后再改回enforcing
+
+<span class="token number">3</span>.永久解决方案
+<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>修复文件安全上下文
+如果文件被放错了地方或上下文不正确，使用chcon命令临时修改
+或使用restorecon命令恢复为默认上下文
+
+<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>恢复默认上下文
+restorecon <span class="token parameter variable">-Rv</span> <span class="token function">file</span>
+
+<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>修改布尔值
+selinux有很多0 <span class="token number">1</span>的开关，可以动态调整，比如允许apache允许家目录
+
+<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>查看布尔值状态
+getsebool <span class="token parameter variable">-a</span> <span class="token operator">|</span> <span class="token function">grep</span> httpd
+httpd_anon_write --<span class="token operator">></span> off
+httpd_builtin_scripting --<span class="token operator">></span> on
+httpd_can_check_spam --<span class="token operator">></span> off
+httpd_can_connect_ftp --<span class="token operator">></span> off
+httpd_can_connect_ldap --<span class="token operator">></span> off
+httpd_can_connect_mythtv --<span class="token operator">></span> off
+httpd_can_connect_zabbix --<span class="token operator">></span> off
+
+<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>修改布尔值
+setsebool <span class="token parameter variable">-P</span> httpd_enable_homedirs on
+
+<span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">)</span>自定义策略模块，一般开发搞<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="selinux工作模式"><a href="#selinux工作模式" class="headerlink" title="selinux工作模式"></a>selinux工作模式</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看当前工作模式</span>
+sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing <span class="token comment"># 临时模式</span>
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Memory protection checking:     actual <span class="token punctuation">(</span>secure<span class="token punctuation">)</span>
+Max kernel policy version:      <span class="token number">33</span>
+
+<span class="token comment"># 临时调整工作模式，只能在enforcing和permissive模式之间切换</span>
+setenforce <span class="token number">0</span>/1
+
+<span class="token comment"># 永久修改</span>
+/etc/selinux/config
+<span class="token assign-left variable">SELINUX</span><span class="token operator">=</span>enforcing/permissive/disabled
+
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=permissive'</span> /etc/selinux/config
+
+<span class="token comment"># </span>
+当从disabled切换为enforcing或permissive时，所有文件都会在第一次重启后重新打标签，但可能会花费很长时间
+如果配置文件.autorelabel不存在，系统可能无法正常启动
+（所以在进行root密码破解的时候，在修改完密码之后，需要在根目录创建
+.autorelabel文件<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="selinux安全上下文设置"><a href="#selinux安全上下文设置" class="headerlink" title="selinux安全上下文设置"></a>selinux安全上下文设置</h2><h3 id="文件-进程安全上下文"><a href="#文件-进程安全上下文" class="headerlink" title="文件&#x2F;进程安全上下文"></a>文件&#x2F;进程安全上下文</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看文件的安全上下文</span>
+<span class="token function">ls</span> <span class="token parameter variable">-Z</span> /var/www/html/
+unconfined_u:object_r:httpd_sys_content_t:s0 index.html
+
+<span class="token comment"># 查看目录安全上下文</span>
+<span class="token function">ls</span> <span class="token parameter variable">-Z</span> /var/www/html/ <span class="token parameter variable">-d</span>
+system_u:object_r:httpd_sys_content_t:s0 /var/www/html/
+
+<span class="token comment"># 查看进程的安全上下文</span>
+<span class="token function">ps</span> <span class="token parameter variable">-ef</span> <span class="token parameter variable">-Z</span> <span class="token operator">|</span> <span class="token function">grep</span> nginx
+system_u:system_r:spc_t:s0      <span class="token number">1001</span>      <span class="token number">669148</span>  <span class="token number">669121</span>  <span class="token number">0</span> Jan08 ?        00:00:34 /usr/bin/nginx-prometheus-exporter --web.listen-address<span class="token operator">=</span>:9102 --nginx.scrape-uri<span class="token operator">=</span>http://192.168.10.100/nginx-status
+
+<span class="token comment"># 查看系统预定义的文件类型规则semanage fcontext -l</span>
+semanage fcontext <span class="token parameter variable">-l</span> <span class="token operator">|</span> <span class="token function">grep</span> /var/www
+/var/www<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>?                                     all files          system_u:object_r:httpd_sys_content_t:s0
+/var/www<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>?/logs<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>?                          all files          system_u:object_r:httpd_log_t:s0
+/var/www/<span class="token punctuation">[</span>^/<span class="token punctuation">]</span>*/cgi-bin<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>?                       all files          system_u:object_r:httpd_sys_script_exec_t:s0
+
+/var/www<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>? 所有文件及子目录
+/var/www<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>?/logs<span class="token punctuation">(</span>/.*<span class="token punctuation">)</span>? 将log目录特别拿出来定义另外的安全上下文
+
+<span class="token comment"># 修改文件安全上下文</span>
+<span class="token number">1</span>.chcon 临时修改
+chcon 用于临时修改上下文，适合测试场景
+chcon <span class="token punctuation">[</span>选项<span class="token punctuation">]</span> 目标上下文 文件/目录
+<span class="token parameter variable">-t</span> 仅修改type字段（最常用
+<span class="token parameter variable">-u</span> 修改user字段
+<span class="token parameter variable">-r</span> 修改role字段
+<span class="token parameter variable">-R</span> 递归修改目录及子文件
+
+chcon <span class="token parameter variable">-t</span> httpd_log_t /var/www/test/access.log
+
+<span class="token number">2</span>.semanage fcontext + restorecon 永久修改安全上下文
+semanage fcontext会将文件、目录的上下文规则写入selinux配置文件
+/etc/selinux/targeted/context/files/file_contexts.local
+restorecon根据文件中的规则，刷新配置
+
+<span class="token comment"># 针对特定文件添加安全上下文规则，并应用</span>
+semanage fcontext <span class="token parameter variable">-a</span> <span class="token parameter variable">-t</span> httpd_sys_content_t "/var/www/html/test.html
+restorecon <span class="token parameter variable">-Rv</span> /var/www/html/test.html<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="端口的安全上下文"><a href="#端口的安全上下文" class="headerlink" title="端口的安全上下文"></a>端口的安全上下文</h3><p>如果进程使用了非默认的端口，比如nginx使用了8080，mysql使用了3307端口，需要手动将端口类型改为进程可以访问的类型http_port_t，否则selinux会阻断进程绑定端口</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">查看端口安全上下文</span><br><span class="line">semanage port -l | grep mysql</span><br><span class="line">mysqld_port_t                  tcp      1186, 3306, 63132-63164</span><br><span class="line">mysqlmanagerd_port_t           tcp      2273</span><br><span class="line"></span><br><span class="line">配置端口安全上下文</span><br><span class="line">semanage port -a -t &lt;端口类型&gt; -p 协议 端口号-端口范围 <span class="comment"># 添加</span></span><br><span class="line">semanage port -m -t &lt;端口类型&gt; -p 协议 端口号-端口范围 <span class="comment"># 覆盖原类型</span></span><br><span class="line">semanage port -d -t &lt;端口类型&gt; -p 协议 端口号-端口范围 <span class="comment"># 删除</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看端口安全上下文
+semanage port <span class="token parameter variable">-l</span> <span class="token operator">|</span> <span class="token function">grep</span> mysql
+mysqld_port_t                  tcp      <span class="token number">1186</span>, <span class="token number">3306</span>, <span class="token number">63132</span>-63164
+mysqlmanagerd_port_t           tcp      <span class="token number">2273</span>
+
+配置端口安全上下文
+semanage port <span class="token parameter variable">-a</span> <span class="token parameter variable">-t</span> <span class="token operator">&lt;</span>端口类型<span class="token operator">></span> <span class="token parameter variable">-p</span> 协议 端口号-端口范围 <span class="token comment"># 添加</span>
+semanage port <span class="token parameter variable">-m</span> <span class="token parameter variable">-t</span> <span class="token operator">&lt;</span>端口类型<span class="token operator">></span> <span class="token parameter variable">-p</span> 协议 端口号-端口范围 <span class="token comment"># 覆盖原类型</span>
+semanage port <span class="token parameter variable">-d</span> <span class="token parameter variable">-t</span> <span class="token operator">&lt;</span>端口类型<span class="token operator">></span> <span class="token parameter variable">-p</span> 协议 端口号-端口范围 <span class="token comment"># 删除</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="selinux的布尔值"><a href="#selinux的布尔值" class="headerlink" title="selinux的布尔值"></a>selinux的布尔值</h2><p>selinux的布尔值是动态调整selinux策略的开关，无需修改核心配置文件，通过开启和关闭就可以临时或永久调整进程访问权限</p>
 <p>在不关闭selinux不修改安全上下文的前提下，快速设备特殊业务场景，避免因策略过严，导致服务异常</p>
 <p><strong>selinux布尔值操作</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看布尔值，大部分的布尔值都是关闭状态</span></span><br><span class="line">getsebool -a</span><br><span class="line">semanage boolean -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置布尔值</span></span><br><span class="line">setsebool httpd_can_connect_ftp=on <span class="comment"># 临时修改</span></span><br><span class="line">setsebool -P httpd_can_connect_ftp=on  <span class="comment"># 永久修改</span></span><br><span class="line">setsebool -P httpd_can_connect_ftp=on httpd_use_nfs=on</span><br><span class="line"></span><br><span class="line">注意点:</span><br><span class="line">- 最小权限原则</span><br><span class="line">- 重启服务生效</span><br><span class="line">- 拒绝禁用selinux，遇到问题优先调整布尔值、上下文</span><br><span class="line">- 避免频繁修改，-P会写入配置文件，频繁修改可能导致配置冗余</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看布尔值，大部分的布尔值都是关闭状态</span>
+getsebool <span class="token parameter variable">-a</span>
+semanage boolean <span class="token parameter variable">-l</span>
 
-<h2 id="selinux日志查看工具ausearch"><a href="#selinux日志查看工具ausearch" class="headerlink" title="selinux日志查看工具ausearch"></a>selinux日志查看工具ausearch</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># c查看阻断记录</span></span><br><span class="line">grep <span class="string">&#x27;type=AVC&#x27;</span> /var/log/audit/audit.log</span><br><span class="line"></span><br><span class="line">ausearch -m avc <span class="comment"># 只查看AVC类型的记录</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 时间筛选</span></span><br><span class="line">ausearch -m avc -ts recent <span class="comment"># 最近10分钟</span></span><br><span class="line">ausearch -m avc -ts 14:00 <span class="comment"># 今天14点后</span></span><br><span class="line">ausearch -m avc -ts <span class="string">&quot;09:00:00&quot;</span> <span class="comment"># 今天9点之后</span></span><br><span class="line">ausearch -m avc -ts 09:00 -te 17:00 <span class="comment"># 今天9点到17点</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 按进程名筛选</span></span><br><span class="line"><span class="comment"># 查看所有因httpd导致的avc阻断</span></span><br><span class="line">ausearch -m avc -c httpd <span class="comment"># -c指定进程名</span></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 配置布尔值</span>
+setsebool <span class="token assign-left variable">httpd_can_connect_ftp</span><span class="token operator">=</span>on <span class="token comment"># 临时修改</span>
+setsebool <span class="token parameter variable">-P</span> <span class="token assign-left variable">httpd_can_connect_ftp</span><span class="token operator">=</span>on  <span class="token comment"># 永久修改</span>
+setsebool <span class="token parameter variable">-P</span> <span class="token assign-left variable">httpd_can_connect_ftp</span><span class="token operator">=</span>on <span class="token assign-left variable">httpd_use_nfs</span><span class="token operator">=</span>on
+
+注意点:
+- 最小权限原则
+- 重启服务生效
+- 拒绝禁用selinux，遇到问题优先调整布尔值、上下文
+- 避免频繁修改，-P会写入配置文件，频繁修改可能导致配置冗余<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="selinux日志查看工具ausearch"><a href="#selinux日志查看工具ausearch" class="headerlink" title="selinux日志查看工具ausearch"></a>selinux日志查看工具ausearch</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># c查看阻断记录</span>
+<span class="token function">grep</span> <span class="token string">'type=AVC'</span> /var/log/audit/audit.log
+
+ausearch <span class="token parameter variable">-m</span> avc <span class="token comment"># 只查看AVC类型的记录</span>
+
+<span class="token comment"># 时间筛选</span>
+ausearch <span class="token parameter variable">-m</span> avc <span class="token parameter variable">-ts</span> recent <span class="token comment"># 最近10分钟</span>
+ausearch <span class="token parameter variable">-m</span> avc <span class="token parameter variable">-ts</span> <span class="token number">14</span>:00 <span class="token comment"># 今天14点后</span>
+ausearch <span class="token parameter variable">-m</span> avc <span class="token parameter variable">-ts</span> <span class="token string">"09:00:00"</span> <span class="token comment"># 今天9点之后</span>
+ausearch <span class="token parameter variable">-m</span> avc <span class="token parameter variable">-ts</span> 09:00 <span class="token parameter variable">-te</span> <span class="token number">17</span>:00 <span class="token comment"># 今天9点到17点</span>
+
+<span class="token comment"># 按进程名筛选</span>
+<span class="token comment"># 查看所有因httpd导致的avc阻断</span>
+ausearch <span class="token parameter variable">-m</span> avc <span class="token parameter variable">-c</span> httpd <span class="token comment"># -c指定进程名</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6571,36 +6739,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7065,13 +7203,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8112,13 +8250,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8571,14 +8709,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8586,14 +8724,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

@@ -500,7 +500,231 @@
 <p>1.根据任务是否已经通过了编译阶段，来动态调整节点并发数<br>2.如果N个任务都过了编译阶段，则将并发数调整为N+1，随后调整为1<br>3.自动化完成，使用shell或python<br>4.检测服务器负载，负载降低才允许新增并发数</p>
 <p><strong>思路</strong></p>
 <p>1.通过jenkins的节点api&#x2F;json获取当前任务数<br>2.获取任务ID对应的日志，搜索是否具备编译完成的关键字“100%”<br>3.使用ET修改config.xml，POST来修改并发数</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line">import time</span><br><span class="line">import psutil</span><br><span class="line">import logging</span><br><span class="line">from logging.handlers import RotatingFileHandler</span><br><span class="line">import os</span><br><span class="line">from xml.etree import ElementTree as ET  <span class="comment"># 解析与修改XML配置</span></span><br><span class="line">from urllib.parse import urlparse</span><br><span class="line"></span><br><span class="line"><span class="comment"># -------------------- 配置区域 --------------------</span></span><br><span class="line">JENKINS_URL = <span class="string">&quot;xxxx&quot;</span></span><br><span class="line">NODE_NAME = <span class="string">&quot;slave-1&quot;</span></span><br><span class="line">ADMIN = <span class="string">&quot;xxxx&quot;</span></span><br><span class="line">API_TOKEN = <span class="string">&quot;xxxx&quot;</span></span><br><span class="line">KEYWORD = <span class="string">&quot;100%&quot;</span>                                <span class="comment"># 查询日志的关键字</span></span><br><span class="line">LOG_PATH = <span class="string">&quot;xxxx&quot;</span>     <span class="comment"># 日志文件完整路径</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># -------------------- 日志配置 --------------------</span></span><br><span class="line">log_dir = os.path.dirname(LOG_PATH)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建日志目录</span></span><br><span class="line">try:</span><br><span class="line">    os.makedirs(log_dir, exist_ok=True)</span><br><span class="line">except PermissionError as e:</span><br><span class="line">    raise SystemExit(f<span class="string">&quot;✖ 无权限创建日志目录: &#123;log_dir&#125;\n错误详情: &#123;e&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置日志系统</span></span><br><span class="line">logger = logging.getLogger(__name__)</span><br><span class="line">logger.setLevel(logging.DEBUG)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 文件日志处理器（自动轮转，大小5MB）</span></span><br><span class="line">file_handler = RotatingFileHandler(</span><br><span class="line">    filename=LOG_PATH,</span><br><span class="line">    maxBytes=5*1024*1024,</span><br><span class="line">    backupCount=5,</span><br><span class="line">    encoding=<span class="string">&#x27;utf-8&#x27;</span></span><br><span class="line">)</span><br><span class="line">file_handler.setFormatter(logging.Formatter(</span><br><span class="line">    <span class="string">&#x27;[%(asctime)s] [%(levelname).4s] %(message)s&#x27;</span></span><br><span class="line">))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 控制台处理器</span></span><br><span class="line">console_handler = logging.StreamHandler()</span><br><span class="line">console_handler.setFormatter(logging.Formatter(</span><br><span class="line">    <span class="string">&#x27;[%(levelname)s] %(message)s&#x27;</span></span><br><span class="line">))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 移除旧处理器后添加新处理器</span></span><br><span class="line">logger.handlers.clear()</span><br><span class="line">logger.addHandler(file_handler)</span><br><span class="line">logger.addHandler(console_handler)</span><br><span class="line"><span class="comment"># -------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># --------------- 全局状态存储 ---------------</span></span><br><span class="line">session = requests.Session()        <span class="comment"># 保持会话的request对象</span></span><br><span class="line">session.auth = (ADMIN, API_TOKEN)</span><br><span class="line">crumb_header = None                 </span><br><span class="line">original_executors = 1              <span class="comment"># 原始并发执行器数量</span></span><br><span class="line"></span><br><span class="line">def init_jenkins():</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;初始化 Jenkins 连接&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    global crumb_header, original_executors</span><br><span class="line">    crumb_header = get_crumb_header()  <span class="comment"># 获取CSRF令牌</span></span><br><span class="line">    <span class="comment"># original_executors = get_current_executors()  # 获取初始并发数</span></span><br><span class="line">    <span class="built_in">print</span>(f<span class="string">&quot;√ 初始化完成 | 原始并发数: &#123;original_executors&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line">def get_crumb_header():</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;获取Jenkins CSRF防护令牌&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    crumb_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/crumbIssuer/api/json&quot;</span></span><br><span class="line">    try:</span><br><span class="line">        response = session.get(crumb_url)</span><br><span class="line">        data = response.json()</span><br><span class="line">        <span class="built_in">return</span> &#123;data[<span class="string">&#x27;crumbRequestField&#x27;</span>]: data[<span class="string">&#x27;crumb&#x27;</span>]&#125;</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 获取 CSRF 失败: &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> None</span><br><span class="line"></span><br><span class="line">def get_current_executors():</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;获取当前并发执行器配置&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    config_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml&quot;</span></span><br><span class="line">    try:</span><br><span class="line">        response = session.get(config_url, headers=crumb_header)</span><br><span class="line">        root = ET.fromstring(response.content)</span><br><span class="line">        <span class="comment"># 从 XML 配置中提取并发数配置</span></span><br><span class="line">        <span class="built_in">return</span> int(root.find(<span class="string">&quot;.//numExecutors&quot;</span>).text)</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 获取并发数失败: &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> 1</span><br><span class="line"></span><br><span class="line">def get_active_builds():</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;获取当前运行中的构建任务列表，返回任务url&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    api_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/api/json&quot;</span></span><br><span class="line">    params = &#123;<span class="string">&#x27;tree&#x27;</span>: <span class="string">&#x27;executors[currentExecutable[url]]&#x27;</span>&#125;</span><br><span class="line">    </span><br><span class="line">    try:</span><br><span class="line">        response = session.get(api_url, headers=crumb_header, params=params)</span><br><span class="line">        <span class="built_in">return</span> [</span><br><span class="line">            parse_build_info(executor[<span class="string">&#x27;currentExecutable&#x27;</span>][<span class="string">&#x27;url&#x27;</span>])</span><br><span class="line">            <span class="keyword">for</span> executor <span class="keyword">in</span> response.json().get(<span class="string">&#x27;executors&#x27;</span>, [])</span><br><span class="line">            <span class="keyword">if</span> executor.get(<span class="string">&#x27;currentExecutable&#x27;</span>, &#123;&#125;).get(<span class="string">&#x27;url&#x27;</span>)</span><br><span class="line">        ]</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 获取任务失败: &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> []</span><br><span class="line"></span><br><span class="line">def parse_build_info(url):</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;解析构建任务URL，返回一个字典&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    path = urlparse(url).path.split(<span class="string">&#x27;/&#x27;</span>)</span><br><span class="line">    <span class="built_in">return</span> &#123;</span><br><span class="line">        <span class="string">&#x27;job&#x27;</span>: path[2],</span><br><span class="line">        <span class="string">&#x27;build_num&#x27;</span>: path[3],</span><br><span class="line">        <span class="string">&#x27;url&#x27;</span>: url</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">def check_keyword_in_log(build_info):</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;检查构建日志是否包含关键标识&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    log_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/job/&#123;build_info[&#x27;job&#x27;]&#125;/&#123;build_info[&#x27;build_num&#x27;]&#125;/logText/progressiveText&quot;</span></span><br><span class="line">    try:</span><br><span class="line">        response = session.get(log_url, headers=crumb_header)</span><br><span class="line">        <span class="built_in">return</span> KEYWORD <span class="keyword">in</span> response.text</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 检查日志失败: &#123;build_info[&#x27;job&#x27;]&#125; #&#123;build_info[&#x27;build_num&#x27;]&#125; - &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br><span class="line"></span><br><span class="line">def adjust_executors(target_num):</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;调整节点并发执行器数量&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    config_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml&quot;</span></span><br><span class="line">    </span><br><span class="line">    try:</span><br><span class="line">        <span class="comment"># 获取当前节点配置</span></span><br><span class="line">        response = session.get(config_url, headers=crumb_header)</span><br><span class="line">        root = ET.fromstring(response.content)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 定位并发数配置节点</span></span><br><span class="line">        num_exec = root.find(<span class="string">&quot;.//numExecutors&quot;</span>)</span><br><span class="line">        num_exec.text = str(target_num)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 提交修改后的配置</span></span><br><span class="line">        response = session.post(</span><br><span class="line">            config_url,</span><br><span class="line">            headers=&#123;<span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;text/xml&#x27;</span>&#125;,</span><br><span class="line">            data=ET.tostring(root),</span><br><span class="line">            auth=session.auth</span><br><span class="line">        )</span><br><span class="line">        <span class="built_in">return</span> response.status_code == 200</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 调整并发数失败: &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br><span class="line"></span><br><span class="line">def get_load_psutil():</span><br><span class="line">    <span class="comment"># 获取系统负载和CPU核心数</span></span><br><span class="line">    load = psutil.getloadavg()</span><br><span class="line">    cpu_count = psutil.cpu_count()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 判断负载趋势：1min &lt; 5min &lt; 15min</span></span><br><span class="line">    is_decreasing = (load[0] &lt; load[1] &lt; load[2])</span><br><span class="line"></span><br><span class="line">    <span class="built_in">return</span> &#123;</span><br><span class="line">        <span class="string">&#x27;1min&#x27;</span>: load[0],</span><br><span class="line">        <span class="string">&#x27;5min&#x27;</span>: load[1],</span><br><span class="line">        <span class="string">&#x27;15min&#x27;</span>: load[2],</span><br><span class="line">        <span class="string">&#x27;cpu_cores&#x27;</span>: cpu_count,</span><br><span class="line">        <span class="string">&#x27;load_per_core&#x27;</span>: load[0] / cpu_count,</span><br><span class="line">        <span class="string">&#x27;is_decreasing&#x27;</span>: is_decreasing</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    try:</span><br><span class="line">        init_jenkins()  <span class="comment"># 初始化</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 获取当前运行任务</span></span><br><span class="line">        builds = get_active_builds()</span><br><span class="line">        <span class="comment"># 统计通过关键阶段的构建数量</span></span><br><span class="line">        passed = <span class="built_in">sum</span>(1 <span class="keyword">for</span> build <span class="keyword">in</span> builds <span class="keyword">if</span> check_keyword_in_log(build))</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> passed &gt; 0:</span><br><span class="line">            <span class="comment"># 动态调整策略：当前通过数 + 1</span></span><br><span class="line">            target = passed + 1</span><br><span class="line">            logger.info(f<span class="string">&quot;√ 检测到 &#123;passed&#125; 个任务通过编译，尝试调整并发数到 &#123;target&#125;&quot;</span>)</span><br><span class="line">            <span class="comment"># 获取系统负载信息</span></span><br><span class="line">            load_info = get_load_psutil()</span><br><span class="line">            <span class="keyword">if</span> load_info[<span class="string">&#x27;is_decreasing&#x27;</span>] or load_info[<span class="string">&#x27;load_per_core&#x27;</span>] &lt; 0.5:</span><br><span class="line">                <span class="keyword">if</span> load_info[<span class="string">&#x27;is_decreasing&#x27;</span>]:</span><br><span class="line">                    logger.info(<span class="string">&quot;√ 负载正在下降，可以进行调整&quot;</span>)</span><br><span class="line">                <span class="keyword">if</span> load_info[<span class="string">&#x27;load_per_core&#x27;</span>] &lt; 0.5:</span><br><span class="line">                    logger.info(f<span class="string">&quot;√ 低负载(&#123;load_info[&#x27;load_per_core&#x27;]:.2f&#125;&lt;0.5)&quot;</span>)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 提升并发数</span></span><br><span class="line">                <span class="keyword">if</span> adjust_executors(target):</span><br><span class="line">                    logger.info(<span class="string">&quot;~ 等待配置生效...&quot;</span>)</span><br><span class="line">                    time.sleep(2)</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 恢复原始配置</span></span><br><span class="line">                    <span class="keyword">if</span> adjust_executors(original_executors):</span><br><span class="line">                        logger.info(f<span class="string">&quot;√ 已恢复并发数到 &#123;original_executors&#125;&quot;</span>)</span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        logger.error(<span class="string">&quot;× 恢复并发数失败！&quot;</span>)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    logger.error(<span class="string">&quot;× 调整并发数失败！&quot;</span>)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                logger.warning(<span class="string">&quot;! 负载未呈现下降趋势，拒绝调整&quot;</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            logger.info(f<span class="string">&quot;~ 当前无任务通过编译阶段，维持并发数 &#123;original_executors&#125;&quot;</span>)</span><br><span class="line">            </span><br><span class="line">    except KeyboardInterrupt:</span><br><span class="line">        logger.error(<span class="string">&quot;\n× 监控已手动终止&quot;</span>)</span><br><span class="line">    except Exception as e:</span><br><span class="line">        logger.error(f<span class="string">&quot;× 发生未知错误: &#123;e&#125;&quot;</span>, exc_info=True)</span><br><span class="line">        time.sleep(10)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 测试用——结构化日志记录</span></span><br><span class="line">    result = get_load_psutil()</span><br><span class="line">    logger.info(<span class="string">&quot;&quot;</span><span class="string">&quot;</span></span><br><span class="line"><span class="string">    [系统负载情况]</span></span><br><span class="line"><span class="string">    1分钟负载: %.2f</span></span><br><span class="line"><span class="string">    5分钟负载: %.2f</span></span><br><span class="line"><span class="string">    15分钟负载: %.2f</span></span><br><span class="line"><span class="string">    CPU核心数: %d</span></span><br><span class="line"><span class="string">    单核负载率: %.2f</span></span><br><span class="line"><span class="string">    是否负载下降: %s</span></span><br><span class="line"><span class="string">    &quot;</span><span class="string">&quot;&quot;</span>, </span><br><span class="line">    result[<span class="string">&#x27;1min&#x27;</span>], result[<span class="string">&#x27;5min&#x27;</span>], result[<span class="string">&#x27;15min&#x27;</span>],</span><br><span class="line">    result[<span class="string">&#x27;cpu_cores&#x27;</span>], result[<span class="string">&#x27;load_per_core&#x27;</span>],</span><br><span class="line">    <span class="string">&#x27;是&#x27;</span> <span class="keyword">if</span> result[<span class="string">&#x27;is_decreasing&#x27;</span>] <span class="keyword">else</span> <span class="string">&#x27;否&#x27;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">import</span> requests
+<span class="token function">import</span> <span class="token function">time</span>
+<span class="token function">import</span> psutil
+<span class="token function">import</span> logging
+from logging.handlers <span class="token function">import</span> RotatingFileHandler
+<span class="token function">import</span> os
+from xml.etree <span class="token function">import</span> ElementTree as ET  <span class="token comment"># 解析与修改XML配置</span>
+from urllib.parse <span class="token function">import</span> urlparse
+
+<span class="token comment"># -------------------- 配置区域 --------------------</span>
+JENKINS_URL <span class="token operator">=</span> <span class="token string">"xxxx"</span>
+NODE_NAME <span class="token operator">=</span> <span class="token string">"slave-1"</span>
+ADMIN <span class="token operator">=</span> <span class="token string">"xxxx"</span>
+API_TOKEN <span class="token operator">=</span> <span class="token string">"xxxx"</span>
+KEYWORD <span class="token operator">=</span> <span class="token string">"100%"</span>                                <span class="token comment"># 查询日志的关键字</span>
+LOG_PATH <span class="token operator">=</span> <span class="token string">"xxxx"</span>     <span class="token comment"># 日志文件完整路径</span>
+
+<span class="token comment"># -------------------- 日志配置 --------------------</span>
+log_dir <span class="token operator">=</span> os.path.dirname<span class="token punctuation">(</span>LOG_PATH<span class="token punctuation">)</span>
+
+<span class="token comment"># 创建日志目录</span>
+try:
+    os.makedirs<span class="token punctuation">(</span>log_dir, <span class="token assign-left variable">exist_ok</span><span class="token operator">=</span>True<span class="token punctuation">)</span>
+except PermissionError as e:
+    raise SystemExit<span class="token punctuation">(</span>f<span class="token string">"✖ 无权限创建日志目录: &#123;log_dir&#125;<span class="token entity" title="\n">\n</span>错误详情: &#123;e&#125;"</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 配置日志系统</span>
+logger <span class="token operator">=</span> logging.getLogger<span class="token punctuation">(</span>__name__<span class="token punctuation">)</span>
+logger.setLevel<span class="token punctuation">(</span>logging.DEBUG<span class="token punctuation">)</span>
+
+<span class="token comment"># 文件日志处理器（自动轮转，大小5MB）</span>
+file_handler <span class="token operator">=</span> RotatingFileHandler<span class="token punctuation">(</span>
+    <span class="token assign-left variable">filename</span><span class="token operator">=</span>LOG_PATH,
+    <span class="token assign-left variable">maxBytes</span><span class="token operator">=</span><span class="token number">5</span>*1024*1024,
+    <span class="token assign-left variable">backupCount</span><span class="token operator">=</span><span class="token number">5</span>,
+    <span class="token assign-left variable">encoding</span><span class="token operator">=</span><span class="token string">'utf-8'</span>
+<span class="token punctuation">)</span>
+file_handler.setFormatter<span class="token punctuation">(</span>logging.Formatter<span class="token punctuation">(</span>
+    <span class="token string">'[%(asctime)s] [%(levelname).4s] %(message)s'</span>
+<span class="token punctuation">))</span>
+
+<span class="token comment"># 控制台处理器</span>
+console_handler <span class="token operator">=</span> logging.StreamHandler<span class="token punctuation">(</span><span class="token punctuation">)</span>
+console_handler.setFormatter<span class="token punctuation">(</span>logging.Formatter<span class="token punctuation">(</span>
+    <span class="token string">'[%(levelname)s] %(message)s'</span>
+<span class="token punctuation">))</span>
+
+<span class="token comment"># 移除旧处理器后添加新处理器</span>
+logger.handlers.clear<span class="token punctuation">(</span><span class="token punctuation">)</span>
+logger.addHandler<span class="token punctuation">(</span>file_handler<span class="token punctuation">)</span>
+logger.addHandler<span class="token punctuation">(</span>console_handler<span class="token punctuation">)</span>
+<span class="token comment"># -------------------------------------------------</span>
+
+<span class="token comment"># --------------- 全局状态存储 ---------------</span>
+session <span class="token operator">=</span> requests.Session<span class="token punctuation">(</span><span class="token punctuation">)</span>        <span class="token comment"># 保持会话的request对象</span>
+session.auth <span class="token operator">=</span> <span class="token punctuation">(</span>ADMIN, API_TOKEN<span class="token punctuation">)</span>
+crumb_header <span class="token operator">=</span> None                 
+original_executors <span class="token operator">=</span> <span class="token number">1</span>              <span class="token comment"># 原始并发执行器数量</span>
+
+def init_jenkins<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    <span class="token string">""</span>"初始化 Jenkins 连接<span class="token string">""</span>"
+    global crumb_header, original_executors
+    crumb_header <span class="token operator">=</span> get_crumb_header<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment"># 获取CSRF令牌</span>
+    <span class="token comment"># original_executors = get_current_executors()  # 获取初始并发数</span>
+    print<span class="token punctuation">(</span>f<span class="token string">"√ 初始化完成 | 原始并发数: &#123;original_executors&#125;"</span><span class="token punctuation">)</span>
+
+def get_crumb_header<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    <span class="token string">""</span>"获取Jenkins CSRF防护令牌<span class="token string">""</span>"
+    crumb_url <span class="token operator">=</span> f<span class="token string">"&#123;JENKINS_URL&#125;/crumbIssuer/api/json"</span>
+    try:
+        response <span class="token operator">=</span> session.get<span class="token punctuation">(</span>crumb_url<span class="token punctuation">)</span>
+        data <span class="token operator">=</span> response.json<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> <span class="token punctuation">&#123;</span>data<span class="token punctuation">[</span><span class="token string">'crumbRequestField'</span><span class="token punctuation">]</span>: data<span class="token punctuation">[</span><span class="token string">'crumb'</span><span class="token punctuation">]</span><span class="token punctuation">&#125;</span>
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"× 获取 CSRF 失败: &#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> None
+
+def get_current_executors<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    <span class="token string">""</span>"获取当前并发执行器配置<span class="token string">""</span>"
+    config_url <span class="token operator">=</span> f<span class="token string">"&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml"</span>
+    try:
+        response <span class="token operator">=</span> session.get<span class="token punctuation">(</span>config_url, <span class="token assign-left variable">headers</span><span class="token operator">=</span>crumb_header<span class="token punctuation">)</span>
+        root <span class="token operator">=</span> ET.fromstring<span class="token punctuation">(</span>response.content<span class="token punctuation">)</span>
+        <span class="token comment"># 从 XML 配置中提取并发数配置</span>
+        <span class="token builtin class-name">return</span> int<span class="token punctuation">(</span>root.find<span class="token punctuation">(</span><span class="token string">".//numExecutors"</span><span class="token punctuation">)</span>.text<span class="token punctuation">)</span>
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"× 获取并发数失败: &#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> <span class="token number">1</span>
+
+def get_active_builds<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    <span class="token string">""</span>"获取当前运行中的构建任务列表，返回任务url<span class="token string">""</span>"
+    api_url <span class="token operator">=</span> f<span class="token string">"&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/api/json"</span>
+    params <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token string">'tree'</span><span class="token builtin class-name">:</span> <span class="token string">'executors[currentExecutable[url]]'</span><span class="token punctuation">&#125;</span>
+    
+    try:
+        response <span class="token operator">=</span> session.get<span class="token punctuation">(</span>api_url, <span class="token assign-left variable">headers</span><span class="token operator">=</span>crumb_header, <span class="token assign-left variable">params</span><span class="token operator">=</span>params<span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> <span class="token punctuation">[</span>
+            parse_build_info<span class="token punctuation">(</span>executor<span class="token punctuation">[</span><span class="token string">'currentExecutable'</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            <span class="token keyword">for</span> <span class="token for-or-select variable">executor</span> <span class="token keyword">in</span> response.json<span class="token punctuation">(</span><span class="token punctuation">)</span>.get<span class="token punctuation">(</span><span class="token string">'executors'</span>, <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> executor.get<span class="token punctuation">(</span><span class="token string">'currentExecutable'</span>, <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>.get<span class="token punctuation">(</span><span class="token string">'url'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">]</span>
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"× 获取任务失败: &#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+def parse_build_info<span class="token punctuation">(</span>url<span class="token punctuation">)</span>:
+    <span class="token string">""</span>"解析构建任务URL，返回一个字典<span class="token string">""</span>"
+    path <span class="token operator">=</span> urlparse<span class="token punctuation">(</span>url<span class="token punctuation">)</span>.path.split<span class="token punctuation">(</span><span class="token string">'/'</span><span class="token punctuation">)</span>
+    <span class="token builtin class-name">return</span> <span class="token punctuation">&#123;</span>
+        <span class="token string">'job'</span><span class="token builtin class-name">:</span> path<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>,
+        <span class="token string">'build_num'</span><span class="token builtin class-name">:</span> path<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span>,
+        <span class="token string">'url'</span><span class="token builtin class-name">:</span> url
+    <span class="token punctuation">&#125;</span>
+
+def check_keyword_in_log<span class="token punctuation">(</span>build_info<span class="token punctuation">)</span>:
+    <span class="token string">""</span>"检查构建日志是否包含关键标识<span class="token string">""</span>"
+    log_url <span class="token operator">=</span> f<span class="token string">"&#123;JENKINS_URL&#125;/job/&#123;build_info['job']&#125;/&#123;build_info['build_num']&#125;/logText/progressiveText"</span>
+    try:
+        response <span class="token operator">=</span> session.get<span class="token punctuation">(</span>log_url, <span class="token assign-left variable">headers</span><span class="token operator">=</span>crumb_header<span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> KEYWORD <span class="token keyword">in</span> response.text
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"× 检查日志失败: &#123;build_info['job']&#125; #&#123;build_info['build_num']&#125; - &#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> False
+
+def adjust_executors<span class="token punctuation">(</span>target_num<span class="token punctuation">)</span>:
+    <span class="token string">""</span>"调整节点并发执行器数量<span class="token string">""</span>"
+    config_url <span class="token operator">=</span> f<span class="token string">"&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml"</span>
+    
+    try:
+        <span class="token comment"># 获取当前节点配置</span>
+        response <span class="token operator">=</span> session.get<span class="token punctuation">(</span>config_url, <span class="token assign-left variable">headers</span><span class="token operator">=</span>crumb_header<span class="token punctuation">)</span>
+        root <span class="token operator">=</span> ET.fromstring<span class="token punctuation">(</span>response.content<span class="token punctuation">)</span>
+        
+        <span class="token comment"># 定位并发数配置节点</span>
+        num_exec <span class="token operator">=</span> root.find<span class="token punctuation">(</span><span class="token string">".//numExecutors"</span><span class="token punctuation">)</span>
+        num_exec.text <span class="token operator">=</span> str<span class="token punctuation">(</span>target_num<span class="token punctuation">)</span>
+        
+        <span class="token comment"># 提交修改后的配置</span>
+        response <span class="token operator">=</span> session.post<span class="token punctuation">(</span>
+            config_url,
+            <span class="token assign-left variable">headers</span><span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">'Content-Type'</span><span class="token builtin class-name">:</span> <span class="token string">'text/xml'</span><span class="token punctuation">&#125;</span>,
+            <span class="token assign-left variable">data</span><span class="token operator">=</span>ET.tostring<span class="token punctuation">(</span>root<span class="token punctuation">)</span>,
+            <span class="token assign-left variable">auth</span><span class="token operator">=</span>session.auth
+        <span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> response.status_code <span class="token operator">==</span> <span class="token number">200</span>
+    except Exception as e:
+        print<span class="token punctuation">(</span>f<span class="token string">"× 调整并发数失败: &#123;e&#125;"</span><span class="token punctuation">)</span>
+        <span class="token builtin class-name">return</span> False
+
+def get_load_psutil<span class="token punctuation">(</span><span class="token punctuation">)</span>:
+    <span class="token comment"># 获取系统负载和CPU核心数</span>
+    load <span class="token operator">=</span> psutil.getloadavg<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    cpu_count <span class="token operator">=</span> psutil.cpu_count<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># 判断负载趋势：1min &lt; 5min &lt; 15min</span>
+    is_decreasing <span class="token operator">=</span> <span class="token punctuation">(</span>load<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> load<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> load<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token builtin class-name">return</span> <span class="token punctuation">&#123;</span>
+        <span class="token string">'1min'</span><span class="token builtin class-name">:</span> load<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>,
+        <span class="token string">'5min'</span><span class="token builtin class-name">:</span> load<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>,
+        <span class="token string">'15min'</span><span class="token builtin class-name">:</span> load<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>,
+        <span class="token string">'cpu_cores'</span><span class="token builtin class-name">:</span> cpu_count,
+        <span class="token string">'load_per_core'</span><span class="token builtin class-name">:</span> load<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> / cpu_count,
+        <span class="token string">'is_decreasing'</span><span class="token builtin class-name">:</span> is_decreasing
+    <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token builtin class-name">:</span>
+    try:
+        init_jenkins<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment"># 初始化</span>
+        
+        <span class="token comment"># 获取当前运行任务</span>
+        builds <span class="token operator">=</span> get_active_builds<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment"># 统计通过关键阶段的构建数量</span>
+        passed <span class="token operator">=</span> sum<span class="token punctuation">(</span><span class="token number">1</span> <span class="token keyword">for</span> <span class="token for-or-select variable">build</span> <span class="token keyword">in</span> builds <span class="token keyword">if</span> check_keyword_in_log<span class="token punctuation">(</span>build<span class="token punctuation">))</span>
+        
+        <span class="token keyword">if</span> passed <span class="token operator">></span> <span class="token number">0</span>:
+            <span class="token comment"># 动态调整策略：当前通过数 + 1</span>
+            target <span class="token operator">=</span> passed + <span class="token number">1</span>
+            logger.info<span class="token punctuation">(</span>f<span class="token string">"√ 检测到 &#123;passed&#125; 个任务通过编译，尝试调整并发数到 &#123;target&#125;"</span><span class="token punctuation">)</span>
+            <span class="token comment"># 获取系统负载信息</span>
+            load_info <span class="token operator">=</span> get_load_psutil<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> load_info<span class="token punctuation">[</span><span class="token string">'is_decreasing'</span><span class="token punctuation">]</span> or load_info<span class="token punctuation">[</span><span class="token string">'load_per_core'</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0.5</span>:
+                <span class="token keyword">if</span> load_info<span class="token punctuation">[</span><span class="token string">'is_decreasing'</span><span class="token punctuation">]</span>:
+                    logger.info<span class="token punctuation">(</span><span class="token string">"√ 负载正在下降，可以进行调整"</span><span class="token punctuation">)</span>
+                <span class="token keyword">if</span> load_info<span class="token punctuation">[</span><span class="token string">'load_per_core'</span><span class="token punctuation">]</span> <span class="token operator">&lt;</span> <span class="token number">0.5</span>:
+                    logger.info<span class="token punctuation">(</span>f<span class="token string">"√ 低负载(&#123;load_info['load_per_core']:.2f&#125;&lt;0.5)"</span><span class="token punctuation">)</span>
+
+                <span class="token comment"># 提升并发数</span>
+                <span class="token keyword">if</span> adjust_executors<span class="token punctuation">(</span>target<span class="token punctuation">)</span>:
+                    logger.info<span class="token punctuation">(</span><span class="token string">"~ 等待配置生效..."</span><span class="token punctuation">)</span>
+                    time.sleep<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+                    
+                    <span class="token comment"># 恢复原始配置</span>
+                    <span class="token keyword">if</span> adjust_executors<span class="token punctuation">(</span>original_executors<span class="token punctuation">)</span>:
+                        logger.info<span class="token punctuation">(</span>f<span class="token string">"√ 已恢复并发数到 &#123;original_executors&#125;"</span><span class="token punctuation">)</span>
+                    else:
+                        logger.error<span class="token punctuation">(</span><span class="token string">"× 恢复并发数失败！"</span><span class="token punctuation">)</span>
+                else:
+                    logger.error<span class="token punctuation">(</span><span class="token string">"× 调整并发数失败！"</span><span class="token punctuation">)</span>
+            else:
+                logger.warning<span class="token punctuation">(</span><span class="token string">"! 负载未呈现下降趋势，拒绝调整"</span><span class="token punctuation">)</span>
+        else:
+            logger.info<span class="token punctuation">(</span>f<span class="token string">"~ 当前无任务通过编译阶段，维持并发数 &#123;original_executors&#125;"</span><span class="token punctuation">)</span>
+            
+    except KeyboardInterrupt:
+        logger.error<span class="token punctuation">(</span><span class="token string">"<span class="token entity" title="\n">\n</span>× 监控已手动终止"</span><span class="token punctuation">)</span>
+    except Exception as e:
+        logger.error<span class="token punctuation">(</span>f<span class="token string">"× 发生未知错误: &#123;e&#125;"</span>, <span class="token assign-left variable">exc_info</span><span class="token operator">=</span>True<span class="token punctuation">)</span>
+        time.sleep<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># 测试用——结构化日志记录</span>
+    result <span class="token operator">=</span> get_load_psutil<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    logger.info<span class="token punctuation">(</span><span class="token string">""</span>"
+    <span class="token punctuation">[</span>系统负载情况<span class="token punctuation">]</span>
+    <span class="token number">1</span>分钟负载: %.2f
+    <span class="token number">5</span>分钟负载: %.2f
+    <span class="token number">15</span>分钟负载: %.2f
+    CPU核心数: %d
+    单核负载率: %.2f
+    是否负载下降: %s
+    <span class="token string">""</span>", 
+    result<span class="token punctuation">[</span><span class="token string">'1min'</span><span class="token punctuation">]</span>, result<span class="token punctuation">[</span><span class="token string">'5min'</span><span class="token punctuation">]</span>, result<span class="token punctuation">[</span><span class="token string">'15min'</span><span class="token punctuation">]</span>,
+    result<span class="token punctuation">[</span><span class="token string">'cpu_cores'</span><span class="token punctuation">]</span>, result<span class="token punctuation">[</span><span class="token string">'load_per_core'</span><span class="token punctuation">]</span>,
+    <span class="token string">'是'</span> <span class="token keyword">if</span> result<span class="token punctuation">[</span><span class="token string">'is_decreasing'</span><span class="token punctuation">]</span> <span class="token keyword">else</span> <span class="token string">'否'</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6559,36 +6783,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7053,13 +7247,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8100,13 +8294,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8559,14 +8753,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8574,14 +8768,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

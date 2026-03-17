@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移 也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源 也可以用来做主备的harbor，可以说相当有用 下载1234567#linux系统，x86适用wget https:&#x2F;&#x2F;github.com&#x2F;lework&#x2F;skopeo-binary&#x2F;releases&#x2F;download&#x2F;v1.17.0&#x2F;skopeo-linux-amd64sud">
+    <meta name="description" content="能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移 也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源 也可以用来做主备的harbor，可以说相当有用 下载#linux系统，x86适用 wget https:&#x2F;&#x2F;github.com&#x2F;lework&#x2F;skopeo-binary&#x2F;releases&#x2F;download&#x2F;v1.17.0&#x2F;skopeo-linux-amd64 sudo mv">
 <meta property="og:type" content="article">
 <meta property="og:title" content="镜像管理工具skopeo部署与实战">
 <meta property="og:url" content="https://akemi.zj.cn/2024/12/01/K8s-skopeo/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移 也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源 也可以用来做主备的harbor，可以说相当有用 下载1234567#linux系统，x86适用wget https:&#x2F;&#x2F;github.com&#x2F;lework&#x2F;skopeo-binary&#x2F;releases&#x2F;download&#x2F;v1.17.0&#x2F;skopeo-linux-amd64sud">
+<meta property="og:description" content="能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移 也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源 也可以用来做主备的harbor，可以说相当有用 下载#linux系统，x86适用 wget https:&#x2F;&#x2F;github.com&#x2F;lework&#x2F;skopeo-binary&#x2F;releases&#x2F;download&#x2F;v1.17.0&#x2F;skopeo-linux-amd64 sudo mv">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-11-30T17:01:52.000Z">
 <meta property="article:modified_time" content="2026-03-17T13:11:50.099Z">
@@ -493,39 +493,220 @@
         <p>能够非常方便的管理仓库中的镜像，在生产环境中做镜像转移</p>
 <p>也可以挂了代理之后，拿来去搬运国外的镜像到本地，搭建自己的镜像源</p>
 <p>也可以用来做主备的harbor，可以说相当有用</p>
-<h2 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#linux系统，x86适用</span></span><br><span class="line">wget https://github.com/lework/skopeo-binary/releases/download/v1.17.0/skopeo-linux-amd64</span><br><span class="line">sudo <span class="built_in">mv</span> skopeo-linux-amd64 /usr/bin/skopeo</span><br><span class="line">sudo <span class="built_in">chmod</span> +x /usr/bin/skopeo </span><br><span class="line"></span><br><span class="line">skopeo --version</span><br><span class="line"><span class="comment">#skopeo version 1.17.0</span></span><br></pre></td></tr></table></figure>
+<h2 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#linux系统，x86适用</span>
+<span class="token function">wget</span> https://github.com/lework/skopeo-binary/releases/download/v1.17.0/skopeo-linux-amd64
+<span class="token function">sudo</span> <span class="token function">mv</span> skopeo-linux-amd64 /usr/bin/skopeo
+<span class="token function">sudo</span> <span class="token function">chmod</span> +x /usr/bin/skopeo 
 
-<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 复制镜像</span></span><br><span class="line">skopeo copy docker://xxx docker://xxx</span><br><span class="line">从docker仓库复制到docker仓库</span><br><span class="line">如果需要使用仓库之间拷贝，则需要两个仓库都进行登录</span><br><span class="line">并且在复制时，指定--tls-verify=<span class="literal">false</span></span><br><span class="line"></span><br><span class="line">skopeo copy docker://xxx <span class="built_in">dir</span>:/xxx</span><br><span class="line">从docker仓库复制到本地目录</span><br><span class="line"></span><br><span class="line">skopeo copy <span class="built_in">dir</span>:/xxx docker://xxx</span><br><span class="line">从本地复制到docker仓库中</span><br><span class="line"></span><br><span class="line"><span class="comment"># 显示镜像tag</span></span><br><span class="line">skopeo list-tags docker://xxx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除镜像tag</span></span><br><span class="line">skopeo delete docker://xxx:tag</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查镜像信息，返回详细信息</span></span><br><span class="line">skopeo inspect docker://xxx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 登录仓库，类似于docker</span></span><br><span class="line">skopeo login </span><br><span class="line">skopeo <span class="built_in">logout</span></span><br></pre></td></tr></table></figure>
+skopeo <span class="token parameter variable">--version</span>
+<span class="token comment">#skopeo version 1.17.0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 复制镜像</span>
+skopeo copy docker://xxx docker://xxx
+从docker仓库复制到docker仓库
+如果需要使用仓库之间拷贝，则需要两个仓库都进行登录
+并且在复制时，指定--tls-verify<span class="token operator">=</span>false
+
+skopeo copy docker://xxx dir:/xxx
+从docker仓库复制到本地目录
+
+skopeo copy dir:/xxx docker://xxx
+从本地复制到docker仓库中
+
+<span class="token comment"># 显示镜像tag</span>
+skopeo list-tags docker://xxx
+
+<span class="token comment"># 删除镜像tag</span>
+skopeo delete docker://xxx:tag
+
+<span class="token comment"># 检查镜像信息，返回详细信息</span>
+skopeo inspect docker://xxx
+
+<span class="token comment"># 登录仓库，类似于docker</span>
+skopeo login 
+skopeo <span class="token builtin class-name">logout</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>其余选项</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">--insecure-policy 不进行策略检查</span><br><span class="line">--debug 调试，输出更详细信息</span><br><span class="line">--tls-verify=<span class="literal">false</span> 不使用tls证书进行验证，如果使用账号密码进行登录的docker仓库，需要使用</span><br><span class="line">--authfile 指定认证文件</span><br><span class="line"></span><br><span class="line">--src-tls-verify</span><br><span class="line">--dest-tls-verify</span><br><span class="line">用来接替--tls-verify的参数</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">--insecure-policy 不进行策略检查
+<span class="token parameter variable">--debug</span> 调试，输出更详细信息
+--tls-verify<span class="token operator">=</span>false 不使用tls证书进行验证，如果使用账号密码进行登录的docker仓库，需要使用
+<span class="token parameter variable">--authfile</span> 指定认证文件
+
+--src-tls-verify
+--dest-tls-verify
+用来接替--tls-verify的参数<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="搭建两台harbor进行测试"><a href="#搭建两台harbor进行测试" class="headerlink" title="搭建两台harbor进行测试"></a>搭建两台harbor进行测试</h2><p>一般适用于两台不同环境中的harbor进行镜像同步，如果是同网段的harbor，可以直接做主从复制</p>
 <p>为了部署方便我给他放同网段了</p>
 <p><strong>环境</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">VMware WorkStation 17 Pro</span><br><span class="line">CentOS 7.9.2009</span><br><span class="line">4G4C 20G</span><br><span class="line"></span><br><span class="line">192.168.8.130 harbor1</span><br><span class="line">192.168.8.131 harbor2</span><br><span class="line">192.168.8.132 <span class="built_in">test</span>（中间测试主机）</span><br><span class="line"></span><br><span class="line">harbor使用离线安装,版本v2.10</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">VMware WorkStation <span class="token number">17</span> Pro
+CentOS <span class="token number">7.9</span>.2009
+4G4C 20G
 
-<h3 id="快速部署harbor"><a href="#快速部署harbor" class="headerlink" title="快速部署harbor"></a><strong>快速部署harbor</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 自签发证书</span></span><br><span class="line"><span class="built_in">mkdir</span> /ssl</span><br><span class="line"><span class="built_in">cd</span> /ssl</span><br><span class="line">openssl genrsa -out ca.key 2048</span><br><span class="line">openssl req -new -x509 -days 365 -key ca.key -out ca.pem</span><br><span class="line">openssl genrsa -out harbor.key 2048</span><br><span class="line">openssl req -new -key harbor.key -out harbor.csr</span><br><span class="line">openssl x509 -req -<span class="keyword">in</span> harbor.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out harbor.pem -days 365</span><br><span class="line"></span><br><span class="line"><span class="comment"># 换源</span></span><br><span class="line"><span class="built_in">mv</span> /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup</span><br><span class="line">wget -O /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line">yum -y install wget net-tools yum-utils nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack</span><br><span class="line">yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line"></span><br><span class="line">yum clean all &amp;&amp; yum makecache</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安全</span></span><br><span class="line">yum -y install iptables-services</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld --now</span><br><span class="line">systemctl <span class="built_in">disable</span> iptables --now</span><br><span class="line">iptables -F</span><br><span class="line">sed -i <span class="string">&#x27;s/SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line">setenforce 0</span><br><span class="line">sed -i <span class="string">&#x27;s/^server/#server/g&#x27;</span> /etc/chrony.conf</span><br><span class="line">sed -i <span class="string">&#x27;1s/^/server cn.pool.ntp.org iburst\n/&#x27;</span> /etc/chrony.conf</span><br><span class="line">systemctl restart chronyd.service</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/hosts &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span></span><br><span class="line"><span class="string">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span></span><br><span class="line"><span class="string">192.168.8.130 harbor1</span></span><br><span class="line"><span class="string">192.168.8.131 harbor2</span></span><br><span class="line"><span class="string">192.168.8.132 test</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">yum -y install docker-ce</span><br><span class="line">yum -y update</span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/docker/daemon.json &lt;&lt; <span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="string">&quot;registry-mirrors&quot;</span>: [</span><br><span class="line">		<span class="string">&quot;https://hub-mirror.c.163.com&quot;</span>,</span><br><span class="line">		<span class="string">&quot;https://docker.m.daocloud.io&quot;</span>,</span><br><span class="line">		<span class="string">&quot;https://ghcr.io&quot;</span>,</span><br><span class="line">		<span class="string">&quot;https://mirror.baidubce.com&quot;</span>,</span><br><span class="line">		<span class="string">&quot;https://docker.nju.edu.cn&quot;</span></span><br><span class="line">	],</span><br><span class="line">		<span class="string">&quot;insecure-registries&quot;</span>: [<span class="string">&quot;192.168.8.130&quot;</span>,<span class="string">&quot;192.168.8.131&quot;</span>]</span><br><span class="line">&#125;</span><br><span class="line">EOF</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker.service</span><br><span class="line">systemctl <span class="built_in">enable</span> docker.service --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启用转发</span></span><br><span class="line">modprobe br_netfilter</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-ip6tables = 1</span></span><br><span class="line"><span class="string">net.bridge.bridge-nf-call-iptables = 1</span></span><br><span class="line"><span class="string">net.ipv4.ip_forward = 1&quot;</span> &gt; /etc/sysctl.d/docker.conf</span><br><span class="line">sysctl -p /etc/sysctl.d/docker.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装docker-compose</span></span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">wget https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64</span><br><span class="line"><span class="built_in">mkdir</span> -p /usr/bin/docker-compose</span><br><span class="line"><span class="built_in">mv</span> docker-compose-linux-x86_64 /usr/bin/docker-compose/</span><br><span class="line"><span class="built_in">chmod</span> +x /usr/bin/docker-compose</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装harbor</span></span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">tar zxvf harbor-offline-installer-v2.10.0.tgz</span><br><span class="line"><span class="built_in">cd</span> harbor</span><br><span class="line"><span class="built_in">cp</span> harbor.yml.tmpl harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s/^hostname.*/hostname: harbor1/&#x27;</span> harbor.yml <span class="comment">#根据实际主机名修改</span></span><br><span class="line">sed -i <span class="string">&#x27;s#/your/certificate/path#/ssl/harbor.pem#&#x27;</span> harbor.yml</span><br><span class="line">sed -i <span class="string">&#x27;s#/your/private/key/path#/ssl/harbor.key#g&#x27;</span> harbor.yml</span><br><span class="line">./install.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装完成</span></span><br></pre></td></tr></table></figure>
+<span class="token number">192.168</span>.8.130 harbor1
+<span class="token number">192.168</span>.8.131 harbor2
+<span class="token number">192.168</span>.8.132 test（中间测试主机）
+
+harbor使用离线安装,版本v2.10<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="快速部署harbor"><a href="#快速部署harbor" class="headerlink" title="快速部署harbor"></a><strong>快速部署harbor</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 自签发证书</span>
+<span class="token function">mkdir</span> /ssl
+<span class="token builtin class-name">cd</span> /ssl
+openssl genrsa <span class="token parameter variable">-out</span> ca.key <span class="token number">2048</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-x509</span> <span class="token parameter variable">-days</span> <span class="token number">365</span> <span class="token parameter variable">-key</span> ca.key <span class="token parameter variable">-out</span> ca.pem
+openssl genrsa <span class="token parameter variable">-out</span> harbor.key <span class="token number">2048</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-key</span> harbor.key <span class="token parameter variable">-out</span> harbor.csr
+openssl x509 <span class="token parameter variable">-req</span> <span class="token parameter variable">-in</span> harbor.csr <span class="token parameter variable">-CA</span> ca.pem <span class="token parameter variable">-CAkey</span> ca.key <span class="token parameter variable">-CAcreateserial</span> <span class="token parameter variable">-out</span> harbor.pem <span class="token parameter variable">-days</span> <span class="token number">365</span>
+
+<span class="token comment"># 换源</span>
+<span class="token function">mv</span> /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+<span class="token function">wget</span> <span class="token parameter variable">-O</span> /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">wget</span> net-tools yum-utils nfs-utils lrzsz gcc gcc-c++ <span class="token function">make</span> cmake libxml2-devel openssl-devel <span class="token function">curl</span> curl-devel <span class="token function">unzip</span> <span class="token function">sudo</span> ntp libaio-devel <span class="token function">wget</span> <span class="token function">vim</span> ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat ipvsadm conntrack
+yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+yum clean all <span class="token operator">&amp;&amp;</span> yum makecache
+
+<span class="token comment"># 安全</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> iptables-services
+systemctl disable firewalld <span class="token parameter variable">--now</span>
+systemctl disable iptables <span class="token parameter variable">--now</span>
+iptables <span class="token parameter variable">-F</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/SELINUX=.*/SELINUX=disabled/'</span> /etc/selinux/config
+setenforce <span class="token number">0</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^server/#server/g'</span> /etc/chrony.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'1s/^/server cn.pool.ntp.org iburst\n/'</span> /etc/chrony.conf
+systemctl restart chronyd.service
+
+<span class="token function">cat</span> <span class="token operator">></span> /etc/hosts <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.8.130 harbor1
+192.168.8.131 harbor2
+192.168.8.132 test
+EOF</span>
+
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> docker-ce
+yum <span class="token parameter variable">-y</span> update
+<span class="token function">cat</span> <span class="token operator">></span>/etc/docker/daemon.json <span class="token operator">&lt;&lt;</span> <span class="token string">'EOF'
+&#123;
+	"registry-mirrors": [
+		"https://hub-mirror.c.163.com",
+		"https://docker.m.daocloud.io",
+		"https://ghcr.io",
+		"https://mirror.baidubce.com",
+		"https://docker.nju.edu.cn"
+	],
+		"insecure-registries": ["192.168.8.130","192.168.8.131"]
+&#125;
+EOF</span>
+systemctl daemon-reload
+systemctl restart docker.service
+systemctl <span class="token builtin class-name">enable</span> docker.service <span class="token parameter variable">--now</span>
+
+<span class="token comment"># 启用转发</span>
+modprobe br_netfilter
+<span class="token builtin class-name">echo</span> <span class="token string">"
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1"</span> <span class="token operator">></span> /etc/sysctl.d/docker.conf
+<span class="token function">sysctl</span> <span class="token parameter variable">-p</span> /etc/sysctl.d/docker.conf
+
+<span class="token comment"># 安装docker-compose</span>
+<span class="token builtin class-name">cd</span> ~
+<span class="token function">wget</span> https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64
+<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /usr/bin/docker-compose
+<span class="token function">mv</span> docker-compose-linux-x86_64 /usr/bin/docker-compose/
+<span class="token function">chmod</span> +x /usr/bin/docker-compose
+
+<span class="token comment"># 安装harbor</span>
+<span class="token builtin class-name">cd</span> ~
+<span class="token function">tar</span> zxvf harbor-offline-installer-v2.10.0.tgz
+<span class="token builtin class-name">cd</span> harbor
+<span class="token function">cp</span> harbor.yml.tmpl harbor.yml
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^hostname.*/hostname: harbor1/'</span> harbor.yml <span class="token comment">#根据实际主机名修改</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#/your/certificate/path#/ssl/harbor.pem#'</span> harbor.yml
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#/your/private/key/path#/ssl/harbor.key#g'</span> harbor.yml
+./install.sh
+
+<span class="token comment"># 安装完成</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="使用skopeo查看与搬运镜像"><a href="#使用skopeo查看与搬运镜像" class="headerlink" title="使用skopeo查看与搬运镜像"></a>使用skopeo查看与搬运镜像</h3><p><strong>分别登录docker与habor</strong></p>
 <p>建议使用ip，因为如果使用域名，push的时候不一定能解析出来</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">docker login -u admin -p Harbor12345 192.168.8.130</span><br><span class="line">Login Succeeded</span><br><span class="line">docker login -u admin -p Harbor12345 192.168.8.131</span><br><span class="line">Login Succeeded</span><br><span class="line"></span><br><span class="line">skopeo login --tls-verify=<span class="literal">false</span> -u admin -p Harbor12345 192.168.8.130</span><br><span class="line">Login Succeeded!</span><br><span class="line">skopeo login --tls-verify=<span class="literal">false</span> -u admin -p Harbor12345 192.168.8.131</span><br><span class="line">Login Succeeded!</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login <span class="token parameter variable">-u</span> admin <span class="token parameter variable">-p</span> Harbor12345 <span class="token number">192.168</span>.8.130
+Login Succeeded
+<span class="token function">docker</span> login <span class="token parameter variable">-u</span> admin <span class="token parameter variable">-p</span> Harbor12345 <span class="token number">192.168</span>.8.131
+Login Succeeded
+
+skopeo login --tls-verify<span class="token operator">=</span>false <span class="token parameter variable">-u</span> admin <span class="token parameter variable">-p</span> Harbor12345 <span class="token number">192.168</span>.8.130
+Login Succeeded<span class="token operator">!</span>
+skopeo login --tls-verify<span class="token operator">=</span>false <span class="token parameter variable">-u</span> admin <span class="token parameter variable">-p</span> Harbor12345 <span class="token number">192.168</span>.8.131
+Login Succeeded<span class="token operator">!</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>我先上传一个镜像到harbor1，搞个大点的镜像，不然一秒传完了多没意思</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">docker push 192.168.8.130/wangsheng/jenkins-jnlp:v1</span><br><span class="line">docker push 192.168.8.130/wangsheng/jenkins-jnlp:v2</span><br><span class="line">docker push 192.168.8.130/wangsheng/jenkins-jnlp:v3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看tag</span></span><br><span class="line">skopeo list-tags --tls-verify=<span class="literal">false</span> docker://192.168.8.130/wangsheng/jenkins-jnlp</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;Repository&quot;</span>: <span class="string">&quot;192.168.8.130/wangsheng/jenkins-jnlp&quot;</span>,</span><br><span class="line">    <span class="string">&quot;Tags&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;v1&quot;</span>,</span><br><span class="line">        <span class="string">&quot;v2&quot;</span>,</span><br><span class="line">        <span class="string">&quot;v3&quot;</span></span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看信息</span></span><br><span class="line">skopeo inspect --tls-verify=<span class="literal">false</span> docker://192.168.8.130/wangsheng/jenkins-jnlp:v1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> push <span class="token number">192.168</span>.8.130/wangsheng/jenkins-jnlp:v1
+<span class="token function">docker</span> push <span class="token number">192.168</span>.8.130/wangsheng/jenkins-jnlp:v2
+<span class="token function">docker</span> push <span class="token number">192.168</span>.8.130/wangsheng/jenkins-jnlp:v3
+
+<span class="token comment"># 查看tag</span>
+skopeo list-tags --tls-verify<span class="token operator">=</span>false docker://192.168.8.130/wangsheng/jenkins-jnlp
+<span class="token punctuation">&#123;</span>
+    <span class="token string">"Repository"</span><span class="token builtin class-name">:</span> <span class="token string">"192.168.8.130/wangsheng/jenkins-jnlp"</span>,
+    <span class="token string">"Tags"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span>
+        <span class="token string">"v1"</span>,
+        <span class="token string">"v2"</span>,
+        <span class="token string">"v3"</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># 查看信息</span>
+skopeo inspect --tls-verify<span class="token operator">=</span>false docker://192.168.8.130/wangsheng/jenkins-jnlp:v1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>配置skopeo信任所有镜像</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> /etc/containers</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/containers/policy.json&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    &quot;default&quot;: [</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            &quot;type&quot;: &quot;insecureAcceptAnything&quot;</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">    ],</span></span><br><span class="line"><span class="string">    &quot;transports&quot;:</span></span><br><span class="line"><span class="string">        &#123;</span></span><br><span class="line"><span class="string">            &quot;docker-daemon&quot;:</span></span><br><span class="line"><span class="string">                &#123;</span></span><br><span class="line"><span class="string">                    &quot;&quot;: [&#123;&quot;type&quot;:&quot;insecureAcceptAnything&quot;&#125;]</span></span><br><span class="line"><span class="string">                &#125;</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> /etc/containers
+<span class="token function">cat</span> <span class="token operator">></span> /etc/containers/policy.json<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+&#123;
+    "default": [
+        &#123;
+            "type": "insecureAcceptAnything"
+        &#125;
+    ],
+    "transports":
+        &#123;
+            "docker-daemon":
+                &#123;
+                    "": [&#123;"type":"insecureAcceptAnything"&#125;]
+                &#125;
+        &#125;
+&#125;
+EOF</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>复制镜像——到本地</strong></p>
 <p>要复制到本地，需要一个空目录</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> /root/image</span><br><span class="line">skopeo copy --src-tls-verify=<span class="literal">false</span> --dest-tls-verify=<span class="literal">false</span> \</span><br><span class="line">docker://192.168.8.130/wangsheng/jenkins-jnlp:v1 \</span><br><span class="line"><span class="built_in">dir</span>://root/image</span><br><span class="line"></span><br><span class="line">会出来一个显示镜像分层结构的目录</span><br><span class="line">这样就完成了，现在把它从本地复制到harbor2里</span><br><span class="line">skopeo copy --src-tls-verify=<span class="literal">false</span> --dest-tls-verify=<span class="literal">false</span> \</span><br><span class="line"><span class="built_in">dir</span>://root/image docker://192.168.8.131/library/jenkins-jnlp:v1</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> /root/image
+skopeo copy --src-tls-verify<span class="token operator">=</span>false --dest-tls-verify<span class="token operator">=</span>false <span class="token punctuation">\</span>
+docker://192.168.8.130/wangsheng/jenkins-jnlp:v1 <span class="token punctuation">\</span>
+dir://root/image
+
+会出来一个显示镜像分层结构的目录
+这样就完成了，现在把它从本地复制到harbor2里
+skopeo copy --src-tls-verify<span class="token operator">=</span>false --dest-tls-verify<span class="token operator">=</span>false <span class="token punctuation">\</span>
+dir://root/image docker://192.168.8.131/library/jenkins-jnlp:v1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>复制镜像——到远程仓库</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">skopeo copy --src-tls-verify=<span class="literal">false</span> --dest-tls-verify=<span class="literal">false</span> \</span><br><span class="line">docker://192.168.8.130/wangsheng/jenkins-jnlp:v2 \</span><br><span class="line">docker://192.168.8.131/library/jenkins-jnlp:v2</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">skopeo copy --src-tls-verify<span class="token operator">=</span>false --dest-tls-verify<span class="token operator">=</span>false <span class="token punctuation">\</span>
+docker://192.168.8.130/wangsheng/jenkins-jnlp:v2 <span class="token punctuation">\</span>
+docker://192.168.8.131/library/jenkins-jnlp:v2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>查看harbor2的镜像情况</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">skopeo inspect --tls-verify=<span class="literal">false</span> \</span><br><span class="line">docker://192.168.8.131/library/jenkins-jnlp:v1 \</span><br><span class="line">| grep -i -A 5 tag </span><br><span class="line"></span><br><span class="line"><span class="comment">#     &quot;RepoTags&quot;: [</span></span><br><span class="line"><span class="comment">#        &quot;v1&quot;,</span></span><br><span class="line"><span class="comment">#        &quot;v2&quot;</span></span><br><span class="line"><span class="comment">#    ],</span></span><br><span class="line">可以看到刚刚两个版本都传送过来了</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">skopeo inspect --tls-verify<span class="token operator">=</span>false <span class="token punctuation">\</span>
+docker://192.168.8.131/library/jenkins-jnlp:v1 <span class="token punctuation">\</span>
+<span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> <span class="token parameter variable">-A</span> <span class="token number">5</span> tag 
+
+<span class="token comment">#     "RepoTags": [</span>
+<span class="token comment">#        "v1",</span>
+<span class="token comment">#        "v2"</span>
+<span class="token comment">#    ],</span>
+可以看到刚刚两个版本都传送过来了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6584,36 +6765,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7078,13 +7229,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8125,13 +8276,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8584,14 +8735,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8599,14 +8750,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

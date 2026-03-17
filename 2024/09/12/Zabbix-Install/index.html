@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="zabbix安装与部署分为两个部分，zabbix-server和zabbix-agent的安装与部署 zabbix-server部署12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717">
+    <meta name="description" content="zabbix安装与部署分为两个部分，zabbix-server和zabbix-agent的安装与部署 zabbix-server部署环境： CentOS7.9.2009 zabbix 5.0 MariaDB 5.5.68  #安全相关 systemctl disable firewalld.service --now setenforce 0 sed -i &#39;s&#x2F;^SELINUX&#x3D;.*&#x2F;SELIN">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Zabbix5.0安装与部署">
 <meta property="og:url" content="https://akemi.zj.cn/2024/09/12/Zabbix-Install/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="zabbix安装与部署分为两个部分，zabbix-server和zabbix-agent的安装与部署 zabbix-server部署12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717">
+<meta property="og:description" content="zabbix安装与部署分为两个部分，zabbix-server和zabbix-agent的安装与部署 zabbix-server部署环境： CentOS7.9.2009 zabbix 5.0 MariaDB 5.5.68  #安全相关 systemctl disable firewalld.service --now setenforce 0 sed -i &#39;s&#x2F;^SELINUX&#x3D;.*&#x2F;SELIN">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/d76ba2b322e1bb045a17c200a7652089.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/11e8b70481d4d4ec8e714d1ff8a8864e.png">
@@ -497,7 +497,91 @@
                 <main class="main post-page">
     <article class="article-entry">
         <p>zabbix安装与部署分为两个部分，zabbix-server和zabbix-agent的安装与部署</p>
-<h1 id="zabbix-server部署"><a href="#zabbix-server部署" class="headerlink" title="zabbix-server部署"></a>zabbix-server部署</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line">环境：</span><br><span class="line">CentOS7.9.2009</span><br><span class="line">zabbix 5.0</span><br><span class="line">MariaDB 5.5.68</span><br><span class="line"></span><br><span class="line"><span class="comment">#安全相关</span></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">setenforce 0</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/g&#x27;</span> /etc/selinux/config</span><br><span class="line"></span><br><span class="line"><span class="comment">#换阿里云源，因为原本的官方已经不支持了</span></span><br><span class="line"><span class="built_in">cp</span> -a /etc/yum.repos.d /etc/yum.repos.d.backup</span><br><span class="line"><span class="built_in">rm</span> -f /etc/yum.repos.d/*</span><br><span class="line">curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/yum.repos.d/Centos7-SCLo.repo&lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[centos-sclo-rh]</span><br><span class="line">name=CentOS-7 - SCLo rh</span><br><span class="line">baseurl=http://mirrors.aliyun.com/centos/7/sclo/<span class="variable">$basearch</span>/rh/</span><br><span class="line">gpgcheck=1</span><br><span class="line">enabled=1</span><br><span class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo</span><br><span class="line"></span><br><span class="line">[centos-sclo-rh-testing]</span><br><span class="line">name=CentOS-7 - SCLo rh Testing</span><br><span class="line">baseurl=http://mirrors.aliyun.com/centos/7/sclo/<span class="variable">$basearch</span>/rh/</span><br><span class="line">gpgcheck=0</span><br><span class="line">enabled=0</span><br><span class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo</span><br><span class="line"></span><br><span class="line">[centos-sclo-rh-source]</span><br><span class="line">name=CentOS-7 - SCLo rh Sources</span><br><span class="line">baseurl=http://vault.centos.org/centos/7/sclo/Source/rh/</span><br><span class="line">gpgcheck=1</span><br><span class="line">enabled=0</span><br><span class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo</span><br><span class="line"></span><br><span class="line">[centos-sclo-rh-debuginfo]</span><br><span class="line">name=CentOS-7 - SCLo rh Debuginfo</span><br><span class="line">baseurl=http://debuginfo.centos.org/centos/7/sclo/<span class="variable">$basearch</span>/</span><br><span class="line">gpgcheck=1</span><br><span class="line">enabled=0</span><br><span class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo</span><br><span class="line">EOF</span><br><span class="line">yum clean all</span><br><span class="line">yum makecache</span><br><span class="line"></span><br><span class="line"><span class="comment">#下载zabbix的repo包</span></span><br><span class="line">wget https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line">rpm -Uvh zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line">yum -y install zabbix-server-mysql zabbix-agent centos-release-scl</span><br><span class="line"><span class="comment">#启用zabbix软件源</span></span><br><span class="line">sed -i <span class="string">&#x27;11s/enabled=0/enabled=1/&#x27;</span> /etc/yum.repos.d/zabbix.repo</span><br><span class="line">yum -y install zabbix-web-mysql-scl</span><br><span class="line">yum -y install zabbix-nginx-conf-scl</span><br><span class="line">yum -y install mysql</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装数据库</span></span><br><span class="line"><span class="comment">#如果使用mysql，导入初始化命令的时候会报错，所以使用Mariadb</span></span><br><span class="line"></span><br><span class="line">CREATE DATABASE zabbix CHARSET utf8mb4 COLLATE utf8mb4_bin;</span><br><span class="line">grant all privileges on zabbix.* to <span class="string">&#x27;zabbix&#x27;</span>@<span class="string">&#x27;%&#x27;</span> identified by <span class="string">&#x27;zabbix&#x27;</span>;</span><br><span class="line">FLUSH PRIVILEGES;</span><br><span class="line"><span class="comment">#导入数据库</span></span><br><span class="line">zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pzabbix zabbix</span><br><span class="line">mysql -uroot -proot -e <span class="string">&quot;use zabbix;show tables;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#修改/etc/zabbix/zabbix_server.conf，使其可以连接上数据库</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^# DBPa.*/DBPassword=zabbix/&#x27;</span> /etc/zabbix/zabbix_server.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改zabbix-nginx的配置/etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf，取消注释</span></span><br><span class="line">sed -i <span class="string">&#x27;s/#\        listen\          80;/\        listen\          80;/&#x27;</span>  /etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf</span><br><span class="line">sed -i <span class="string">&#x27;s/#\        server_name\     example.com;/\        server_name\     zabbix.wangsheng.com;/&#x27;</span> /etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改zabbix-php的配置/etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf</span></span><br><span class="line">sed -i <span class="string">&#x27;s/listen.acl_users = apache/listen.acl_users = apache,nginx/&#x27;</span> /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改nginx发布目录/etc/opt/rh/rh-nginx116/nginx/nginx.conf，修改到/usr/share/zabbix</span></span><br><span class="line">sed -i <span class="string">&#x27;s#\        root\         /opt/rh/rh-nginx116/root/usr/share/nginx/html;#\        root\         /usr/share/zabbix;#&#x27;</span> /etc/opt/rh/rh-nginx116/nginx/nginx.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改时区到上海</span></span><br><span class="line">sed -i <span class="string">&#x27;$iphp_value[date.timezone] = Asia/Shanghai&#x27;</span> /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">#重启并开机自启</span></span><br><span class="line">systemctl restart zabbix-server zabbix-agent rh-nginx116-nginx rh-php72-php-fpm</span><br><span class="line">systemctl <span class="built_in">enable</span> zabbix-server zabbix-agent rh-nginx116-nginx rh-php72-php-fpm --now</span><br></pre></td></tr></table></figure>
+<h1 id="zabbix-server部署"><a href="#zabbix-server部署" class="headerlink" title="zabbix-server部署"></a>zabbix-server部署</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">环境：
+CentOS7.9.2009
+zabbix <span class="token number">5.0</span>
+MariaDB <span class="token number">5.5</span>.68
+
+<span class="token comment">#安全相关</span>
+systemctl disable firewalld.service <span class="token parameter variable">--now</span>
+setenforce <span class="token number">0</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=disabled/g'</span> /etc/selinux/config
+
+<span class="token comment">#换阿里云源，因为原本的官方已经不支持了</span>
+<span class="token function">cp</span> <span class="token parameter variable">-a</span> /etc/yum.repos.d /etc/yum.repos.d.backup
+<span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/yum.repos.d/*
+<span class="token function">curl</span> <span class="token parameter variable">-o</span> /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+<span class="token function">cat</span> <span class="token operator">></span>/etc/yum.repos.d/Centos7-SCLo.repo<span class="token operator">&lt;&lt;</span><span class="token string">'EOF'
+[centos-sclo-rh]
+name=CentOS-7 - SCLo rh
+baseurl=http://mirrors.aliyun.com/centos/7/sclo/$basearch/rh/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+
+[centos-sclo-rh-testing]
+name=CentOS-7 - SCLo rh Testing
+baseurl=http://mirrors.aliyun.com/centos/7/sclo/$basearch/rh/
+gpgcheck=0
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+
+[centos-sclo-rh-source]
+name=CentOS-7 - SCLo rh Sources
+baseurl=http://vault.centos.org/centos/7/sclo/Source/rh/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+
+[centos-sclo-rh-debuginfo]
+name=CentOS-7 - SCLo rh Debuginfo
+baseurl=http://debuginfo.centos.org/centos/7/sclo/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+EOF</span>
+yum clean all
+yum makecache
+
+<span class="token comment">#下载zabbix的repo包</span>
+<span class="token function">wget</span> https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm
+<span class="token function">rpm</span> <span class="token parameter variable">-Uvh</span> zabbix-release-5.0-1.el7.noarch.rpm
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> zabbix-server-mysql zabbix-agent centos-release-scl
+<span class="token comment">#启用zabbix软件源</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'11s/enabled=0/enabled=1/'</span> /etc/yum.repos.d/zabbix.repo
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> zabbix-web-mysql-scl
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> zabbix-nginx-conf-scl
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> mysql
+
+<span class="token comment">#安装数据库</span>
+<span class="token comment">#如果使用mysql，导入初始化命令的时候会报错，所以使用Mariadb</span>
+
+CREATE DATABASE zabbix CHARSET utf8mb4 COLLATE utf8mb4_bin<span class="token punctuation">;</span>
+grant all privileges on zabbix.* to <span class="token string">'zabbix'</span>@<span class="token string">'%'</span> identified by <span class="token string">'zabbix'</span><span class="token punctuation">;</span>
+FLUSH PRIVILEGES<span class="token punctuation">;</span>
+<span class="token comment">#导入数据库</span>
+zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz <span class="token operator">|</span> mysql <span class="token parameter variable">-uzabbix</span> <span class="token parameter variable">-pzabbix</span> zabbix
+mysql <span class="token parameter variable">-uroot</span> <span class="token parameter variable">-proot</span> <span class="token parameter variable">-e</span> <span class="token string">"use zabbix;show tables;"</span>
+
+<span class="token comment">#修改/etc/zabbix/zabbix_server.conf，使其可以连接上数据库</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^# DBPa.*/DBPassword=zabbix/'</span> /etc/zabbix/zabbix_server.conf
+
+<span class="token comment">#修改zabbix-nginx的配置/etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf，取消注释</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/#\        listen\          80;/\        listen\          80;/'</span>  /etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/#\        server_name\     example.com;/\        server_name\     zabbix.wangsheng.com;/'</span> /etc/opt/rh/rh-nginx116/nginx/conf.d/zabbix.conf
+
+<span class="token comment">#修改zabbix-php的配置/etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/listen.acl_users = apache/listen.acl_users = apache,nginx/'</span> /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf
+
+<span class="token comment">#修改nginx发布目录/etc/opt/rh/rh-nginx116/nginx/nginx.conf，修改到/usr/share/zabbix</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#\        root\         /opt/rh/rh-nginx116/root/usr/share/nginx/html;#\        root\         /usr/share/zabbix;#'</span> /etc/opt/rh/rh-nginx116/nginx/nginx.conf
+
+<span class="token comment">#修改时区到上海</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'$iphp_value[date.timezone] = Asia/Shanghai'</span> /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf
+
+<span class="token comment">#重启并开机自启</span>
+systemctl restart zabbix-server zabbix-agent rh-nginx116-nginx rh-php72-php-fpm
+systemctl <span class="token builtin class-name">enable</span> zabbix-server zabbix-agent rh-nginx116-nginx rh-php72-php-fpm <span class="token parameter variable">--now</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="zabbix-server网页安装"><a href="#zabbix-server网页安装" class="headerlink" title="zabbix-server网页安装"></a>zabbix-server网页安装</h2><p>web登录<a target="_blank" rel="noopener" href="http://zabbix.wangsheng.com/">zabbix.wangsheng.com</a> 我刚刚设置的域名进行安装</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/d76ba2b322e1bb045a17c200a7652089.png"></p>
@@ -505,7 +589,51 @@
 <p>默认账户Admin<br>默认密码zabbix</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/11e8b70481d4d4ec8e714d1ff8a8864e.png"></p>
 <h1 id="zabbix-agent部署"><a href="#zabbix-agent部署" class="headerlink" title="zabbix-agent部署"></a>zabbix-agent部署</h1><p>zabbix-agent分为两种：<br>zabbix-agent c语言 独立进程运行<br>zabbix-agent2(常用) c语言 go语言 多线程、承受高并发</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">环境</span><br><span class="line">CentOS7.9.2009</span><br><span class="line">zabbix 5.0</span><br><span class="line"></span><br><span class="line">zabbix-server 192.168.10.171</span><br><span class="line">zabbix-agent 192.168.10.172</span><br><span class="line"></span><br><span class="line"><span class="comment">#换源</span></span><br><span class="line"><span class="built_in">cp</span> -a /etc/yum.repos.d /etc/yum.repos.d.backup</span><br><span class="line"><span class="built_in">rm</span> -f /etc/yum.repos.d/*</span><br><span class="line">curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line">wget https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line">rpm -Uvh zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line"></span><br><span class="line">yum clean all</span><br><span class="line">yum makecache</span><br><span class="line"></span><br><span class="line">yum -y install zabbix-agent2</span><br><span class="line">systemctl <span class="built_in">enable</span> zabbix-agent2 --now</span><br><span class="line"></span><br><span class="line"><span class="comment">#配置文件修改</span></span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/zabbix/zabbix_agent2.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">PidFile=/var/run/zabbix/zabbix_agent2.pid</span></span><br><span class="line"><span class="string">LogFile=/var/log/zabbix/zabbix_agent2.log</span></span><br><span class="line"><span class="string">LogFileSize=0</span></span><br><span class="line"><span class="string">Server=192.168.10.171</span></span><br><span class="line"><span class="string">ServerActive=192.168.10.171</span></span><br><span class="line"><span class="string">Hostname=zabbix-agent</span></span><br><span class="line"><span class="string">Include=/etc/zabbix/zabbix_agent2.d/*.conf</span></span><br><span class="line"><span class="string">ControlSocket=/tmp/agent.sock</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl restart zabbix-agent2.service</span><br><span class="line"></span><br><span class="line"><span class="comment">#服务器端重启</span></span><br><span class="line">systemctl restart rh-nginx116-nginx</span><br><span class="line"></span><br><span class="line">1.web端添加新建主机</span><br><span class="line">2.为新建主机添加模板，搞个模板比如Template OS Linux by Zabbix agent</span><br><span class="line">3.重启systemctl restart zabbix-server.service</span><br><span class="line">4.新建主机正常监控中(可用)，模板对应的图形也可以查看</span><br><span class="line">5.图形中文字体乱码问题:</span><br><span class="line">yum -y install wqy-microhei-fonts.noarch</span><br><span class="line">\<span class="built_in">cp</span> /usr/share/fonts/wqy-microhei/wqy-microhei.ttc /usr/share/fonts/dejavu/DejaVuSans.ttf</span><br><span class="line">此时问题已解决</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">环境
+CentOS7.9.2009
+zabbix <span class="token number">5.0</span>
+
+zabbix-server <span class="token number">192.168</span>.10.171
+zabbix-agent <span class="token number">192.168</span>.10.172
+
+<span class="token comment">#换源</span>
+<span class="token function">cp</span> <span class="token parameter variable">-a</span> /etc/yum.repos.d /etc/yum.repos.d.backup
+<span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/yum.repos.d/*
+<span class="token function">curl</span> <span class="token parameter variable">-o</span> /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+<span class="token function">wget</span> https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm
+<span class="token function">rpm</span> <span class="token parameter variable">-Uvh</span> zabbix-release-5.0-1.el7.noarch.rpm
+
+yum clean all
+yum makecache
+
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> zabbix-agent2
+systemctl <span class="token builtin class-name">enable</span> zabbix-agent2 <span class="token parameter variable">--now</span>
+
+<span class="token comment">#配置文件修改</span>
+<span class="token function">cat</span> <span class="token operator">></span>/etc/zabbix/zabbix_agent2.conf<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+PidFile=/var/run/zabbix/zabbix_agent2.pid
+LogFile=/var/log/zabbix/zabbix_agent2.log
+LogFileSize=0
+Server=192.168.10.171
+ServerActive=192.168.10.171
+Hostname=zabbix-agent
+Include=/etc/zabbix/zabbix_agent2.d/*.conf
+ControlSocket=/tmp/agent.sock
+EOF</span>
+systemctl restart zabbix-agent2.service
+
+<span class="token comment">#服务器端重启</span>
+systemctl restart rh-nginx116-nginx
+
+<span class="token number">1</span>.web端添加新建主机
+<span class="token number">2</span>.为新建主机添加模板，搞个模板比如Template OS Linux by Zabbix agent
+<span class="token number">3</span>.重启systemctl restart zabbix-server.service
+<span class="token number">4</span>.新建主机正常监控中<span class="token punctuation">(</span>可用<span class="token punctuation">)</span>，模板对应的图形也可以查看
+<span class="token number">5</span>.图形中文字体乱码问题:
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> wqy-microhei-fonts.noarch
+<span class="token punctuation">\</span>cp /usr/share/fonts/wqy-microhei/wqy-microhei.ttc /usr/share/fonts/dejavu/DejaVuSans.ttf
+此时问题已解决
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/1355c8ab3ff97656f64e87a8defda849.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/79c5066d39c93924126c38859d7cedbb.png"></p>
@@ -6569,36 +6697,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7063,13 +7161,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8110,13 +8208,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8569,14 +8667,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8584,14 +8682,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

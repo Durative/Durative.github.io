@@ -439,7 +439,18 @@
 写配置文件
 准备用户与smb用户数据库
 
-部署与初始化12345678910111213hostnamectl set-hostname samba-server &amp;&amp; bashsystemctl disable firewalld.service --nowsetenforce 0sed -i &#x27;s/^SELINUX=.*/SELINUX=disabled/g&#x27; /etc/selinux/configyum -y install samba# 准备共享目录mkdir /data/smb -pgroupadd w...
+部署与初始化hostnamectl set-hostname samba-server &amp;&amp; bash
+systemctl disable firewalld.service --now
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+
+yum -y install samba
+
+# 准备共享目录
+mkdir /data/smb -p
+
+groupadd ws
+chgrp ws /data/...
             </div>
             <!-- read more -->
             
@@ -478,7 +489,13 @@
             <div class="abstract-content">
                 Varnish 是一款高性能的 HTTP 加速器（HTTP Accelerator），专为提升 Web 应用的速度和可扩展性而设计。它本质上是一个 反向代理缓存服务器，通过缓存静态和动态内容，大幅减少后端服务器（如 Apache、Nginx）的负载，提升用户访问速度。
 安装varnish
-1234567hostnamectl set-hostname varnish &amp;&amp; bashyum -y install varnishyum -y install varnish-docs # 文档systemctl enable varnish --nowsystemctl ena...
+
+hostnamectl set-hostname varnish &amp;&amp; bash
+
+yum -y install varnish
+yum -y install varnish-docs # 文档
+systemctl enable varnish --now
+systemctl enab...
             </div>
             <!-- read more -->
             
@@ -528,7 +545,9 @@
 
 制作windows镜像我使用的镜像是tiny10 23h1 x64，这是一个微型的windows系统
 安装完成后，进入eve-ng主机内目录
-12345678910111213141516cd /opt/unetlab/addons/qemu/lscentos-7-minimal    centos-st...
+cd /opt/unetlab/addons/qemu/
+ls
+centos-7-minimal    centos-stream9-20230313  h3cvs...
             </div>
             <!-- read more -->
             
@@ -678,7 +697,14 @@ CUPS功能介绍
             <div class="abstract-content">
                 bond和team这两个基本上功能是一样的，从实现方式上来讲，bond需要的是内核模块bonding属于内核态进程，而team使用teamd作为守护进程，是用户态的进程
 它俩都可以实现ab、负载均衡、LACP模式等
-12345678# 临时加载bonding模块modprobe bondinglsmod | grep bondingbonding               241664  0tls                   131072  1 bonding# 永久加载echo &quot;bonding&quot; | sudo tee /etc/modules-load....
+# 临时加载bonding模块
+modprobe bonding
+lsmod | grep bonding
+bonding               241664  0
+tls                   131072  1 bonding
+
+# 永久加载
+echo "bonding" | sudo tee /etc/modules-load.d/bonding.c...
             </div>
             <!-- read more -->
             
@@ -714,7 +740,18 @@ CUPS功能介绍
             </a>
             <div class="abstract-content">
                 targettarget就是一堆Service的集合，它本身不是service，但是他关联了很多service
-123456789101112131415161718众所周知，系统运行等级3是多租户模式systemctl get-defaultmulti-user.targetsystemctl list-dependencies multi-user.targetmulti-user.target● ├─aegis.service● ├─aliyun.service....● ├─var-lib-snapd-snap-snapd-23771.mount● ├─basic.target●...
+众所周知，系统运行等级3是多租户模式
+systemctl get-default
+multi-user.target
+
+systemctl list-dependencies multi-user.target
+multi-user.target
+● ├─aegis.service
+● ├─aliyun.service
+....
+● ├─var-lib-snapd-snap-snapd-23771.mount
+● ├─basic.target
+● │ ├─microcode.s...
             </div>
             <!-- read more -->
             
@@ -757,7 +794,13 @@ Let’s Encrypt的优势
 支持ACME协议，实现了证书申请、安装和续期的自动化
 提供的SSL&#x2F;TLS证书完全免费
 
-安装工具与生成SSL证书12345678910111213141516171819202122232425262728293031323334353637# 环境说明，使用的是CentOS7.9 2C2G 阿里云公有云实例 # 安装Let&#x27;s Encrypt提供的工具certbot与nginx插件(1)使用ce...
+安装工具与生成SSL证书# 环境说明，使用的是CentOS7.9 2C2G 阿里云公有云实例 
+
+# 安装Let's Encrypt提供的工具certbot与nginx插件
+(1)使用certbot的旧python2插件
+yum install epel-release
+yum install certbot
+yum i...
             </div>
             <!-- read more -->
             
@@ -796,10 +839,23 @@ Let’s Encrypt的优势
                 <span class="abstract-title-text">高效使用Linux-执行命令的不同方式</span>
             </a>
             <div class="abstract-content">
-                有条件列表、无条件列表1234567这个很好理解有条件列表：前一个命令执行成功或失败，才会执行git add . &amp;&amp; git commit -m &#x27;test&#x27; &amp;&amp; git push[ $? -eq 0 ] || echo &quot;commmand run fail&quot;无条件列表：用分号隔开的命令for ((i=10; i&gt;5; i--)); do echo $i; done
+                有条件列表、无条件列表这个很好理解
+有条件列表：前一个命令执行成功或失败，才会执行
+git add . &amp;&amp; git commit -m 'test' &amp;&amp; git push
+[ $? -eq 0 ] || echo "commmand run fail"
+
+无条件列表：用分号隔开的命令
+for ((i=10; i>5; i--)); do echo $i; done
 
 命令替换指的是将字符串替换为命令
-12345678$(xxxx)执行括号内的命令，并将命令替换为输出也可以使用``反引号，但是不够清晰推荐使...
+$(xxxx)
+执行括号内的命令，并将命令替换为输出
+
+也可以使用``反引号，但是不够清晰
+推荐使用$()的方式，并且便于嵌套
+
+mkdir john
+m...
             </div>
             <!-- read more -->
             
@@ -837,7 +893,18 @@ Let’s Encrypt的优势
                 现在有一个生产和一个预发环境，通过合并staging分支的代码到master分支来进行更新
 但是出于方便回滚的目的，要一点一点代码进行合并测试
 我应该如何精确让我提交的代码能够被合并，而不附带上别人的代码呢？
-123456789101112131415161718192021222324252627282930313233343536373839401.提交已有的代码到staging这个前缀是zsh的功能，不用管git:(staging) sudo git commit -m &#x27;add material to prod&#x27;git:(staging) sudo git p...
+1.提交已有的代码到staging
+
+这个前缀是zsh的功能，不用管
+git:(staging) sudo git commit -m 'add material to prod'
+git:(staging) sudo git push
+
+并且记录提交代码的摘要，这个摘要可以通过git logs查看
+也可以在网页中查看
+63cbc67a
+d16ef0f7
+
+2.切换到master分...
             </div>
             <!-- read more -->
             
@@ -6846,36 +6913,6 @@ Let’s Encrypt的优势
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7340,13 +7377,13 @@ Let’s Encrypt的优势
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8387,13 +8424,13 @@ Let’s Encrypt的优势
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8846,14 +8883,14 @@ Let’s Encrypt的优势
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8861,14 +8898,14 @@ Let’s Encrypt的优势
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

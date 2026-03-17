@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="现象 例行巡检时，发现9-11点CPU压力高 查看发现大量CPU用于SYS和WAIT，us正常怀疑是MySQL锁或SQL语句出问题 死锁两个进程同时调用同一行数据，进入互相阻塞的状态 产生死锁时，由于事务的特性，当事务其中一句SQL执行错误时，数据库会反复执行同一段事务的SQL语句，造成大量CPU占用 锁监控命令 123456show status like &#x27;innodb_rows_l">
+    <meta name="description" content="现象 例行巡检时，发现9-11点CPU压力高 查看发现大量CPU用于SYS和WAIT，us正常怀疑是MySQL锁或SQL语句出问题 死锁两个进程同时调用同一行数据，进入互相阻塞的状态 产生死锁时，由于事务的特性，当事务其中一句SQL执行错误时，数据库会反复执行同一段事务的SQL语句，造成大量CPU占用 锁监控命令 show status like &#39;innodb_rows_lock%&#39; selec">
 <meta property="og:type" content="article">
 <meta property="og:title" content="面对锁表，他的选择是……监控锁状态与查看死锁">
 <meta property="og:url" content="https://akemi.zj.cn/2024/11/01/MySQL-Locked-2/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="现象 例行巡检时，发现9-11点CPU压力高 查看发现大量CPU用于SYS和WAIT，us正常怀疑是MySQL锁或SQL语句出问题 死锁两个进程同时调用同一行数据，进入互相阻塞的状态 产生死锁时，由于事务的特性，当事务其中一句SQL执行错误时，数据库会反复执行同一段事务的SQL语句，造成大量CPU占用 锁监控命令 123456show status like &#x27;innodb_rows_l">
+<meta property="og:description" content="现象 例行巡检时，发现9-11点CPU压力高 查看发现大量CPU用于SYS和WAIT，us正常怀疑是MySQL锁或SQL语句出问题 死锁两个进程同时调用同一行数据，进入互相阻塞的状态 产生死锁时，由于事务的特性，当事务其中一句SQL执行错误时，数据库会反复执行同一段事务的SQL语句，造成大量CPU占用 锁监控命令 show status like &#39;innodb_rows_lock%&#39; selec">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-11-01T14:27:01.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.759Z">
@@ -496,10 +496,19 @@
 <p><strong>死锁</strong><br>两个进程同时调用同一行数据，进入互相阻塞的状态</p>
 <p>产生死锁时，由于事务的特性，当事务其中一句SQL执行错误时，数据库会反复执行同一段事务的SQL语句，造成大量CPU占用</p>
 <p><strong>锁监控命令</strong></p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> status <span class="keyword">like</span> <span class="string">&#x27;innodb_rows_lock%&#x27;</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> infomation_schema.innodb_trx;</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> sys.innodb_lock_waits;</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> performance_schema.threads;</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> performance_schema.events_statements_current;</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> performance_schema.events_statements_history;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> <span class="token keyword">status</span> <span class="token operator">like</span> <span class="token string">'innodb_rows_lock%'</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> infomation_schema<span class="token punctuation">.</span>innodb_trx<span class="token punctuation">;</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> sys<span class="token punctuation">.</span>innodb_lock_waits<span class="token punctuation">;</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> performance_schema<span class="token punctuation">.</span>threads<span class="token punctuation">;</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> performance_schema<span class="token punctuation">.</span>events_statements_current<span class="token punctuation">;</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> performance_schema<span class="token punctuation">.</span>events_statements_history<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>死锁监控</strong></p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> engine innodb status\G</span><br><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%deadlock%&#x27;</span>;</span><br><span class="line"></span><br><span class="line">参数——开启死锁监控，这样就可以在日志和<span class="keyword">show</span> engine innodb status\G中看到</span><br><span class="line">innodb_print_all_deadlocks <span class="operator">=</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">show</span> <span class="token keyword">engine</span> <span class="token keyword">innodb</span> <span class="token keyword">status</span>\G
+<span class="token keyword">show</span> variables <span class="token operator">like</span> <span class="token string">'%deadlock%'</span><span class="token punctuation">;</span>
+
+参数——开启死锁监控，这样就可以在日志和<span class="token keyword">show</span> <span class="token keyword">engine</span> <span class="token keyword">innodb</span> <span class="token keyword">status</span>\G中看到
+innodb_print_all_deadlocks <span class="token operator">=</span> <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6558,36 +6567,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7052,13 +7031,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8099,13 +8078,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8558,14 +8537,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8573,14 +8552,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

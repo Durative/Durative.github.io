@@ -512,12 +512,38 @@
 <h2 id="vSwitch组件实验"><a href="#vSwitch组件实验" class="headerlink" title="vSwitch组件实验"></a>vSwitch组件实验</h2><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250306191248683.png"></p>
 <h3 id="路由器配置"><a href="#路由器配置" class="headerlink" title="路由器配置"></a>路由器配置</h3><p>生产中使用静态配置，我这里测试就直接用dhcp了，也省的ping了</p>
 <p>要是静态还得ping一下来确保已经通了，dhcp只要获取到ip就是通了</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">sys</span><br><span class="line">interface GigabitEthernet0/0/0.10 </span><br><span class="line"> dot1q termination vid 10 <span class="comment"># 指定子接口处理VLAN10的流量</span></span><br><span class="line"> ip address 10.1.10.254 255.255.255.0</span><br><span class="line"> arp broadcast <span class="built_in">enable</span></span><br><span class="line"> quit</span><br><span class="line"></span><br><span class="line">dhcp <span class="built_in">enable</span></span><br><span class="line"><span class="comment"># 为VLAN10创建DHCP地址池</span></span><br><span class="line">ip pool vlan10</span><br><span class="line"> gateway-list 10.1.10.254</span><br><span class="line"> network 10.1.10.0 mask 255.255.255.0</span><br><span class="line"> quit</span><br><span class="line"></span><br><span class="line">interface GigabitEthernet0/0/0.10</span><br><span class="line"> dhcp <span class="keyword">select</span> global  <span class="comment"># 调用全局地址池</span></span><br><span class="line"> quit</span><br><span class="line">interface GigabitEthernet0/0/1.20</span><br><span class="line"> dhcp <span class="keyword">select</span> global</span><br><span class="line"> quit</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sys
+interface GigabitEthernet0/0/0.10 
+ dot1q termination vid <span class="token number">10</span> <span class="token comment"># 指定子接口处理VLAN10的流量</span>
+ <span class="token function">ip</span> address <span class="token number">10.1</span>.10.254 <span class="token number">255.255</span>.255.0
+ arp broadcast <span class="token builtin class-name">enable</span>
+ quit
+
+dhcp <span class="token builtin class-name">enable</span>
+<span class="token comment"># 为VLAN10创建DHCP地址池</span>
+<span class="token function">ip</span> pool vlan10
+ gateway-list <span class="token number">10.1</span>.10.254
+ network <span class="token number">10.1</span>.10.0 mask <span class="token number">255.255</span>.255.0
+ quit
+
+interface GigabitEthernet0/0/0.10
+ dhcp <span class="token keyword">select</span> global  <span class="token comment"># 调用全局地址池</span>
+ quit
+interface GigabitEthernet0/0/1.20
+ dhcp <span class="token keyword">select</span> global
+ quit
+ <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>随后在ESXI中创建vSwitch-创建端口组-创建VMkernel网卡<br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250306194019569.png"></p>
 <h3 id="测试tag"><a href="#测试tag" class="headerlink" title="测试tag"></a>测试tag</h3><p>创建虚机用以测试tag流量，给它的子接口打tag</p>
 <p>我使用的系统是almalinux9 网卡名ens192</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">加tag之前先ping 10.1.10.254测试，可以通</span><br><span class="line"></span><br><span class="line">ip <span class="built_in">link</span> add <span class="built_in">link</span> ens192 name ens192.100 <span class="built_in">type</span> vlan <span class="built_in">id</span> 100</span><br><span class="line">ip addr add 10.1.10.2/24 dev ens192.1 brd +</span><br><span class="line">ip <span class="built_in">link</span> <span class="built_in">set</span> ens192.100 up</span><br><span class="line"></span><br><span class="line">此时ping网关10.1.10.254就没法通</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">加tag之前先ping <span class="token number">10.1</span>.10.254测试，可以通
+
+<span class="token function">ip</span> <span class="token function">link</span> <span class="token function">add</span> <span class="token function">link</span> ens192 name ens192.100 <span class="token builtin class-name">type</span> vlan <span class="token function">id</span> <span class="token number">100</span>
+<span class="token function">ip</span> addr <span class="token function">add</span> <span class="token number">10.1</span>.10.2/24 dev ens192.1 brd +
+<span class="token function">ip</span> <span class="token function">link</span> <span class="token builtin class-name">set</span> ens192.100 up
+
+此时ping网关10.1.10.254就没法通<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="网卡绑定（链路冗余）"><a href="#网卡绑定（链路冗余）" class="headerlink" title="网卡绑定（链路冗余）"></a>网卡绑定（链路冗余）</h2><p>在ESXI层面上，可以配置多个网卡，也就是添加上行链路，它的本质是一个备份链路<br><strong>并不提供负载均衡的功能</strong></p>
 <p>基本没人用这个功能</p>
@@ -6582,36 +6608,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7076,13 +7072,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8123,13 +8119,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8582,14 +8578,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8597,14 +8593,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

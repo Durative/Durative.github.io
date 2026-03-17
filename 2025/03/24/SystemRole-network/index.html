@@ -535,21 +535,163 @@
 </tbody></table>
 <h2 id="roles安装、工作方法"><a href="#roles安装、工作方法" class="headerlink" title="roles安装、工作方法"></a><strong>roles安装、工作方法</strong></h2><p>RHEL System Roles通过预定义<strong>一组变量调用roles</strong>，roles会自动根据变量，去自动进行配置</p>
 <p>一般来说，会将其添加至host_vars，来针对不同的主机做不同的配置</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">yum -y install rhel-system-roles</span><br><span class="line"></span><br><span class="line">ansible-galaxy list |grep rhel-system-roles</span><br><span class="line">- linux-system-roles.network, (unknown version) <span class="comment"># 社区版</span></span><br><span class="line">...</span><br><span class="line">- rhel-system-roles.network, (unknown version) <span class="comment"># 红帽版</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> rhel-system-roles
 
-<h2 id="network-connections变量"><a href="#network-connections变量" class="headerlink" title="network_connections变量"></a><strong>network_connections变量</strong></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">vars:</span><br><span class="line">	network_connections:</span><br><span class="line">		- name: eth0-profile   <span class="comment"># nmcli con配置文件名称</span></span><br><span class="line">		  <span class="built_in">type</span>: ethernet/bridge/bond/team/vlan/macvlan</span><br><span class="line">		  interface_name: eth0 <span class="comment"># 根据名称选择接口</span></span><br><span class="line">		  autoconnect: <span class="literal">true</span></span><br><span class="line">		  persistent_state: present/absent <span class="comment"># 生成/删除配置文件,默认present</span></span><br><span class="line">		  state: up <span class="comment"># 启动</span></span><br><span class="line">		  zone: <span class="comment"># 加到哪个防火墙的zone中</span></span><br><span class="line">		  mac:  <span class="comment"># 根据mac地址匹配接口</span></span><br><span class="line">		  ip:   <span class="comment"># IP地址配置</span></span><br><span class="line">		    address:</span><br><span class="line">		      - <span class="string">&quot;192.168.1.10/24&quot;</span></span><br><span class="line">		    gateway4: 192.168.1.1</span><br><span class="line">		    dns:</span><br><span class="line">		      - 8.8.8.8</span><br><span class="line">		    dns_search: <span class="comment"># dns搜索域，dns解析时，会加上这段后缀，内网环境使用</span></span><br><span class="line">		      - example.com</span><br><span class="line">		    routes:     <span class="comment"># 静态路由配置</span></span><br><span class="line">		      - network: 10.0.0.0/24</span><br><span class="line">		        gateway: 192.168.1.254</span><br><span class="line">		        metric: 100</span><br><span class="line">roles:</span><br><span class="line">- rhel-system-roles.network</span><br></pre></td></tr></table></figure>
+ansible-galaxy list <span class="token operator">|</span><span class="token function">grep</span> rhel-system-roles
+- linux-system-roles.network, <span class="token punctuation">(</span>unknown version<span class="token punctuation">)</span> <span class="token comment"># 社区版</span>
+<span class="token punctuation">..</span>.
+- rhel-system-roles.network, <span class="token punctuation">(</span>unknown version<span class="token punctuation">)</span> <span class="token comment"># 红帽版</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="通过变量赋予ip"><a href="#通过变量赋予ip" class="headerlink" title="通过变量赋予ip"></a><strong>通过变量赋予ip</strong></h2><h3 id="在inventory中设置-不推荐"><a href="#在inventory中设置-不推荐" class="headerlink" title="在inventory中设置(不推荐)"></a>在inventory中设置(不推荐)</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">[all]</span><br><span class="line">servera ansible_host=10.1.1.1 node_data_address=192.168.1.1/24</span><br><span class="line">serverb ansbile_host=10.1.1.2 node_data_address=192.168.1.2/24</span><br><span class="line"></span><br><span class="line">playbook:</span><br><span class="line">---</span><br><span class="line">- name: <span class="built_in">set</span> network</span><br><span class="line">	hosts: all</span><br><span class="line">	vars:</span><br><span class="line">		network_connections:</span><br><span class="line">		- name: eth1</span><br><span class="line">			interface_name: eth1</span><br><span class="line">			persistent_state: present</span><br><span class="line">			<span class="built_in">type</span>: ethernet</span><br><span class="line">			autoconnect: <span class="built_in">yes</span></span><br><span class="line">			ip:</span><br><span class="line">				address:</span><br><span class="line">				- <span class="string">&quot;&#123;&#123; node_data_address &#125;&#125;&quot;</span></span><br><span class="line">			state: up</span><br><span class="line">	roles:</span><br><span class="line">	- rhel-system-roles.network</span><br></pre></td></tr></table></figure>
+<h2 id="network-connections变量"><a href="#network-connections变量" class="headerlink" title="network_connections变量"></a><strong>network_connections变量</strong></h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vars:
+	network_connections:
+		- name: eth0-profile   <span class="token comment"># nmcli con配置文件名称</span>
+		  type: ethernet/bridge/bond/team/vlan/macvlan
+		  interface_name: eth0 <span class="token comment"># 根据名称选择接口</span>
+		  autoconnect: <span class="token boolean">true</span>
+		  persistent_state: present/absent <span class="token comment"># 生成/删除配置文件,默认present</span>
+		  state: up <span class="token comment"># 启动</span>
+		  zone: <span class="token comment"># 加到哪个防火墙的zone中</span>
+		  mac:  <span class="token comment"># 根据mac地址匹配接口</span>
+		  ip:   <span class="token comment"># IP地址配置</span>
+		    address:
+		      - <span class="token string">"192.168.1.10/24"</span>
+		    gateway4: <span class="token number">192.168</span>.1.1
+		    dns:
+		      - <span class="token number">8.8</span>.8.8
+		    dns_search: <span class="token comment"># dns搜索域，dns解析时，会加上这段后缀，内网环境使用</span>
+		      - example.com
+		    routes:     <span class="token comment"># 静态路由配置</span>
+		      - network: <span class="token number">10.0</span>.0.0/24
+		        gateway: <span class="token number">192.168</span>.1.254
+		        metric: <span class="token number">100</span>
+roles:
+- rhel-system-roles.network<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="在host-vars中设置-推荐"><a href="#在host-vars中设置-推荐" class="headerlink" title="在host_vars中设置(推荐)"></a>在host_vars中设置(推荐)</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">vim host_vars/servera</span><br><span class="line">network_connections:</span><br><span class="line">- name: eth1</span><br><span class="line">	interface_name: eth1</span><br><span class="line">	persistent_state: present</span><br><span class="line">	<span class="built_in">type</span>: ethernet</span><br><span class="line">	autoconnect: <span class="built_in">yes</span></span><br><span class="line">	ip:</span><br><span class="line">		address:</span><br><span class="line">		- 192.168.1.1/24</span><br><span class="line">		</span><br><span class="line">vim host_vars/serverb</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">playbook:</span><br><span class="line">---</span><br><span class="line">- name: <span class="built_in">set</span> network</span><br><span class="line">	hosts: all</span><br><span class="line">	roles:</span><br><span class="line">	- rhel-system-roles.network</span><br></pre></td></tr></table></figure>
+<h2 id="通过变量赋予ip"><a href="#通过变量赋予ip" class="headerlink" title="通过变量赋予ip"></a><strong>通过变量赋予ip</strong></h2><h3 id="在inventory中设置-不推荐"><a href="#在inventory中设置-不推荐" class="headerlink" title="在inventory中设置(不推荐)"></a>在inventory中设置(不推荐)</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>all<span class="token punctuation">]</span>
+servera <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.1</span>.1.1 <span class="token assign-left variable">node_data_address</span><span class="token operator">=</span><span class="token number">192.168</span>.1.1/24
+serverb <span class="token assign-left variable">ansbile_host</span><span class="token operator">=</span><span class="token number">10.1</span>.1.2 <span class="token assign-left variable">node_data_address</span><span class="token operator">=</span><span class="token number">192.168</span>.1.2/24
+
+playbook:
+---
+- name: <span class="token builtin class-name">set</span> network
+	hosts: all
+	vars:
+		network_connections:
+		- name: eth1
+			interface_name: eth1
+			persistent_state: present
+			type: ethernet
+			autoconnect: <span class="token function">yes</span>
+			ip:
+				address:
+				- <span class="token string">"&#123;&#123; node_data_address &#125;&#125;"</span>
+			state: up
+	roles:
+	- rhel-system-roles.network<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="在host-vars中设置-推荐"><a href="#在host-vars中设置-推荐" class="headerlink" title="在host_vars中设置(推荐)"></a>在host_vars中设置(推荐)</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> host_vars/servera
+network_connections:
+- name: eth1
+	interface_name: eth1
+	persistent_state: present
+	type: ethernet
+	autoconnect: <span class="token function">yes</span>
+	ip:
+		address:
+		- <span class="token number">192.168</span>.1.1/24
+		
+<span class="token function">vim</span> host_vars/serverb
+<span class="token punctuation">..</span>.
+
+playbook:
+---
+- name: <span class="token builtin class-name">set</span> network
+	hosts: all
+	roles:
+	- rhel-system-roles.network<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="通过MAC地址指定网卡"><a href="#通过MAC地址指定网卡" class="headerlink" title="通过MAC地址指定网卡"></a>通过MAC地址指定网卡</h2><p>在实际生产环境中，100台服务器不可能全都是同一型号的，肯定有着不同的命名规则，如果ens enp eno这种，此时就需要通过mac地址来指定网卡</p>
 <p><strong>一般可以通过BMC&#x2F;IPMI获取网卡的mac地址</strong></p>
 <p>使用mac地址指定网卡来获取</p>
 <h3 id="土法寻找"><a href="#土法寻找" class="headerlink" title="土法寻找"></a><strong>土法寻找</strong></h3><p>通过loop在ansible_facts中寻找对于mac的interface</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> host_vars/servera</span><br><span class="line">mac: <span class="string">&quot;50:00:00:02:00:01&quot;</span></span><br><span class="line"><span class="built_in">cat</span> host_vars/serverb</span><br><span class="line">mac: <span class="string">&quot;50:00:00:03:00:03&quot;</span></span><br><span class="line"></span><br><span class="line">---</span><br><span class="line">- name: find interface name </span><br><span class="line">  hosts: servera</span><br><span class="line">  tasks:</span><br><span class="line">    - name: find intface name <span class="keyword">for</span> specific mac address</span><br><span class="line">      set_fact:</span><br><span class="line">        the_interface: <span class="string">&quot;&#123;&#123; item &#125;&#125;&quot;</span></span><br><span class="line">      when:</span><br><span class="line">		  - ansible_facts[item][<span class="string">&#x27;macaddress&#x27;</span>] is defined</span><br><span class="line">		  - ansible_facts[item][<span class="string">&#x27;macaddress&#x27;</span>] == mac</span><br><span class="line">			loop: <span class="string">&quot;&#123;&#123; ansible_facts[&#x27;interfaces&#x27;] &#125;&#125;&quot;</span></span><br><span class="line">		- debug:</span><br><span class="line">				var: the_interface</span><br><span class="line">				</span><br><span class="line">ansible-playbook network_facts.yml</span><br><span class="line"></span><br><span class="line">PLAY [find interface name] ********************************************************************************************************************************************************</span><br><span class="line"></span><br><span class="line">TASK [Gathering Facts] ************************************************************************************************************************************************************</span><br><span class="line">ok: [<span class="built_in">test</span>]</span><br><span class="line"></span><br><span class="line">TASK [find intface name <span class="keyword">for</span> specific mac address] *********************************************************************************************************************************</span><br><span class="line">skipping: [<span class="built_in">test</span>] =&gt; (item=lo)</span><br><span class="line">skipping: [<span class="built_in">test</span>] =&gt; (item=docker0)</span><br><span class="line">skipping: [<span class="built_in">test</span>] =&gt; (item=br-64a3ddc2b328)</span><br><span class="line">skipping: [<span class="built_in">test</span>] =&gt; (item=br-25937a927369)</span><br><span class="line">ok: [<span class="built_in">test</span>] =&gt; (item=eth0)</span><br><span class="line"></span><br><span class="line">TASK [debug] **********************************************************************************************************************************************************************</span><br><span class="line">ok: [<span class="built_in">test</span>] =&gt; &#123;</span><br><span class="line">    <span class="string">&quot;the_interface&quot;</span>: <span class="string">&quot;eth0&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">PLAY RECAP ************************************************************************************************************************************************************************</span><br><span class="line"><span class="built_in">test</span>                       : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> host_vars/servera
+mac: <span class="token string">"50:00:00:02:00:01"</span>
+<span class="token function">cat</span> host_vars/serverb
+mac: <span class="token string">"50:00:00:03:00:03"</span>
 
-<h3 id="通过RHEL-System-Roles指定mac的方式修改"><a href="#通过RHEL-System-Roles指定mac的方式修改" class="headerlink" title="通过RHEL System Roles指定mac的方式修改"></a>通过<strong>RHEL System Roles指定mac的方式修改</strong></h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">configure</span> <span class="string">network</span> <span class="string">interface</span></span><br><span class="line">  <span class="attr">hosts:</span> <span class="string">test</span></span><br><span class="line">  <span class="attr">become:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">vars:</span></span><br><span class="line">    <span class="attr">target_mac:</span> <span class="string">&quot;bc:24:11:3f:13:8c&quot;</span></span><br><span class="line">    <span class="attr">network_connections:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">static_net</span></span><br><span class="line">        <span class="attr">type:</span> <span class="string">ethernet</span></span><br><span class="line">        <span class="attr">mac:</span> <span class="string">&quot;<span class="template-variable">&#123;&#123; target_mac &#125;&#125;</span>&quot;</span></span><br><span class="line">        <span class="attr">state:</span> <span class="string">up</span></span><br><span class="line">        <span class="attr">ip:</span></span><br><span class="line">          <span class="attr">dhcp4:</span> <span class="literal">no</span></span><br><span class="line">          <span class="attr">address:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="number">192.168</span><span class="number">.10</span><span class="number">.177</span><span class="string">/24</span></span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">run</span> <span class="string">NetworkManager</span></span><br><span class="line">      <span class="attr">service:</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">NetworkManager</span></span><br><span class="line">        <span class="attr">state:</span> <span class="string">started</span></span><br><span class="line">        <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Find</span> <span class="string">target</span> <span class="string">interface</span></span><br><span class="line">      <span class="attr">set_fact:</span></span><br><span class="line">        <span class="attr">the_interface:</span> <span class="string">&quot;<span class="template-variable">&#123;&#123; item &#125;&#125;</span>&quot;</span></span><br><span class="line">      <span class="attr">when:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">ansible_facts[item][&#x27;macaddress&#x27;]</span> <span class="string">is</span> <span class="string">defined</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">ansible_facts[item][&#x27;macaddress&#x27;]</span> <span class="string">==</span> <span class="string">target_mac</span></span><br><span class="line">      <span class="attr">loop:</span> <span class="string">&quot;<span class="template-variable">&#123;&#123; ansible_facts[&#x27;interfaces&#x27;] &#125;&#125;</span>&quot;</span>  <span class="comment"># 修正变量名 interface -&gt; interfaces</span></span><br><span class="line"></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Debug</span> <span class="string">interface</span></span><br><span class="line">      <span class="attr">debug:</span></span><br><span class="line">        <span class="attr">var:</span> <span class="string">the_interface</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">roles:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">rhel-system-roles.network</span></span><br></pre></td></tr></table></figure>
+---
+- name: <span class="token function">find</span> interface name 
+  hosts: servera
+  tasks:
+    - name: <span class="token function">find</span> intface name <span class="token keyword">for</span> specific mac address
+      set_fact:
+        the_interface: <span class="token string">"&#123;&#123; item &#125;&#125;"</span>
+      when:
+		  - ansible_facts<span class="token punctuation">[</span>item<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">'macaddress'</span><span class="token punctuation">]</span> is defined
+		  - ansible_facts<span class="token punctuation">[</span>item<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">'macaddress'</span><span class="token punctuation">]</span> <span class="token operator">==</span> mac
+			loop: <span class="token string">"&#123;&#123; ansible_facts['interfaces'] &#125;&#125;"</span>
+		- debug:
+				var: the_interface
+				
+ansible-playbook network_facts.yml
+
+PLAY <span class="token punctuation">[</span>find interface name<span class="token punctuation">]</span> ********************************************************************************************************************************************************
+
+TASK <span class="token punctuation">[</span>Gathering Facts<span class="token punctuation">]</span> ************************************************************************************************************************************************************
+ok: <span class="token punctuation">[</span>test<span class="token punctuation">]</span>
+
+TASK <span class="token punctuation">[</span>find intface name <span class="token keyword">for</span> specific mac address<span class="token punctuation">]</span> *********************************************************************************************************************************
+skipping: <span class="token punctuation">[</span>test<span class="token punctuation">]</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>item<span class="token operator">=</span>lo<span class="token punctuation">)</span>
+skipping: <span class="token punctuation">[</span>test<span class="token punctuation">]</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>item<span class="token operator">=</span>docker0<span class="token punctuation">)</span>
+skipping: <span class="token punctuation">[</span>test<span class="token punctuation">]</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>item<span class="token operator">=</span>br-64a3ddc2b328<span class="token punctuation">)</span>
+skipping: <span class="token punctuation">[</span>test<span class="token punctuation">]</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>item<span class="token operator">=</span>br-25937a927369<span class="token punctuation">)</span>
+ok: <span class="token punctuation">[</span>test<span class="token punctuation">]</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>item<span class="token operator">=</span>eth0<span class="token punctuation">)</span>
+
+TASK <span class="token punctuation">[</span>debug<span class="token punctuation">]</span> **********************************************************************************************************************************************************************
+ok: <span class="token punctuation">[</span>test<span class="token punctuation">]</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token string">"the_interface"</span><span class="token builtin class-name">:</span> <span class="token string">"eth0"</span>
+<span class="token punctuation">&#125;</span>
+
+PLAY RECAP ************************************************************************************************************************************************************************
+<span class="token builtin class-name">test</span>                       <span class="token builtin class-name">:</span> <span class="token assign-left variable">ok</span><span class="token operator">=</span><span class="token number">3</span>    <span class="token assign-left variable">changed</span><span class="token operator">=</span><span class="token number">0</span>    <span class="token assign-left variable">unreachable</span><span class="token operator">=</span><span class="token number">0</span>    <span class="token assign-left variable">failed</span><span class="token operator">=</span><span class="token number">0</span>    <span class="token assign-left variable">skipped</span><span class="token operator">=</span><span class="token number">0</span>    <span class="token assign-left variable">rescued</span><span class="token operator">=</span><span class="token number">0</span>    <span class="token assign-left variable">ignored</span><span class="token operator">=</span><span class="token number">0</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="通过RHEL-System-Roles指定mac的方式修改"><a href="#通过RHEL-System-Roles指定mac的方式修改" class="headerlink" title="通过RHEL System Roles指定mac的方式修改"></a>通过<strong>RHEL System Roles指定mac的方式修改</strong></h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
+<span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> configure network interface
+  <span class="token key atrule">hosts</span><span class="token punctuation">:</span> test
+  <span class="token key atrule">become</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+  <span class="token key atrule">vars</span><span class="token punctuation">:</span>
+    <span class="token key atrule">target_mac</span><span class="token punctuation">:</span> <span class="token string">"bc:24:11:3f:13:8c"</span>
+    <span class="token key atrule">network_connections</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> static_net
+        <span class="token key atrule">type</span><span class="token punctuation">:</span> ethernet
+        <span class="token key atrule">mac</span><span class="token punctuation">:</span> <span class="token string">"&#123;&#123; target_mac &#125;&#125;"</span>
+        <span class="token key atrule">state</span><span class="token punctuation">:</span> up
+        <span class="token key atrule">ip</span><span class="token punctuation">:</span>
+          <span class="token key atrule">dhcp4</span><span class="token punctuation">:</span> no
+          <span class="token key atrule">address</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> 192.168.10.177/24
+  <span class="token key atrule">tasks</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> run NetworkManager
+      <span class="token key atrule">service</span><span class="token punctuation">:</span>
+        <span class="token key atrule">name</span><span class="token punctuation">:</span> NetworkManager
+        <span class="token key atrule">state</span><span class="token punctuation">:</span> started
+        <span class="token key atrule">enabled</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Find target interface
+      <span class="token key atrule">set_fact</span><span class="token punctuation">:</span>
+        <span class="token key atrule">the_interface</span><span class="token punctuation">:</span> <span class="token string">"&#123;&#123; item &#125;&#125;"</span>
+      <span class="token key atrule">when</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> ansible_facts<span class="token punctuation">[</span>item<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">'macaddress'</span><span class="token punctuation">]</span> is defined
+        <span class="token punctuation">-</span> ansible_facts<span class="token punctuation">[</span>item<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">'macaddress'</span><span class="token punctuation">]</span> == target_mac
+      <span class="token key atrule">loop</span><span class="token punctuation">:</span> <span class="token string">"&#123;&#123; ansible_facts['interfaces'] &#125;&#125;"</span>  <span class="token comment"># 修正变量名 interface -> interfaces</span>
+
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Debug interface
+      <span class="token key atrule">debug</span><span class="token punctuation">:</span>
+        <span class="token key atrule">var</span><span class="token punctuation">:</span> the_interface
+
+  <span class="token key atrule">roles</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> rhel<span class="token punctuation">-</span>system<span class="token punctuation">-</span>roles.network<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>注：目标主机需要有两个及以上网卡，在inventory中定义的是管理网卡，这里配置的是数据网卡</p>
 <p>如果只有一个，在修改完ip之后，由于ip修改，与hosts中对不上，ansible就会丢失连接，体现在tasks运行卡住</p>
@@ -6612,36 +6754,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7106,13 +7218,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8153,13 +8265,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8612,14 +8724,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8627,14 +8739,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

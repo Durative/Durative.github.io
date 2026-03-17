@@ -497,7 +497,14 @@ Storage DRS
                 
 本地存储即安装ESXI时，服务器上的本地磁盘但是使用时，需要格式化成VMFS文件系统以下是创建本地存储的步骤：选择之后会列出本地可见的块存储，然后可以选择创建指定大小的文件系统我这里因为没有本地存储就略过了，毕竟很简单
 
-NFS存储Centos7搭建NFS服务器12345678910111213# 搭建NFSyum -y install nfs-utilsmkdir /publicchmod 777 /publicecho &#x27;/public 10.163.2.0/24(rw)&#x27; &gt; /etc/exportssystemctl enable nfs-server...
+NFS存储Centos7搭建NFS服务器# 搭建NFS
+yum -y install nfs-utils
+mkdir /public
+chmod 777 /public
+echo '/public 10.163.2.0/24(rw)' > /etc/exports
+systemctl enable nfs-server.service --now
+
+systemctl...
             </div>
             <!-- read more -->
             
@@ -578,7 +585,23 @@ IO调优
                 <span class="abstract-title-text">Linux网络调优</span>
             </a>
             <div class="abstract-content">
-                网络内核可调项1234567891011121314151617181920212223#包接收流程(网线)1.电信号被网卡芯片解码，转换成以太网帧(网卡)2.网卡DMA引擎将帧直接写入环形缓冲区3.缓冲区达到阈值之后，网卡触发硬中断（缓冲区满时新的帧会被丢弃4.内核中断处理程序标记需要处理的帧，并触发软中断来处理硬中断5.数据从环形缓冲区复制到内核协议栈内存，方便软中断单独处理6.软中断剥离包，并判断是给本机还是转发的(应用层)7.如果报文的目的地是本地，放入socket接收缓冲区，复制到用户空间内存#包发送流程1.应用调用write()将数据放入Socket发送缓冲区(内核)2.协议...
+                网络内核可调项#包接收流程
+(网线)
+1.电信号被网卡芯片解码，转换成以太网帧
+(网卡)
+2.网卡DMA引擎将帧直接写入环形缓冲区
+3.缓冲区达到阈值之后，网卡触发硬中断（缓冲区满时新的帧会被丢弃
+4.内核中断处理程序标记需要处理的帧，并触发软中断来处理硬中断
+5.数据从环形缓冲区复制到内核协议栈内存，方便软中断单独处理
+6.软中断剥离包，并判断是给本机还是转发的
+(应用层)
+7.如果报文的目的地是本地，放入socket接收缓冲区，复制到用户空间内存
+
+#包发送流程
+1.应用调用write()将数据放入Socket发送缓冲区
+(内核)
+2.协议栈封装
+3.协议栈将帧放入环形缓冲区（TX ...
             </div>
             <!-- read more -->
             
@@ -666,7 +689,21 @@ SSD与TRIM丢弃传统机械硬盘（HDD）可直接覆写数据，但...
             <div class="abstract-content">
                 fastapi支持快速搭建api，并且原生支持协程，异步特性
 在搭建api这方面比flask更加专精
-快速开始123456789101112pip install fastapi uvicorn pydanticvim main.pyfrom fastapi import FastAPIapp = FastAPI()@app.get(&quot;/&quot;)async def root():    return &#123;&quot;message&quot;: &quot;Hello World&quot;&#125;    # 启动命令uvicorn main:app --re...
+快速开始pip install fastapi uvicorn pydantic
+
+vim main.py
+from fastapi import FastAPI
+app = FastAPI()
+@app.get("/")
+async def root():
+    return &#123;"message": "Hello World"&#125;
+    
+# 启动命令
+uvicorn main:app --reload
+
+
+
+Query类专门用于定义查询参数（URL 中的 ?ke...
             </div>
             <!-- read more -->
             
@@ -742,7 +779,12 @@ SSD与TRIM丢弃传统机械硬盘（HDD）可直接覆写数据，但...
             </a>
             <div class="abstract-content">
                 测试存储系统需要模拟真实的工作负载。fio命令使用多个线程和进程模拟工作负载。场景包括顺序的、随机的读写和混合的I&#x2F;O类型。该工具支持在单个文件上创建多线程I&#x2F;O请求。
-参数说明1234567891011121314fio --name=randwrite --ioengine=libaio --iodepth=1 \--rw=randwrite --bs=4k --direct=1 --size=512M --numjobs=2 \--group_reporting --filename=/tmp/testfile--name=randwrite 自定义任务名称--...
+参数说明fio --name=randwrite --ioengine=libaio --iodepth=1 \
+--rw=randwrite --bs=4k --direct=1 --size=512M --numjobs=2 \
+--group_reporting --filename=/tmp/testfile
+
+--name=randwrite 自定义任务名称
+--ioengine=libai...
             </div>
             <!-- read more -->
             
@@ -6838,36 +6880,6 @@ bfq
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7332,13 +7344,13 @@ bfq
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8379,13 +8391,13 @@ bfq
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8838,14 +8850,14 @@ bfq
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8853,14 +8865,14 @@ bfq
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

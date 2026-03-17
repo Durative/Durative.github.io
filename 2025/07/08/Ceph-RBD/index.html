@@ -527,7 +527,11 @@
 <h2 id="使用RBD"><a href="#使用RBD" class="headerlink" title="使用RBD"></a>使用RBD</h2><p>rbd可以和云存储底层结合，还可以作为k8s的ceph供应商的块存储</p>
 <p>一般只推荐一个RBD镜像附加到一个客户机，因为多客户机上挂载，可以导致文件系统损坏和数据丢失，可以多读单写作备份</p>
 <p><strong>创建rbd镜像流程</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1.使用ceph osd pool create创建自定义RBD镜像存储池</span><br><span class="line">2.创建专门的rbd用户，以访问rbd池(红帽推荐)</span><br><span class="line">3.使用rbd create --size &lt;size&gt; &lt;pool-name&gt;/&lt;image-name&gt;创建RBD镜像</span><br><span class="line">默认默认名称为rbd_default_pool参数，使用</span><br><span class="line">ceph config <span class="built_in">set</span> osd rbd_default_pool value可以指定</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.使用ceph osd pool create创建自定义RBD镜像存储池
+<span class="token number">2</span>.创建专门的rbd用户，以访问rbd池<span class="token punctuation">(</span>红帽推荐<span class="token punctuation">)</span>
+<span class="token number">3</span>.使用rbd create <span class="token parameter variable">--size</span> <span class="token operator">&lt;</span>size<span class="token operator">></span> <span class="token operator">&lt;</span>pool-name<span class="token operator">></span>/<span class="token operator">&lt;</span>image-name<span class="token operator">></span>创建RBD镜像
+默认默认名称为rbd_default_pool参数，使用
+ceph config <span class="token builtin class-name">set</span> osd rbd_default_pool value可以指定<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>访问RBD的方式</strong></p>
 <ul>
@@ -535,31 +539,143 @@
 <li>librbd库为KVM虚机与OpenStack、libvirt等提供块存储</li>
 <li>k8s使用CSI 驱动可以将ceph作为存储类动态提供pv</li>
 </ul>
-<h3 id="linux访问——rbd映射与rbdmap持久化映射"><a href="#linux访问——rbd映射与rbdmap持久化映射" class="headerlink" title="linux访问——rbd映射与rbdmap持久化映射"></a><strong>linux访问——rbd映射与rbdmap持久化映射</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">将RBD池中的ws RBD映像映射到客户机的/dev/rbd0设备:</span><br><span class="line">rbd map &lt;pool-name&gt;/&lt;image-name&gt;</span><br><span class="line"></span><br><span class="line">列出rbd镜像</span><br><span class="line">rbd device list</span><br><span class="line"></span><br><span class="line">解除映射</span><br><span class="line">rbd device unmap</span><br><span class="line"></span><br><span class="line">**rbdmap持久化映射**</span><br><span class="line">rbdmap服务可以在系统启动和关闭时自动将RBD映像映射到设备</span><br><span class="line">该服务在/etc/ceph/rbdmap文件中查找带有凭据的映射映像</span><br><span class="line">服务使用RBD映像在/etc/fstab文件中显示的挂载点来挂载和卸载RBD映像</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /etc/ceph/rbdmap</span><br><span class="line"><span class="comment"># RbdDevice             Parameters</span></span><br><span class="line"><span class="comment">#poolname/imagename     id=client,keyring=/etc/ceph/ceph.client.keyring</span></span><br><span class="line"></span><br><span class="line">1.创建一个文件系统挂载点</span><br><span class="line">2./etc/ceph/rbdmap文件中添加单行条目，需要添加用户与keyring</span><br><span class="line">3.在/etc/fstab中为rbd添加条目</span><br><span class="line">4.设置rbdmap systemd下次开机启动</span><br></pre></td></tr></table></figure>
+<h3 id="linux访问——rbd映射与rbdmap持久化映射"><a href="#linux访问——rbd映射与rbdmap持久化映射" class="headerlink" title="linux访问——rbd映射与rbdmap持久化映射"></a><strong>linux访问——rbd映射与rbdmap持久化映射</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">将RBD池中的ws RBD映像映射到客户机的/dev/rbd0设备:
+rbd map <span class="token operator">&lt;</span>pool-name<span class="token operator">></span>/<span class="token operator">&lt;</span>image-name<span class="token operator">></span>
+
+列出rbd镜像
+rbd device list
+
+解除映射
+rbd device unmap
+
+**rbdmap持久化映射**
+rbdmap服务可以在系统启动和关闭时自动将RBD映像映射到设备
+该服务在/etc/ceph/rbdmap文件中查找带有凭据的映射映像
+服务使用RBD映像在/etc/fstab文件中显示的挂载点来挂载和卸载RBD映像
+
+<span class="token function">cat</span> /etc/ceph/rbdmap
+<span class="token comment"># RbdDevice             Parameters</span>
+<span class="token comment">#poolname/imagename     id=client,keyring=/etc/ceph/ceph.client.keyring</span>
+
+<span class="token number">1</span>.创建一个文件系统挂载点
+<span class="token number">2</span>./etc/ceph/rbdmap文件中添加单行条目，需要添加用户与keyring
+<span class="token number">3</span>.在/etc/fstab中为rbd添加条目
+<span class="token number">4</span>.设置rbdmap systemd下次开机启动<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="RBD的缓存配置介绍"><a href="#RBD的缓存配置介绍" class="headerlink" title="RBD的缓存配置介绍"></a>RBD的缓存配置介绍</h3><p>ceph块设备的用户空间实现无法使用Linux页缓存，所以ceph的块设备使用自己的内存缓存，即RBD缓存，它的行为和linux页缓存差不多开</p>
 <p><strong>RBD缓存配置</strong></p>
 <p>1.缓存关闭（性能完全依赖网络和 OSD 磁盘速度）</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    Client-&gt;&gt;RBD: 写请求</span><br><span class="line">    RBD-&gt;&gt;OSD Journal: 同步写入日志</span><br><span class="line">    OSD Journal-&gt;&gt;Client: 确认写入</span><br><span class="line">    OSD Journal-&gt;&gt;OSD Data: 异步刷盘</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-mermaid" data-language="mermaid"><code class="language-mermaid"><span class="token keyword">sequenceDiagram</span>
+    Client<span class="token arrow operator">->></span>RBD<span class="token operator">:</span> 写请求
+    RBD<span class="token arrow operator">->></span>OSD Journal<span class="token operator">:</span> 同步写入日志
+    OSD Journal<span class="token arrow operator">->></span>Client<span class="token operator">:</span> 确认写入
+    OSD Journal<span class="token arrow operator">->></span>OSD Data<span class="token operator">:</span> 异步刷盘
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>2.缓存开启（回写），有一个最大脏缓存字节数M，如果大于M则不允许继续写入</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    Client-&gt;&gt;RBD Cache: 读请求</span><br><span class="line">    alt 缓存命中</span><br><span class="line">        RBD Cache-&gt;&gt;Client: 直接返回</span><br><span class="line">    else 缓存未命中</span><br><span class="line">        RBD Cache-&gt;&gt;OSD: 读取数据</span><br><span class="line">        OSD-&gt;&gt;RBD Cache: 返回数据</span><br><span class="line">        RBD Cache-&gt;&gt;Client: 返回+缓存</span><br><span class="line">    end</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-mermaid" data-language="mermaid"><code class="language-mermaid"><span class="token keyword">sequenceDiagram</span>
+    Client<span class="token arrow operator">->></span>RBD Cache<span class="token operator">:</span> 读请求
+    <span class="token keyword">alt</span> 缓存命中
+        RBD Cache<span class="token arrow operator">->></span>Client<span class="token operator">:</span> 直接返回
+    <span class="token keyword">else</span> 缓存未命中
+        RBD Cache<span class="token arrow operator">->></span>OSD<span class="token operator">:</span> 读取数据
+        OSD<span class="token arrow operator">->></span>RBD Cache<span class="token operator">:</span> 返回数据
+        RBD Cache<span class="token arrow operator">->></span>Client<span class="token operator">:</span> 返回+缓存
+    <span class="token keyword">end</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>3.直写式高速缓存，最大脏缓存字节数设置为0，强制透写</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    Client-&gt;&gt;RBD Cache: 写请求</span><br><span class="line">    RBD Cache-&gt;&gt;Client: 立即确认</span><br><span class="line">    RBD Cache-&gt;&gt;OSD Journal: 异步批量写入</span><br><span class="line">    OSD Journal-&gt;&gt;RBD Cache: 批量确认</span><br><span class="line">    OSD Journal-&gt;&gt;OSD Data: 异步刷盘</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-mermaid" data-language="mermaid"><code class="language-mermaid"><span class="token keyword">sequenceDiagram</span>
+    Client<span class="token arrow operator">->></span>RBD Cache<span class="token operator">:</span> 写请求
+    RBD Cache<span class="token arrow operator">->></span>Client<span class="token operator">:</span> 立即确认
+    RBD Cache<span class="token arrow operator">->></span>OSD Journal<span class="token operator">:</span> 异步批量写入
+    OSD Journal<span class="token arrow operator">->></span>RBD Cache<span class="token operator">:</span> 批量确认
+    OSD Journal<span class="token arrow operator">->></span>OSD Data<span class="token operator">:</span> 异步刷盘
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="RBD镜像介绍"><a href="#RBD镜像介绍" class="headerlink" title="RBD镜像介绍"></a>RBD镜像介绍</h2><p><strong>RBD镜像名称</strong></p>
 <p>每一个RBD镜像都有一个特定的名称，以rbd开头，中间有个点，后面是12位16进制</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">rbd info wspool/wsimage</span><br><span class="line">rbd image <span class="string">&#x27;wsimage&#x27;</span>:</span><br><span class="line">        size 100 GiB <span class="keyword">in</span> 25600 objects</span><br><span class="line">        order 22 (4 MiB objects)</span><br><span class="line">        snapshot_count: 0</span><br><span class="line">        <span class="built_in">id</span>: 88cd9395ea3</span><br><span class="line">        block_name_prefix: rbd_data.88cd9395ea3</span><br><span class="line">        format: 2</span><br><span class="line">        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten</span><br><span class="line">        op_features:</span><br><span class="line">        flags:</span><br><span class="line">        create_timestamp: Mon Jul  7 06:18:55 2025</span><br><span class="line">        access_timestamp: Mon Jul  7 06:18:55 2025</span><br><span class="line">        modify_timestamp: Mon Jul  7 06:18:55 2025</span><br><span class="line"></span><br><span class="line">这里这个就是名称</span><br><span class="line">rbd_data.88cd9395ea3</span><br><span class="line"></span><br><span class="line">rados -p wspool <span class="built_in">ls</span></span><br><span class="line">rbd_object_map.88cd9395ea3</span><br><span class="line">rbd_directory</span><br><span class="line">rbd_id.wsimage</span><br><span class="line">rbd_info</span><br><span class="line">rbd_header.88cd9395ea3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">rbd info wspool/wsimage
+rbd image <span class="token string">'wsimage'</span><span class="token builtin class-name">:</span>
+        size <span class="token number">100</span> GiB <span class="token keyword">in</span> <span class="token number">25600</span> objects
+        order <span class="token number">22</span> <span class="token punctuation">(</span><span class="token number">4</span> MiB objects<span class="token punctuation">)</span>
+        snapshot_count: <span class="token number">0</span>
+        id: 88cd9395ea3
+        block_name_prefix: rbd_data.88cd9395ea3
+        format: <span class="token number">2</span>
+        features: layering, exclusive-lock, object-map, fast-diff, deep-flatten
+        op_features:
+        flags:
+        create_timestamp: Mon Jul  <span class="token number">7</span> 06:18:55 <span class="token number">2025</span>
+        access_timestamp: Mon Jul  <span class="token number">7</span> 06:18:55 <span class="token number">2025</span>
+        modify_timestamp: Mon Jul  <span class="token number">7</span> 06:18:55 <span class="token number">2025</span>
+
+这里这个就是名称
+rbd_data.88cd9395ea3
+
+rados <span class="token parameter variable">-p</span> wspool <span class="token function">ls</span>
+rbd_object_map.88cd9395ea3
+rbd_directory
+rbd_id.wsimage
+rbd_info
+rbd_header.88cd9395ea3
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>rbd镜像顺序</strong></p>
 <p>镜像顺序image order，定义了对象的大小</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">12 = 4KiB</span><br><span class="line">13 = 8KiB</span><br><span class="line">缺省为22 = 4MiB</span><br><span class="line"></span><br><span class="line">可以通过rbd create --order 选项来哦覆盖默认值</span><br><span class="line">可选范围在4KiB到32MiB之间</span><br><span class="line"></span><br><span class="line">小对象 (低order) → 高IOPS，高元数据开销</span><br><span class="line">大对象 (高order) → 高吞吐量，低碎片化</span><br><span class="line">Order=22: 最大镜像 = 2^32 * 4MB = 16TB</span><br><span class="line">Order=24: 最大镜像 = 2^32 * 16MB = 64TB</span><br><span class="line">Order=30: 最大镜像 = 2^32 * 1GB = 4PB</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">12</span> <span class="token operator">=</span> 4KiB
+<span class="token number">13</span> <span class="token operator">=</span> 8KiB
+缺省为22 <span class="token operator">=</span> 4MiB
+
+可以通过rbd create <span class="token parameter variable">--order</span> 选项来哦覆盖默认值
+可选范围在4KiB到32MiB之间
+
+小对象 <span class="token punctuation">(</span>低order<span class="token punctuation">)</span> → 高IOPS，高元数据开销
+大对象 <span class="token punctuation">(</span>高order<span class="token punctuation">)</span> → 高吞吐量，低碎片化
+<span class="token assign-left variable">Order</span><span class="token operator">=</span><span class="token number">22</span>: 最大镜像 <span class="token operator">=</span> <span class="token number">2</span>^32 * 4MB <span class="token operator">=</span> 16TB
+<span class="token assign-left variable">Order</span><span class="token operator">=</span><span class="token number">24</span>: 最大镜像 <span class="token operator">=</span> <span class="token number">2</span>^32 * 16MB <span class="token operator">=</span> 64TB
+<span class="token assign-left variable">Order</span><span class="token operator">=</span><span class="token number">30</span>: 最大镜像 <span class="token operator">=</span> <span class="token number">2</span>^32 * 1GB <span class="token operator">=</span> 4PB<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>其他参数</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">image_format:RBD镜像格式版本。默认值为2，即最新版本。版本1已弃用</span><br><span class="line">stripe_unit:一个对象中存储的连续字节数，默认为object_size。</span><br><span class="line">stripe_count:条带所跨越的RBD镜像对象个数，默认为1。</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">image_format:RBD镜像格式版本。默认值为2，即最新版本。版本1已弃用
+stripe_unit:一个对象中存储的连续字节数，默认为object_size。
+stripe_count:条带所跨越的RBD镜像对象个数，默认为1。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="完整创建RBD的过程"><a href="#完整创建RBD的过程" class="headerlink" title="完整创建RBD的过程"></a>完整创建RBD的过程</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">1. 创建存储池后初始化</span><br><span class="line">ceph osd pool create rbd_pool 128 128</span><br><span class="line">rbd pool init rbd_pool</span><br><span class="line"></span><br><span class="line">2.创建多租户clientb</span><br><span class="line">useradd clientb</span><br><span class="line">ceph auth get-or-create client.rbd_pool.clientb mon <span class="string">&#x27;profile rbd&#x27;</span> \</span><br><span class="line">osd <span class="string">&#x27;profile rbd&#x27;</span> -o /etc/ceph/ceph.client.rbd_pool.clientb.keyring</span><br><span class="line"></span><br><span class="line">3.创建RBD</span><br><span class="line">su - clientb</span><br><span class="line"><span class="built_in">export</span> CEPH_ARGS=<span class="string">&#x27;--id=rbd_pool,clientb&#x27;</span></span><br><span class="line">rbd create rbd_pool/test --size=128M</span><br><span class="line"></span><br><span class="line">4.RBD临时映射</span><br><span class="line">rbd map rbd_pool/test</span><br><span class="line"></span><br><span class="line">rbd showmapped</span><br><span class="line"><span class="built_in">id</span>  pool    namespace  image    snap  device</span><br><span class="line">0   rbd_pool           <span class="built_in">test</span>     -     /dev/rbd0</span><br><span class="line"></span><br><span class="line">5.格式化</span><br><span class="line">mkfs.xfs /dev/rbd0</span><br><span class="line"></span><br><span class="line">6.做永久挂载</span><br><span class="line"><span class="built_in">mkdir</span> /mnt/rbd</span><br><span class="line">mount /dev/rbd0 /mnt/rbd</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /etc/ceph/rbdmap</span><br><span class="line">rbd_pool/test <span class="built_in">id</span>=rbd_pool.clientb,keyring=/etc/ceph/ceph.client.rbd_pool.clientb.keyring</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /etc/fstab</span><br><span class="line">/dev/rbd/rbd_pool/test /mnt/rbd xfs noauto 0 0</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> rbdmap --now</span><br><span class="line">systemctl restart rbdmap</span><br></pre></td></tr></table></figure>
+<h2 id="完整创建RBD的过程"><a href="#完整创建RBD的过程" class="headerlink" title="完整创建RBD的过程"></a>完整创建RBD的过程</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>. 创建存储池后初始化
+ceph osd pool create rbd_pool <span class="token number">128</span> <span class="token number">128</span>
+rbd pool init rbd_pool
+
+<span class="token number">2</span>.创建多租户clientb
+<span class="token function">useradd</span> clientb
+ceph auth get-or-create client.rbd_pool.clientb mon <span class="token string">'profile rbd'</span> <span class="token punctuation">\</span>
+osd <span class="token string">'profile rbd'</span> <span class="token parameter variable">-o</span> /etc/ceph/ceph.client.rbd_pool.clientb.keyring
+
+<span class="token number">3</span>.创建RBD
+<span class="token function">su</span> - clientb
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">CEPH_ARGS</span><span class="token operator">=</span><span class="token string">'--id=rbd_pool,clientb'</span>
+rbd create rbd_pool/test <span class="token parameter variable">--size</span><span class="token operator">=</span>128M
+
+<span class="token number">4</span>.RBD临时映射
+rbd map rbd_pool/test
+
+rbd showmapped
+<span class="token function">id</span>  pool    namespace  image    snap  device
+<span class="token number">0</span>   rbd_pool           <span class="token builtin class-name">test</span>     -     /dev/rbd0
+
+<span class="token number">5</span>.格式化
+mkfs.xfs /dev/rbd0
+
+<span class="token number">6</span>.做永久挂载
+<span class="token function">mkdir</span> /mnt/rbd
+<span class="token function">mount</span> /dev/rbd0 /mnt/rbd
+
+<span class="token function">cat</span> /etc/ceph/rbdmap
+rbd_pool/test <span class="token assign-left variable">id</span><span class="token operator">=</span>rbd_pool.clientb,keyring<span class="token operator">=</span>/etc/ceph/ceph.client.rbd_pool.clientb.keyring
+
+<span class="token function">cat</span> /etc/fstab
+/dev/rbd/rbd_pool/test /mnt/rbd xfs noauto <span class="token number">0</span> <span class="token number">0</span>
+
+systemctl <span class="token builtin class-name">enable</span> rbdmap <span class="token parameter variable">--now</span>
+systemctl restart rbdmap<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6618,36 +6734,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7112,13 +7198,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8159,13 +8245,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8618,14 +8704,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8633,14 +8719,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

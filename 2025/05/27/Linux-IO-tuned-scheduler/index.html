@@ -544,7 +544,33 @@
 <td>全自动机器人分拣流水线</td>
 </tr>
 </tbody></table>
-<h2 id="可调优参数"><a href="#可调优参数" class="headerlink" title="可调优参数"></a>可调优参数</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前调度器</span></span><br><span class="line"><span class="built_in">cat</span> /sys/block/vda/queue/scheduler</span><br><span class="line">[mq-deadline] kyber bfq none</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可调参数</span></span><br><span class="line"><span class="built_in">ls</span> /sys/block/vda/queue/iosched/</span><br><span class="line">async_depth  fifo_batch  front_merges  read_expire  write_expire  writes_starved</span><br><span class="line"></span><br><span class="line">async_depth 控制「异步请求」（比如后台写入）的队列深度</span><br><span class="line">增大此值可以提高吞吐量，但可能增加延迟</span><br><span class="line"></span><br><span class="line">fifo_batch 一次批量处理多少个 I/O 请求</span><br><span class="line">增大此值可提升吞吐量（适合顺序读写），但可能增加延迟</span><br><span class="line"></span><br><span class="line">front_merges 是否允许将新请求合并到已有请求的</span><br><span class="line">默认打开，适用HDD</span><br><span class="line"></span><br><span class="line">read_expire 读请求的最大等待时间（单位：毫秒），超时的读请求会被优先处理</span><br><span class="line">默认500毫秒</span><br><span class="line"></span><br><span class="line">write_expire 写请求的最大等待时间</span><br><span class="line">默认为5000毫秒</span><br><span class="line"></span><br><span class="line">writes_starved 在优先处理读请求之前，最多允许连续处理多少个写请求</span><br><span class="line">默认为2，增大此值会让写请求更积极</span><br><span class="line"></span><br><span class="line">上面这一部分都可以通过tuned配置文件来配置</span><br></pre></td></tr></table></figure>
+<h2 id="可调优参数"><a href="#可调优参数" class="headerlink" title="可调优参数"></a>可调优参数</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看当前调度器</span>
+<span class="token function">cat</span> /sys/block/vda/queue/scheduler
+<span class="token punctuation">[</span>mq-deadline<span class="token punctuation">]</span> kyber bfq none
+
+<span class="token comment"># 可调参数</span>
+<span class="token function">ls</span> /sys/block/vda/queue/iosched/
+async_depth  fifo_batch  front_merges  read_expire  write_expire  writes_starved
+
+async_depth 控制「异步请求」（比如后台写入）的队列深度
+增大此值可以提高吞吐量，但可能增加延迟
+
+fifo_batch 一次批量处理多少个 I/O 请求
+增大此值可提升吞吐量（适合顺序读写），但可能增加延迟
+
+front_merges 是否允许将新请求合并到已有请求的
+默认打开，适用HDD
+
+read_expire 读请求的最大等待时间（单位：毫秒），超时的读请求会被优先处理
+默认500毫秒
+
+write_expire 写请求的最大等待时间
+默认为5000毫秒
+
+writes_starved 在优先处理读请求之前，最多允许连续处理多少个写请求
+默认为2，增大此值会让写请求更积极
+
+上面这一部分都可以通过tuned配置文件来配置<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <table>
 <thead>
@@ -586,10 +612,29 @@
 </tr>
 </tbody></table>
 <h2 id="tuned调整调度器"><a href="#tuned调整调度器" class="headerlink" title="tuned调整调度器"></a>tuned调整调度器</h2><p>在tuned中，默认提供了两种I&#x2F;O调优策略</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">tuned-adm list</span><br><span class="line">- latency-performance         - Optimize <span class="keyword">for</span> deterministic performance at the cost of increased power consumption</span><br><span class="line">- throughput-performance      - Broadly applicable tuning that provides excellent performance across a variety of common server workloads</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tuned-adm list
+- latency-performance         - Optimize <span class="token keyword">for</span> deterministic performance at the cost of increased power consumption
+- throughput-performance      - Broadly applicable tuning that provides excellent performance across a variety of common server workloads
+<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>也可以tuned自定义模式中，定义使用的IO调度器</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> /etc/tuned/custom-iosched</span><br><span class="line">vim /etc/tuned/custom-iosched/tuned.conf</span><br><span class="line">[main]</span><br><span class="line">summary=Custom I/O Scheduler Profile <span class="keyword">for</span> NVMe SSD</span><br><span class="line"></span><br><span class="line">[disk]</span><br><span class="line"><span class="comment"># 设置所有磁盘的 I/O 调度器为 mq-deadline</span></span><br><span class="line">devices=*</span><br><span class="line">sysfs.scheduler=mq-deadline</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可选：针对特定磁盘（如 nvme0n1）</span></span><br><span class="line"><span class="comment"># devices=nvme0n1</span></span><br><span class="line"><span class="comment"># sysfs.scheduler=kyber</span></span><br><span class="line"></span><br><span class="line">tuned-adm profile custom-iosched</span><br><span class="line">sudo systemctl restart tuned</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> /etc/tuned/custom-iosched
+<span class="token function">vim</span> /etc/tuned/custom-iosched/tuned.conf
+<span class="token punctuation">[</span>main<span class="token punctuation">]</span>
+<span class="token assign-left variable">summary</span><span class="token operator">=</span>Custom I/O Scheduler Profile <span class="token keyword">for</span> NVMe SSD
+
+<span class="token punctuation">[</span>disk<span class="token punctuation">]</span>
+<span class="token comment"># 设置所有磁盘的 I/O 调度器为 mq-deadline</span>
+<span class="token assign-left variable">devices</span><span class="token operator">=</span>*
+<span class="token assign-left variable">sysfs.scheduler</span><span class="token operator">=</span>mq-deadline
+
+<span class="token comment"># 可选：针对特定磁盘（如 nvme0n1）</span>
+<span class="token comment"># devices=nvme0n1</span>
+<span class="token comment"># sysfs.scheduler=kyber</span>
+
+tuned-adm profile custom-iosched
+<span class="token function">sudo</span> systemctl restart tuned
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6648,36 +6693,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7142,13 +7157,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8189,13 +8204,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8648,14 +8663,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8663,14 +8678,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

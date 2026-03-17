@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="CRD是一种k8s的自定义资源，可以通过yaml文件指定新的资源类型，包括资源的属性、版本、范围等 在自定义了资源之后，就可以使用这种资源，创建控制器来管理一些服务 但它的自定义，其实并不是从头开始的自定义，而是使用官方预先准备好的工具，我们定义CRD，其实是使用了官方提供的扩展 使用自定义CRD 官方示例1234567891011121314151617181920212223242526272">
+    <meta name="description" content="CRD是一种k8s的自定义资源，可以通过yaml文件指定新的资源类型，包括资源的属性、版本、范围等 在自定义了资源之后，就可以使用这种资源，创建控制器来管理一些服务 但它的自定义，其实并不是从头开始的自定义，而是使用官方预先准备好的工具，我们定义CRD，其实是使用了官方提供的扩展 使用自定义CRD 官方示例apiVersion: apiextensions.k8s.io&#x2F;v1 # 指定使用的Kub">
 <meta property="og:type" content="article">
 <meta property="og:title" content="CRD自定义API资源介绍与使用官方案例">
 <meta property="og:url" content="https://akemi.zj.cn/2024/12/08/CRD/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="CRD是一种k8s的自定义资源，可以通过yaml文件指定新的资源类型，包括资源的属性、版本、范围等 在自定义了资源之后，就可以使用这种资源，创建控制器来管理一些服务 但它的自定义，其实并不是从头开始的自定义，而是使用官方预先准备好的工具，我们定义CRD，其实是使用了官方提供的扩展 使用自定义CRD 官方示例1234567891011121314151617181920212223242526272">
+<meta property="og:description" content="CRD是一种k8s的自定义资源，可以通过yaml文件指定新的资源类型，包括资源的属性、版本、范围等 在自定义了资源之后，就可以使用这种资源，创建控制器来管理一些服务 但它的自定义，其实并不是从头开始的自定义，而是使用官方预先准备好的工具，我们定义CRD，其实是使用了官方提供的扩展 使用自定义CRD 官方示例apiVersion: apiextensions.k8s.io&#x2F;v1 # 指定使用的Kub">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-12-08T13:53:46.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:06:24.081Z">
@@ -493,7 +493,60 @@
         <p>CRD是一种k8s的自定义资源，可以通过yaml文件指定新的资源类型，包括资源的属性、版本、范围等</p>
 <p>在自定义了资源之后，就可以使用这种资源，创建控制器来管理一些服务</p>
 <p><strong>但它的自定义，其实并不是从头开始的自定义，而是使用官方预先准备好的工具，我们定义CRD，其实是使用了官方提供的扩展</strong></p>
-<h1 id="使用自定义CRD-官方示例"><a href="#使用自定义CRD-官方示例" class="headerlink" title="使用自定义CRD 官方示例"></a>使用自定义CRD 官方示例</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apiextensions.k8s.io/v1 <span class="comment"># 指定使用的Kubernetes API版本，这里是用于扩展API的v1版本。</span></span><br><span class="line">kind: CustomResourceDefinition <span class="comment"># 声明这是一个CustomResourceDefinition对象。</span></span><br><span class="line">metadata:</span><br><span class="line">  name: crontabs.stable.example.com <span class="comment"># CRD的全局唯一名称，格式为&lt;plural&gt;.&lt;group&gt;。</span></span><br><span class="line">spec:</span><br><span class="line">  group: stable.example.com <span class="comment"># 自定义资源的API组名。</span></span><br><span class="line">  versions: <span class="comment"># 定义CRD的不同版本。</span></span><br><span class="line">    - name: v1 <span class="comment"># 版本的名称。</span></span><br><span class="line">      served: <span class="literal">true</span> <span class="comment"># 表示该版本是活跃的，可以被API服务器服务。</span></span><br><span class="line">      storage: <span class="literal">true</span> <span class="comment"># 表示该版本是存储版本，Kubernetes将使用这个版本存储CRD的数据。</span></span><br><span class="line">      schema: <span class="comment"># 定义CRD对象的结构。</span></span><br><span class="line">        openAPIV3Schema: <span class="comment"># 使用OpenAPI v3规范定义结构。</span></span><br><span class="line">          <span class="built_in">type</span>: object <span class="comment"># 根类型是对象。</span></span><br><span class="line">          properties: <span class="comment"># 定义对象的属性。</span></span><br><span class="line">            spec: <span class="comment"># 定义spec属性。</span></span><br><span class="line">              <span class="built_in">type</span>: object <span class="comment"># spec的类型是对象。</span></span><br><span class="line">              properties: <span class="comment"># 定义spec对象的属性。</span></span><br><span class="line">                cronSpec: <span class="comment"># cron表达式属性。</span></span><br><span class="line">                  <span class="built_in">type</span>: string <span class="comment"># cron表达式的类型是字符串。</span></span><br><span class="line">                image:</span><br><span class="line">                  <span class="built_in">type</span>: string <span class="comment"># 镜像的类型是字符串。</span></span><br><span class="line">                replicas:</span><br><span class="line">                  <span class="built_in">type</span>: <span class="built_in">integer</span> <span class="comment"># 副本数量的类型是整数。</span></span><br><span class="line">  scope: Namespaced <span class="comment"># 定义CRD的作用域，这里是命名空间作用域，意味着CRD实例将绑定到特定的命名空间。</span></span><br><span class="line">  names:</span><br><span class="line">    plural: crontabs <span class="comment"># 复数形式的名称，用于API路径中。</span></span><br><span class="line">    singular: crontab <span class="comment"># 单数形式的名称。</span></span><br><span class="line">    kind: CronTab <span class="comment"># CRD的类别名称，用于标识资源类型。</span></span><br><span class="line">    shortNames: <span class="comment"># 定义CRD的简短名称列表。</span></span><br><span class="line">    - ct <span class="comment"># 简短名称之一，允许用户以更短的命令引用CRD。</span></span><br><span class="line">    </span><br><span class="line">kubectl apply -f CRD-crontab.yaml</span><br><span class="line"></span><br><span class="line">像上面这个自定义资源，其实只有spec.versions.schema.properties.spec.properties中的</span><br><span class="line">字段是真正定义了创建资源时要自己写的字段，其余基本都是一些版本和名字的定义</span><br><span class="line"></span><br><span class="line">kubectl api-versions  | grep stable</span><br><span class="line">[stable.example.com/v1](http://stable.example.com/v1)</span><br><span class="line">此时可以看到我刚刚定义的这个group名已经可以查询到了</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; CRD-crontab-example.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: &quot;stable.example.com/v1&quot;</span></span><br><span class="line"><span class="string">kind: CronTab</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: my-new-cron-object</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  cronSpec: &quot;* * * * * */5&quot;</span></span><br><span class="line"><span class="string">  image: busybox</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f CRD-crontab-example.yaml</span><br><span class="line"></span><br><span class="line">kubectl get ct</span><br><span class="line">NAME                 AGE</span><br><span class="line">my-new-cron-object   29s</span><br></pre></td></tr></table></figure>
+<h1 id="使用自定义CRD-官方示例"><a href="#使用自定义CRD-官方示例" class="headerlink" title="使用自定义CRD 官方示例"></a>使用自定义CRD 官方示例</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">apiVersion: apiextensions.k8s.io/v1 <span class="token comment"># 指定使用的Kubernetes API版本，这里是用于扩展API的v1版本。</span>
+kind: CustomResourceDefinition <span class="token comment"># 声明这是一个CustomResourceDefinition对象。</span>
+metadata:
+  name: crontabs.stable.example.com <span class="token comment"># CRD的全局唯一名称，格式为&lt;plural>.&lt;group>。</span>
+spec:
+  group: stable.example.com <span class="token comment"># 自定义资源的API组名。</span>
+  versions: <span class="token comment"># 定义CRD的不同版本。</span>
+    - name: v1 <span class="token comment"># 版本的名称。</span>
+      served: <span class="token boolean">true</span> <span class="token comment"># 表示该版本是活跃的，可以被API服务器服务。</span>
+      storage: <span class="token boolean">true</span> <span class="token comment"># 表示该版本是存储版本，Kubernetes将使用这个版本存储CRD的数据。</span>
+      schema: <span class="token comment"># 定义CRD对象的结构。</span>
+        openAPIV3Schema: <span class="token comment"># 使用OpenAPI v3规范定义结构。</span>
+          type: object <span class="token comment"># 根类型是对象。</span>
+          properties: <span class="token comment"># 定义对象的属性。</span>
+            spec: <span class="token comment"># 定义spec属性。</span>
+              type: object <span class="token comment"># spec的类型是对象。</span>
+              properties: <span class="token comment"># 定义spec对象的属性。</span>
+                cronSpec: <span class="token comment"># cron表达式属性。</span>
+                  type: string <span class="token comment"># cron表达式的类型是字符串。</span>
+                image:
+                  type: string <span class="token comment"># 镜像的类型是字符串。</span>
+                replicas:
+                  type: integer <span class="token comment"># 副本数量的类型是整数。</span>
+  scope: Namespaced <span class="token comment"># 定义CRD的作用域，这里是命名空间作用域，意味着CRD实例将绑定到特定的命名空间。</span>
+  names:
+    plural: crontabs <span class="token comment"># 复数形式的名称，用于API路径中。</span>
+    singular: <span class="token function">crontab</span> <span class="token comment"># 单数形式的名称。</span>
+    kind: CronTab <span class="token comment"># CRD的类别名称，用于标识资源类型。</span>
+    shortNames: <span class="token comment"># 定义CRD的简短名称列表。</span>
+    - ct <span class="token comment"># 简短名称之一，允许用户以更短的命令引用CRD。</span>
+    
+kubectl apply <span class="token parameter variable">-f</span> CRD-crontab.yaml
+
+像上面这个自定义资源，其实只有spec.versions.schema.properties.spec.properties中的
+字段是真正定义了创建资源时要自己写的字段，其余基本都是一些版本和名字的定义
+
+kubectl api-versions  <span class="token operator">|</span> <span class="token function">grep</span> stable
+<span class="token punctuation">[</span>stable.example.com/v1<span class="token punctuation">]</span><span class="token punctuation">(</span>http://stable.example.com/v1<span class="token punctuation">)</span>
+此时可以看到我刚刚定义的这个group名已经可以查询到了
+
+<span class="token function">cat</span> <span class="token operator">></span> CRD-crontab-example.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+apiVersion: "stable.example.com/v1"
+kind: CronTab
+metadata:
+  name: my-new-cron-object
+spec:
+  cronSpec: "* * * * * */5"
+  image: busybox
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> CRD-crontab-example.yaml
+
+kubectl get ct
+NAME                 AGE
+my-new-cron-object   29s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6552,36 +6605,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7046,13 +7069,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8093,13 +8116,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8552,14 +8575,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8567,14 +8590,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

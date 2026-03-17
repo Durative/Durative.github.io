@@ -501,10 +501,83 @@
 <li>标签保真：honor_labels: true 保留原始标签，方便分析来源</li>
 <li>灵活选择：match[] 决定上游拉哪些数据，不浪费带宽。</li>
 </ul>
-<h3 id="部署下级Prometheus"><a href="#部署下级Prometheus" class="headerlink" title="部署下级Prometheus"></a>部署下级Prometheus</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 这台IP是10.163.2.106，和中心Prometheus 10.163.2.100同一网段</span></span><br><span class="line">hostnamectl set-hostname prometheus-region &amp;&amp; bash</span><br><span class="line"></span><br><span class="line">wget https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheus-3.5.0.linux-amd64.tar.gz</span><br><span class="line">tar -xf prometheus-3.5.0.linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> -r prometheus-3.5.0.linux-amd64 /usr/local/</span><br><span class="line"><span class="built_in">cd</span> /usr/local/prometheus-3.5.0.linux-amd64/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 简单修改配置文件使其指向中心Prometheus，一会就用这个来进行测试，看中心Prometheus能不能看到自己的数据</span></span><br><span class="line">scrape_configs:</span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [<span class="string">&quot;10.163.2.100:9100&quot;</span>]</span><br><span class="line">        labels:</span><br><span class="line">          instance: <span class="string">&quot;prometheus-central&quot;</span></span><br><span class="line">          </span><br><span class="line"><span class="comment"># 搞个service文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/prometheus.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit]</span></span><br><span class="line"><span class="string">Description=Prometheus Server</span></span><br><span class="line"><span class="string">Documentation=https://prometheus.io/docs/introduction/overview/</span></span><br><span class="line"><span class="string">After=network.target</span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">Restart=on-failure</span></span><br><span class="line"><span class="string">WorkingDirectory=/usr/local/prometheus-3.5.0.linux-amd64/</span></span><br><span class="line"><span class="string">ExecStart=/usr/local/prometheus-3.5.0.linux-amd64/prometheus --config.file=/usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml</span></span><br><span class="line"><span class="string">[Install]</span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl <span class="built_in">enable</span> prometheus.service --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证启动</span></span><br><span class="line">ss -tunlp | grep 9090</span><br><span class="line">tcp   LISTEN 0      4096               *:9090            *:*    <span class="built_in">users</span>:((&quot;prometheus&quot;,pid=<span class="number">11875</span>,fd=<span class="number">6</span>))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="部署下级Prometheus"><a href="#部署下级Prometheus" class="headerlink" title="部署下级Prometheus"></a>部署下级Prometheus</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 这台IP是10.163.2.106，和中心Prometheus 10.163.2.100同一网段</span>
+hostnamectl set-hostname prometheus-region <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+
+<span class="token function">wget</span> https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheus-3.5.0.linux-amd64.tar.gz
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> prometheus-3.5.0.linux-amd64.tar.gz
+<span class="token function">cp</span> <span class="token parameter variable">-r</span> prometheus-3.5.0.linux-amd64 /usr/local/
+<span class="token builtin class-name">cd</span> /usr/local/prometheus-3.5.0.linux-amd64/
+
+<span class="token comment"># 简单修改配置文件使其指向中心Prometheus，一会就用这个来进行测试，看中心Prometheus能不能看到自己的数据</span>
+scrape_configs:
+    static_configs:
+      - targets: <span class="token punctuation">[</span><span class="token string">"10.163.2.100:9100"</span><span class="token punctuation">]</span>
+        labels:
+          instance: <span class="token string">"prometheus-central"</span>
+          
+<span class="token comment"># 搞个service文件</span>
+<span class="token function">cat</span> <span class="token operator">></span> /etc/systemd/system/prometheus.service <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Unit]
+Description=Prometheus Server
+Documentation=https://prometheus.io/docs/introduction/overview/
+After=network.target
+[Service]
+Restart=on-failure
+WorkingDirectory=/usr/local/prometheus-3.5.0.linux-amd64/
+ExecStart=/usr/local/prometheus-3.5.0.linux-amd64/prometheus --config.file=/usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml
+[Install]
+WantedBy=multi-user.target
+EOF</span>
+systemctl daemon-reload
+systemctl <span class="token builtin class-name">enable</span> prometheus.service <span class="token parameter variable">--now</span>
+
+<span class="token comment"># 验证启动</span>
+ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">9090</span>
+tcp   LISTEN <span class="token number">0</span>      <span class="token number">4096</span>               *:9090            *:*    users:<span class="token variable"><span class="token punctuation">((</span>"prometheus"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">11875</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">6</span><span class="token punctuation">))</span></span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="调整中心Prometheus配置"><a href="#调整中心Prometheus配置" class="headerlink" title="调整中心Prometheus配置"></a>调整中心Prometheus配置</h3><p>添加针对于下级Prometheus的抓取配置信息</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl set-hostname prometheus-central &amp;&amp; bash</span><br><span class="line"></span><br><span class="line">vim /usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml</span><br><span class="line">scrape_configs:</span><br><span class="line">...</span><br><span class="line">  <span class="comment"># 配置下级Prometheus</span></span><br><span class="line">    scrape_interval: 10s <span class="comment"># 采集间隔</span></span><br><span class="line">    honor_labels: <span class="literal">true</span> <span class="comment"># 保留labels</span></span><br><span class="line">    metrics_path: <span class="string">&#x27;/federate&#x27;</span> <span class="comment"># 抓取的路径，联邦抓这个路径</span></span><br><span class="line">    params:  <span class="comment"># 抓取的下层任务的规则</span></span><br><span class="line">      <span class="string">&#x27;match[]&#x27;</span>: </span><br><span class="line">       - <span class="string">&#x27;&#123;instance=&quot;prometheus.*&quot;&#125;&#x27;</span> <span class="comment"># 所有instance标签以 &quot;prometheus&quot; 开头的指标</span></span><br><span class="line">       - <span class="string">&#x27;&#123;__name__=~&quot;job:.*&quot;&#125;&#x27;</span> <span class="comment"># 匹配所有指标名称以&quot;job&quot;开头的指标</span></span><br><span class="line">       - <span class="string">&#x27;&#123;__name__=~&quot;node.*&quot;&#125;&#x27;</span> <span class="comment"># 匹配所有指标名称以&quot;node&quot;开头的指标</span></span><br><span class="line">    static_configs: </span><br><span class="line">      - targets: [<span class="string">&quot;10.163.2.106:9090&quot;</span>]</span><br><span class="line">      </span><br><span class="line">systemctl restart prometheus.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 给中心Prometheus搞个exporter，用以测试</span></span><br><span class="line">wget https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz</span><br><span class="line">tar -xf node_exporter-1.10.2.linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> -r node_exporter-1.10.2.linux-amd64 /usr/local/</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/node-exporter.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit] </span></span><br><span class="line"><span class="string">Description=Node Exporter </span></span><br><span class="line"><span class="string">After=network.target </span></span><br><span class="line"><span class="string">[Service] </span></span><br><span class="line"><span class="string">ExecStart=/usr/local/node_exporter-1.10.2.linux-amd64/node_exporter</span></span><br><span class="line"><span class="string">Restart=always </span></span><br><span class="line"><span class="string">User=root </span></span><br><span class="line"><span class="string">Group=root </span></span><br><span class="line"><span class="string">RestartSec=3 </span></span><br><span class="line"><span class="string">LimitNOFILE=4096 </span></span><br><span class="line"><span class="string">[Install] </span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl <span class="built_in">enable</span> node-exporter.service --now</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">hostnamectl set-hostname prometheus-central <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+
+<span class="token function">vim</span> /usr/local/prometheus-3.5.0.linux-amd64/prometheus.yml
+scrape_configs:
+<span class="token punctuation">..</span>.
+  <span class="token comment"># 配置下级Prometheus</span>
+    scrape_interval: 10s <span class="token comment"># 采集间隔</span>
+    honor_labels: <span class="token boolean">true</span> <span class="token comment"># 保留labels</span>
+    metrics_path: <span class="token string">'/federate'</span> <span class="token comment"># 抓取的路径，联邦抓这个路径</span>
+    params:  <span class="token comment"># 抓取的下层任务的规则</span>
+      <span class="token string">'match[]'</span><span class="token builtin class-name">:</span> 
+       - <span class="token string">'&#123;instance="prometheus.*"&#125;'</span> <span class="token comment"># 所有instance标签以 "prometheus" 开头的指标</span>
+       - <span class="token string">'&#123;__name__=~"job:.*"&#125;'</span> <span class="token comment"># 匹配所有指标名称以"job"开头的指标</span>
+       - <span class="token string">'&#123;__name__=~"node.*"&#125;'</span> <span class="token comment"># 匹配所有指标名称以"node"开头的指标</span>
+    static_configs: 
+      - targets: <span class="token punctuation">[</span><span class="token string">"10.163.2.106:9090"</span><span class="token punctuation">]</span>
+      
+systemctl restart prometheus.service
+
+<span class="token comment"># 给中心Prometheus搞个exporter，用以测试</span>
+<span class="token function">wget</span> https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> node_exporter-1.10.2.linux-amd64.tar.gz
+<span class="token function">cp</span> <span class="token parameter variable">-r</span> node_exporter-1.10.2.linux-amd64 /usr/local/
+<span class="token function">cat</span> <span class="token operator">></span> /etc/systemd/system/node-exporter.service <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+[Unit] 
+Description=Node Exporter 
+After=network.target 
+[Service] 
+ExecStart=/usr/local/node_exporter-1.10.2.linux-amd64/node_exporter
+Restart=always 
+User=root 
+Group=root 
+RestartSec=3 
+LimitNOFILE=4096 
+[Install] 
+WantedBy=multi-user.target
+EOF</span>
+systemctl daemon-reload
+systemctl <span class="token builtin class-name">enable</span> node-exporter.service <span class="token parameter variable">--now</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260109141038999.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260109141056290.png"></p>
@@ -6567,36 +6640,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7061,13 +7104,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8108,13 +8151,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8567,14 +8610,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8582,14 +8625,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

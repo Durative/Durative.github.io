@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="这个故障我没有去issue里找，但是大概率是bug了 故障背景与现象 在一个父子chart结构的helm工程中，原本有两个老的子chart，mysql与redis，它俩自己是没问题的 后面准备新加minio服务作为依赖项加入chart，我就找了个比较新的minio chart 16.0.10版本，25年4月22的，相当新了 1234依赖项配置:    version: 16.0.10    rep">
+    <meta name="description" content="这个故障我没有去issue里找，但是大概率是bug了 故障背景与现象 在一个父子chart结构的helm工程中，原本有两个老的子chart，mysql与redis，它俩自己是没问题的 后面准备新加minio服务作为依赖项加入chart，我就找了个比较新的minio chart 16.0.10版本，25年4月22的，相当新了 依赖项配置:     version: 16.0.10     repos">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Helm labels渲染bug">
 <meta property="og:url" content="https://akemi.zj.cn/2025/06/25/Helm-lables-bug/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="这个故障我没有去issue里找，但是大概率是bug了 故障背景与现象 在一个父子chart结构的helm工程中，原本有两个老的子chart，mysql与redis，它俩自己是没问题的 后面准备新加minio服务作为依赖项加入chart，我就找了个比较新的minio chart 16.0.10版本，25年4月22的，相当新了 1234依赖项配置:    version: 16.0.10    rep">
+<meta property="og:description" content="这个故障我没有去issue里找，但是大概率是bug了 故障背景与现象 在一个父子chart结构的helm工程中，原本有两个老的子chart，mysql与redis，它俩自己是没问题的 后面准备新加minio服务作为依赖项加入chart，我就找了个比较新的minio chart 16.0.10版本，25年4月22的，相当新了 依赖项配置:     version: 16.0.10     repos">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-06-25T09:29:43.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.760Z">
@@ -494,24 +494,60 @@
 <p><strong>故障背景与现象</strong></p>
 <p>在一个父子chart结构的helm工程中，原本有两个老的子chart，mysql与redis，它俩自己是没问题的</p>
 <p>后面准备新加minio服务作为依赖项加入chart，我就找了个比较新的minio chart 16.0.10版本，25年4月22的，相当新了</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">依赖项配置:</span><br><span class="line">    version: 16.0.10</span><br><span class="line">    repository: <span class="string">&quot;file://./charts/minio&quot;</span></span><br><span class="line">    condition: minio.enabled</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">依赖项配置:
+    version: <span class="token number">16.0</span>.10
+    repository: <span class="token string">"file://./charts/minio"</span>
+    condition: minio.enabled<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>结果调了一下参数，部署之后发现每次调整父values文件中的minio.enabled，都会导致已经部署完的mysql与redis被重建</p>
 <p><strong>排查与恢复</strong></p>
 <ul>
 <li>使用tempalte模拟minio.enabled&#x3D;false与true的情况</li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">helm template ./ -f values.yaml --<span class="built_in">set</span> minio.enabled=<span class="literal">true</span> &gt; enabled.yaml</span><br><span class="line">helm template ./ -f values.yaml --<span class="built_in">set</span> minio.enabled=<span class="literal">false</span> &gt; disabled.yaml</span><br><span class="line"></span><br><span class="line">然后使用vscode的对比功能对比一下，发现开启和关闭minio时，redis与mysql的labels都会变化</span><br><span class="line">由此导致的服务被重建</span><br><span class="line"></span><br><span class="line">开启前:</span><br><span class="line">  labels:</span><br><span class="line">    app.kubernetes.io/instance: release-name</span><br><span class="line">    app.kubernetes.io/managed-by: Helm</span><br><span class="line">    app.kubernetes.io/name: mysql</span><br><span class="line">    helm.sh/chart: mysql-9.12.0</span><br><span class="line">开启后:</span><br><span class="line">  labels:</span><br><span class="line">    app.kubernetes.io/instance: release-name</span><br><span class="line">    app.kubernetes.io/managed-by: Helm</span><br><span class="line">    app.kubernetes.io/name: mysql</span><br><span class="line">    helm.sh/chart: mysql-9.12.0</span><br><span class="line">    app.kubernetes.io/version: 8.0.34</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm template ./ <span class="token parameter variable">-f</span> values.yaml <span class="token parameter variable">--set</span> <span class="token assign-left variable">minio.enabled</span><span class="token operator">=</span>true <span class="token operator">></span> enabled.yaml
+helm template ./ <span class="token parameter variable">-f</span> values.yaml <span class="token parameter variable">--set</span> <span class="token assign-left variable">minio.enabled</span><span class="token operator">=</span>false <span class="token operator">></span> disabled.yaml
+
+然后使用vscode的对比功能对比一下，发现开启和关闭minio时，redis与mysql的labels都会变化
+由此导致的服务被重建
+
+开启前:
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-9.12.0
+开启后:
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-9.12.0
+    app.kubernetes.io/version: <span class="token number">8.0</span>.34<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>那么这个多出来的labels是从哪来的呢，这类labels的使用者基本都是子chart的secret或者sa的模板文件，在这些文件中找到了一个字段common.labels.standard</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">这是一个非常普遍的sa模板</span><br><span class="line">&#123;&#123;- <span class="keyword">if</span> and .Values.serviceAccount.create (and (not .Values.master.serviceAccount.create) (not .Values.replica.serviceAccount.create)) &#125;&#125;</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">automountServiceAccountToken: &#123;&#123; .Values.serviceAccount.automountServiceAccountToken &#125;&#125;</span><br><span class="line">metadata:</span><br><span class="line">  name: &#123;&#123; template <span class="string">&quot;redis.serviceAccountName&quot;</span> . &#125;&#125;</span><br><span class="line">  namespace: &#123;&#123; .Release.Namespace | quote &#125;&#125;</span><br><span class="line">  labels: &#123;&#123;- include <span class="string">&quot;common.labels.standard&quot;</span> . | nindent 4 &#125;&#125;</span><br><span class="line">    &#123;&#123;- <span class="keyword">if</span> .Values.commonLabels &#125;&#125;</span><br><span class="line">    &#123;&#123;- include <span class="string">&quot;common.tplvalues.render&quot;</span> ( dict <span class="string">&quot;value&quot;</span> .Values.commonLabels <span class="string">&quot;context&quot;</span> $ ) | nindent 4 &#125;&#125;</span><br><span class="line">    &#123;&#123;- end &#125;&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">这是一个非常普遍的sa模板
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">if</span> and .Values.serviceAccount.create <span class="token punctuation">(</span>and <span class="token punctuation">(</span>not .Values.master.serviceAccount.create<span class="token punctuation">)</span> <span class="token punctuation">(</span>not .Values.replica.serviceAccount.create<span class="token punctuation">))</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.serviceAccount.automountServiceAccountToken <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+metadata:
+  name: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> template <span class="token string">"redis.serviceAccountName"</span> <span class="token builtin class-name">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  namespace: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Release.Namespace <span class="token operator">|</span> quote <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+  labels: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- include <span class="token string">"common.labels.standard"</span> <span class="token builtin class-name">.</span> <span class="token operator">|</span> nindent <span class="token number">4</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">if</span> .Values.commonLabels <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- include <span class="token string">"common.tplvalues.render"</span> <span class="token punctuation">(</span> dict <span class="token string">"value"</span> .Values.commonLabels <span class="token string">"context"</span> $ <span class="token punctuation">)</span> <span class="token operator">|</span> nindent <span class="token number">4</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <ul>
 <li>寻找字段common.labels.standard</li>
 </ul>
 <p>此时我还以为是mysql与redis的问题，意图找到common.labels.standard的位置并且将其修改为服务版本，那应该就行了</p>
 <p>最终找到是在子chart下common&#x2F;templates&#x2F;_labels.tpl文件中定义的</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">grep -r <span class="string">&#x27;common.labels.standard&#x27;</span> | grep defin</span><br><span class="line">charts/redis/charts/common/templates/_labels.tpl:&#123;&#123;- define <span class="string">&quot;common.labels.standard&quot;</span> -&#125;&#125;</span><br><span class="line">charts/mysql/charts/common/templates/_labels.tpl:&#123;&#123;- define <span class="string">&quot;common.labels.standard&quot;</span> -&#125;&#125;</span><br><span class="line">charts/minio/charts/common/templates/_labels.tpl:&#123;&#123;- define <span class="string">&quot;common.labels.standard&quot;</span> -&#125;&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">grep</span> <span class="token parameter variable">-r</span> <span class="token string">'common.labels.standard'</span> <span class="token operator">|</span> <span class="token function">grep</span> defin
+charts/redis/charts/common/templates/_labels.tpl:<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- define <span class="token string">"common.labels.standard"</span> -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+charts/mysql/charts/common/templates/_labels.tpl:<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- define <span class="token string">"common.labels.standard"</span> -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+charts/minio/charts/common/templates/_labels.tpl:<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- define <span class="token string">"common.labels.standard"</span> -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <ul>
 <li>发现故障原因</li>
@@ -519,7 +555,30 @@
 <p>但是当我分别给redis与mysql修改了define字段后，发现还是有问题，并且redis和mysql的version字段都会固定为8.0.34</p>
 <p>随后意识到其实是minio的_labels.tpl问题，对比可见，相对于mysql的_labels.tpl，minio的多了version的字段</p>
 <p>删除该version字段后恢复</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">minio/charts/common/template/_labels.tpl</span><br><span class="line">...</span><br><span class="line">&#123;&#123;- with .context.Chart.AppVersion -&#125;&#125;</span><br><span class="line">&#123;&#123;- <span class="variable">$_</span> := <span class="built_in">set</span> <span class="variable">$default</span> <span class="string">&quot;app.kubernetes.io/version&quot;</span> . -&#125;&#125;</span><br><span class="line">&#123;&#123;- end -&#125;&#125;</span><br><span class="line">&#123;&#123; template <span class="string">&quot;common.tplvalues.merge&quot;</span> (dict <span class="string">&quot;values&quot;</span> (list .customLabels <span class="variable">$default</span>) <span class="string">&quot;context&quot;</span> .context) &#125;&#125;</span><br><span class="line">&#123;&#123;- <span class="keyword">else</span> -&#125;&#125;</span><br><span class="line">app.kubernetes.io/name: &#123;&#123; include <span class="string">&quot;common.names.name&quot;</span> . &#125;&#125;</span><br><span class="line">helm.sh/chart: &#123;&#123; include <span class="string">&quot;common.names.chart&quot;</span> . &#125;&#125;</span><br><span class="line">app.kubernetes.io/instance: &#123;&#123; .Release.Name &#125;&#125;</span><br><span class="line">app.kubernetes.io/managed-by: &#123;&#123; .Release.Service &#125;&#125;</span><br><span class="line">&#123;&#123;- with .Chart.AppVersion &#125;&#125;</span><br><span class="line">app.kubernetes.io/version: &#123;&#123; . | quote &#125;&#125;</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">mysql/charts/common/template/_labels.tpl</span><br><span class="line">...</span><br><span class="line">&#123;&#123;- <span class="keyword">else</span> -&#125;&#125;</span><br><span class="line">app.kubernetes.io/name: &#123;&#123; include <span class="string">&quot;common.names.name&quot;</span> . &#125;&#125;</span><br><span class="line">helm.sh/chart: &#123;&#123; include <span class="string">&quot;common.names.chart&quot;</span> . &#125;&#125;</span><br><span class="line">app.kubernetes.io/instance: &#123;&#123; .Release.Name &#125;&#125;</span><br><span class="line">app.kubernetes.io/managed-by: &#123;&#123; .Release.Service &#125;&#125;</span><br><span class="line">&#123;&#123;- end -&#125;&#125;</span><br><span class="line">&#123;&#123;- end -&#125;&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">minio/charts/common/template/_labels.tpl
+<span class="token punctuation">..</span>.
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- with .context.Chart.AppVersion -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token variable">$_</span> :<span class="token operator">=</span> <span class="token builtin class-name">set</span> <span class="token variable">$default</span> <span class="token string">"app.kubernetes.io/version"</span> <span class="token builtin class-name">.</span> -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> template <span class="token string">"common.tplvalues.merge"</span> <span class="token punctuation">(</span>dict <span class="token string">"values"</span> <span class="token punctuation">(</span>list .customLabels <span class="token variable">$default</span><span class="token punctuation">)</span> <span class="token string">"context"</span> .context<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">else</span> -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/name: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> include <span class="token string">"common.names.name"</span> <span class="token builtin class-name">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+helm.sh/chart: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> include <span class="token string">"common.names.chart"</span> <span class="token builtin class-name">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/instance: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Release.Name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/managed-by: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Release.Service <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- with .Chart.AppVersion <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/version: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> <span class="token builtin class-name">.</span> <span class="token operator">|</span> quote <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">..</span>.
+
+mysql/charts/common/template/_labels.tpl
+<span class="token punctuation">..</span>.
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- <span class="token keyword">else</span> -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/name: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> include <span class="token string">"common.names.name"</span> <span class="token builtin class-name">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+helm.sh/chart: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> include <span class="token string">"common.names.chart"</span> <span class="token builtin class-name">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/instance: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Release.Name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+app.kubernetes.io/managed-by: <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Release.Service <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>- end -<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>bug说明</strong></p>
 <p>正常情况下，helm的子chart只会渲染自己目录下common&#x2F;template中的那些函数定义文件</p>
@@ -6584,36 +6643,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7078,13 +7107,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8125,13 +8154,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8584,14 +8613,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8599,14 +8628,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

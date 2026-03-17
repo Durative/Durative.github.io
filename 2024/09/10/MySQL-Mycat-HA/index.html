@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="环境说明12345678910111213141516171819软件版本mysql版本5.7.44mycat版本1.6.7.4linux版本CentOS7.9.2009keepalived版本1.3.5-19(yum安装)主机地址分配为了避免主库与mycat使用keepalived冲突，所以mycat部署在从库上192.168.10.125 mysql-1 master-1 192.168.10">
+    <meta name="description" content="环境说明软件版本 mysql版本5.7.44 mycat版本1.6.7.4 linux版本CentOS7.9.2009 keepalived版本1.3.5-19(yum安装)  主机地址分配 为了避免主库与mycat使用keepalived冲突，所以mycat部署在从库上 192.168.10.125 mysql-1 master-1  192.168.10.126 mysql-2 master-">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Mycat与keepalived高可用">
 <meta property="og:url" content="https://akemi.zj.cn/2024/09/10/MySQL-Mycat-HA/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="环境说明12345678910111213141516171819软件版本mysql版本5.7.44mycat版本1.6.7.4linux版本CentOS7.9.2009keepalived版本1.3.5-19(yum安装)主机地址分配为了避免主库与mycat使用keepalived冲突，所以mycat部署在从库上192.168.10.125 mysql-1 master-1 192.168.10">
+<meta property="og:description" content="环境说明软件版本 mysql版本5.7.44 mycat版本1.6.7.4 linux版本CentOS7.9.2009 keepalived版本1.3.5-19(yum安装)  主机地址分配 为了避免主库与mycat使用keepalived冲突，所以mycat部署在从库上 192.168.10.125 mysql-1 master-1  192.168.10.126 mysql-2 master-">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/1514f1549238568febe4c2e5602711fc.png">
 <meta property="article:published_time" content="2024-09-10T10:42:46.000Z">
@@ -492,22 +492,165 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <h2 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">软件版本</span><br><span class="line">mysql版本5.7.44</span><br><span class="line">mycat版本1.6.7.4</span><br><span class="line">linux版本CentOS7.9.2009</span><br><span class="line">keepalived版本1.3.5-19(yum安装)</span><br><span class="line"></span><br><span class="line">主机地址分配</span><br><span class="line">为了避免主库与mycat使用keepalived冲突，所以mycat部署在从库上</span><br><span class="line">192.168.10.125 mysql-1 master-1 </span><br><span class="line">192.168.10.126 mysql-2 master-2 slave-1 (当前主库)</span><br><span class="line">192.168.10.127 mysql-3 slave-2 mycat-1</span><br><span class="line">192.168.10.128 mysql-4 slave-3 mycat-2</span><br><span class="line">keepalived VIP 192.168.10.197/24</span><br><span class="line"></span><br><span class="line">账号分配(测试环境)</span><br><span class="line">mycat用户名admin</span><br><span class="line">mycat密码admin</span><br><span class="line">mysql用户root</span><br><span class="line">mysql密码root</span><br></pre></td></tr></table></figure>
+        <h2 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">软件版本
+mysql版本5.7.44
+mycat版本1.6.7.4
+linux版本CentOS7.9.2009
+keepalived版本1.3.5-19<span class="token punctuation">(</span>yum安装<span class="token punctuation">)</span>
+
+主机地址分配
+为了避免主库与mycat使用keepalived冲突，所以mycat部署在从库上
+<span class="token number">192.168</span>.10.125 mysql-1 master-1 
+<span class="token number">192.168</span>.10.126 mysql-2 master-2 slave-1 <span class="token punctuation">(</span>当前主库<span class="token punctuation">)</span>
+<span class="token number">192.168</span>.10.127 mysql-3 slave-2 mycat-1
+<span class="token number">192.168</span>.10.128 mysql-4 slave-3 mycat-2
+keepalived VIP <span class="token number">192.168</span>.10.197/24
+
+账号分配<span class="token punctuation">(</span>测试环境<span class="token punctuation">)</span>
+mycat用户名admin
+mycat密码admin
+mysql用户root
+mysql密码root<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="mycat部署与配置"><a href="#mycat部署与配置" class="headerlink" title="mycat部署与配置"></a>mycat部署与配置</h2><p>mysql-3和mysql-4节点部署</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /root/</span><br><span class="line">wget https://github.com/MyCATApache/Mycat-Server/releases/download/Mycat-server-1.6.7.4-release/Mycat-server-1.6.7.4-release-20200105164103-linux.tar.gz</span><br><span class="line">tar -xf Mycat-server-1.6.7.4-release-20200105164103-linux.tar.gz</span><br><span class="line">yum -y install java</span><br><span class="line"><span class="comment">#修改配置文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt;/root/mycat/conf/schema.xml&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">&lt;?xml version=&quot;1.0&quot;?&gt;</span></span><br><span class="line"><span class="string">&lt;!DOCTYPE mycat:schema SYSTEM &quot;schema.dtd&quot;&gt;</span></span><br><span class="line"><span class="string">&lt;mycat:schema xmlns:mycat=&quot;http://io.mycat/&quot;&gt;</span></span><br><span class="line"><span class="string">	&lt;schema name=&quot;db01&quot; checkSQLschema=&quot;false&quot; sqlMaxLimit=&quot;100&quot; dataNode=&quot;dn1&quot;&gt;&lt;/schema&gt;</span></span><br><span class="line"><span class="string">	&lt;schema name=&quot;db02&quot; checkSQLschema=&quot;false&quot; sqlMaxLimit=&quot;100&quot; dataNode=&quot;dn2&quot;&gt;&lt;/schema&gt;</span></span><br><span class="line"><span class="string">	&lt;dataNode name=&quot;dn1&quot; dataHost=&quot;localhost1&quot; database=&quot;ws&quot; /&gt;</span></span><br><span class="line"><span class="string">	&lt;dataNode name=&quot;dn2&quot; dataHost=&quot;localhost1&quot; database=&quot;xhy&quot; /&gt;</span></span><br><span class="line"><span class="string">	&lt;dataHost name=&quot;localhost1&quot; maxCon=&quot;500&quot; minCon=&quot;20&quot; balance=&quot;1&quot; writeType=&quot;0&quot; dbType=&quot;mysql&quot; dbDriver=&quot;native&quot; switchType=&quot;1&quot;  slaveThreshold=&quot;100&quot;&gt;</span></span><br><span class="line"><span class="string">		&lt;heartbeat&gt;select user()&lt;/heartbeat&gt;</span></span><br><span class="line"><span class="string">		&lt;writeHost host=&quot;master&quot; url=&quot;192.168.10.126:3306&quot; user=&quot;root&quot; password=&quot;root&quot;&gt;</span></span><br><span class="line"><span class="string">			&lt;readHost host=&quot;slave1&quot; url=&quot;192.168.10.127:3306&quot; user=&quot;root&quot; password=&quot;root&quot;/&gt;</span></span><br><span class="line"><span class="string">			&lt;readHost host=&quot;slave2&quot; url=&quot;192.168.10.128:3306&quot; user=&quot;root&quot; password=&quot;root&quot;/&gt;</span></span><br><span class="line"><span class="string">			&lt;readHost host=&quot;slave3&quot; url=&quot;192.168.10.125:3306&quot; user=&quot;root&quot; password=&quot;root&quot;/&gt;</span></span><br><span class="line"><span class="string">		&lt;/writeHost&gt;</span></span><br><span class="line"><span class="string">	&lt;/dataHost&gt;</span></span><br><span class="line"><span class="string">&lt;/mycat:schema&gt;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="comment">#修改/root/mycat/conf/server.xml</span></span><br><span class="line">        &lt;user name=<span class="string">&quot;admin&quot;</span>&gt;</span><br><span class="line">                &lt;property name=<span class="string">&quot;password&quot;</span>&gt;admin&lt;/property&gt;</span><br><span class="line">                &lt;property name=<span class="string">&quot;schemas&quot;</span>&gt;db01,db02&lt;/property&gt;</span><br><span class="line">                &lt;property name=<span class="string">&quot;readOnly&quot;</span>&gt;<span class="literal">false</span>&lt;/property&gt;</span><br><span class="line">        &lt;/user&gt;</span><br><span class="line"><span class="comment">#</span></span><br><span class="line">/root/mycat/bin/mycat start</span><br><span class="line">ss -tunlp | grep -c 8066</span><br><span class="line"><span class="comment">#1</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> /root/
+<span class="token function">wget</span> https://github.com/MyCATApache/Mycat-Server/releases/download/Mycat-server-1.6.7.4-release/Mycat-server-1.6.7.4-release-20200105164103-linux.tar.gz
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> Mycat-server-1.6.7.4-release-20200105164103-linux.tar.gz
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">java</span>
+<span class="token comment">#修改配置文件</span>
+<span class="token function">cat</span> <span class="token operator">></span>/root/mycat/conf/schema.xml<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+&lt;?xml version="1.0"?>
+&lt;!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+&lt;mycat:schema xmlns:mycat="http://io.mycat/">
+	&lt;schema name="db01" checkSQLschema="false" sqlMaxLimit="100" dataNode="dn1">&lt;/schema>
+	&lt;schema name="db02" checkSQLschema="false" sqlMaxLimit="100" dataNode="dn2">&lt;/schema>
+	&lt;dataNode name="dn1" dataHost="localhost1" database="ws" />
+	&lt;dataNode name="dn2" dataHost="localhost1" database="xhy" />
+	&lt;dataHost name="localhost1" maxCon="500" minCon="20" balance="1" writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+		&lt;heartbeat>select user()&lt;/heartbeat>
+		&lt;writeHost host="master" url="192.168.10.126:3306" user="root" password="root">
+			&lt;readHost host="slave1" url="192.168.10.127:3306" user="root" password="root"/>
+			&lt;readHost host="slave2" url="192.168.10.128:3306" user="root" password="root"/>
+			&lt;readHost host="slave3" url="192.168.10.125:3306" user="root" password="root"/>
+		&lt;/writeHost>
+	&lt;/dataHost>
+&lt;/mycat:schema>
+EOF</span>
+<span class="token comment">#修改/root/mycat/conf/server.xml</span>
+        <span class="token operator">&lt;</span>user <span class="token assign-left variable">name</span><span class="token operator">=</span><span class="token string">"admin"</span><span class="token operator">></span>
+                <span class="token operator">&lt;</span>property <span class="token assign-left variable">name</span><span class="token operator">=</span><span class="token string">"password"</span><span class="token operator">></span>admin<span class="token operator">&lt;</span>/property<span class="token operator">></span>
+                <span class="token operator">&lt;</span>property <span class="token assign-left variable">name</span><span class="token operator">=</span><span class="token string">"schemas"</span><span class="token operator">></span>db01,db0<span class="token operator"><span class="token file-descriptor important">2</span>&lt;</span>/property<span class="token operator">></span>
+                <span class="token operator">&lt;</span>property <span class="token assign-left variable">name</span><span class="token operator">=</span><span class="token string">"readOnly"</span><span class="token operator">></span>false<span class="token operator">&lt;</span>/property<span class="token operator">></span>
+        <span class="token operator">&lt;</span>/user<span class="token operator">></span>
+<span class="token comment">#</span>
+/root/mycat/bin/mycat start
+ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-c</span> <span class="token number">8066</span>
+<span class="token comment">#1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="keepalived配置"><a href="#keepalived配置" class="headerlink" title="keepalived配置"></a>keepalived配置</h2><p><strong>主mycat</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">yum -y install keepalived</span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/keepalived/keepalived.conf&lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">! Configuration File <span class="keyword">for</span> keepalived</span><br><span class="line">global_defs &#123;</span><br><span class="line">   router_id mysql-1</span><br><span class="line">&#125;</span><br><span class="line">vrrp_script check_mycat &#123;</span><br><span class="line">    script <span class="string">&quot;/etc/keepalived/check_mycat.sh&quot;</span></span><br><span class="line">	  interval 3</span><br><span class="line">&#125;</span><br><span class="line">vrrp_instance mycat &#123;</span><br><span class="line">    state MASTER</span><br><span class="line">    interface ens18</span><br><span class="line">    virtual_router_id 52</span><br><span class="line">    priority 100</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        192.168.10.197/24 dev ens18</span><br><span class="line">    &#125;</span><br><span class="line">    track_script &#123;</span><br><span class="line">        check_mycat</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> keepalived
+<span class="token function">cat</span> <span class="token operator">></span>/etc/keepalived/keepalived.conf<span class="token operator">&lt;&lt;</span><span class="token string">'EOF'
+! Configuration File for keepalived
+global_defs &#123;
+   router_id mysql-1
+&#125;
+vrrp_script check_mycat &#123;
+    script "/etc/keepalived/check_mycat.sh"
+	  interval 3
+&#125;
+vrrp_instance mycat &#123;
+    state MASTER
+    interface ens18
+    virtual_router_id 52
+    priority 100
+    advert_int 1
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1111
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.10.197/24 dev ens18
+    &#125;
+    track_script &#123;
+        check_mycat
+    &#125;
+&#125;
+EOF</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>备mycat</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">yum -y install keepalived</span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/keepalived/keepalived.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">! Configuration File for keepalived</span></span><br><span class="line"><span class="string">global_defs &#123;</span></span><br><span class="line"><span class="string">   router_id mysql-2</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">vrrp_script check_mycat &#123;</span></span><br><span class="line"><span class="string">    script &quot;/etc/keepalived/check_mycat.sh&quot;</span></span><br><span class="line"><span class="string">	  interval 3</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">vrrp_instance mycat &#123;</span></span><br><span class="line"><span class="string">    state BACKUP</span></span><br><span class="line"><span class="string">    interface ens18</span></span><br><span class="line"><span class="string">    virtual_router_id 52</span></span><br><span class="line"><span class="string">    priority 90</span></span><br><span class="line"><span class="string">    advert_int 1</span></span><br><span class="line"><span class="string">    authentication &#123;</span></span><br><span class="line"><span class="string">        auth_type PASS</span></span><br><span class="line"><span class="string">        auth_pass 1111</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    virtual_ipaddress &#123;</span></span><br><span class="line"><span class="string">        192.168.10.197/24 dev ens18</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    track_script &#123;</span></span><br><span class="line"><span class="string">        check_mycat</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> keepalived
+<span class="token function">cat</span> <span class="token operator">></span>/etc/keepalived/keepalived.conf<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+! Configuration File for keepalived
+global_defs &#123;
+   router_id mysql-2
+&#125;
+vrrp_script check_mycat &#123;
+    script "/etc/keepalived/check_mycat.sh"
+	  interval 3
+&#125;
+vrrp_instance mycat &#123;
+    state BACKUP
+    interface ens18
+    virtual_router_id 52
+    priority 90
+    advert_int 1
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1111
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.10.197/24 dev ens18
+    &#125;
+    track_script &#123;
+        check_mycat
+    &#125;
+&#125;
+EOF</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>简单检查脚本</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt;/etc/keepalived/check_mycat.sh&lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line"><span class="comment">#!/bin/bash</span></span><br><span class="line">counter=$(ps -ef | grep mycat | grep -v grep | <span class="built_in">wc</span> -l)  </span><br><span class="line"><span class="keyword">if</span> [ <span class="variable">$counter</span> -eq 0 ]; <span class="keyword">then</span>  </span><br><span class="line">    <span class="comment"># 尝试启动 Mycat（这里需要根据你的实际启动命令修改）   </span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="subst">$(date +%F)</span> 尝试重启 Mycat&quot;</span> &gt;&gt; /etc/keepalived/check.log</span><br><span class="line">    /root/mycat/bin/mycat start 2&gt;&amp;1 /dev/null</span><br><span class="line">    <span class="built_in">sleep</span> 2</span><br><span class="line">    counter=$(ps -ef | grep mycat | grep -v grep | <span class="built_in">wc</span> -l)   </span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$counter</span> -eq 0 ]; <span class="keyword">then</span> </span><br><span class="line">		    <span class="built_in">echo</span> <span class="string">&quot;<span class="subst">$(date +%F)</span> mycat重启失败，关闭keepalived&quot;</span> &gt;&gt; /etc/keepalived/check.log</span><br><span class="line">        systemctl stop keepalived</span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="subst">$(hostname)</span> 主机 Mycat 服务异常，vip 已切换&quot;</span> | mail -s <span class="string">&quot;keepalived 告警&quot;</span> alertwarning@163.com  </span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line"><span class="built_in">chmod</span> +x /etc/keepalived/check_mycat.sh</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> <span class="token operator">></span>/etc/keepalived/check_mycat.sh<span class="token operator">&lt;&lt;</span><span class="token string">'EOF'
+#!/bin/bash
+counter=$(ps -ef | grep mycat | grep -v grep | wc -l)  
+if [ $counter -eq 0 ]; then  
+    # 尝试启动 Mycat（这里需要根据你的实际启动命令修改）   
+    echo "$(date +%F) 尝试重启 Mycat" >> /etc/keepalived/check.log
+    /root/mycat/bin/mycat start 2>&amp;1 /dev/null
+    sleep 2
+    counter=$(ps -ef | grep mycat | grep -v grep | wc -l)   
+    if [ $counter -eq 0 ]; then 
+		    echo "$(date +%F) mycat重启失败，关闭keepalived" >> /etc/keepalived/check.log
+        systemctl stop keepalived
+        echo "$(hostname) 主机 Mycat 服务异常，vip 已切换" | mail -s "keepalived 告警" alertwarning@163.com  
+    fi
+fi
+EOF</span>
+
+<span class="token function">chmod</span> +x /etc/keepalived/check_mycat.sh<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>测试VIP漂移</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart keepalived.service</span><br><span class="line">systemctl is-active keepalived.service</span><br><span class="line"><span class="comment">#active</span></span><br><span class="line"></span><br><span class="line">此时已经有VIP了</span><br><span class="line">mysql-3:</span><br><span class="line">ip a | grep 192</span><br><span class="line">    inet 192.168.10.127/24 brd 192.168.10.255 scope global noprefixroute ens18</span><br><span class="line">    inet 192.168.10.197/24 scope global secondary ens18</span><br><span class="line">mysql-4:</span><br><span class="line">ip a| grep 192</span><br><span class="line">    inet 192.168.10.128/24 brd 192.168.10.255 scope global noprefixroute ens18</span><br><span class="line"></span><br><span class="line">并且能够连接成功</span><br><span class="line"></span><br><span class="line">关闭mysql-3的keepalived</span><br><span class="line">systemctl stop keepalived.service</span><br><span class="line">ip a | grep 192.</span><br><span class="line">    inet 192.168.10.127/24 brd 192.168.10.255 scope global noprefixroute ens18</span><br><span class="line">ip a| grep 192</span><br><span class="line">    inet 192.168.10.128/24 brd 192.168.10.255 scope global noprefixroute ens18</span><br><span class="line">    inet 192.168.10.197/24 scope global secondary ens18</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl daemon-reload
+systemctl restart keepalived.service
+systemctl is-active keepalived.service
+<span class="token comment">#active</span>
+
+此时已经有VIP了
+mysql-3:
+<span class="token function">ip</span> a <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">192</span>
+    inet <span class="token number">192.168</span>.10.127/24 brd <span class="token number">192.168</span>.10.255 scope global noprefixroute ens18
+    inet <span class="token number">192.168</span>.10.197/24 scope global secondary ens18
+mysql-4:
+<span class="token function">ip</span> a<span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">192</span>
+    inet <span class="token number">192.168</span>.10.128/24 brd <span class="token number">192.168</span>.10.255 scope global noprefixroute ens18
+
+并且能够连接成功
+
+关闭mysql-3的keepalived
+systemctl stop keepalived.service
+<span class="token function">ip</span> a <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">192</span>.
+    inet <span class="token number">192.168</span>.10.127/24 brd <span class="token number">192.168</span>.10.255 scope global noprefixroute ens18
+<span class="token function">ip</span> a<span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">192</span>
+    inet <span class="token number">192.168</span>.10.128/24 brd <span class="token number">192.168</span>.10.255 scope global noprefixroute ens18
+    inet <span class="token number">192.168</span>.10.197/24 scope global secondary ens18<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/1514f1549238568febe4c2e5602711fc.png"><br>（连接成功）</p>
 
@@ -6569,36 +6712,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7063,13 +7176,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8110,13 +8223,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8569,14 +8682,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8584,14 +8697,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

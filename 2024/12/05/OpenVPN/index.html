@@ -517,36 +517,200 @@
 <p><strong>服务端加密数据</strong></p>
 <p>服务端使用client.crt进行加密</p>
 <p>客户端通过client.key进行解密</p>
-<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">CentOS7.9.2009</span><br><span class="line">120.26.160.133 vpn-server 有EIP的ECS</span><br><span class="line">192.168.10.220 windows-client</span><br><span class="line">192.168.10.100 linux-client</span><br></pre></td></tr></table></figure>
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">CentOS7.9.2009
+<span class="token number">120.26</span>.160.133 vpn-server 有EIP的ECS
+<span class="token number">192.168</span>.10.220 windows-client
+<span class="token number">192.168</span>.10.100 linux-client<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="OpenVpn部署"><a href="#OpenVpn部署" class="headerlink" title="OpenVpn部署"></a>OpenVpn部署</h2><h3 id="在服务端制作证书（使用easy-rsa-old）"><a href="#在服务端制作证书（使用easy-rsa-old）" class="headerlink" title="在服务端制作证书（使用easy-rsa-old）"></a>在服务端制作证书（使用easy-rsa-old）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/OpenVPN/easy-rsa-old</span><br><span class="line">下载master分支</span><br><span class="line">unzip easy-rsa-old-master.zip</span><br><span class="line"></span><br><span class="line"><span class="comment"># 小小修改一下vars变量文件</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^export KEY_COUNTRY.*/export KEY_COUNTRY=&quot;CN&quot;/g&#x27;</span> easy-rsa-old-master/easy-rsa/2.0/vars</span><br><span class="line">sed -i <span class="string">&#x27;s/^export KEY_PROVINCE.*/export KEY_PROVINCE=&quot;Beijing&quot;/g&#x27;</span> easy-rsa-old-master/easy-rsa/2.0/vars</span><br><span class="line">sed -i <span class="string">&#x27;s/^export KEY_CITY.*/export KEY_CITY=&quot;Beijing&quot;/g&#x27;</span> easy-rsa-old-master/easy-rsa/2.0/vars</span><br><span class="line"><span class="built_in">cd</span> easy-rsa-old-master/easy-rsa/2.0/</span><br><span class="line"><span class="built_in">source</span> vars</span><br><span class="line">./clean-all</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建ca的证书文件</span></span><br><span class="line">./build-ca</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建server的证书文件</span></span><br><span class="line">./build-key-server vpnserver</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建client的证书</span></span><br><span class="line">./build-key vpnclient</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成密钥交换文件信息</span></span><br><span class="line">./build-dh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成一个ta.key，抗dos的，不生成会启动报错</span></span><br><span class="line">openvpn --genkey --secret ta.key</span><br></pre></td></tr></table></figure>
+<h2 id="OpenVpn部署"><a href="#OpenVpn部署" class="headerlink" title="OpenVpn部署"></a>OpenVpn部署</h2><h3 id="在服务端制作证书（使用easy-rsa-old）"><a href="#在服务端制作证书（使用easy-rsa-old）" class="headerlink" title="在服务端制作证书（使用easy-rsa-old）"></a>在服务端制作证书（使用easy-rsa-old）</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">https://github.com/OpenVPN/easy-rsa-old
+下载master分支
+<span class="token function">unzip</span> easy-rsa-old-master.zip
 
-<h3 id="在服务端制作证书（使用openssl）"><a href="#在服务端制作证书（使用openssl）" class="headerlink" title="在服务端制作证书（使用openssl）"></a>在服务端制作证书（使用openssl）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> /ssl</span><br><span class="line"><span class="built_in">cd</span> /ssl</span><br><span class="line"><span class="comment"># 生成ca.key</span></span><br><span class="line">openssl genrsa -out ca.key 4096</span><br><span class="line"><span class="comment"># 生成ca.crt</span></span><br><span class="line">openssl req -new -x509 -days 3650 -key ca.key -out ca.crt</span><br><span class="line"><span class="comment"># 生成vpnserver.key</span></span><br><span class="line">openssl genrsa -out vpnserver.key 4096</span><br><span class="line"><span class="comment"># 生成vpnserver.crt</span></span><br><span class="line">openssl req -new -x509 -key vpnserver.key -out vpnserver.crt -days 3650</span><br><span class="line"><span class="comment"># 生成vpnclient.key</span></span><br><span class="line">openssl genrsa -out vpnclient.key 4096</span><br><span class="line"><span class="comment"># 生成vpnclient.csr</span></span><br><span class="line">openssl req -new -key vpnclient.key -out vpnclient.csr</span><br><span class="line"><span class="comment"># 使用ca签署证书vpnclient.crt</span></span><br><span class="line">openssl x509 -req -<span class="keyword">in</span> vpnclient.csr -CA ca.crt -CAkey ca.key \</span><br><span class="line">-CAcreateserial -out vpnclient.crt -days 3650</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成dh2048.pem</span></span><br><span class="line">openssl dhparam -out dh2048.pem 2048</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成ta.key</span></span><br><span class="line">openvpn --genkey --secret ta.key</span><br></pre></td></tr></table></figure>
+<span class="token comment"># 小小修改一下vars变量文件</span>
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^export KEY_COUNTRY.*/export KEY_COUNTRY="CN"/g'</span> easy-rsa-old-master/easy-rsa/2.0/vars
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^export KEY_PROVINCE.*/export KEY_PROVINCE="Beijing"/g'</span> easy-rsa-old-master/easy-rsa/2.0/vars
+<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^export KEY_CITY.*/export KEY_CITY="Beijing"/g'</span> easy-rsa-old-master/easy-rsa/2.0/vars
+<span class="token builtin class-name">cd</span> easy-rsa-old-master/easy-rsa/2.0/
+<span class="token builtin class-name">source</span> vars
+./clean-all
 
-<h3 id="配置OpenVpn服务端"><a href="#配置OpenVpn服务端" class="headerlink" title="配置OpenVpn服务端"></a>配置OpenVpn服务端</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">yum -y install openvpn</span><br><span class="line">版本</span><br><span class="line">openvpn-2.4.12</span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动证书</span></span><br><span class="line"><span class="built_in">cd</span> /ssl</span><br><span class="line"><span class="built_in">cp</span> ca.crt server.crt dh2048.pem server.key /etc/openvpn/server</span><br><span class="line"><span class="built_in">cp</span> dh2048.pem ta.key /etc/openvpn/server/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改OpenVpn模板配置文件</span></span><br><span class="line"><span class="built_in">cp</span> /usr/share/doc/openvpn-2.4.12/sample/sample-config-files/server.conf /etc/openvpn/server</span><br><span class="line"><span class="built_in">cd</span> /etc/openvpn/server</span><br><span class="line"></span><br><span class="line">如果证书和server.conf不在同个目录下，那还需要修改server.conf中文件的相对路径</span><br><span class="line"></span><br><span class="line"><span class="comment"># 以下是一些字段的含义</span></span><br><span class="line">ca ca.crt                               ca证书位置</span><br><span class="line">cert vpnserver.crt                      server.crt的位置</span><br><span class="line">server 10.8.0.0 255.255.255.0           vpn的端点网段信息</span><br><span class="line">cipher AES-256-GCM                      加密方式</span><br><span class="line">push <span class="string">&quot;route 192.168.10.0 255.255.255.0&quot;</span> 要推送的网段信息</span><br><span class="line"><span class="built_in">log</span>         openvpn.log                 日志位置</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启服务器路由转发，加载到内核中</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;net.ipv4.ip_forward = 1&quot;</span> &gt;&gt; /etc/sysctl.conf</span><br><span class="line">sysctl -p</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动服务器端OpenVpn</span></span><br><span class="line"><span class="built_in">cd</span> /etc/openvpn/server</span><br><span class="line">openvpn --daemon --config server.conf</span><br><span class="line"><span class="comment">#ss -tunlp | grep 1194</span></span><br><span class="line"><span class="comment">#udp    UNCONN     0      0         *:1194                  *:*                   users:((&quot;openvpn&quot;,pid=3354,fd=6))</span></span><br></pre></td></tr></table></figure>
+<span class="token comment"># 创建ca的证书文件</span>
+./build-ca
+
+<span class="token comment"># 创建server的证书文件</span>
+./build-key-server vpnserver
+
+<span class="token comment"># 创建client的证书</span>
+./build-key vpnclient
+
+<span class="token comment"># 生成密钥交换文件信息</span>
+./build-dh
+
+<span class="token comment"># 生成一个ta.key，抗dos的，不生成会启动报错</span>
+openvpn <span class="token parameter variable">--genkey</span> <span class="token parameter variable">--secret</span> ta.key<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="在服务端制作证书（使用openssl）"><a href="#在服务端制作证书（使用openssl）" class="headerlink" title="在服务端制作证书（使用openssl）"></a>在服务端制作证书（使用openssl）</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> /ssl
+<span class="token builtin class-name">cd</span> /ssl
+<span class="token comment"># 生成ca.key</span>
+openssl genrsa <span class="token parameter variable">-out</span> ca.key <span class="token number">4096</span>
+<span class="token comment"># 生成ca.crt</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-x509</span> <span class="token parameter variable">-days</span> <span class="token number">3650</span> <span class="token parameter variable">-key</span> ca.key <span class="token parameter variable">-out</span> ca.crt
+<span class="token comment"># 生成vpnserver.key</span>
+openssl genrsa <span class="token parameter variable">-out</span> vpnserver.key <span class="token number">4096</span>
+<span class="token comment"># 生成vpnserver.crt</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-x509</span> <span class="token parameter variable">-key</span> vpnserver.key <span class="token parameter variable">-out</span> vpnserver.crt <span class="token parameter variable">-days</span> <span class="token number">3650</span>
+<span class="token comment"># 生成vpnclient.key</span>
+openssl genrsa <span class="token parameter variable">-out</span> vpnclient.key <span class="token number">4096</span>
+<span class="token comment"># 生成vpnclient.csr</span>
+openssl req <span class="token parameter variable">-new</span> <span class="token parameter variable">-key</span> vpnclient.key <span class="token parameter variable">-out</span> vpnclient.csr
+<span class="token comment"># 使用ca签署证书vpnclient.crt</span>
+openssl x509 <span class="token parameter variable">-req</span> <span class="token parameter variable">-in</span> vpnclient.csr <span class="token parameter variable">-CA</span> ca.crt <span class="token parameter variable">-CAkey</span> ca.key <span class="token punctuation">\</span>
+<span class="token parameter variable">-CAcreateserial</span> <span class="token parameter variable">-out</span> vpnclient.crt <span class="token parameter variable">-days</span> <span class="token number">3650</span>
+
+<span class="token comment"># 生成dh2048.pem</span>
+openssl dhparam <span class="token parameter variable">-out</span> dh2048.pem <span class="token number">2048</span>
+
+<span class="token comment"># 生成ta.key</span>
+openvpn <span class="token parameter variable">--genkey</span> <span class="token parameter variable">--secret</span> ta.key<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="配置OpenVpn服务端"><a href="#配置OpenVpn服务端" class="headerlink" title="配置OpenVpn服务端"></a>配置OpenVpn服务端</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> openvpn
+版本
+openvpn-2.4.12
+
+<span class="token comment"># 移动证书</span>
+<span class="token builtin class-name">cd</span> /ssl
+<span class="token function">cp</span> ca.crt server.crt dh2048.pem server.key /etc/openvpn/server
+<span class="token function">cp</span> dh2048.pem ta.key /etc/openvpn/server/
+
+<span class="token comment"># 修改OpenVpn模板配置文件</span>
+<span class="token function">cp</span> /usr/share/doc/openvpn-2.4.12/sample/sample-config-files/server.conf /etc/openvpn/server
+<span class="token builtin class-name">cd</span> /etc/openvpn/server
+
+如果证书和server.conf不在同个目录下，那还需要修改server.conf中文件的相对路径
+
+<span class="token comment"># 以下是一些字段的含义</span>
+ca ca.crt                               ca证书位置
+cert vpnserver.crt                      server.crt的位置
+server <span class="token number">10.8</span>.0.0 <span class="token number">255.255</span>.255.0           vpn的端点网段信息
+cipher AES-256-GCM                      加密方式
+push <span class="token string">"route 192.168.10.0 255.255.255.0"</span> 要推送的网段信息
+log         openvpn.log                 日志位置
+
+<span class="token comment"># 开启服务器路由转发，加载到内核中</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"net.ipv4.ip_forward = 1"</span> <span class="token operator">>></span> /etc/sysctl.conf
+<span class="token function">sysctl</span> <span class="token parameter variable">-p</span>
+
+<span class="token comment"># 启动服务器端OpenVpn</span>
+<span class="token builtin class-name">cd</span> /etc/openvpn/server
+openvpn <span class="token parameter variable">--daemon</span> <span class="token parameter variable">--config</span> server.conf
+<span class="token comment">#ss -tunlp | grep 1194</span>
+<span class="token comment">#udp    UNCONN     0      0         *:1194                  *:*                   users:(("openvpn",pid=3354,fd=6))</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="配置OpenVpn客户端"><a href="#配置OpenVpn客户端" class="headerlink" title="配置OpenVpn客户端"></a>配置OpenVpn客户端</h3><p>思路就是先在服务端配好客户端配置，然后拿出去给别的主机用</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">工作目录在/etc/openvpn/client</span><br><span class="line"><span class="comment"># 放证书</span></span><br><span class="line"><span class="built_in">cd</span> /ssl/</span><br><span class="line"><span class="built_in">cp</span> ca.crt vpnclient.crt vpnclient.key /etc/openvpn/client/</span><br><span class="line"><span class="built_in">cp</span> ta.key /etc/openvpn/client/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 改配置文件</span></span><br><span class="line"><span class="built_in">cd</span> /etc/openvpn/client</span><br><span class="line"><span class="built_in">cp</span> /usr/share/doc/openvpn-2.4.12/sample/sample-config-files/client.conf .</span><br><span class="line"></span><br><span class="line">一些字段:</span><br><span class="line">cert client.crt            crt文件位置</span><br><span class="line">remote 120.26.160.133 1194 指定服务端的地址</span><br><span class="line">cipher AES-256-GCM         加密方式</span><br><span class="line"></span><br><span class="line"><span class="comment"># 改名，必须以ovpn为后缀</span></span><br><span class="line"><span class="built_in">mv</span> client.conf client.ovpn</span><br><span class="line"></span><br><span class="line"><span class="comment"># 打包，以发送给vpn客户端</span></span><br><span class="line"><span class="built_in">cd</span> ..</span><br><span class="line">tar -cf vpn-client.tar.gz client/</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">工作目录在/etc/openvpn/client
+<span class="token comment"># 放证书</span>
+<span class="token builtin class-name">cd</span> /ssl/
+<span class="token function">cp</span> ca.crt vpnclient.crt vpnclient.key /etc/openvpn/client/
+<span class="token function">cp</span> ta.key /etc/openvpn/client/
+
+<span class="token comment"># 改配置文件</span>
+<span class="token builtin class-name">cd</span> /etc/openvpn/client
+<span class="token function">cp</span> /usr/share/doc/openvpn-2.4.12/sample/sample-config-files/client.conf <span class="token builtin class-name">.</span>
+
+一些字段:
+cert client.crt            crt文件位置
+remote <span class="token number">120.26</span>.160.133 <span class="token number">1194</span> 指定服务端的地址
+cipher AES-256-GCM         加密方式
+
+<span class="token comment"># 改名，必须以ovpn为后缀</span>
+<span class="token function">mv</span> client.conf client.ovpn
+
+<span class="token comment"># 打包，以发送给vpn客户端</span>
+<span class="token builtin class-name">cd</span> <span class="token punctuation">..</span>
+<span class="token function">tar</span> <span class="token parameter variable">-cf</span> vpn-client.tar.gz client/<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="windows系统客户端"><a href="#windows系统客户端" class="headerlink" title="windows系统客户端"></a>windows系统客户端</h3><p>将配置文件传送到windows系统上</p>
 <p>在OpenVpn官网下载安装客户端<br><a target="_blank" rel="noopener" href="https://openvpn.net/community-downloads/">https://openvpn.net/community-downloads/</a></p>
 <p>设置文件加载路径，改为ovpn文件所在地址</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/12/912558b935054d2e845736d3367d902b.png"></p>
-<h3 id="linux系统客户端"><a href="#linux系统客户端" class="headerlink" title="linux系统客户端"></a>linux系统客户端</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">yum -y install openvpn</span><br><span class="line">openvpn --daemon --config &lt;ovpn文件位置&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="linux系统客户端"><a href="#linux系统客户端" class="headerlink" title="linux系统客户端"></a>linux系统客户端</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> openvpn
+openvpn <span class="token parameter variable">--daemon</span> <span class="token parameter variable">--config</span> <span class="token operator">&lt;</span>ovpn文件位置<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <h2 id="使用用户密码进行验证"><a href="#使用用户密码进行验证" class="headerlink" title="使用用户密码进行验证"></a>使用用户密码进行验证</h2><p>如果按照上面的这个步骤连接报错，是因为CA并不是可信CA，openvpn无法验证服务端的证书，就会报错</p>
 <p><strong>所以使用用户密码验证</strong></p>
 <p>使用用户密码验证，需要在服务端额外添加验证用户密码的脚本</p>
 <p>以及修改配置文件</p>
 <h3 id="创建验证脚本"><a href="#创建验证脚本" class="headerlink" title="创建验证脚本"></a>创建验证脚本</h3><p>指定我的密码文件为&#x2F;etc&#x2F;openvpn&#x2F;server&#x2F;pass_file</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">tee</span> &gt; /etc/openvpn/server/auth_pass.sh &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">#!/bin/sh</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># checkpsw.sh (C) 2004 Mathias Sundman &lt;mathias@openvpn.se&gt;</span></span><br><span class="line"><span class="string">#</span></span><br><span class="line"><span class="string"># This script authenticates OpenVPN users against a plain text file.</span></span><br><span class="line"><span class="string"># The passfile should contain one row per user with the username first,</span></span><br><span class="line"><span class="string"># followed by one or more spaces or tabs, and then the password.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">PASSFILE=&quot;/etc/openvpn/server/pass_file&quot;</span></span><br><span class="line"><span class="string">LOG_FILE=&quot;/etc/openvpn/server/openvpn-password.log&quot;</span></span><br><span class="line"><span class="string">TIME_STAMP=$(date &quot;+%Y-%m-%d %T&quot;)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># Check if the password file is readable</span></span><br><span class="line"><span class="string">if [ ! -r &quot;$&#123;PASSFILE&#125;&quot; ]; then</span></span><br><span class="line"><span class="string">    echo &quot;$&#123;TIME_STAMP&#125;: Could not open password file \&quot;$&#123;PASSFILE&#125;\&quot; for reading.&quot; &gt;&gt; &quot;$&#123;LOG_FILE&#125;&quot;</span></span><br><span class="line"><span class="string">    exit 1</span></span><br><span class="line"><span class="string">fi</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># Extract the correct password for the given username</span></span><br><span class="line"><span class="string">CORRECT_PASSWORD=$(awk -v user=&quot;$&#123;username&#125;&quot; &#x27;!/^;/ &amp;&amp; !/^#/ &amp;&amp; $1 == user &#123;print $2; exit&#125;&#x27; &quot;$&#123;PASSFILE&#125;&quot;)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># Check if the user exists in the password file</span></span><br><span class="line"><span class="string">if [ &quot;$&#123;CORRECT_PASSWORD&#125;&quot; = &quot;&quot; ]; then</span></span><br><span class="line"><span class="string">    echo &quot;$&#123;TIME_STAMP&#125;: User does not exist: username=\&quot;$&#123;username&#125;\&quot;, password=\&quot;$&#123;password&#125;\&quot;.&quot; &gt;&gt; &quot;$&#123;LOG_FILE&#125;&quot;</span></span><br><span class="line"><span class="string">    exit 1</span></span><br><span class="line"><span class="string">fi</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># Check if the provided password matches the stored password</span></span><br><span class="line"><span class="string">if [ &quot;$&#123;password&#125;&quot; = &quot;$&#123;CORRECT_PASSWORD&#125;&quot; ]; then</span></span><br><span class="line"><span class="string">    echo &quot;$&#123;TIME_STAMP&#125;: Successful authentication: username=\&quot;$&#123;username&#125;\&quot;.&quot; &gt;&gt; &quot;$&#123;LOG_FILE&#125;&quot;</span></span><br><span class="line"><span class="string">    exit 0</span></span><br><span class="line"><span class="string">else</span></span><br><span class="line"><span class="string">    echo &quot;$&#123;TIME_STAMP&#125;: Incorrect password: username=\&quot;$&#123;username&#125;\&quot;, password=\&quot;$&#123;password&#125;\&quot;.&quot; &gt;&gt; &quot;$&#123;LOG_FILE&#125;&quot;</span></span><br><span class="line"><span class="string">    exit 1</span></span><br><span class="line"><span class="string">fi</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="built_in">chmod</span> +x auth_pass.sh</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;test 123456&quot;</span> &gt;&gt; /etc/openvpn/server/pass_file</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">tee</span> <span class="token operator">></span> /etc/openvpn/server/auth_pass.sh <span class="token operator">&lt;&lt;</span><span class="token string">EOF
+#!/bin/sh
+
+# checkpsw.sh (C) 2004 Mathias Sundman &lt;mathias@openvpn.se>
+#
+# This script authenticates OpenVPN users against a plain text file.
+# The passfile should contain one row per user with the username first,
+# followed by one or more spaces or tabs, and then the password.
+
+PASSFILE="/etc/openvpn/server/pass_file"
+LOG_FILE="/etc/openvpn/server/openvpn-password.log"
+TIME_STAMP=<span class="token variable"><span class="token variable">$(</span><span class="token function">date</span> <span class="token string">"+%Y-%m-%d %T"</span><span class="token variable">)</span></span>
+
+# Check if the password file is readable
+if [ ! -r "<span class="token variable">$&#123;PASSFILE&#125;</span>" ]; then
+    echo "<span class="token variable">$&#123;TIME_STAMP&#125;</span>: Could not open password file <span class="token entity" title="\&quot;">\"</span><span class="token variable">$&#123;PASSFILE&#125;</span><span class="token entity" title="\&quot;">\"</span> for reading." >> "<span class="token variable">$&#123;LOG_FILE&#125;</span>"
+    exit 1
+fi
+
+# Extract the correct password for the given username
+CORRECT_PASSWORD=<span class="token variable"><span class="token variable">$(</span><span class="token function">awk</span> <span class="token parameter variable">-v</span> <span class="token assign-left variable">user</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$&#123;username&#125;</span>"</span> <span class="token string">'!/^;/ &amp;&amp; !/^#/ &amp;&amp; $1 == user &#123;print $2; exit&#125;'</span> <span class="token string">"<span class="token variable">$&#123;PASSFILE&#125;</span>"</span><span class="token variable">)</span></span>
+
+# Check if the user exists in the password file
+if [ "<span class="token variable">$&#123;CORRECT_PASSWORD&#125;</span>" = "" ]; then
+    echo "<span class="token variable">$&#123;TIME_STAMP&#125;</span>: User does not exist: username=<span class="token entity" title="\&quot;">\"</span><span class="token variable">$&#123;username&#125;</span><span class="token entity" title="\&quot;">\"</span>, password=<span class="token entity" title="\&quot;">\"</span><span class="token variable">$&#123;password&#125;</span><span class="token entity" title="\&quot;">\"</span>." >> "<span class="token variable">$&#123;LOG_FILE&#125;</span>"
+    exit 1
+fi
+
+# Check if the provided password matches the stored password
+if [ "<span class="token variable">$&#123;password&#125;</span>" = "<span class="token variable">$&#123;CORRECT_PASSWORD&#125;</span>" ]; then
+    echo "<span class="token variable">$&#123;TIME_STAMP&#125;</span>: Successful authentication: username=<span class="token entity" title="\&quot;">\"</span><span class="token variable">$&#123;username&#125;</span><span class="token entity" title="\&quot;">\"</span>." >> "<span class="token variable">$&#123;LOG_FILE&#125;</span>"
+    exit 0
+else
+    echo "<span class="token variable">$&#123;TIME_STAMP&#125;</span>: Incorrect password: username=<span class="token entity" title="\&quot;">\"</span><span class="token variable">$&#123;username&#125;</span><span class="token entity" title="\&quot;">\"</span>, password=<span class="token entity" title="\&quot;">\"</span><span class="token variable">$&#123;password&#125;</span><span class="token entity" title="\&quot;">\"</span>." >> "<span class="token variable">$&#123;LOG_FILE&#125;</span>"
+    exit 1
+fi
+EOF</span>
+<span class="token function">chmod</span> +x auth_pass.sh
+<span class="token builtin class-name">echo</span> <span class="token string">"test 123456"</span> <span class="token operator">>></span> /etc/openvpn/server/pass_file<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="修改server-conf文件"><a href="#修改server-conf文件" class="headerlink" title="修改server.conf文件"></a>修改server.conf文件</h3><p>添加</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">script-security 3 ——允许执行所有脚本</span><br><span class="line">auth-user-pass-verify /etc/openvpn/server/auth_pass.sh via-env ——指定脚本</span><br><span class="line">username-as-common-name ——使用客户端提供的用户名</span><br><span class="line">verify-client-cert none ——不需要客户端提供证书，而使用用户名和密码</span><br><span class="line">client-config-dir ccd ——指定客户端配置文件存放位置为ccd目录</span><br><span class="line"></span><br><span class="line">添加单独配置到ccd目录</span><br><span class="line"><span class="built_in">cd</span> /etc/openvpn/server</span><br><span class="line"><span class="built_in">mkdir</span> ccd</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;ifconfig-push 10.8.0.20 255.255.255.0&quot;</span> &gt; /etc/openvpn/server/ccd/test</span><br><span class="line">分配一个静态IP给我的测试主机</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">script-security <span class="token number">3</span> ——允许执行所有脚本
+auth-user-pass-verify /etc/openvpn/server/auth_pass.sh via-env ——指定脚本
+username-as-common-name ——使用客户端提供的用户名
+verify-client-cert none ——不需要客户端提供证书，而使用用户名和密码
+client-config-dir ccd ——指定客户端配置文件存放位置为ccd目录
 
-<h3 id="修改client-conf文件"><a href="#修改client-conf文件" class="headerlink" title="修改client.conf文件"></a>修改client.conf文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">删除</span><br><span class="line">cert vpnclient.crt</span><br><span class="line">key vpnclient.key</span><br><span class="line">不需要用证书来验证了，只需要ta.key和ca.crt</span><br><span class="line"></span><br><span class="line">添加</span><br><span class="line">auth-user-pass</span><br><span class="line">auth-nocache</span><br><span class="line"></span><br><span class="line">sudo <span class="built_in">tee</span> &gt; password&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">test</span></span><br><span class="line"><span class="string">123456</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+添加单独配置到ccd目录
+<span class="token builtin class-name">cd</span> /etc/openvpn/server
+<span class="token function">mkdir</span> ccd
+<span class="token builtin class-name">echo</span> <span class="token string">"ifconfig-push 10.8.0.20 255.255.255.0"</span> <span class="token operator">></span> /etc/openvpn/server/ccd/test
+分配一个静态IP给我的测试主机<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="在windows和linux中添加对CA机构的信任"><a href="#在windows和linux中添加对CA机构的信任" class="headerlink" title="在windows和linux中添加对CA机构的信任"></a>在windows和linux中添加对CA机构的信任</h2><h3 id="CentOS7-9-2009"><a href="#CentOS7-9-2009" class="headerlink" title="CentOS7.9.2009"></a>CentOS7.9.2009</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cp</span> ca.crt /etc/pki/ca-trust/source/anchors/</span><br><span class="line">update-ca-trust</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="修改client-conf文件"><a href="#修改client-conf文件" class="headerlink" title="修改client.conf文件"></a>修改client.conf文件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">删除
+cert vpnclient.crt
+key vpnclient.key
+不需要用证书来验证了，只需要ta.key和ca.crt
+
+添加
+auth-user-pass
+auth-nocache
+
+<span class="token function">sudo</span> <span class="token function">tee</span> <span class="token operator">></span> password<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+test
+123456
+EOF</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="在windows和linux中添加对CA机构的信任"><a href="#在windows和linux中添加对CA机构的信任" class="headerlink" title="在windows和linux中添加对CA机构的信任"></a>在windows和linux中添加对CA机构的信任</h2><h3 id="CentOS7-9-2009"><a href="#CentOS7-9-2009" class="headerlink" title="CentOS7.9.2009"></a>CentOS7.9.2009</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cp</span> ca.crt /etc/pki/ca-trust/source/anchors/
+update-ca-trust
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
     </article>
     <!-- license -->
@@ -6606,36 +6770,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7100,13 +7234,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8147,13 +8281,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8606,14 +8740,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8621,14 +8755,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

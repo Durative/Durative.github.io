@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="helm版本3.14父子chart结构本地依赖项 bug现象在子chart中添加新服务后，通过helm template进行渲染测试，发现新服务有时可以被渲染出来，有时不行，其结果不稳定 123456789101112131415161718192021222324先通过-f指定变量文件helm template .&#x2F; -f values-prod.yaml | grep kafkahelm te">
+    <meta name="description" content="helm版本3.14父子chart结构本地依赖项 bug现象在子chart中添加新服务后，通过helm template进行渲染测试，发现新服务有时可以被渲染出来，有时不行，其结果不稳定 先通过-f指定变量文件 helm template .&#x2F; -f values-prod.yaml | grep kafka helm template .&#x2F; -f values-prod.yaml | grep">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Helm渲染顺序bug">
 <meta property="og:url" content="https://akemi.zj.cn/2025/06/13/Helm-template-bug/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="helm版本3.14父子chart结构本地依赖项 bug现象在子chart中添加新服务后，通过helm template进行渲染测试，发现新服务有时可以被渲染出来，有时不行，其结果不稳定 123456789101112131415161718192021222324先通过-f指定变量文件helm template .&#x2F; -f values-prod.yaml | grep kafkahelm te">
+<meta property="og:description" content="helm版本3.14父子chart结构本地依赖项 bug现象在子chart中添加新服务后，通过helm template进行渲染测试，发现新服务有时可以被渲染出来，有时不行，其结果不稳定 先通过-f指定变量文件 helm template .&#x2F; -f values-prod.yaml | grep kafka helm template .&#x2F; -f values-prod.yaml | grep">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-06-13T11:15:21.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:06:24.136Z">
@@ -492,11 +492,39 @@
     <article class="article-entry">
         <p>helm版本3.14<br>父子chart结构<br>本地依赖项</p>
 <h2 id="bug现象"><a href="#bug现象" class="headerlink" title="bug现象"></a>bug现象</h2><p>在子chart中添加新服务后，通过helm template进行渲染测试，发现新服务有时可以被渲染出来，有时不行，其结果不稳定</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">先通过-f指定变量文件</span><br><span class="line">helm template ./ -f values-prod.yaml | grep kafka</span><br><span class="line">helm template ./ -f values-prod.yaml | grep kafka</span><br><span class="line"><span class="comment"># Source: charts/data-platform/templates/kafka-monitor-deploy.yaml</span></span><br><span class="line">  name: kafka-monitor</span><br><span class="line">    app.kubernetes.io/func-role: kafka-monitor</span><br><span class="line">      app.kubernetes.io/func-role: kafka-monitor</span><br><span class="line">        app.kubernetes.io/func-role: kafka-monitor</span><br><span class="line">            - <span class="built_in">echo</span> <span class="string">&quot;start...&quot;</span>;<span class="built_in">cd</span> /kafka_raw_data/; <span class="built_in">touch</span> /tmp/kafkalog.txt;./start.sh 2&gt;&amp;1 | <span class="built_in">tee</span></span><br><span class="line">              -a /tmp/kafkalog.txt</span><br><span class="line">helm template ./ -f values-prod.yaml | grep kafka</span><br><span class="line"><span class="comment"># Source: charts/data-platform/templates/kafka-monitor-deploy.yaml</span></span><br><span class="line">  name: kafka-monitor</span><br><span class="line">    app.kubernetes.io/func-role: kafka-monitor</span><br><span class="line">      app.kubernetes.io/func-role: kafka-monitor</span><br><span class="line">        app.kubernetes.io/func-role: kafka-monitor</span><br><span class="line">            - <span class="built_in">echo</span> <span class="string">&quot;start...&quot;</span>;<span class="built_in">cd</span> /kafka_raw_data/; <span class="built_in">touch</span> /tmp/kafkalog.txt;./start.sh 2&gt;&amp;1 | <span class="built_in">tee</span></span><br><span class="line">              -a /tmp/kafkalog.txt</span><br><span class="line">              </span><br><span class="line">通过-s选项进行指定模板进行渲染</span><br><span class="line">helm template ./ -f values-prod.yaml -s charts/data-platform/templates/kafka-monitor-deploy.yaml</span><br><span class="line"></span><br><span class="line">发现有时候会报错找不到子chart中的模板文件:</span><br><span class="line">Error: could not find template charts/qa-data-platform/templates/kafka-monitor-deploy.yaml <span class="keyword">in</span> chart</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">先通过-f指定变量文件
+helm template ./ <span class="token parameter variable">-f</span> values-prod.yaml <span class="token operator">|</span> <span class="token function">grep</span> kafka
+helm template ./ <span class="token parameter variable">-f</span> values-prod.yaml <span class="token operator">|</span> <span class="token function">grep</span> kafka
+<span class="token comment"># Source: charts/data-platform/templates/kafka-monitor-deploy.yaml</span>
+  name: kafka-monitor
+    app.kubernetes.io/func-role: kafka-monitor
+      app.kubernetes.io/func-role: kafka-monitor
+        app.kubernetes.io/func-role: kafka-monitor
+            - <span class="token builtin class-name">echo</span> <span class="token string">"start..."</span><span class="token punctuation">;</span><span class="token builtin class-name">cd</span> /kafka_raw_data/<span class="token punctuation">;</span> <span class="token function">touch</span> /tmp/kafkalog.txt<span class="token punctuation">;</span>./start.sh <span class="token operator"><span class="token file-descriptor important">2</span>></span><span class="token file-descriptor important">&amp;1</span> <span class="token operator">|</span> <span class="token function">tee</span>
+              <span class="token parameter variable">-a</span> /tmp/kafkalog.txt
+helm template ./ <span class="token parameter variable">-f</span> values-prod.yaml <span class="token operator">|</span> <span class="token function">grep</span> kafka
+<span class="token comment"># Source: charts/data-platform/templates/kafka-monitor-deploy.yaml</span>
+  name: kafka-monitor
+    app.kubernetes.io/func-role: kafka-monitor
+      app.kubernetes.io/func-role: kafka-monitor
+        app.kubernetes.io/func-role: kafka-monitor
+            - <span class="token builtin class-name">echo</span> <span class="token string">"start..."</span><span class="token punctuation">;</span><span class="token builtin class-name">cd</span> /kafka_raw_data/<span class="token punctuation">;</span> <span class="token function">touch</span> /tmp/kafkalog.txt<span class="token punctuation">;</span>./start.sh <span class="token operator"><span class="token file-descriptor important">2</span>></span><span class="token file-descriptor important">&amp;1</span> <span class="token operator">|</span> <span class="token function">tee</span>
+              <span class="token parameter variable">-a</span> /tmp/kafkalog.txt
+              
+通过-s选项进行指定模板进行渲染
+helm template ./ <span class="token parameter variable">-f</span> values-prod.yaml <span class="token parameter variable">-s</span> charts/data-platform/templates/kafka-monitor-deploy.yaml
+
+发现有时候会报错找不到子chart中的模板文件:
+Error: could not <span class="token function">find</span> template charts/qa-data-platform/templates/kafka-monitor-deploy.yaml <span class="token keyword">in</span> chart<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="helm对依赖项的渲染流程"><a href="#helm对依赖项的渲染流程" class="headerlink" title="helm对依赖项的渲染流程"></a>helm对依赖项的渲染流程</h2><p>1.初始化渲染上下文<br>2.解析父Chart.yaml<br>3.读取依赖<br>4.遍历依赖项</p>
 <p>读取依赖时<br><strong>对于file:&#x2F;&#x2F;类型的本地依赖：</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">D --&gt; E&#123;检查charts/目录&#125;</span><br><span class="line">E --&gt;|存在依赖名目录| F[使用目录内容]</span><br><span class="line">E --&gt;|不存在目录| G&#123;检查同名.tgz文件&#125;</span><br><span class="line">G --&gt;|存在.tgz| H[解压到内存]</span><br><span class="line">G --&gt;|不存在| I[报错]</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-mermaid" data-language="mermaid"><code class="language-mermaid"><span class="token keyword">graph</span> TD
+D <span class="token arrow operator">--></span> E<span class="token text string">&#123;检查charts/目录&#125;</span>
+E <span class="token arrow operator">--></span><span class="token label property">|存在依赖名目录|</span> F<span class="token text string">[使用目录内容]</span>
+E <span class="token arrow operator">--></span><span class="token label property">|不存在目录|</span> G<span class="token text string">&#123;检查同名.tgz文件&#125;</span>
+G <span class="token arrow operator">--></span><span class="token label property">|存在.tgz|</span> H<span class="token text string">[解压到内存]</span>
+G <span class="token arrow operator">--></span><span class="token label property">|不存在|</span> I<span class="token text string">[报错]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>对于远程依赖</strong>，使用<code>helm dependency update</code> 进行远程依赖的更新，重新下载并覆盖.tgz文件</p>
 <p>而.tgz位置就是位于父目录的charts&#x2F;下</p>
@@ -6565,36 +6593,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7059,13 +7057,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8106,13 +8104,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8565,14 +8563,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8580,14 +8578,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

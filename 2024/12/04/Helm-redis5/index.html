@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="搜索与下载chart123456789101112helm search repo redis可以看到基本上都是redis7和redis4通过helm search repo redis -l挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改helm pull bitnami&#x2F;redis --version 16.13.2mv redis-16.13.2.tgz ~cd ~tar">
+    <meta name="description" content="搜索与下载charthelm search repo redis 可以看到基本上都是redis7和redis4  通过 helm search repo redis -l 挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改  helm pull bitnami&#x2F;redis --version 16.13.2 mv redis-16.13.2.tgz ~ cd ~ tar -xf">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Helm部署redis5与使用local-path-provisioner">
 <meta property="og:url" content="https://akemi.zj.cn/2024/12/04/Helm-redis5/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="搜索与下载chart123456789101112helm search repo redis可以看到基本上都是redis7和redis4通过helm search repo redis -l挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改helm pull bitnami&#x2F;redis --version 16.13.2mv redis-16.13.2.tgz ~cd ~tar">
+<meta property="og:description" content="搜索与下载charthelm search repo redis 可以看到基本上都是redis7和redis4  通过 helm search repo redis -l 挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改  helm pull bitnami&#x2F;redis --version 16.13.2 mv redis-16.13.2.tgz ~ cd ~ tar -xf">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-12-03T16:30:27.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.184Z">
@@ -493,16 +493,284 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <h2 id="搜索与下载chart"><a href="#搜索与下载chart" class="headerlink" title="搜索与下载chart"></a>搜索与下载chart</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">helm search repo redis</span><br><span class="line">可以看到基本上都是redis7和redis4</span><br><span class="line"></span><br><span class="line">通过</span><br><span class="line">helm search repo redis -l</span><br><span class="line">挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改</span><br><span class="line"></span><br><span class="line">helm pull bitnami/redis --version 16.13.2</span><br><span class="line"><span class="built_in">mv</span> redis-16.13.2.tgz ~</span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">tar -xf redis-16.13.2.tgz </span><br><span class="line"><span class="built_in">mv</span> redis helm-redis5</span><br></pre></td></tr></table></figure>
+        <h2 id="搜索与下载chart"><a href="#搜索与下载chart" class="headerlink" title="搜索与下载chart"></a>搜索与下载chart</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm search repo redis
+可以看到基本上都是redis7和redis4
 
-<h2 id="查看chart信息，观察yaml文件结构"><a href="#查看chart信息，观察yaml文件结构" class="headerlink" title="查看chart信息，观察yaml文件结构"></a>查看chart信息，观察yaml文件结构</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> helm-redis5/</span><br><span class="line">进入Chart.yaml</span><br><span class="line">修改appversion为5.0.5</span><br><span class="line"></span><br><span class="line">进入value.yaml</span><br><span class="line">redis的value文件，分成几个部分，分别是global，master，replica，sentinel</span><br><span class="line">分别是全局，主节点，主从复制节点，哨兵节点</span><br><span class="line">不同的部署模式需要修改不同的部分</span><br><span class="line"></span><br><span class="line">我这次是只做redis单点的部署，所以只修改如下部分：</span><br><span class="line">默认镜像tag是6.2.7，修改为5.0.5</span><br><span class="line">默认服务类型clusterIP，端口6379</span><br><span class="line">默认副本数replica.replicaCount为3，修改为0，因为我不需要主从复制</span><br><span class="line">默认污点容忍没有配置，我是单点k8s，所以需要在master的tolerations里加一段污点配置:</span><br><span class="line">  tolerations: </span><br><span class="line">    - key: <span class="string">&quot;node-role.kubernetes.io/master&quot;</span></span><br><span class="line">      operator: <span class="string">&quot;Exists&quot;</span></span><br><span class="line">      effect: <span class="string">&quot;NoSchedule&quot;</span></span><br><span class="line"></span><br><span class="line">默认需要一块8Gi的存储，干脆正好学一下用local-path供应商好了</span><br><span class="line">在global的storageClass中加入</span><br><span class="line">storageClass: <span class="string">&quot;local-path&quot;</span></span><br><span class="line">以后部署helm就可以在他storageClass上直接标注就行，部署过程在下面</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+通过
+helm search repo redis <span class="token parameter variable">-l</span>
+挑选一个旧一点的chart版本，是redis6的，在此基础上进行修改
+
+helm pull bitnami/redis <span class="token parameter variable">--version</span> <span class="token number">16.13</span>.2
+<span class="token function">mv</span> redis-16.13.2.tgz ~
+<span class="token builtin class-name">cd</span> ~
+<span class="token function">tar</span> <span class="token parameter variable">-xf</span> redis-16.13.2.tgz 
+<span class="token function">mv</span> redis helm-redis5<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="查看chart信息，观察yaml文件结构"><a href="#查看chart信息，观察yaml文件结构" class="headerlink" title="查看chart信息，观察yaml文件结构"></a>查看chart信息，观察yaml文件结构</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> helm-redis5/
+进入Chart.yaml
+修改appversion为5.0.5
+
+进入value.yaml
+redis的value文件，分成几个部分，分别是global，master，replica，sentinel
+分别是全局，主节点，主从复制节点，哨兵节点
+不同的部署模式需要修改不同的部分
+
+我这次是只做redis单点的部署，所以只修改如下部分：
+默认镜像tag是6.2.7，修改为5.0.5
+默认服务类型clusterIP，端口6379
+默认副本数replica.replicaCount为3，修改为0，因为我不需要主从复制
+默认污点容忍没有配置，我是单点k8s，所以需要在master的tolerations里加一段污点配置:
+  tolerations: 
+    - key: <span class="token string">"node-role.kubernetes.io/master"</span>
+      operator: <span class="token string">"Exists"</span>
+      effect: <span class="token string">"NoSchedule"</span>
+
+默认需要一块8Gi的存储，干脆正好学一下用local-path供应商好了
+在global的storageClass中加入
+storageClass: <span class="token string">"local-path"</span>
+以后部署helm就可以在他storageClass上直接标注就行，部署过程在下面
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="创建local-path-provisioner"><a href="#创建local-path-provisioner" class="headerlink" title="创建local-path-provisioner"></a>创建local-path-provisioner</h2><p>我这里打了污点，使其可以在master上部署</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br></pre></td><td class="code"><pre><span class="line">存储目录就使用/data好了</span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">sudo <span class="built_in">tee</span> &gt; local-path-provisioner-deploy.yaml&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Namespace</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-storage</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: ServiceAccount</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-service-account</span></span><br><span class="line"><span class="string">  namespace: local-path-storage</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="string">kind: Role</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-role</span></span><br><span class="line"><span class="string">  namespace: local-path-storage</span></span><br><span class="line"><span class="string">rules:</span></span><br><span class="line"><span class="string">    resources: [&quot;pods&quot;]</span></span><br><span class="line"><span class="string">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;, &quot;create&quot;, &quot;patch&quot;, &quot;update&quot;, &quot;delete&quot;]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="string">kind: ClusterRole</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-role</span></span><br><span class="line"><span class="string">rules:</span></span><br><span class="line"><span class="string">    resources: [&quot;nodes&quot;, &quot;persistentvolumeclaims&quot;, &quot;configmaps&quot;, &quot;pods&quot;, &quot;pods/log&quot;]</span></span><br><span class="line"><span class="string">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]</span></span><br><span class="line"><span class="string">    resources: [&quot;persistentvolumes&quot;]</span></span><br><span class="line"><span class="string">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;, &quot;create&quot;, &quot;patch&quot;, &quot;update&quot;, &quot;delete&quot;]</span></span><br><span class="line"><span class="string">    resources: [&quot;events&quot;]</span></span><br><span class="line"><span class="string">    verbs: [&quot;create&quot;, &quot;patch&quot;]</span></span><br><span class="line"><span class="string">    resources: [&quot;storageclasses&quot;]</span></span><br><span class="line"><span class="string">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="string">kind: RoleBinding</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-bind</span></span><br><span class="line"><span class="string">  namespace: local-path-storage</span></span><br><span class="line"><span class="string">roleRef:</span></span><br><span class="line"><span class="string">  apiGroup: rbac.authorization.k8s.io</span></span><br><span class="line"><span class="string">  kind: Role</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-role</span></span><br><span class="line"><span class="string">subjects:</span></span><br><span class="line"><span class="string">    name: local-path-provisioner-service-account</span></span><br><span class="line"><span class="string">    namespace: local-path-storage</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="string">kind: ClusterRoleBinding</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-bind</span></span><br><span class="line"><span class="string">roleRef:</span></span><br><span class="line"><span class="string">  apiGroup: rbac.authorization.k8s.io</span></span><br><span class="line"><span class="string">  kind: ClusterRole</span></span><br><span class="line"><span class="string">  name: local-path-provisioner-role</span></span><br><span class="line"><span class="string">subjects:</span></span><br><span class="line"><span class="string">    name: local-path-provisioner-service-account</span></span><br><span class="line"><span class="string">    namespace: local-path-storage</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: apps/v1</span></span><br><span class="line"><span class="string">kind: Deployment</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-provisioner</span></span><br><span class="line"><span class="string">  namespace: local-path-storage</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  replicas: 1</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">    matchLabels:</span></span><br><span class="line"><span class="string">      app: local-path-provisioner</span></span><br><span class="line"><span class="string">  template:</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      labels:</span></span><br><span class="line"><span class="string">        app: local-path-provisioner</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      tolerations:</span></span><br><span class="line"><span class="string">        - key: &quot;node-role.kubernetes.io/master&quot;</span></span><br><span class="line"><span class="string">          operator: &quot;Exists&quot;</span></span><br><span class="line"><span class="string">          effect: &quot;NoSchedule&quot;</span></span><br><span class="line"><span class="string">      serviceAccountName: local-path-provisioner-service-account</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">        - name: local-path-provisioner</span></span><br><span class="line"><span class="string">          image: rancher/local-path-provisioner:v0.0.29</span></span><br><span class="line"><span class="string">          imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">          command:</span></span><br><span class="line"><span class="string">            - local-path-provisioner</span></span><br><span class="line"><span class="string">            - --debug</span></span><br><span class="line"><span class="string">            - start</span></span><br><span class="line"><span class="string">            - --config</span></span><br><span class="line"><span class="string">            - /etc/config/config.json</span></span><br><span class="line"><span class="string">          volumeMounts:</span></span><br><span class="line"><span class="string">            - name: config-volume</span></span><br><span class="line"><span class="string">              mountPath: /etc/config/</span></span><br><span class="line"><span class="string">          env:</span></span><br><span class="line"><span class="string">            - name: POD_NAMESPACE</span></span><br><span class="line"><span class="string">              valueFrom:</span></span><br><span class="line"><span class="string">                fieldRef:</span></span><br><span class="line"><span class="string">                  fieldPath: metadata.namespace</span></span><br><span class="line"><span class="string">            - name: CONFIG_MOUNT_PATH</span></span><br><span class="line"><span class="string">              value: /etc/config/</span></span><br><span class="line"><span class="string">      volumes:</span></span><br><span class="line"><span class="string">        - name: config-volume</span></span><br><span class="line"><span class="string">          configMap:</span></span><br><span class="line"><span class="string">            name: local-path-config</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: storage.k8s.io/v1</span></span><br><span class="line"><span class="string">kind: StorageClass</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path</span></span><br><span class="line"><span class="string">provisioner: rancher.io/local-path</span></span><br><span class="line"><span class="string">volumeBindingMode: WaitForFirstConsumer</span></span><br><span class="line"><span class="string">reclaimPolicy: Delete</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">kind: ConfigMap</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: local-path-config</span></span><br><span class="line"><span class="string">  namespace: local-path-storage</span></span><br><span class="line"><span class="string">data:</span></span><br><span class="line"><span class="string">  config.json: |-</span></span><br><span class="line"><span class="string">    &#123;</span></span><br><span class="line"><span class="string">            &quot;nodePathMap&quot;:[</span></span><br><span class="line"><span class="string">            &#123;</span></span><br><span class="line"><span class="string">                    &quot;node&quot;:&quot;DEFAULT_PATH_FOR_NON_LISTED_NODES&quot;,</span></span><br><span class="line"><span class="string">                    &quot;paths&quot;:[&quot;/data&quot;]</span></span><br><span class="line"><span class="string">            &#125;</span></span><br><span class="line"><span class="string">            ]</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">  setup: |-</span></span><br><span class="line"><span class="string">    #!/bin/sh</span></span><br><span class="line"><span class="string">    set -eu</span></span><br><span class="line"><span class="string">    mkdir -m 0777 -p &quot;$VOL_DIR&quot;</span></span><br><span class="line"><span class="string">  teardown: |-</span></span><br><span class="line"><span class="string">    #!/bin/sh</span></span><br><span class="line"><span class="string">    set -eu</span></span><br><span class="line"><span class="string">    rm -rf &quot;$VOL_DIR&quot;</span></span><br><span class="line"><span class="string">  helperPod.yaml: |-</span></span><br><span class="line"><span class="string">    apiVersion: v1</span></span><br><span class="line"><span class="string">    kind: Pod</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      name: helper-pod</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      priorityClassName: system-node-critical</span></span><br><span class="line"><span class="string">      tolerations:</span></span><br><span class="line"><span class="string">        - key: node.kubernetes.io/disk-pressure</span></span><br><span class="line"><span class="string">          operator: Exists</span></span><br><span class="line"><span class="string">          effect: NoSchedule</span></span><br><span class="line"><span class="string">        - key: &quot;node-role.kubernetes.io/master&quot;</span></span><br><span class="line"><span class="string">          operator: &quot;Exists&quot;</span></span><br><span class="line"><span class="string">          effect: &quot;NoSchedule&quot;</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">      - name: helper-pod</span></span><br><span class="line"><span class="string">        image: busybox</span></span><br><span class="line"><span class="string">        imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f local-path-provisioner-deploy.yaml</span><br><span class="line">kubectl get pods -n local-path-storage</span><br><span class="line">NAME                                      READY   STATUS    RESTARTS   AGE</span><br><span class="line">local-path-provisioner-849b996c68-8vwk4   1/1     Running   0          6s</span><br><span class="line">kubectl apply -f local-path-storage-class.yaml</span><br><span class="line">kubectl get sc</span><br><span class="line">NAME         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE</span><br><span class="line">local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   <span class="literal">false</span>                  33s</span><br><span class="line"></span><br><span class="line">可以看到供应商运行正常，而且已经有了一个名字叫local-path的存储类</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">存储目录就使用/data好了
+<span class="token builtin class-name">cd</span> ~
+<span class="token function">sudo</span> <span class="token function">tee</span> <span class="token operator">></span> local-path-provisioner-deploy.yaml<span class="token operator">&lt;&lt;</span><span class="token string">EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: local-path-storage
 
-<h2 id="部署redis"><a href="#部署redis" class="headerlink" title="部署redis"></a>部署redis</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">helm install redis5 ./</span><br><span class="line">kubectl get pods -w</span><br><span class="line">NAME              READY   STATUS    RESTARTS       AGE</span><br><span class="line">mysql8-0          1/1     Running   1 (148m ago)   161m</span><br><span class="line">redis5-master-0   0/1     Running   0              9s</span><br><span class="line">redis5-master-0   1/1     Running   0              20s</span><br><span class="line"></span><br><span class="line">kubectl get pvc</span><br><span class="line">NAME                         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE</span><br><span class="line">data-mysql8-0                Bound    local-pv                                   8Gi        RWO                           7h23m</span><br><span class="line">redis-data-redis5-master-0   Bound    pvc-87c6f460-c592-4417-8785-f2e174c3f711   8Gi        RWO            local-path     30m</span><br><span class="line"></span><br><span class="line">kubectl get pv</span><br><span class="line">NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS        CLAIM                                STORAGECLASS   REASON   AGE</span><br><span class="line">local-pv                                   8Gi        RWO            Retain           Terminating   default/data-mysql8-0                                        6h54m</span><br><span class="line">pvc-87c6f460-c592-4417-8785-f2e174c3f711   8Gi        RWO            Delete           Bound         default/redis-data-redis5-master-0   local-path              7m22s</span><br><span class="line"></span><br><span class="line">kubectl get svc | grep redis</span><br><span class="line">redis5-headless   ClusterIP   None             &lt;none&gt;        6379/TCP   3m8s</span><br><span class="line">redis5-master     ClusterIP   10.103.71.155    &lt;none&gt;        6379/TCP   3m8s</span><br><span class="line">redis5-replicas   ClusterIP   10.107.136.246   &lt;none&gt;        6379/TCP   3m8s</span><br><span class="line"></span><br><span class="line">可以看到pod运行正常，pv和pvc也能绑定，说明local-path的供应商也能正常运行</span><br></pre></td></tr></table></figure>
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: local-path-provisioner-service-account
+  namespace: local-path-storage
 
-<h2 id="连接redis与测试"><a href="#连接redis与测试" class="headerlink" title="连接redis与测试"></a>连接redis与测试</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">生成一个初始密码</span><br><span class="line"><span class="built_in">export</span> REDIS_PASSWORD=$(kubectl get secret --namespace default redis5 -o jsonpath=<span class="string">&quot;&#123;.data.redis-password&#125;&quot;</span> | <span class="built_in">base64</span> -d)</span><br><span class="line"></span><br><span class="line">创建用于连接的pod</span><br><span class="line">kubectl run --namespace default redis-client --restart=<span class="string">&#x27;Never&#x27;</span> --<span class="built_in">env</span> REDIS_PASSWORD=<span class="variable">$REDIS_PASSWORD</span>  --image docker.io/bitnami/redis:5.0.5 --<span class="built_in">command</span> -- <span class="built_in">sleep</span> infinity</span><br><span class="line">给pod添加容忍度</span><br><span class="line">kubectl patch pod redis-client -n default --<span class="built_in">type</span>=<span class="string">&#x27;json&#x27;</span> -p=<span class="string">&#x27;[&#123;&quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/spec/tolerations&quot;, &quot;value&quot;: [&#123;&quot;key&quot;: &quot;node-role.kubernetes.io/master&quot;, &quot;operator&quot;: &quot;Exists&quot;, &quot;effect&quot;: &quot;NoSchedule&quot;&#125;]&#125;]&#x27;</span></span><br><span class="line"></span><br><span class="line">kubectl get pods -w</span><br><span class="line">NAME              READY   STATUS    RESTARTS       AGE</span><br><span class="line">redis5-master-0   1/1     Running   0              12m</span><br><span class="line">redis-client      0/1     Pending   0              0s</span><br><span class="line">redis-client      0/1     Pending   0              0s</span><br><span class="line">redis-client      0/1     Pending   0              9s</span><br><span class="line">redis-client      0/1     Pending   0              9s</span><br><span class="line">redis-client      0/1     ContainerCreating   0              9s</span><br><span class="line">redis-client      0/1     ContainerCreating   0              10s</span><br><span class="line">redis-client      1/1     Running             0              10s</span><br><span class="line"></span><br><span class="line">可以看到redis的client已经正常运行</span><br><span class="line"></span><br><span class="line">然后进入client</span><br><span class="line">kubectl <span class="built_in">exec</span> --<span class="built_in">tty</span> -i redis-client --namespace default -- bash</span><br><span class="line"></span><br><span class="line">然后进入redis</span><br><span class="line">REDISCLI_AUTH=<span class="string">&quot;<span class="variable">$REDIS_PASSWORD</span>&quot;</span> redis-cli -h redis5-master</span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">如果想从集群外部对集群进行访问</span><br><span class="line">kubectl port-forward --namespace default svc/redis5-master 6379:6379 &amp;&amp;</span><br><span class="line">REDISCLI_AUTH=<span class="string">&quot;<span class="variable">$REDIS_PASSWORD</span>&quot;</span> redis-cli -h 127.0.0.1 -p 6379</span><br><span class="line"></span><br><span class="line">这条命令将容器service服务的6379端口转发到了本机的6379</span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">redis配置文件位置</span><br><span class="line">在进入了redis-client之后</span><br><span class="line">/opt/bitnami/redis/etc/redis-default.conf</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: local-path-provisioner-role
+  namespace: local-path-storage
+rules:
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: local-path-provisioner-role
+rules:
+    resources: ["nodes", "persistentvolumeclaims", "configmaps", "pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: local-path-provisioner-bind
+  namespace: local-path-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: local-path-provisioner-role
+subjects:
+    name: local-path-provisioner-service-account
+    namespace: local-path-storage
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: local-path-provisioner-bind
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: local-path-provisioner-role
+subjects:
+    name: local-path-provisioner-service-account
+    namespace: local-path-storage
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-path-provisioner
+  namespace: local-path-storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: local-path-provisioner
+  template:
+    metadata:
+      labels:
+        app: local-path-provisioner
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+      serviceAccountName: local-path-provisioner-service-account
+      containers:
+        - name: local-path-provisioner
+          image: rancher/local-path-provisioner:v0.0.29
+          imagePullPolicy: IfNotPresent
+          command:
+            - local-path-provisioner
+            - --debug
+            - start
+            - --config
+            - /etc/config/config.json
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config/
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONFIG_MOUNT_PATH
+              value: /etc/config/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: local-path-config
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: local-path-config
+  namespace: local-path-storage
+data:
+  config.json: |-
+    &#123;
+            "nodePathMap":[
+            &#123;
+                    "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
+                    "paths":["/data"]
+            &#125;
+            ]
+    &#125;
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "<span class="token variable">$VOL_DIR</span>"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "<span class="token variable">$VOL_DIR</span>"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+      - name: helper-pod
+        image: busybox
+        imagePullPolicy: IfNotPresent
+EOF</span>
+kubectl apply <span class="token parameter variable">-f</span> local-path-provisioner-deploy.yaml
+kubectl get pods <span class="token parameter variable">-n</span> local-path-storage
+NAME                                      READY   STATUS    RESTARTS   AGE
+local-path-provisioner-849b996c68-8vwk4   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          6s
+kubectl apply <span class="token parameter variable">-f</span> local-path-storage-class.yaml
+kubectl get sc
+NAME         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   <span class="token boolean">false</span>                  33s
+
+可以看到供应商运行正常，而且已经有了一个名字叫local-path的存储类<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="部署redis"><a href="#部署redis" class="headerlink" title="部署redis"></a>部署redis</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">helm <span class="token function">install</span> redis5 ./
+kubectl get pods <span class="token parameter variable">-w</span>
+NAME              READY   STATUS    RESTARTS       AGE
+mysql8-0          <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>148m ago<span class="token punctuation">)</span>   161m
+redis5-master-0   <span class="token number">0</span>/1     Running   <span class="token number">0</span>              9s
+redis5-master-0   <span class="token number">1</span>/1     Running   <span class="token number">0</span>              20s
+
+kubectl get pvc
+NAME                         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+data-mysql8-0                Bound    local-pv                                   8Gi        RWO                           7h23m
+redis-data-redis5-master-0   Bound    pvc-87c6f460-c592-4417-8785-f2e174c3f711   8Gi        RWO            local-path     30m
+
+kubectl get <span class="token function">pv</span>
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS        CLAIM                                STORAGECLASS   REASON   AGE
+local-pv                                   8Gi        RWO            Retain           Terminating   default/data-mysql8-0                                        6h54m
+pvc-87c6f460-c592-4417-8785-f2e174c3f711   8Gi        RWO            Delete           Bound         default/redis-data-redis5-master-0   local-path              7m22s
+
+kubectl get svc <span class="token operator">|</span> <span class="token function">grep</span> redis
+redis5-headless   ClusterIP   None             <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">6379</span>/TCP   3m8s
+redis5-master     ClusterIP   <span class="token number">10.103</span>.71.155    <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">6379</span>/TCP   3m8s
+redis5-replicas   ClusterIP   <span class="token number">10.107</span>.136.246   <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">6379</span>/TCP   3m8s
+
+可以看到pod运行正常，pv和pvc也能绑定，说明local-path的供应商也能正常运行<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="连接redis与测试"><a href="#连接redis与测试" class="headerlink" title="连接redis与测试"></a>连接redis与测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">生成一个初始密码
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">REDIS_PASSWORD</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl get secret <span class="token parameter variable">--namespace</span> default redis5 <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.data.redis-password&#125;"</span> <span class="token operator">|</span> base64 <span class="token parameter variable">-d</span><span class="token variable">)</span></span>
+
+创建用于连接的pod
+kubectl run <span class="token parameter variable">--namespace</span> default redis-client <span class="token parameter variable">--restart</span><span class="token operator">=</span><span class="token string">'Never'</span> <span class="token parameter variable">--env</span> <span class="token assign-left variable">REDIS_PASSWORD</span><span class="token operator">=</span><span class="token variable">$REDIS_PASSWORD</span>  <span class="token parameter variable">--image</span> docker.io/bitnami/redis:5.0.5 <span class="token parameter variable">--command</span> -- <span class="token function">sleep</span> infinity
+给pod添加容忍度
+kubectl patch pod redis-client <span class="token parameter variable">-n</span> default <span class="token parameter variable">--type</span><span class="token operator">=</span><span class="token string">'json'</span> <span class="token parameter variable">-p</span><span class="token operator">=</span><span class="token string">'[&#123;"op": "add", "path": "/spec/tolerations", "value": [&#123;"key": "node-role.kubernetes.io/master", "operator": "Exists", "effect": "NoSchedule"&#125;]&#125;]'</span>
+
+kubectl get pods <span class="token parameter variable">-w</span>
+NAME              READY   STATUS    RESTARTS       AGE
+redis5-master-0   <span class="token number">1</span>/1     Running   <span class="token number">0</span>              12m
+redis-client      <span class="token number">0</span>/1     Pending   <span class="token number">0</span>              0s
+redis-client      <span class="token number">0</span>/1     Pending   <span class="token number">0</span>              0s
+redis-client      <span class="token number">0</span>/1     Pending   <span class="token number">0</span>              9s
+redis-client      <span class="token number">0</span>/1     Pending   <span class="token number">0</span>              9s
+redis-client      <span class="token number">0</span>/1     ContainerCreating   <span class="token number">0</span>              9s
+redis-client      <span class="token number">0</span>/1     ContainerCreating   <span class="token number">0</span>              10s
+redis-client      <span class="token number">1</span>/1     Running             <span class="token number">0</span>              10s
+
+可以看到redis的client已经正常运行
+
+然后进入client
+kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">--tty</span> <span class="token parameter variable">-i</span> redis-client <span class="token parameter variable">--namespace</span> default -- <span class="token function">bash</span>
+
+然后进入redis
+<span class="token assign-left variable">REDISCLI_AUTH</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$REDIS_PASSWORD</span>"</span> redis-cli <span class="token parameter variable">-h</span> redis5-master
+
+<span class="token comment">#</span>
+如果想从集群外部对集群进行访问
+kubectl port-forward <span class="token parameter variable">--namespace</span> default svc/redis5-master <span class="token number">6379</span>:6379 <span class="token operator">&amp;&amp;</span>
+<span class="token assign-left variable">REDISCLI_AUTH</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$REDIS_PASSWORD</span>"</span> redis-cli <span class="token parameter variable">-h</span> <span class="token number">127.0</span>.0.1 <span class="token parameter variable">-p</span> <span class="token number">6379</span>
+
+这条命令将容器service服务的6379端口转发到了本机的6379
+
+<span class="token comment">#</span>
+redis配置文件位置
+在进入了redis-client之后
+/opt/bitnami/redis/etc/redis-default.conf
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6561,36 +6829,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7055,13 +7293,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8102,13 +8340,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8561,14 +8799,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8576,14 +8814,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

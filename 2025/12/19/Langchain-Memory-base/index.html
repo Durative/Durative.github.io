@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="会话缓冲记忆ConversationBufferMemory  将预设的聊天记录保存起来，为之后的聊天提供上下文信息，同时也可以将实时聊天信息保存起来  会话缓冲窗口记忆ConversationBufferWindowMemory  记录最近k次的聊天交互信息 会话缓冲记忆ConversationBufferMemory12345678910111213141516171819202122232">
+    <meta name="description" content="会话缓冲记忆ConversationBufferMemory  将预设的聊天记录保存起来，为之后的聊天提供上下文信息，同时也可以将实时聊天信息保存起来  会话缓冲窗口记忆ConversationBufferWindowMemory  记录最近k次的聊天交互信息 会话缓冲记忆ConversationBufferMemoryfrom langchain.memory import Conversat">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Langchain模块Memory常用组件">
 <meta property="og:url" content="https://akemi.zj.cn/2025/12/19/Langchain-Memory-base/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="会话缓冲记忆ConversationBufferMemory  将预设的聊天记录保存起来，为之后的聊天提供上下文信息，同时也可以将实时聊天信息保存起来  会话缓冲窗口记忆ConversationBufferWindowMemory  记录最近k次的聊天交互信息 会话缓冲记忆ConversationBufferMemory12345678910111213141516171819202122232">
+<meta property="og:description" content="会话缓冲记忆ConversationBufferMemory  将预设的聊天记录保存起来，为之后的聊天提供上下文信息，同时也可以将实时聊天信息保存起来  会话缓冲窗口记忆ConversationBufferWindowMemory  记录最近k次的聊天交互信息 会话缓冲记忆ConversationBufferMemoryfrom langchain.memory import Conversat">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-12-19T10:21:44.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.788Z">
@@ -501,19 +501,201 @@
 <li>会话缓冲窗口记忆ConversationBufferWindowMemory</li>
 </ul>
 <p>记录最近k次的聊天交互信息</p>
-<h2 id="会话缓冲记忆ConversationBufferMemory"><a href="#会话缓冲记忆ConversationBufferMemory" class="headerlink" title="会话缓冲记忆ConversationBufferMemory"></a>会话缓冲记忆ConversationBufferMemory</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>,streaming=<span class="literal">True</span>)</span><br><span class="line">memory = ConversationBufferMemory(return_messages=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 历史聊天信息，正常情况下不会这样使用</span></span><br><span class="line">memory.save_context(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;你叫啥名字&quot;</span>&#125;,&#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;我叫ShengWang&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接使用到链中（常用）</span></span><br><span class="line">conversation = ConversationChain(</span><br><span class="line">    llm=llm,</span><br><span class="line">    memory=memory,  <span class="comment"># 将记忆对象传递给链</span></span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">response = conversation.predict(<span class="built_in">input</span>=<span class="string">&quot;你还记得你叫什么吗？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;AI: <span class="subst">&#123;response&#125;</span>\n&quot;</span>)</span><br><span class="line"><span class="comment">#</span></span><br><span class="line">response = conversation.predict(<span class="built_in">input</span>=<span class="string">&quot;师傅你是做什么工作的&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;AI: <span class="subst">&#123;response&#125;</span>\n&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;=== 自动保存的对话历史 ===&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(memory.buffer)</span><br></pre></td></tr></table></figure>
+<h2 id="会话缓冲记忆ConversationBufferMemory"><a href="#会话缓冲记忆ConversationBufferMemory" class="headerlink" title="会话缓冲记忆ConversationBufferMemory"></a>会话缓冲记忆ConversationBufferMemory</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>memory <span class="token keyword">import</span> ConversationBufferMemory
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> ConversationChain
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
 
-<h2 id="会话窗口缓冲记忆ConversationBufferWindowMemory"><a href="#会话窗口缓冲记忆ConversationBufferWindowMemory" class="headerlink" title="会话窗口缓冲记忆ConversationBufferWindowMemory"></a>会话窗口缓冲记忆ConversationBufferWindowMemory</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferWindowMemory</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>,streaming=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置k=2，save三次</span></span><br><span class="line">memory = ConversationBufferWindowMemory(k=<span class="number">2</span>)</span><br><span class="line">memory.save_context(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;你叫啥名字&quot;</span>&#125;,&#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;我叫ShengWang&quot;</span>&#125;)</span><br><span class="line">memory.save_context(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;hello&quot;</span>&#125;,&#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;hello&quot;</span>&#125;)</span><br><span class="line">memory.save_context(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;hello&quot;</span>&#125;,&#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;hello&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line">conversation = ConversationChain(</span><br><span class="line">    llm=llm,</span><br><span class="line">    memory=memory,</span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">response = conversation.predict(<span class="built_in">input</span>=<span class="string">&quot;你还记得你叫什么吗？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;AI: <span class="subst">&#123;response&#125;</span>\n&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># AI: 当然记得！我是DeepSeek，由深度求索公司创造的AI助手。很高兴为您提供帮助！😊</span></span><br></pre></td></tr></table></figure>
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">,</span>streaming<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+memory <span class="token operator">=</span> ConversationBufferMemory<span class="token punctuation">(</span>return_messages<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 历史聊天信息，正常情况下不会这样使用</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"你叫啥名字"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span><span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"我叫ShengWang"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 直接使用到链中（常用）</span>
+conversation <span class="token operator">=</span> ConversationChain<span class="token punctuation">(</span>
+    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    memory<span class="token operator">=</span>memory<span class="token punctuation">,</span>  <span class="token comment"># 将记忆对象传递给链</span>
+    verbose<span class="token operator">=</span><span class="token boolean">True</span>
+<span class="token punctuation">)</span>
+
+response <span class="token operator">=</span> conversation<span class="token punctuation">.</span>predict<span class="token punctuation">(</span><span class="token builtin">input</span><span class="token operator">=</span><span class="token string">"你还记得你叫什么吗？"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"AI: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>response<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span><span class="token punctuation">)</span>
+<span class="token comment">#</span>
+response <span class="token operator">=</span> conversation<span class="token punctuation">.</span>predict<span class="token punctuation">(</span><span class="token builtin">input</span><span class="token operator">=</span><span class="token string">"师傅你是做什么工作的"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"AI: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>response<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"=== 自动保存的对话历史 ==="</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>memory<span class="token punctuation">.</span><span class="token builtin">buffer</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="会话窗口缓冲记忆ConversationBufferWindowMemory"><a href="#会话窗口缓冲记忆ConversationBufferWindowMemory" class="headerlink" title="会话窗口缓冲记忆ConversationBufferWindowMemory"></a>会话窗口缓冲记忆ConversationBufferWindowMemory</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>memory <span class="token keyword">import</span> ConversationBufferWindowMemory
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> ConversationChain
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">,</span>streaming<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 设置k=2，save三次</span>
+memory <span class="token operator">=</span> ConversationBufferWindowMemory<span class="token punctuation">(</span>k<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"你叫啥名字"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span><span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"我叫ShengWang"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"hello"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span><span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"hello"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"hello"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span><span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"hello"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+
+conversation <span class="token operator">=</span> ConversationChain<span class="token punctuation">(</span>
+    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    memory<span class="token operator">=</span>memory<span class="token punctuation">,</span>
+    verbose<span class="token operator">=</span><span class="token boolean">True</span>
+<span class="token punctuation">)</span>
+
+response <span class="token operator">=</span> conversation<span class="token punctuation">.</span>predict<span class="token punctuation">(</span><span class="token builtin">input</span><span class="token operator">=</span><span class="token string">"你还记得你叫什么吗？"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"AI: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>response<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span><span class="token punctuation">)</span>
+
+<span class="token comment"># AI: 当然记得！我是DeepSeek，由深度求索公司创造的AI助手。很高兴为您提供帮助！😊</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="会话摘要记忆Conversation-summary-memory"><a href="#会话摘要记忆Conversation-summary-memory" class="headerlink" title="会话摘要记忆Conversation summary memory"></a>会话摘要记忆Conversation summary memory</h2><p>将对话进行总结，将总结存储在内存中。只返回摘要，极端节省token，对于长对话来说非常实用，但丢失细节</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationSummaryMemory,ChatMessageHistory</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line">memory = ConversationSummaryMemory(</span><br><span class="line">    llm=llm,</span><br><span class="line">    memory_key=<span class="string">&quot;history&quot;</span>,</span><br><span class="line">    return_messages=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line">memory.save_context(</span><br><span class="line">    &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;你好，我叫张三，我来自北京&quot;</span>&#125;,</span><br><span class="line">    &#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;你好张三！很高兴认识你。北京是个很棒的城市。&quot;</span>&#125;</span><br><span class="line">)</span><br><span class="line">memory.save_context(</span><br><span class="line">    &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;我今年25岁，是一名软件工程师&quot;</span>&#125;,</span><br><span class="line">    &#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;真不错！25岁的软件工程师，很有前途的职业。&quot;</span>&#125;</span><br><span class="line">)</span><br><span class="line">memory.save_context(</span><br><span class="line">    &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;我喜欢打篮球和旅游&quot;</span>&#125;,</span><br><span class="line">    &#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;运动加旅游是很健康的生活方式！&quot;</span>&#125;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看摘要</span></span><br><span class="line"><span class="built_in">print</span>(memory.buffer)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用新对话</span></span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</span><br><span class="line">conversation = ConversationChain(</span><br><span class="line">    llm=llm,</span><br><span class="line">    memory=memory,</span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line">response = conversation.predict(<span class="built_in">input</span>=<span class="string">&quot;你还记得关于我的哪些信息？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;AI: <span class="subst">&#123;response&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">当然记得！你叫张三，今年<span class="number">25</span>岁，是一位来自北京的软件工程师。你之前提到过自己喜欢打篮球和旅行，我觉得这是一个非常棒的生活方式——既能锻炼身体，又能开阔眼界。北京这座城市充满活力，而软件工程又是一个充满前景的领域，相信你在这条路上一定有很多有趣的故事吧？</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>memory <span class="token keyword">import</span> ConversationSummaryMemory<span class="token punctuation">,</span>ChatMessageHistory
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
+memory <span class="token operator">=</span> ConversationSummaryMemory<span class="token punctuation">(</span>
+    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    memory_key<span class="token operator">=</span><span class="token string">"history"</span><span class="token punctuation">,</span>
+    return_messages<span class="token operator">=</span><span class="token boolean">True</span>
+<span class="token punctuation">)</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"你好，我叫张三，我来自北京"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"你好张三！很高兴认识你。北京是个很棒的城市。"</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">)</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"我今年25岁，是一名软件工程师"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"真不错！25岁的软件工程师，很有前途的职业。"</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">)</span>
+memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"我喜欢打篮球和旅游"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> <span class="token string">"运动加旅游是很健康的生活方式！"</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># 查看摘要</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>memory<span class="token punctuation">.</span><span class="token builtin">buffer</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 使用新对话</span>
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> ConversationChain
+conversation <span class="token operator">=</span> ConversationChain<span class="token punctuation">(</span>
+    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    memory<span class="token operator">=</span>memory<span class="token punctuation">,</span>
+    verbose<span class="token operator">=</span><span class="token boolean">True</span>
+<span class="token punctuation">)</span>
+response <span class="token operator">=</span> conversation<span class="token punctuation">.</span>predict<span class="token punctuation">(</span><span class="token builtin">input</span><span class="token operator">=</span><span class="token string">"你还记得关于我的哪些信息？"</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"AI: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>response<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+
+当然记得！你叫张三，今年<span class="token number">25</span>岁，是一位来自北京的软件工程师。你之前提到过自己喜欢打篮球和旅行，我觉得这是一个非常棒的生活方式——既能锻炼身体，又能开阔眼界。北京这座城市充满活力，而软件工程又是一个充满前景的领域，相信你在这条路上一定有很多有趣的故事吧？<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="会话摘要记忆缓冲ConversationSummaryBufferMemory（略）"><a href="#会话摘要记忆缓冲ConversationSummaryBufferMemory（略）" class="headerlink" title="会话摘要记忆缓冲ConversationSummaryBufferMemory（略）"></a>会话摘要记忆缓冲<strong>ConversationSummaryBufferMemory（略）</strong></h2><p>是会话摘要记忆的升级版，<strong>同样用法</strong></p>
 <p>保留最近的N条原始对话 + 将早期对话压缩为摘要，既保留近期细节，又压缩早期内容</p>
 <p><code>max_token_limit</code> 控制总token数，<code>max_len</code>（可选）控制保留的对话轮数</p>
 <p>但<strong>需要支持token计算的模型</strong>，比如openAI。而deepseek不支持</p>
 <h2 id="向量存储后端记忆Vector-store-backend-memory"><a href="#向量存储后端记忆Vector-store-backend-memory" class="headerlink" title="向量存储后端记忆Vector store-backend memory"></a>向量存储后端记忆Vector store-backend memory</h2><p>将对话历史存储在向量数据库中，通过语义相似度检索来获取相关记忆的方法。它与传统记忆方法完全不同，更像是一个”长期记忆”或”知识库”。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> VectorStoreRetrieverMemory</span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Chroma</span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化模型和embedding</span></span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line">embeddings = OpenAIEmbeddings()  <span class="comment"># 需要OpenAI API key</span></span><br><span class="line"><span class="comment"># 或者使用其他embedding模型，如HuggingFaceEmbeddings</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建向量存储</span></span><br><span class="line">vectorstore = Chroma(</span><br><span class="line">    embedding_function=embeddings,</span><br><span class="line">    persist_directory=<span class="string">&quot;./vector_db&quot;</span>  <span class="comment"># 持久化存储</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建向量记忆</span></span><br><span class="line">memory = VectorStoreRetrieverMemory(</span><br><span class="line">    retriever=vectorstore.as_retriever(</span><br><span class="line">        search_kwargs=&#123;<span class="string">&quot;k&quot;</span>: <span class="number">3</span>&#125;  <span class="comment"># 返回最相似的3条</span></span><br><span class="line">    ),</span><br><span class="line">    memory_key=<span class="string">&quot;chat_history&quot;</span>,</span><br><span class="line">    return_docs=<span class="literal">True</span>  <span class="comment"># 返回文档对象</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;=== 向量存储记忆示例 ===&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加历史对话（可以来自不同会话）</span></span><br><span class="line">historical_conversations = [</span><br><span class="line">    <span class="string">&quot;用户: 我叫张三，来自北京\n助手: 你好张三，北京是个很棒的城市！&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 我今年30岁，是一名软件工程师\n助手: 30岁的软件工程师，经验丰富啊。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 我喜欢打篮球和旅游\n助手: 运动加旅游是很好的生活方式。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 我养了一只叫Tom的猫\n助手: Tom一定很可爱！&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 最近在学习Python编程\n助手: Python是很好的入门语言。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 想转行做数据科学家\n助手: 数据科学家需要统计学和编程技能。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 我经常去健身房锻炼\n助手: 健身对身体和心理健康都很重要。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 去年去了日本旅行\n助手: 日本的文化和风景都很迷人。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 我的妻子是医生\n助手: 医生是很崇高的职业。&quot;</span>,</span><br><span class="line">    <span class="string">&quot;用户: 我们计划明年要孩子\n助手: 家庭计划很重要，祝你们幸福。&quot;</span>,</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;添加历史对话到向量库...&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> conv <span class="keyword">in</span> historical_conversations:</span><br><span class="line">    memory.save_context(</span><br><span class="line">        &#123;<span class="string">&quot;input&quot;</span>: conv.split(<span class="string">&quot;\n&quot;</span>)[<span class="number">0</span>].replace(<span class="string">&quot;用户: &quot;</span>, <span class="string">&quot;&quot;</span>)&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;output&quot;</span>: conv.split(<span class="string">&quot;\n&quot;</span>)[<span class="number">1</span>].replace(<span class="string">&quot;助手: &quot;</span>, <span class="string">&quot;&quot;</span>)&#125;</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试检索</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;\n测试语义检索:&quot;</span>)</span><br><span class="line">test_queries = [</span><br><span class="line">    <span class="string">&quot;关于我的个人信息&quot;</span>,</span><br><span class="line">    <span class="string">&quot;我的兴趣爱好&quot;</span>,</span><br><span class="line">    <span class="string">&quot;我的家庭情况&quot;</span>,</span><br><span class="line">    <span class="string">&quot;我的职业发展&quot;</span>,</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> query <span class="keyword">in</span> test_queries:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;\n查询: <span class="subst">&#123;query&#125;</span>&quot;</span>)</span><br><span class="line">    docs = memory.retriever.invoke(query)</span><br><span class="line">    <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="built_in">enumerate</span>(docs, <span class="number">1</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;  相关记忆 <span class="subst">&#123;i&#125;</span>: <span class="subst">&#123;doc.page_content[:<span class="number">80</span>]&#125;</span>...&quot;</span>)</span><br><span class="line"></span><br><span class="line">  相关记忆 <span class="number">1</span>: <span class="built_in">input</span>: 我喜欢打篮球和旅游</span><br><span class="line">output: 运动加旅游是很好的生活方式。...</span><br><span class="line">  相关记忆 <span class="number">2</span>: <span class="built_in">input</span>: 我经常去健身房锻炼</span><br><span class="line">output: 健身对身体和心理健康都很重要。...</span><br><span class="line">  相关记忆 <span class="number">3</span>: <span class="built_in">input</span>: 我的妻子是医生</span><br><span class="line">output: 医生是很崇高的职业。...</span><br><span class="line"></span><br><span class="line">查询: 我的兴趣爱好</span><br><span class="line">  相关记忆 <span class="number">1</span>: <span class="built_in">input</span>: 我养了一只叫Tom的猫</span><br><span class="line">output: Tom一定很可爱！...</span><br><span class="line">  相关记忆 <span class="number">2</span>: <span class="built_in">input</span>: 我的妻子是医生</span><br><span class="line">output: 医生是很崇高的职业。...</span><br><span class="line">  相关记忆 <span class="number">3</span>: <span class="built_in">input</span>: 我喜欢打篮球和旅游</span><br><span class="line">output: 运动加旅游是很好的生活方式。...</span><br><span class="line"></span><br><span class="line">查询: 我的家庭情况</span><br><span class="line">  相关记忆 <span class="number">1</span>: <span class="built_in">input</span>: 我们计划明年要孩子</span><br><span class="line">output: 家庭计划很重要，祝你们幸福。...</span><br><span class="line">  相关记忆 <span class="number">2</span>: <span class="built_in">input</span>: 我的妻子是医生</span><br><span class="line">output: 医生是很崇高的职业。...</span><br><span class="line">  相关记忆 <span class="number">3</span>: <span class="built_in">input</span>: 我喜欢打篮球和旅游</span><br><span class="line">output: 运动加旅游是很好的生活方式。...</span><br><span class="line"></span><br><span class="line">查询: 我的职业发展</span><br><span class="line">  相关记忆 <span class="number">1</span>: <span class="built_in">input</span>: 我养了一只叫Tom的猫</span><br><span class="line">output: Tom一定很可爱！...</span><br><span class="line">  相关记忆 <span class="number">2</span>: <span class="built_in">input</span>: 我的妻子是医生</span><br><span class="line">output: 医生是很崇高的职业。...</span><br><span class="line">  相关记忆 <span class="number">3</span>: <span class="built_in">input</span>: 我喜欢打篮球和旅游</span><br><span class="line">output: 运动加旅游是很好的生活方式。...</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>memory <span class="token keyword">import</span> VectorStoreRetrieverMemory
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>vectorstores <span class="token keyword">import</span> Chroma
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>embeddings <span class="token keyword">import</span> OpenAIEmbeddings
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> ConversationChain
+<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
+<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
+<span class="token keyword">import</span> os
+
+load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 初始化模型和embedding</span>
+llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
+embeddings <span class="token operator">=</span> OpenAIEmbeddings<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment"># 需要OpenAI API key</span>
+<span class="token comment"># 或者使用其他embedding模型，如HuggingFaceEmbeddings</span>
+
+<span class="token comment"># 创建向量存储</span>
+vectorstore <span class="token operator">=</span> Chroma<span class="token punctuation">(</span>
+    embedding_function<span class="token operator">=</span>embeddings<span class="token punctuation">,</span>
+    persist_directory<span class="token operator">=</span><span class="token string">"./vector_db"</span>  <span class="token comment"># 持久化存储</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># 创建向量记忆</span>
+memory <span class="token operator">=</span> VectorStoreRetrieverMemory<span class="token punctuation">(</span>
+    retriever<span class="token operator">=</span>vectorstore<span class="token punctuation">.</span>as_retriever<span class="token punctuation">(</span>
+        search_kwargs<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">"k"</span><span class="token punctuation">:</span> <span class="token number">3</span><span class="token punctuation">&#125;</span>  <span class="token comment"># 返回最相似的3条</span>
+    <span class="token punctuation">)</span><span class="token punctuation">,</span>
+    memory_key<span class="token operator">=</span><span class="token string">"chat_history"</span><span class="token punctuation">,</span>
+    return_docs<span class="token operator">=</span><span class="token boolean">True</span>  <span class="token comment"># 返回文档对象</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"=== 向量存储记忆示例 ==="</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 添加历史对话（可以来自不同会话）</span>
+historical_conversations <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token string">"用户: 我叫张三，来自北京\n助手: 你好张三，北京是个很棒的城市！"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 我今年30岁，是一名软件工程师\n助手: 30岁的软件工程师，经验丰富啊。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 我喜欢打篮球和旅游\n助手: 运动加旅游是很好的生活方式。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 我养了一只叫Tom的猫\n助手: Tom一定很可爱！"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 最近在学习Python编程\n助手: Python是很好的入门语言。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 想转行做数据科学家\n助手: 数据科学家需要统计学和编程技能。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 我经常去健身房锻炼\n助手: 健身对身体和心理健康都很重要。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 去年去了日本旅行\n助手: 日本的文化和风景都很迷人。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 我的妻子是医生\n助手: 医生是很崇高的职业。"</span><span class="token punctuation">,</span>
+    <span class="token string">"用户: 我们计划明年要孩子\n助手: 家庭计划很重要，祝你们幸福。"</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"添加历史对话到向量库..."</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> conv <span class="token keyword">in</span> historical_conversations<span class="token punctuation">:</span>
+    memory<span class="token punctuation">.</span>save_context<span class="token punctuation">(</span>
+        <span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> conv<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">"用户: "</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span><span class="token string">"output"</span><span class="token punctuation">:</span> conv<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">"助手: "</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span>
+    <span class="token punctuation">)</span>
+
+<span class="token comment"># 测试检索</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\n测试语义检索:"</span><span class="token punctuation">)</span>
+test_queries <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token string">"关于我的个人信息"</span><span class="token punctuation">,</span>
+    <span class="token string">"我的兴趣爱好"</span><span class="token punctuation">,</span>
+    <span class="token string">"我的家庭情况"</span><span class="token punctuation">,</span>
+    <span class="token string">"我的职业发展"</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+<span class="token keyword">for</span> query <span class="token keyword">in</span> test_queries<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\n查询: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>query<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+    docs <span class="token operator">=</span> memory<span class="token punctuation">.</span>retriever<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span>query<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i<span class="token punctuation">,</span> doc <span class="token keyword">in</span> <span class="token builtin">enumerate</span><span class="token punctuation">(</span>docs<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  相关记忆 </span><span class="token interpolation"><span class="token punctuation">&#123;</span>i<span class="token punctuation">&#125;</span></span><span class="token string">: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>doc<span class="token punctuation">.</span>page_content<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token format-spec">80]</span><span class="token punctuation">&#125;</span></span><span class="token string">..."</span></span><span class="token punctuation">)</span>
+
+  相关记忆 <span class="token number">1</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我喜欢打篮球和旅游
+output<span class="token punctuation">:</span> 运动加旅游是很好的生活方式。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">2</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我经常去健身房锻炼
+output<span class="token punctuation">:</span> 健身对身体和心理健康都很重要。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">3</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我的妻子是医生
+output<span class="token punctuation">:</span> 医生是很崇高的职业。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+查询<span class="token punctuation">:</span> 我的兴趣爱好
+  相关记忆 <span class="token number">1</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我养了一只叫Tom的猫
+output<span class="token punctuation">:</span> Tom一定很可爱！<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">2</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我的妻子是医生
+output<span class="token punctuation">:</span> 医生是很崇高的职业。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">3</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我喜欢打篮球和旅游
+output<span class="token punctuation">:</span> 运动加旅游是很好的生活方式。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+查询<span class="token punctuation">:</span> 我的家庭情况
+  相关记忆 <span class="token number">1</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我们计划明年要孩子
+output<span class="token punctuation">:</span> 家庭计划很重要，祝你们幸福。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">2</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我的妻子是医生
+output<span class="token punctuation">:</span> 医生是很崇高的职业。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">3</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我喜欢打篮球和旅游
+output<span class="token punctuation">:</span> 运动加旅游是很好的生活方式。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+查询<span class="token punctuation">:</span> 我的职业发展
+  相关记忆 <span class="token number">1</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我养了一只叫Tom的猫
+output<span class="token punctuation">:</span> Tom一定很可爱！<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">2</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我的妻子是医生
+output<span class="token punctuation">:</span> 医生是很崇高的职业。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  相关记忆 <span class="token number">3</span><span class="token punctuation">:</span> <span class="token builtin">input</span><span class="token punctuation">:</span> 我喜欢打篮球和旅游
+output<span class="token punctuation">:</span> 运动加旅游是很好的生活方式。<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6572,36 +6754,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7066,13 +7218,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8113,13 +8265,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8572,14 +8724,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8587,14 +8739,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

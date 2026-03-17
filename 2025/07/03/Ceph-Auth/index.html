@@ -507,10 +507,43 @@
 <p>使用ceph rados rbd等命令行工具，管理员可以使用<code>--id或--keyring</code> 来指定用户账户和keyring文件，如果不指定，就默认使用client.keyring</p>
 <p>如果在缺省的位置存放keyring文件，就可以不使用<code>--keyring</code> 参数，cephadm shell自动从&#x2F;etc&#x2F;ceph目录挂载keyring</p>
 <p><strong>能力capabilities</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">定义用户的操作权限</span><br><span class="line"><span class="comment"># 语法</span></span><br><span class="line">&#123;daemon-type&#125; <span class="string">&#x27;&#123;capability&#125; [&#123;capability&#125; ...]&#x27;</span></span><br><span class="line"><span class="comment"># 示例</span></span><br><span class="line">mon <span class="string">&#x27;allow r, allow command &quot;osd blacklist&quot;&#x27;</span></span><br><span class="line">osd <span class="string">&#x27;allow rw pool=rbd-pool&#x27;</span></span><br><span class="line">mds <span class="string">&#x27;allow rw path=/cephfs/dir&#x27;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">定义用户的操作权限
+<span class="token comment"># 语法</span>
+<span class="token punctuation">&#123;</span>daemon-type<span class="token punctuation">&#125;</span> <span class="token string">'&#123;capability&#125; [&#123;capability&#125; ...]'</span>
+<span class="token comment"># 示例</span>
+mon <span class="token string">'allow r, allow command "osd blacklist"'</span>
+osd <span class="token string">'allow rw pool=rbd-pool'</span>
+mds <span class="token string">'allow rw path=/cephfs/dir'</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>用户管理</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建用户</span></span><br><span class="line">ceph auth add client.wangsheng mon <span class="string">&#x27;allow r&#x27;</span> osd <span class="string">&#x27;allow rw pool=mypool&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看用户权限</span></span><br><span class="line">ceph auth get client.wangsheng</span><br><span class="line">[client.wangsheng]</span><br><span class="line">        key = AQCwXWZoosBKExAAwQ0S9u0WgbR7KOYEJQ+0dg==</span><br><span class="line">        caps mon = <span class="string">&quot;allow r&quot;</span></span><br><span class="line">        caps osd = <span class="string">&quot;allow rw pool=mypool&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有用户</span></span><br><span class="line">ceph auth <span class="built_in">ls</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建密钥环</span></span><br><span class="line">ceph-authtool --create-keyring /etc/ceph/ceph.client.wangsheng.keyring</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加用户到密钥环</span></span><br><span class="line">ceph auth get client.wangsheng -o /etc/ceph/ceph.client.wangsheng.keyring</span><br><span class="line"></span><br><span class="line"><span class="comment"># 合并多个密钥环</span></span><br><span class="line"><span class="built_in">cat</span> user1.keyring user2.keyring &gt; combined.keyring</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改用户权限</span></span><br><span class="line">ceph auth caps client.john mon <span class="string">&#x27;allow rw&#x27;</span> osd <span class="string">&#x27;allow rwx pool=data-pool&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除用户</span></span><br><span class="line">ceph auth del client.wangsheng</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建用户</span>
+ceph auth <span class="token function">add</span> client.wangsheng mon <span class="token string">'allow r'</span> osd <span class="token string">'allow rw pool=mypool'</span>
+
+<span class="token comment"># 查看用户权限</span>
+ceph auth get client.wangsheng
+<span class="token punctuation">[</span>client.wangsheng<span class="token punctuation">]</span>
+        key <span class="token operator">=</span> AQCwXWZoosBKExAAwQ0S9u0WgbR7KOYEJQ+0dg<span class="token operator">==</span>
+        caps mon <span class="token operator">=</span> <span class="token string">"allow r"</span>
+        caps osd <span class="token operator">=</span> <span class="token string">"allow rw pool=mypool"</span>
+
+<span class="token comment"># 列出所有用户</span>
+ceph auth <span class="token function">ls</span>
+
+<span class="token comment"># 创建密钥环</span>
+ceph-authtool --create-keyring /etc/ceph/ceph.client.wangsheng.keyring
+
+<span class="token comment"># 添加用户到密钥环</span>
+ceph auth get client.wangsheng <span class="token parameter variable">-o</span> /etc/ceph/ceph.client.wangsheng.keyring
+
+<span class="token comment"># 合并多个密钥环</span>
+<span class="token function">cat</span> user1.keyring user2.keyring <span class="token operator">></span> combined.keyring
+
+<span class="token comment"># 修改用户权限</span>
+ceph auth caps client.john mon <span class="token string">'allow rw'</span> osd <span class="token string">'allow rwx pool=data-pool'</span>
+
+<span class="token comment"># 删除用户</span>
+ceph auth del client.wangsheng
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </article>
     <!-- license -->
     
@@ -6569,36 +6602,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7063,13 +7066,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8110,13 +8113,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8569,14 +8572,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8584,14 +8587,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

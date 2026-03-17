@@ -540,7 +540,31 @@
 <td>提供命令行接口，用于撰写邮件内容并调用 MTA（如 Postfix）发送。</td>
 </tr>
 </tbody></table>
-<h2 id="配置postfix"><a href="#配置postfix" class="headerlink" title="配置postfix"></a>配置postfix</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 因为系统版本比较新我这里使用s-nail</span></span><br><span class="line">yum -y install postfix s-nail</span><br><span class="line"></span><br><span class="line"><span class="comment"># 限制 Postfix 仅监听本地回环接口（不接收外部邮件）</span></span><br><span class="line">postconf -e <span class="string">&quot;inet_interfaces = loopback-only&quot;</span></span><br><span class="line">postconf -e <span class="string">&quot;mynetworks = 127.0.0.0/8 [::1]/128&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 拒绝本地邮件</span></span><br><span class="line">postconf -e <span class="string">&quot;mydestination =&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置邮件域名标识（发件人域名）</span></span><br><span class="line">postconf -e <span class="string">&quot;myorigin = <span class="subst">$(hostname)</span>&quot;</span></span><br><span class="line">postconf -e <span class="string">&quot;myhostname = <span class="subst">$(hostname)</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 禁用 SMTP 身份验证（本地发信时无需认证）</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_auth_enable = no&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置中央邮件服务器</span></span><br><span class="line">postconf -e <span class="string">&quot;relayhost = [mail.wangsheng.com]&quot;</span></span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> postfix --now</span><br><span class="line">systemctl restart postfix</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;Test mail&quot;</span> | s-nail -s <span class="string">&quot;Test Subject&quot;</span> wangsheng@wangsheng.com</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="配置postfix"><a href="#配置postfix" class="headerlink" title="配置postfix"></a>配置postfix</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 因为系统版本比较新我这里使用s-nail</span>
+yum <span class="token parameter variable">-y</span> <span class="token function">install</span> postfix s-nail
+
+<span class="token comment"># 限制 Postfix 仅监听本地回环接口（不接收外部邮件）</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"inet_interfaces = loopback-only"</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"mynetworks = 127.0.0.0/8 [::1]/128"</span>
+
+<span class="token comment"># 拒绝本地邮件</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"mydestination ="</span>
+
+<span class="token comment"># 设置邮件域名标识（发件人域名）</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"myorigin = <span class="token variable"><span class="token variable">$(</span><span class="token function">hostname</span><span class="token variable">)</span></span>"</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"myhostname = <span class="token variable"><span class="token variable">$(</span><span class="token function">hostname</span><span class="token variable">)</span></span>"</span>
+
+<span class="token comment"># 禁用 SMTP 身份验证（本地发信时无需认证）</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_auth_enable = no"</span>
+
+<span class="token comment"># 设置中央邮件服务器</span>
+postconf <span class="token parameter variable">-e</span> <span class="token string">"relayhost = [mail.wangsheng.com]"</span>
+
+systemctl <span class="token builtin class-name">enable</span> postfix <span class="token parameter variable">--now</span>
+systemctl restart postfix
+
+<span class="token builtin class-name">echo</span> <span class="token string">"Test mail"</span> <span class="token operator">|</span> s-nail <span class="token parameter variable">-s</span> <span class="token string">"Test Subject"</span> wangsheng@wangsheng.com
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250408180615782.png"></p>
 
@@ -6602,36 +6626,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7096,13 +7090,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8143,13 +8137,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8602,14 +8596,14 @@
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8617,14 +8611,14 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

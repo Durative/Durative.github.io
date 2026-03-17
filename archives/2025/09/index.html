@@ -435,7 +435,14 @@
                 这是有网络的情况下，如果离线环境下则需要准备对应版本的deb包手动安装
 ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4
 环境初始化与集群部署
-123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596# ...
+# 环境初始化
+sudo swapoff -a
+注释/etc/fstab中的swap分区
+
+sudo modprobe br_netfilter
+sudo tee > /etc/sysctl.d/k8s.conf &lt;&lt;-'EOF'
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-ca...
             </div>
             <!-- read more -->
             
@@ -475,10 +482,20 @@ ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4
                 拓扑
 
 环境说明
-1234567Centos7.9 root密码皆为110.163.2.100 master10.163.2.138 zabbix-server 10.163.2.139 zabbix-agent10.163.2.140 zabbix-agent2salt 3006LTSzabbix 5
+Centos7.9 root密码皆为1
+10.163.2.100 master
+10.163.2.138 zabbix-server 
+10.163.2.139 zabbix-agent
+10.163.2.140 zabbix-agent2
+salt 3006LTS
+zabbix 5
 
 参考步骤：Zabbix5.0安装与部署 · Akemi
-环境准备1234567891011121314echo &quot;10.163.2.138 zabbix-server 10.163.2.139 zabbix-agent10.163.2.140 zabbix-agent210....
+环境准备echo "10.163.2.138 zabbix-server 
+10.163.2.139 zabbix-agent
+10.163.2.140 zabbix-agent2
+10.163.2.141 zabbix-db
+10...
             </div>
             <!-- read more -->
             
@@ -559,7 +576,14 @@ ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4
             <div class="abstract-content">
                 grains和ansible的facts变量差不多，但facts是ansible管理节点动态收集的信息
 而grains是记录在minion本地的静态信息，会被minion定期收集，master可以随时收集grains信息，以key-value的形式存放
-grains模块的用法123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384...
+grains模块的用法salt 'minion1' sys.list_functions grains
+minion1:
+    - grains.append
+    - grains.delkey
+    - grains.delval
+    - grains.equals
+    - grains.fetch
+    - grai...
             </div>
             <!-- read more -->
             
@@ -598,7 +622,17 @@ grains模块的用法12345678910111213141516171819202122232425262728293031323334
 远程执行可以节省时间，但是有一些缺点，各个命令之间有一些细微的区别，这些区别会导致，如果将远程执行的命令写成脚本，那就会存在很多问题
 状态管理介绍为了解决上面这个问题，salt可以创建一个可以重用的配置模板，将其称为state
 状态文件的存放位置，取决于配置文件
-1234567891011121314/etc/salt/master...file_roots:  base:    - /srv/salt/base  dev:    - /srv/salt/dev  prod:    - /srv/salt/pr...
+/etc/salt/master
+...
+file_roots:
+  base:
+    - /srv/salt/base
+  dev:
+    - /srv/salt/dev
+  prod:
+    - /srv/salt/prod
+...
+mkdi...
             </div>
             <!-- read more -->
             
@@ -693,7 +727,11 @@ IP地址池管理
 
 直接部署
 Installation | OpenELB
-12345678910111213141516171819202122232425262728293031323334搞个最新版的wget https://raw.githubusercontent.com/openelb/openelb/master/d...
+搞个最新版的
+wget https://raw.githubusercontent.com/openelb/openelb/master/deploy/openelb.yaml
+kubectl apply -f openelb.yaml
+
+kubectl ...
             </div>
             <!-- read more -->
             
@@ -816,7 +854,11 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
 上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住
 这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式
 
-12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485...
+10.163.2.100 ansible (Rocky 8.10)
+10.163.2.130 10.163.3.119 ceph1 (Rocky 8.10)
+10.163.2.110 10.163.3.118 ceph2
+10.163.2.136 10.163.3.117 ceph3
+ceph v17.2.7 quinc...
             </div>
             <!-- read more -->
             
@@ -6825,36 +6867,6 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7319,13 +7331,13 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8366,13 +8378,13 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8825,14 +8837,14 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8840,14 +8852,14 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">

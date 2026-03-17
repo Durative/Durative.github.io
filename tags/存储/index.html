@@ -515,7 +515,11 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
 上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住
 这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式
 
-12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485...
+10.163.2.100 ansible (Rocky 8.10)
+10.163.2.130 10.163.3.119 ceph1 (Rocky 8.10)
+10.163.2.110 10.163.3.118 ceph2
+10.163.2.136 10.163.3.117 ceph3
+ceph v17.2.7 quinc...
             </div>
             <!-- read more -->
             
@@ -592,11 +596,12 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
             <div class="abstract-content">
                 正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有archived开头的目录
 这是一个超大nfs挂载，使用的是阿里云的NAS，其中有500T数据被占用，有多大呢，连输入ls都会卡住
-12df -Th | grep mntxxx[.cn-hangzhou.nas.aliyuncs.com:/ nfs        10P  502T  9.6P    5% /mnt2
+df -Th | grep mnt
+xxx[.cn-hangzhou.nas.aliyuncs.com:/ nfs        10P  502T  9.6P    5% /mnt2
 
 解决思路find与xargs
 首先肯定是find，因为我们要的是archived开头的目录，它可以很快帮我们找出哪些目录需要删除
-123456789101112131415...
+find /mnt2 -maxdepth 1...
             </div>
             <!-- read more -->
             
@@ -634,7 +639,19 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
             </a>
             <div class="abstract-content">
                 
-环境准备123456789101112131415161718192021222324252627282930313233343536373839404142434445管理网络10.163.2.0/24 DHCP存储网络172.16.0.0/24系统版本CentOS 8.5.2111交换机用L2做，这样简单点正常生产会使用两台L3，两条链路，两块网卡做bond# 更新yum源rm -rf /etc/yum.repos.d/*curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-...
+环境准备
+管理网络10.163.2.0/24 DHCP
+存储网络172.16.0.0/24
+系统版本CentOS 8.5.2111
+交换机用L2做，这样简单点
+正常生产会使用两台L3，两条链路，两块网卡做bond
+
+# 更新yum源
+rm -rf /etc/yum.repos.d/*
+curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo
+
+# 添加HA的软件源
+cat > /etc/yum.repos.d/HighAvailability....
             </div>
             <!-- read more -->
             
@@ -674,7 +691,11 @@ ceph版本选择v3.9，因为我的k8s集群是v1.27参考文档https://github.c
 拓扑
 
 环境说明
-1234567eve-ng10.163.2.125 10.163.3.113 iscsi-target CentOS7.910.163.2.100 10.163.3.114 pcs1         CentOS8.010.163.2.102 10.1...
+eve-ng
+
+10.163.2.125 10.163.3.113 iscsi-target CentOS7.9
+10.163.2.100 10.163.3.114 pcs1         CentOS8.0
+10.163.2.102 10.163....
             </div>
             <!-- read more -->
             
@@ -753,7 +774,12 @@ dm-multipath会根据&#x2F;etc&#x2F;multipath.conf中的设置，自动检测路
             </a>
             <div class="abstract-content">
                 云环境与本地主机的区别本地环境大多是使用LVM做的，也就是像这样
-12345678910[root@1panel ~]# lsblkNAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTSsda                      8:0    0   500G  0 disk├─sda1                   8:1    0     1G  0 part /boot├─sda2                   8:2    0    49G  0 part│ ├─almalinux_192-roo...
+[root@1panel ~]# lsblk
+NAME                   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda                      8:0    0   500G  0 disk
+├─sda1                   8:1    0     1G  0 part /boot
+├─sda2                   8:2    0    49G  0 part
+│ ├─almalinux_192-root 253:...
             </div>
             <!-- read more -->
             
@@ -6814,36 +6840,6 @@ Pacemaker架构硬件架构1.集群节点
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7308,13 +7304,13 @@ Pacemaker架构硬件架构1.集群节点
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -8355,13 +8351,13 @@ Pacemaker架构硬件架构1.集群节点
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -8814,14 +8810,14 @@ Pacemaker架构硬件架构1.集群节点
                 k8s
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
-                <span class="iconfont-archer">&#xe606;</span>
-                前端
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Linux服务">
                 <span class="iconfont-archer">&#xe606;</span>
                 Linux服务
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="前端">
+                <span class="iconfont-archer">&#xe606;</span>
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
@@ -8829,14 +8825,14 @@ Pacemaker架构硬件架构1.集群节点
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="网络">
-                <span class="iconfont-archer">&#xe606;</span>
-                网络
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
                 虚拟化
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="网络">
+                <span class="iconfont-archer">&#xe606;</span>
+                网络
             </span>
         
             <span class="sidebar-tag-name" data-tags="Python">
