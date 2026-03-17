@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="arptables介绍arptables是linux中用于管理arp包过滤规则的工具，也基于netfilter框架 arp协议本身非常简单，缺乏安全验证机制，因此容易遭受攻击 # arptables应用场景 1.防御arp欺骗 攻击者伪造arp应答包，导致受害者的arp缓存被污染，将本应发送给合法主机的流量发送给了攻击者 arptables可以桂枝规则，只允许来自可信MAC地址的arp应答包  2">
+    <meta name="description" content="arptables介绍arptables是linux中用于管理arp包过滤规则的工具，也基于netfilter框架 arp协议本身非常简单，缺乏安全验证机制，因此容易遭受攻击 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647# arptables应用场景1.防御arp欺骗攻击者">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux软件防火墙-arptables、ebtables、nftables介绍与使用">
 <meta property="og:url" content="https://akemi.zj.cn/2026/02/11/Linux-nftables/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="arptables介绍arptables是linux中用于管理arp包过滤规则的工具，也基于netfilter框架 arp协议本身非常简单，缺乏安全验证机制，因此容易遭受攻击 # arptables应用场景 1.防御arp欺骗 攻击者伪造arp应答包，导致受害者的arp缓存被污染，将本应发送给合法主机的流量发送给了攻击者 arptables可以桂枝规则，只允许来自可信MAC地址的arp应答包  2">
+<meta property="og:description" content="arptables介绍arptables是linux中用于管理arp包过滤规则的工具，也基于netfilter框架 arp协议本身非常简单，缺乏安全验证机制，因此容易遭受攻击 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647# arptables应用场景1.防御arp欺骗攻击者">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-02-11T11:02:23.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.753Z">
@@ -201,12 +201,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -214,7 +216,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -495,197 +496,26 @@
     <article class="article-entry">
         <h1 id="arptables介绍"><a href="#arptables介绍" class="headerlink" title="arptables介绍"></a>arptables介绍</h1><p>arptables是linux中用于管理arp包过滤规则的工具，也基于netfilter框架</p>
 <p>arp协议本身非常简单，缺乏安全验证机制，因此容易遭受攻击</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># arptables应用场景</span>
-<span class="token number">1</span>.防御arp欺骗
-攻击者伪造arp应答包，导致受害者的arp缓存被污染，将本应发送给合法主机的流量发送给了攻击者
-arptables可以桂枝规则，只允许来自可信MAC地址的arp应答包
-
-<span class="token number">2</span>.防御arp泛洪
-攻击者发送大量伪造的arp请求包，耗尽交换机的mac地址表或资源
-arptables可以限制单位时间内接收到的arp包的数量
-
-<span class="token number">3</span>.网络访问控制
-可以根据源目MAC来允许或拒绝主机之间的arp通信，从而实现一个基于mac地址的简单访问控制列表
-
-<span class="token number">4</span>.arp包过滤和记录
-可以LOG异常的arp请求或应答，用于网络监控和故障排查 
-
-<span class="token comment"># </span>
-filter表
-INPUT、OUTPUT链，分别处理发往本机和发出的包
-
-<span class="token comment"># arptables操作</span>
-<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>默认规则
-arptables <span class="token parameter variable">-P</span> INPUT ACCEPT
-arptables <span class="token parameter variable">-P</span> OUTPUT ACCEPT
-
-<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>拒绝特定mac地址的arp回复
-arptables <span class="token parameter variable">-A</span> INPUT --source-mac 00:11:22:33:44:55 <span class="token parameter variable">-j</span> DROP
-
-<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>只允许特定mac的arp回复
-arptables <span class="token parameter variable">-A</span> INPUT --source-mac 00:11:22:33:44:55  --src-ip <span class="token number">192.168</span>.1.100 <span class="token parameter variable">-j</span> ACCEPT
-arptables <span class="token parameter variable">-A</span> INPUT <span class="token parameter variable">-j</span> DROPs
-
-<span class="token comment"># ip地址过滤</span>
-<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>绑定IP和ARP地址
-arptables <span class="token parameter variable">-A</span> INPUT --src-ip <span class="token number">192.168</span>.1.1 --source-mac <span class="token operator">!</span> 00:11:22:33:44:55 <span class="token parameter variable">-j</span> DROP
-
-<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>限制特定IP段的arp请求
-arptables <span class="token parameter variable">-A</span> INPUT --src-ip <span class="token number">192.168</span>.1.0/24 <span class="token parameter variable">-j</span> ACCEPT
-arptables <span class="token parameter variable">-A</span> INPUT --src-ip <span class="token number">192.168</span>.2.0/24 <span class="token parameter variable">-j</span> DROP
-
-<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>只允许eth0接口的arp请求
-arptables <span class="token parameter variable">-A</span> INPUT <span class="token parameter variable">-i</span> eth0 <span class="token parameter variable">-j</span> ACCEPT
-arptables <span class="token parameter variable">-A</span> INPUT <span class="token parameter variable">-j</span> DROP
-
-<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>限制从wlan0发出的arp包
-arptables <span class="token parameter variable">-A</span> OUTPUT <span class="token parameter variable">-o</span> wlan0 --dst-ip <span class="token number">192.168</span>.1.1 <span class="token parameter variable">-j</span> ACCEPT
-arptables <span class="token parameter variable">-A</span> OUTPUT <span class="token parameter variable">-o</span> wlan0 <span class="token parameter variable">-j</span> DROP
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># arptables应用场景</span></span><br><span class="line">1.防御arp欺骗</span><br><span class="line">攻击者伪造arp应答包，导致受害者的arp缓存被污染，将本应发送给合法主机的流量发送给了攻击者</span><br><span class="line">arptables可以桂枝规则，只允许来自可信MAC地址的arp应答包</span><br><span class="line"></span><br><span class="line">2.防御arp泛洪</span><br><span class="line">攻击者发送大量伪造的arp请求包，耗尽交换机的mac地址表或资源</span><br><span class="line">arptables可以限制单位时间内接收到的arp包的数量</span><br><span class="line"></span><br><span class="line">3.网络访问控制</span><br><span class="line">可以根据源目MAC来允许或拒绝主机之间的arp通信，从而实现一个基于mac地址的简单访问控制列表</span><br><span class="line"></span><br><span class="line">4.arp包过滤和记录</span><br><span class="line">可以LOG异常的arp请求或应答，用于网络监控和故障排查 </span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">filter表</span><br><span class="line">INPUT、OUTPUT链，分别处理发往本机和发出的包</span><br><span class="line"></span><br><span class="line"><span class="comment"># arptables操作</span></span><br><span class="line">(1)默认规则</span><br><span class="line">arptables -P INPUT ACCEPT</span><br><span class="line">arptables -P OUTPUT ACCEPT</span><br><span class="line"></span><br><span class="line">(2)拒绝特定mac地址的arp回复</span><br><span class="line">arptables -A INPUT --source-mac 00:11:22:33:44:55 -j DROP</span><br><span class="line"></span><br><span class="line">(3)只允许特定mac的arp回复</span><br><span class="line">arptables -A INPUT --source-mac 00:11:22:33:44:55  --src-ip 192.168.1.100 -j ACCEPT</span><br><span class="line">arptables -A INPUT -j DROPs</span><br><span class="line"></span><br><span class="line"><span class="comment"># ip地址过滤</span></span><br><span class="line">(1)绑定IP和ARP地址</span><br><span class="line">arptables -A INPUT --src-ip 192.168.1.1 --source-mac ! 00:11:22:33:44:55 -j DROP</span><br><span class="line"></span><br><span class="line">(2)限制特定IP段的arp请求</span><br><span class="line">arptables -A INPUT --src-ip 192.168.1.0/24 -j ACCEPT</span><br><span class="line">arptables -A INPUT --src-ip 192.168.2.0/24 -j DROP</span><br><span class="line"></span><br><span class="line">(3)只允许eth0接口的arp请求</span><br><span class="line">arptables -A INPUT -i eth0 -j ACCEPT</span><br><span class="line">arptables -A INPUT -j DROP</span><br><span class="line"></span><br><span class="line">(4)限制从wlan0发出的arp包</span><br><span class="line">arptables -A OUTPUT -o wlan0 --dst-ip 192.168.1.1 -j ACCEPT</span><br><span class="line">arptables -A OUTPUT -o wlan0 -j DROP</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h1 id="ebtables介绍"><a href="#ebtables介绍" class="headerlink" title="ebtables介绍"></a>ebtables介绍</h1><p>etbtables是一个用于在linux内核中设置和维护以太网帧规则的工具，工作在数据链路层，比较少用</p>
 <p>主要用于控制网桥上的流量，比如brctl或ip link创建的网桥</p>
 <p><strong>所有经过桥接设备的流量，无论是转发还是发往本机，都会先经过ebtables，</strong>只有目标是本机上层协议栈的IP包才会继续传递给iptables</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># mac地址过滤</span>
-<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>阻止特定mac地址通信
-ebtables <span class="token parameter variable">-A</span> INPUT <span class="token parameter variable">-s</span> 00:11:22:33:44:55 <span class="token parameter variable">-j</span> DROP
-ebtables <span class="token parameter variable">-A</span> FORWARD <span class="token parameter variable">-s</span> 00:11:22:33:44:55 <span class="token parameter variable">-j</span> DROP
-
-<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>只允许特定mac地址通信
-ebtables <span class="token parameter variable">-A</span> INPUT <span class="token parameter variable">-s</span> 00:11:22:33:44:55 <span class="token parameter variable">-j</span> ACCEPT
-ebtables <span class="token parameter variable">-A</span> INPUT <span class="token parameter variable">-j</span> DROP
-
-<span class="token comment"># IP层过滤</span>
-<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>过滤IP流量
-ebtables <span class="token parameter variable">-A</span> FORWARD <span class="token parameter variable">-p</span> IPv4 --ip-proto tcp --ip-dport <span class="token number">80</span> <span class="token parameter variable">-j</span> DROP
-ebtables <span class="token parameter variable">-A</span> FORWARD <span class="token parameter variable">-p</span> IPv4 --ip-src <span class="token number">192.168</span>.1.0/24 <span class="token parameter variable">-j</span> ACCEPT
-
-<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>阻止特定arp请求
-ebtables <span class="token parameter variable">-A</span> FORWARD <span class="token parameter variable">-p</span> arp --arp-ip-dst <span class="token number">192.168</span>.1.1 <span class="token parameter variable">-j</span> DROP
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># mac地址过滤</span></span><br><span class="line">(1)阻止特定mac地址通信</span><br><span class="line">ebtables -A INPUT -s 00:11:22:33:44:55 -j DROP</span><br><span class="line">ebtables -A FORWARD -s 00:11:22:33:44:55 -j DROP</span><br><span class="line"></span><br><span class="line">(2)只允许特定mac地址通信</span><br><span class="line">ebtables -A INPUT -s 00:11:22:33:44:55 -j ACCEPT</span><br><span class="line">ebtables -A INPUT -j DROP</span><br><span class="line"></span><br><span class="line"><span class="comment"># IP层过滤</span></span><br><span class="line">(1)过滤IP流量</span><br><span class="line">ebtables -A FORWARD -p IPv4 --ip-proto tcp --ip-dport 80 -j DROP</span><br><span class="line">ebtables -A FORWARD -p IPv4 --ip-src 192.168.1.0/24 -j ACCEPT</span><br><span class="line"></span><br><span class="line">(2)阻止特定arp请求</span><br><span class="line">ebtables -A FORWARD -p arp --arp-ip-dst 192.168.1.1 -j DROP</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h1 id="新一代tables-nftables"><a href="#新一代tables-nftables" class="headerlink" title="新一代tables-nftables"></a>新一代tables-nftables</h1><p>nftables对iptables ip6tables arptables等的功能进行了融合</p>
 <p>为了降低迁移成本，提供了iptables-nft等兼容工具，允许用户继续使用iptables语法，规则会自动转换为nftables格式</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ls</span> <span class="token parameter variable">-l</span> /sbin/iptables
-lrwxrwxrwx. <span class="token number">1</span> root root <span class="token number">26</span> Mar  <span class="token number">2</span>  <span class="token number">2024</span> /sbin/iptables -<span class="token operator">></span> /etc/alternatives/iptables
-<span class="token function">ls</span> <span class="token parameter variable">-l</span> /etc/alternatives/iptables
-lrwxrwxrwx. <span class="token number">1</span> root root <span class="token number">22</span> Mar  <span class="token number">2</span>  <span class="token number">2024</span> /etc/alternatives/iptables -<span class="token operator">></span> /usr/sbin/iptables-nft
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> -l /sbin/iptables</span><br><span class="line">lrwxrwxrwx. 1 root root 26 Mar  2  2024 /sbin/iptables -&gt; /etc/alternatives/iptables</span><br><span class="line"><span class="built_in">ls</span> -l /etc/alternatives/iptables</span><br><span class="line">lrwxrwxrwx. 1 root root 22 Mar  2  2024 /etc/alternatives/iptables -&gt; /usr/sbin/iptables-nft</span><br><span class="line"></span><br><span class="line">可以看到现在使用的iptables其实就是使用iptables-nft</span><br></pre></td></tr></table></figure>
 
-可以看到现在使用的iptables其实就是使用iptables-nft<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="nftables的组件"><a href="#nftables的组件" class="headerlink" title="nftables的组件"></a>nftables的组件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">表、链、规则、地址簇、优先级</span><br><span class="line"></span><br><span class="line">1.表</span><br><span class="line">和iptables不同，nftables没有默认的表，需要手动创建</span><br><span class="line"></span><br><span class="line">2.链</span><br><span class="line">3.规则</span><br><span class="line"></span><br><span class="line">4.地址簇</span><br><span class="line">nftables的每个表只有一个地址簇，并且只适用于该簇的数据包：</span><br><span class="line">- ip</span><br><span class="line">- ip6</span><br><span class="line">- inet <span class="comment"># 同时处理ipv4和ipv6</span></span><br><span class="line">- arp</span><br><span class="line">- bridge</span><br><span class="line"></span><br><span class="line">5.优先级</span><br><span class="line">nftbales的优先级priority的作用是定义链的执行顺序，数据包经过内核时，会按优先级从低到高触发不同的链</span><br><span class="line">优先级一般范围-200~200</span><br><span class="line">prerouting -100</span><br><span class="line">input forward output 0</span><br><span class="line">postrouting 100</span><br></pre></td></tr></table></figure>
 
-<h2 id="nftables的组件"><a href="#nftables的组件" class="headerlink" title="nftables的组件"></a>nftables的组件</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">表、链、规则、地址簇、优先级
+<h2 id="nftables基本语法与命令"><a href="#nftables基本语法与命令" class="headerlink" title="nftables基本语法与命令"></a>nftables基本语法与命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">nft [选项] 命令 [对象] [规则]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有当前规则</span></span><br><span class="line">nft list ruleset</span><br><span class="line"><span class="comment"># 清空所有规则</span></span><br><span class="line">nft flush rulest</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建表</span></span><br><span class="line">nft add table &lt;地址簇&gt; &lt;表名&gt;</span><br><span class="line"><span class="comment"># 创建链</span></span><br><span class="line">nft add chain &lt;地址簇&gt; &lt;表名&gt; &lt;链名&gt; &#123; <span class="built_in">type</span> &lt;类型&gt; hook &#123;钩子&#125; priority &lt;优先级&gt; ;policy &lt;默认策略&gt;;&#125;</span><br><span class="line"><span class="comment"># 在链末尾添加规则</span></span><br><span class="line">nft add chain &lt;地址簇&gt; &lt;表名&gt; &lt;链名&gt; &lt;表达式&gt; &lt;动作&gt;</span><br><span class="line"><span class="comment"># 在链开头添加规则</span></span><br><span class="line">nft insert rule &lt;地址簇&gt; &lt;表名&gt; &lt;链名&gt; &lt;表达式&gt; &lt;动作&gt;</span><br><span class="line"><span class="comment"># 删除规则</span></span><br><span class="line">nft delete rule &lt;地址簇&gt; &lt;表名&gt; &lt;链名&gt; &lt;句柄&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># iptables与nftables对比添加规则</span></span><br><span class="line">iptables -t nat -A PREROUTING -p tcp --dport 1000 -j DNAT --to-destination 1.1.1.1:1234</span><br><span class="line"></span><br><span class="line">nft add tables ip nat</span><br><span class="line">nft add chain  ip nat prerouting <span class="string">&#x27;&#123;type nat hook prerouting priority -100;policy accpet;&#125;&#x27;</span></span><br><span class="line">nft add rule ip nat prerouting tcp dport 1000 dnat to 1.1.1.1:1234</span><br></pre></td></tr></table></figure>
 
-<span class="token number">1</span>.表
-和iptables不同，nftables没有默认的表，需要手动创建
+<h2 id="nftables配置规则示例-filter表"><a href="#nftables配置规则示例-filter表" class="headerlink" title="nftables配置规则示例-filter表"></a>nftables配置规则示例-filter表</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建表</span></span><br><span class="line">nft add tables inet my_table</span><br><span class="line">nft list ruleset</span><br><span class="line"></span><br><span class="line"><span class="comment"># 链的类型</span></span><br><span class="line">nft没有内置链，分为两种，一种是基本链，附加到网络栈钩子的链，钩子点包括input output forward prerouting postrouting</span><br><span class="line">另一种是常规链，是用户自定义的链，用以复用规则，将多个链中重复的规则集中管理，通过跳转机制被其他链调用</span><br><span class="line"></span><br><span class="line">nft add chain inet my_table my_utility_chain</span><br><span class="line">nft add chain inet my_table my_filter_chain &#123;<span class="built_in">type</span> fiilter hook input priority 0;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># nftables配置实例，filter表</span></span><br><span class="line">1.创建ipv4 filter表</span><br><span class="line">nft add table ip filter</span><br><span class="line">nft list tables </span><br><span class="line"></span><br><span class="line">2.创建基本链</span><br><span class="line">nft add chain ip filter input <span class="string">&#x27;&#123; type filter hook input priority 0;policy accept;&#125;&#x27;</span></span><br><span class="line">nft add chain ip filter forward <span class="string">&#x27;&#123; type filter hook forward priority 0; policy accept;&#125;&#x27;</span></span><br><span class="line">nft add chain ip filter output <span class="string">&#x27;&#123; type filter hook output priority 0;policy accept;&#125;&#x27;</span></span><br><span class="line"><span class="comment"># 白名单</span></span><br><span class="line">nft add chain ip filter input <span class="string">&#x27;&#123; type filter hook input priority 0;policy drop;&#125;&#x27;</span></span><br><span class="line">nft add chain ip filter forward <span class="string">&#x27;&#123; type filter hook forward priority 0; policy drop;&#125;&#x27;</span></span><br><span class="line">nft add chain ip filter output <span class="string">&#x27;&#123; type filter hook output priority 0;policy drop;&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">3.基础过滤规则</span><br><span class="line">(1)环回接口</span><br><span class="line">nft add rule ip filter input iif <span class="string">&#x27;lo&#x27;</span> accept</span><br><span class="line">nft add rule ip filter output oif <span class="string">&#x27;lo&#x27;</span> accept</span><br><span class="line"></span><br><span class="line">(2)允许已建立的连接和相关流量</span><br><span class="line">nft add rule ip filter input ct state established,related accept</span><br><span class="line"></span><br><span class="line">(3)允许ssh</span><br><span class="line">nft add rule ip filter input tcp dport 22 accept</span><br><span class="line"></span><br><span class="line">(4)允许http https</span><br><span class="line">nft add rule ip filter input tcp dport &#123;80,443&#125; accept </span><br><span class="line"></span><br><span class="line">(5)允许ICMP</span><br><span class="line">nft add rule ip filter input ip protocol icmp <span class="built_in">type</span> echo-request accept</span><br></pre></td></tr></table></figure>
 
-<span class="token number">2</span>.链
-<span class="token number">3</span>.规则
+<h2 id="nftables配置规则示例-nat表"><a href="#nftables配置规则示例-nat表" class="headerlink" title="nftables配置规则示例-nat表"></a>nftables配置规则示例-nat表</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">1.配置nat表和链(</span><br><span class="line">nft add table ip nat</span><br><span class="line">nft add chain ip nat prerouting <span class="string">&#x27;&#123; type nat hook prerouting priority -100;policy accept;&#125;&#x27;</span></span><br><span class="line">nft add chain ip nat postrouting <span class="string">&#x27;&#123; type nat hook postrouting priority -100;policy accept;&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">2.端口转发</span><br><span class="line">nft add rule ip nat prerouting tcp dport 8080 dnat to 192.168.1.10:80</span><br><span class="line"></span><br><span class="line">3.源地址转换</span><br><span class="line">nft add rule ip nat postrouting ip saddr 192.168.1.0/24 snat to 203.0.113.1</span><br></pre></td></tr></table></figure>
 
-<span class="token number">4</span>.地址簇
-nftables的每个表只有一个地址簇，并且只适用于该簇的数据包：
-- <span class="token function">ip</span>
-- ip6
-- inet <span class="token comment"># 同时处理ipv4和ipv6</span>
-- arp
-- bridge
-
-<span class="token number">5</span>.优先级
-nftbales的优先级priority的作用是定义链的执行顺序，数据包经过内核时，会按优先级从低到高触发不同的链
-优先级一般范围-200~200
-prerouting <span class="token parameter variable">-100</span>
-input forward output <span class="token number">0</span>
-postrouting <span class="token number">100</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="nftables基本语法与命令"><a href="#nftables基本语法与命令" class="headerlink" title="nftables基本语法与命令"></a>nftables基本语法与命令</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nft <span class="token punctuation">[</span>选项<span class="token punctuation">]</span> 命令 <span class="token punctuation">[</span>对象<span class="token punctuation">]</span> <span class="token punctuation">[</span>规则<span class="token punctuation">]</span>
-
-<span class="token comment"># 列出所有当前规则</span>
-nft list ruleset
-<span class="token comment"># 清空所有规则</span>
-nft flush rulest
-
-<span class="token comment"># 创建表</span>
-nft <span class="token function">add</span> table <span class="token operator">&lt;</span>地址簇<span class="token operator">></span> <span class="token operator">&lt;</span>表名<span class="token operator">></span>
-<span class="token comment"># 创建链</span>
-nft <span class="token function">add</span> chain <span class="token operator">&lt;</span>地址簇<span class="token operator">></span> <span class="token operator">&lt;</span>表名<span class="token operator">></span> <span class="token operator">&lt;</span>链名<span class="token operator">></span> <span class="token punctuation">&#123;</span> <span class="token builtin class-name">type</span> <span class="token operator">&lt;</span>类型<span class="token operator">></span> hook <span class="token punctuation">&#123;</span>钩子<span class="token punctuation">&#125;</span> priority <span class="token operator">&lt;</span>优先级<span class="token operator">></span> <span class="token punctuation">;</span>policy <span class="token operator">&lt;</span>默认策略<span class="token operator">></span><span class="token punctuation">;</span><span class="token punctuation">&#125;</span>
-<span class="token comment"># 在链末尾添加规则</span>
-nft <span class="token function">add</span> chain <span class="token operator">&lt;</span>地址簇<span class="token operator">></span> <span class="token operator">&lt;</span>表名<span class="token operator">></span> <span class="token operator">&lt;</span>链名<span class="token operator">></span> <span class="token operator">&lt;</span>表达式<span class="token operator">></span> <span class="token operator">&lt;</span>动作<span class="token operator">></span>
-<span class="token comment"># 在链开头添加规则</span>
-nft insert rule <span class="token operator">&lt;</span>地址簇<span class="token operator">></span> <span class="token operator">&lt;</span>表名<span class="token operator">></span> <span class="token operator">&lt;</span>链名<span class="token operator">></span> <span class="token operator">&lt;</span>表达式<span class="token operator">></span> <span class="token operator">&lt;</span>动作<span class="token operator">></span>
-<span class="token comment"># 删除规则</span>
-nft delete rule <span class="token operator">&lt;</span>地址簇<span class="token operator">></span> <span class="token operator">&lt;</span>表名<span class="token operator">></span> <span class="token operator">&lt;</span>链名<span class="token operator">></span> <span class="token operator">&lt;</span>句柄<span class="token operator">></span>
-
-<span class="token comment"># iptables与nftables对比添加规则</span>
-iptables <span class="token parameter variable">-t</span> nat <span class="token parameter variable">-A</span> PREROUTING <span class="token parameter variable">-p</span> tcp <span class="token parameter variable">--dport</span> <span class="token number">1000</span> <span class="token parameter variable">-j</span> DNAT --to-destination <span class="token number">1.1</span>.1.1:1234
-
-nft <span class="token function">add</span> tables <span class="token function">ip</span> nat
-nft <span class="token function">add</span> chain  <span class="token function">ip</span> nat prerouting <span class="token string">'&#123;type nat hook prerouting priority -100;policy accpet;&#125;'</span>
-nft <span class="token function">add</span> rule <span class="token function">ip</span> nat prerouting tcp dport <span class="token number">1000</span> dnat to <span class="token number">1.1</span>.1.1:1234<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="nftables配置规则示例-filter表"><a href="#nftables配置规则示例-filter表" class="headerlink" title="nftables配置规则示例-filter表"></a>nftables配置规则示例-filter表</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建表</span>
-nft <span class="token function">add</span> tables inet my_table
-nft list ruleset
-
-<span class="token comment"># 链的类型</span>
-nft没有内置链，分为两种，一种是基本链，附加到网络栈钩子的链，钩子点包括input output forward prerouting postrouting
-另一种是常规链，是用户自定义的链，用以复用规则，将多个链中重复的规则集中管理，通过跳转机制被其他链调用
-
-nft <span class="token function">add</span> chain inet my_table my_utility_chain
-nft <span class="token function">add</span> chain inet my_table my_filter_chain <span class="token punctuation">&#123;</span>type fiilter hook input priority <span class="token number">0</span><span class="token punctuation">;</span><span class="token punctuation">&#125;</span>
-
-<span class="token comment"># nftables配置实例，filter表</span>
-<span class="token number">1</span>.创建ipv4 filter表
-nft <span class="token function">add</span> table <span class="token function">ip</span> filter
-nft list tables 
-
-<span class="token number">2</span>.创建基本链
-nft <span class="token function">add</span> chain <span class="token function">ip</span> filter input <span class="token string">'&#123; type filter hook input priority 0;policy accept;&#125;'</span>
-nft <span class="token function">add</span> chain <span class="token function">ip</span> filter forward <span class="token string">'&#123; type filter hook forward priority 0; policy accept;&#125;'</span>
-nft <span class="token function">add</span> chain <span class="token function">ip</span> filter output <span class="token string">'&#123; type filter hook output priority 0;policy accept;&#125;'</span>
-<span class="token comment"># 白名单</span>
-nft <span class="token function">add</span> chain <span class="token function">ip</span> filter input <span class="token string">'&#123; type filter hook input priority 0;policy drop;&#125;'</span>
-nft <span class="token function">add</span> chain <span class="token function">ip</span> filter forward <span class="token string">'&#123; type filter hook forward priority 0; policy drop;&#125;'</span>
-nft <span class="token function">add</span> chain <span class="token function">ip</span> filter output <span class="token string">'&#123; type filter hook output priority 0;policy drop;&#125;'</span>
-
-<span class="token number">3</span>.基础过滤规则
-<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>环回接口
-nft <span class="token function">add</span> rule <span class="token function">ip</span> filter input iif <span class="token string">'lo'</span> accept
-nft <span class="token function">add</span> rule <span class="token function">ip</span> filter output oif <span class="token string">'lo'</span> accept
-
-<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>允许已建立的连接和相关流量
-nft <span class="token function">add</span> rule <span class="token function">ip</span> filter input ct state established,related accept
-
-<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>允许ssh
-nft <span class="token function">add</span> rule <span class="token function">ip</span> filter input tcp dport <span class="token number">22</span> accept
-
-<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>允许http https
-nft <span class="token function">add</span> rule <span class="token function">ip</span> filter input tcp dport <span class="token punctuation">&#123;</span><span class="token number">80,443</span><span class="token punctuation">&#125;</span> accept 
-
-<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>允许ICMP
-nft <span class="token function">add</span> rule <span class="token function">ip</span> filter input <span class="token function">ip</span> protocol icmp <span class="token builtin class-name">type</span> echo-request accept<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="nftables配置规则示例-nat表"><a href="#nftables配置规则示例-nat表" class="headerlink" title="nftables配置规则示例-nat表"></a>nftables配置规则示例-nat表</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.配置nat表和链<span class="token punctuation">(</span>
-nft <span class="token function">add</span> table <span class="token function">ip</span> nat
-nft <span class="token function">add</span> chain <span class="token function">ip</span> nat prerouting <span class="token string">'&#123; type nat hook prerouting priority -100;policy accept;&#125;'</span>
-nft <span class="token function">add</span> chain <span class="token function">ip</span> nat postrouting <span class="token string">'&#123; type nat hook postrouting priority -100;policy accept;&#125;'</span>
-
-<span class="token number">2</span>.端口转发
-nft <span class="token function">add</span> rule <span class="token function">ip</span> nat prerouting tcp dport <span class="token number">8080</span> dnat to <span class="token number">192.168</span>.1.10:80
-
-<span class="token number">3</span>.源地址转换
-nft <span class="token function">add</span> rule <span class="token function">ip</span> nat postrouting <span class="token function">ip</span> saddr <span class="token number">192.168</span>.1.0/24 snat to <span class="token number">203.0</span>.113.1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="nftable配置文件导出导入"><a href="#nftable配置文件导出导入" class="headerlink" title="nftable配置文件导出导入"></a>nftable配置文件导出导入</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 导出</span>
-nft list ruleset <span class="token operator">></span> nftrule
-
-<span class="token comment"># 清空规则</span>
-nft flush ruleset
-
-<span class="token comment"># 导入规则</span>
-nft <span class="token parameter variable">-f</span> nftrule
-
-<span class="token comment"># 导入特定表的规则</span>
-nft list table <span class="token function">ip</span> filter <span class="token operator">></span> nftrule_filter
-nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="nftable配置文件导出导入"><a href="#nftable配置文件导出导入" class="headerlink" title="nftable配置文件导出导入"></a>nftable配置文件导出导入</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导出</span></span><br><span class="line">nft list ruleset &gt; nftrule</span><br><span class="line"></span><br><span class="line"><span class="comment"># 清空规则</span></span><br><span class="line">nft flush ruleset</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入规则</span></span><br><span class="line">nft -f nftrule</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入特定表的规则</span></span><br><span class="line">nft list table ip filter &gt; nftrule_filter</span><br><span class="line">nft -f nftrule_filter</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6764,18 +6594,6 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6859,13 +6677,13 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7240,13 +7058,13 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7486,13 +7304,13 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8191,13 +8009,13 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8741,9 +8559,9 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8751,9 +8569,9 @@ nft <span class="token parameter variable">-f</span> nftrule_filter<span aria-hi
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

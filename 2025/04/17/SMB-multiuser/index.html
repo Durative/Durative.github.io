@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -508,41 +509,11 @@
 <li><strong>允许多用户动态切换身份</strong>非 root 用户可以通过自己的凭据访问共享，而非依赖挂载时的初始用户。</li>
 <li><strong>权限隔离</strong>每个用户的操作会基于其自身身份（如 Linux UID&#x2F;GID）被映射到服务端，确保权限正确分离。</li>
 </ul>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 服务器侧</span>
-添加用户min 表示最小权限（读权限）
-<span class="token function">useradd</span> <span class="token parameter variable">-s</span> /sbin/nologin min
-smbpasswd <span class="token parameter variable">-a</span> min
-
-修改配置文件，添加用户min
-<span class="token function">vim</span> /etc/samba/smb.conf
-<span class="token punctuation">[</span>wangsheng<span class="token punctuation">]</span>
-        comment <span class="token operator">=</span> its a <span class="token builtin class-name">test</span>
-        path <span class="token operator">=</span> /data/smb
-        valid <span class="token function">users</span> <span class="token operator">=</span> xhy, min, @ws
-        browseable <span class="token operator">=</span> No
-        <span class="token builtin class-name">read</span> only <span class="token operator">=</span> No
-        <span class="token function">write</span> list <span class="token operator">=</span> @ws
-
-systemctl restart smb.service
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 服务器侧</span></span><br><span class="line">添加用户min 表示最小权限（读权限）</span><br><span class="line">useradd -s /sbin/nologin min</span><br><span class="line">smbpasswd -a min</span><br><span class="line"></span><br><span class="line">修改配置文件，添加用户min</span><br><span class="line">vim /etc/samba/smb.conf</span><br><span class="line">[wangsheng]</span><br><span class="line">        comment = its a <span class="built_in">test</span></span><br><span class="line">        path = /data/smb</span><br><span class="line">        valid <span class="built_in">users</span> = xhy, min, @ws</span><br><span class="line">        browseable = No</span><br><span class="line">        <span class="built_in">read</span> only = No</span><br><span class="line">        write list = @ws</span><br><span class="line"></span><br><span class="line">systemctl restart smb.service</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h2 id="客户端挂载选项-multiuser"><a href="#客户端挂载选项-multiuser" class="headerlink" title="客户端挂载选项 multiuser"></a><strong>客户端挂载选项 multiuser</strong></h2><p>在客户端中，如果使用了multiuser参数进行挂载</p>
 <p>那么就可以使用cifscreds来加载凭据</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /etc/fstab
-//10.163.2.102/wangsheng /samba-share cifs defaults,_netdev,username<span class="token operator">=</span>min,password<span class="token operator">=</span>min,multiuser <span class="token number">0</span> <span class="token number">0</span>
-
-<span class="token function">mount</span> <span class="token operator">|</span> <span class="token function">grep</span> samba
-//10.163.2.102/wangsheng on /samba-share <span class="token builtin class-name">type</span> cifs <span class="token punctuation">(</span>rw,relatime,vers<span class="token operator">=</span><span class="token number">3.1</span>.1,cache<span class="token operator">=</span>strict,upcall_target<span class="token operator">=</span>app,multiuser,uid<span class="token operator">=</span><span class="token number">0</span>,noforceuid,gid<span class="token operator">=</span><span class="token number">0</span>,noforcegid,addr<span class="token operator">=</span><span class="token number">10.163</span>.2.102,file_mode<span class="token operator">=</span>0755,dir_mode<span class="token operator">=</span>0755,soft,nounix,serverino,mapposix,noperm,reparse<span class="token operator">=</span>nfs,nativesocket,symlink<span class="token operator">=</span>native,rsize<span class="token operator">=</span><span class="token number">4194304</span>,wsize<span class="token operator">=</span><span class="token number">4194304</span>,bsize<span class="token operator">=</span><span class="token number">1048576</span>,retrans<span class="token operator">=</span><span class="token number">1</span>,echo_interval<span class="token operator">=</span><span class="token number">60</span>,actimeo<span class="token operator">=</span><span class="token number">1</span>,closetimeo<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
-
-当前使用的是min的凭据
-添加ws2的凭证
-cifscreds <span class="token function">add</span> <span class="token parameter variable">-u</span> ws2 <span class="token number">10.163</span>.2.102
-Password:
-
-<span class="token builtin class-name">cd</span> /samba-share/
-<span class="token function">touch</span> <span class="token number">22222</span>
-
-成功创建<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/fstab</span><br><span class="line">//10.163.2.102/wangsheng /samba-share cifs defaults,_netdev,username=min,password=min,multiuser 0 0</span><br><span class="line"></span><br><span class="line">mount | grep samba</span><br><span class="line">//10.163.2.102/wangsheng on /samba-share <span class="built_in">type</span> cifs (rw,relatime,vers=3.1.1,cache=strict,upcall_target=app,multiuser,uid=0,noforceuid,gid=0,noforcegid,addr=10.163.2.102,file_mode=0755,dir_mode=0755,soft,nounix,serverino,mapposix,noperm,reparse=nfs,nativesocket,symlink=native,rsize=4194304,wsize=4194304,bsize=1048576,retrans=1,echo_interval=60,actimeo=1,closetimeo=1)</span><br><span class="line"></span><br><span class="line">当前使用的是min的凭据</span><br><span class="line">添加ws2的凭证</span><br><span class="line">cifscreds add -u ws2 10.163.2.102</span><br><span class="line">Password:</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> /samba-share/</span><br><span class="line"><span class="built_in">touch</span> 22222</span><br><span class="line"></span><br><span class="line">成功创建</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6621,18 +6592,6 @@ Password:
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6716,13 +6675,13 @@ Password:
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7097,13 +7056,13 @@ Password:
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7343,13 +7302,13 @@ Password:
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8048,13 +8007,13 @@ Password:
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8598,9 +8557,9 @@ Password:
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8608,9 +8567,9 @@ Password:
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

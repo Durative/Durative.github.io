@@ -208,12 +208,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -221,7 +223,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -513,23 +514,7 @@
 <p>负载均衡硬件有F5 bigip &#x2F; A10 &#x2F; 等<br>软件有 Nginx LVS等</p>
 <h1 id="Nginx-服务"><a href="#Nginx-服务" class="headerlink" title="Nginx 服务"></a>Nginx 服务</h1><p>包含两个进程<br>应用进程-master<br>应用进程-worker</p>
 <p>nginx.conf配置文件 - &#x2F;etc&#x2F;nginx</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python">来看一个最简单的 Nginx 负载均衡配置。
-http <span class="token punctuation">&#123;</span>
- upstream cluster <span class="token punctuation">&#123;</span>
- server srv1<span class="token punctuation">;</span>
- server srv2<span class="token punctuation">;</span>
- server srv3<span class="token punctuation">;</span>
- <span class="token punctuation">&#125;</span>
- server <span class="token punctuation">&#123;</span>
- listen <span class="token number">80</span><span class="token punctuation">;</span>
- location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
- proxy_pass http<span class="token punctuation">:</span><span class="token operator">//</span>cluster<span class="token punctuation">;</span>
- <span class="token punctuation">&#125;</span>
- <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-通过上述配置，Nginx 会作为 HTTP 反向代理，把访问本机的 HTTP 请求，均分到后端集
-群的 <span class="token number">3</span> 台服务器上。
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">来看一个最简单的 Nginx 负载均衡配置。</span><br><span class="line">http &#123;</span><br><span class="line"> upstream cluster &#123;</span><br><span class="line"> server srv1;</span><br><span class="line"> server srv2;</span><br><span class="line"> server srv3;</span><br><span class="line"> &#125;</span><br><span class="line"> server &#123;</span><br><span class="line"> listen <span class="number">80</span>;</span><br><span class="line"> location / &#123;</span><br><span class="line"> proxy_pass http://cluster;</span><br><span class="line"> &#125;</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br><span class="line">通过上述配置，Nginx 会作为 HTTP 反向代理，把访问本机的 HTTP 请求，均分到后端集</span><br><span class="line">群的 <span class="number">3</span> 台服务器上。</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h1 id="keepalived服务"><a href="#keepalived服务" class="headerlink" title="keepalived服务"></a>keepalived服务</h1><p>keepalived 高可用集群选举软件</p>
 <p>又可以选举主备，又可以提供</p>
@@ -543,202 +528,30 @@ http <span class="token punctuation">&#123;</span>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240426224723.png"></p>
 <h1 id="nginx环境搭建"><a href="#nginx环境搭建" class="headerlink" title="nginx环境搭建"></a>nginx环境搭建</h1><p>环境：<br>VMwareworkstation 17 pro<br>CentOS Linux release 7.8.2003 (Core)<br>——4G内存，2core<br>——20G硬盘<br>——minimal安装<br>——NAT网络<br>#创建完web模板后进行克隆效率更高，随意</p>
 <p>5节点部署，如图所示<br><img src="https://img-blog.csdnimg.cn/direct/8a4dca18c00e4a60b65cc0b3020e1e3c.png"></p>
-<h2 id="搭建web节点"><a href="#搭建web节点" class="headerlink" title="搭建web节点"></a>搭建web节点</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#搭建web节点</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> httpd
-
-<span class="token comment">#修改主机名与html文件</span>
-hostnamectl set-hostname WEB1 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-<span class="token builtin class-name">echo</span> web1 <span class="token operator">></span> /var/www/html/index.html
-hostnamectl set-hostname WEB2 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-<span class="token builtin class-name">echo</span> web2 <span class="token operator">></span> /var/www/html/index.html
-hostnamectl set-hostname WEB3 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-<span class="token builtin class-name">echo</span> web3 <span class="token operator">></span> /var/www/html/index.html
-
-systemctl <span class="token builtin class-name">enable</span> httpd <span class="token parameter variable">--now</span>
-
-<span class="token comment">#安全相关</span>
-systemctl disable firewalld <span class="token parameter variable">--now</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=disabled/'</span> /etc/selinux/config
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="搭建web节点"><a href="#搭建web节点" class="headerlink" title="搭建web节点"></a>搭建web节点</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#搭建web节点</span></span><br><span class="line">yum -y install httpd</span><br><span class="line"></span><br><span class="line"><span class="comment">#修改主机名与html文件</span></span><br><span class="line">hostnamectl set-hostname WEB1 &amp;&amp; bash</span><br><span class="line"><span class="built_in">echo</span> web1 &gt; /var/www/html/index.html</span><br><span class="line">hostnamectl set-hostname WEB2 &amp;&amp; bash</span><br><span class="line"><span class="built_in">echo</span> web2 &gt; /var/www/html/index.html</span><br><span class="line">hostnamectl set-hostname WEB3 &amp;&amp; bash</span><br><span class="line"><span class="built_in">echo</span> web3 &gt; /var/www/html/index.html</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> httpd --now</span><br><span class="line"></span><br><span class="line"><span class="comment">#安全相关</span></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld --now</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p><img src="https://img-blog.csdnimg.cn/direct/455a58d5afc34dc6ac50f174ab91bae4.png"></p>
-<h2 id="搭建nginx服务"><a href="#搭建nginx服务" class="headerlink" title="搭建nginx服务"></a>搭建nginx服务</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#搭建nginx节点</span>
-hostnamectl set-hostname HA1 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-hostnamectl set-hostname HA2 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
+<h2 id="搭建nginx服务"><a href="#搭建nginx服务" class="headerlink" title="搭建nginx服务"></a>搭建nginx服务</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#搭建nginx节点</span></span><br><span class="line">hostnamectl set-hostname HA1 &amp;&amp; bash</span><br><span class="line">hostnamectl set-hostname HA2 &amp;&amp; bash</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装软件包</span></span><br><span class="line">yum -y install wget vim net-tools</span><br><span class="line">wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo</span><br><span class="line">yum -y install nginx nginx-mod-stream</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> nginx --now</span><br><span class="line">netstat -tunlp | grep -i nginx <span class="comment"># #验证</span></span><br><span class="line"><span class="comment">#tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      9482/nginx: master</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#安全相关</span></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld --now</span><br><span class="line">sed -i <span class="string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br></pre></td></tr></table></figure>
 
-<span class="token comment">#安装软件包</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">wget</span> <span class="token function">vim</span> net-tools
-<span class="token function">wget</span> <span class="token parameter variable">-O</span> /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> nginx nginx-mod-stream
-
-systemctl <span class="token builtin class-name">enable</span> nginx <span class="token parameter variable">--now</span>
-<span class="token function">netstat</span> <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> nginx <span class="token comment"># #验证</span>
-<span class="token comment">#tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      9482/nginx: master</span>
-
-<span class="token comment">#安全相关</span>
-systemctl disable firewalld <span class="token parameter variable">--now</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^SELINUX=.*/SELINUX=disabled/'</span> /etc/selinux/config<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="nginx服务配置"><a href="#nginx服务配置" class="headerlink" title="nginx服务配置"></a>nginx服务配置</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#nginx服务配置</span>
-
-<span class="token comment">#备份，并且清除注释</span>
-<span class="token function">cp</span> /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/.*#.*//'</span> /etc/nginx/nginx.conf
-<span class="token function">vim</span> /etc/nginx/nginx.conf
-
-<span class="token comment">###配置文件含义</span>
-user nginx<span class="token punctuation">;</span>
-worker_processes auto<span class="token punctuation">;</span> 
-error_log /var/log/nginx/error.log<span class="token punctuation">;</span>
-pid /run/nginx.pid<span class="token punctuation">;</span>
-include /usr/share/nginx/modules/*.conf<span class="token punctuation">;</span>
-
-events <span class="token punctuation">&#123;</span>
-    worker_connections <span class="token number">1024</span><span class="token punctuation">;</span> <span class="token comment">#worker进程上限</span>
-<span class="token punctuation">&#125;</span>
-
-http <span class="token punctuation">&#123;</span> <span class="token comment">#自身http服务的配置</span>
-    log_format  main  <span class="token string">'$remote_addr - $remote_user [$time_local] "$request" '</span>
-                      <span class="token string">'$status $body_bytes_sent "$http_referer" '</span>
-                      <span class="token string">'"$http_user_agent" "$http_x_forwarded_for"'</span><span class="token punctuation">;</span>
-    access_log  /var/log/nginx/access.log  main<span class="token punctuation">;</span>
-    sendfile            on<span class="token punctuation">;</span>
-    tcp_nopush          on<span class="token punctuation">;</span>
-		keepalive_timeout   <span class="token number">65</span><span class="token punctuation">;</span>
-    types_hash_max_size <span class="token number">4096</span><span class="token punctuation">;</span>
-    include             /etc/nginx/mime.types<span class="token punctuation">;</span>
-    default_type        application/octet-stream<span class="token punctuation">;</span>
-    include /etc/nginx/conf.d/*.conf<span class="token punctuation">;</span>
-
-    server <span class="token punctuation">&#123;</span> <span class="token comment">#自己作为http服务器时的配置</span>
-        listen       <span class="token number">80</span><span class="token punctuation">;</span>
-        listen       <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:80<span class="token punctuation">;</span> <span class="token comment">#监听的ipv6的地址与端口</span>
-        server_name  _<span class="token punctuation">;</span>
-        root         /usr/share/nginx/html<span class="token punctuation">;</span>
-        include /etc/nginx/default.d/*.conf<span class="token punctuation">;</span> 
-        error_page <span class="token number">404</span> /404.html<span class="token punctuation">;</span> <span class="token comment">#出错之后的提示页面等</span>
-        location <span class="token operator">=</span> /404.html <span class="token punctuation">&#123;</span>
-        <span class="token punctuation">&#125;</span>
-				error_page <span class="token number">500</span> <span class="token number">502</span> <span class="token number">503</span> <span class="token number">504</span> /50x.html<span class="token punctuation">;</span> 
-        location <span class="token operator">=</span> /50x.html <span class="token punctuation">&#123;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token comment">###修改完成之后如下</span>
-<span class="token comment">#内含变量，建议vim，使用cat &lt;&lt;END或echo都会出错</span>
-user nginx<span class="token punctuation">;</span>
-worker_processes auto<span class="token punctuation">;</span> 
-error_log /var/log/nginx/error.log<span class="token punctuation">;</span>
-pid /run/nginx.pid<span class="token punctuation">;</span>
-include /usr/share/nginx/modules/*.conf<span class="token punctuation">;</span>
-
-events <span class="token punctuation">&#123;</span>
-    worker_connections <span class="token number">1024</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span>
-
-stream <span class="token punctuation">&#123;</span>
-log_format main <span class="token string">'$remote_addr $upstream_addr - [$time_local] $status
-$upstream_bytes_sent'</span><span class="token punctuation">;</span>
-access_log /var/log/nginx/web_cluster.log main<span class="token punctuation">;</span>
- upstream web_LB <span class="token punctuation">&#123;</span> <span class="token comment">#负载均衡设置</span>
- server <span class="token number">192.168</span>.8.162:80<span class="token punctuation">;</span>  <span class="token comment">#添加要转发的地址与端口</span>
- server <span class="token number">192.168</span>.8.163:80<span class="token punctuation">;</span>
- server <span class="token number">192.168</span>.8.164:80<span class="token punctuation">;</span>
- <span class="token punctuation">&#125;</span>
- server <span class="token punctuation">&#123;</span>
- listen <span class="token number">80</span><span class="token punctuation">;</span> <span class="token comment">#本地监听的端口，可以修改</span>
- proxy_pass web_LB<span class="token punctuation">;</span> <span class="token comment"># 设置为通过负载均衡web_LB的方式进行代理</span>
- <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token comment">#检查</span>
-nginx <span class="token parameter variable">-t</span>
-<span class="token comment">#nginx: the configuration file /etc/nginx/nginx.conf syntax is ok</span>
-<span class="token comment">#nginx: configuration file /etc/nginx/nginx.conf test is successful</span>
-nginx <span class="token parameter variable">-s</span> reload <span class="token comment">#重载配置文件</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="nginx服务配置"><a href="#nginx服务配置" class="headerlink" title="nginx服务配置"></a>nginx服务配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#nginx服务配置</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#备份，并且清除注释</span></span><br><span class="line"><span class="built_in">cp</span> /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak</span><br><span class="line">sed -i <span class="string">&#x27;s/.*#.*//&#x27;</span> /etc/nginx/nginx.conf</span><br><span class="line">vim /etc/nginx/nginx.conf</span><br><span class="line"></span><br><span class="line"><span class="comment">###配置文件含义</span></span><br><span class="line">user nginx;</span><br><span class="line">worker_processes auto; </span><br><span class="line">error_log /var/log/nginx/error.log;</span><br><span class="line">pid /run/nginx.pid;</span><br><span class="line">include /usr/share/nginx/modules/*.conf;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections 1024; <span class="comment">#worker进程上限</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http &#123; <span class="comment">#自身http服务的配置</span></span><br><span class="line">    log_format  main  <span class="string">&#x27;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &#x27;</span></span><br><span class="line">                      <span class="string">&#x27;$status $body_bytes_sent &quot;$http_referer&quot; &#x27;</span></span><br><span class="line">                      <span class="string">&#x27;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&#x27;</span>;</span><br><span class="line">    access_log  /var/log/nginx/access.log  main;</span><br><span class="line">    sendfile            on;</span><br><span class="line">    tcp_nopush          on;</span><br><span class="line">		keepalive_timeout   65;</span><br><span class="line">    types_hash_max_size 4096;</span><br><span class="line">    include             /etc/nginx/mime.types;</span><br><span class="line">    default_type        application/octet-stream;</span><br><span class="line">    include /etc/nginx/conf.d/*.conf;</span><br><span class="line"></span><br><span class="line">    server &#123; <span class="comment">#自己作为http服务器时的配置</span></span><br><span class="line">        listen       80;</span><br><span class="line">        listen       [::]:80; <span class="comment">#监听的ipv6的地址与端口</span></span><br><span class="line">        server_name  _;</span><br><span class="line">        root         /usr/share/nginx/html;</span><br><span class="line">        include /etc/nginx/default.d/*.conf; </span><br><span class="line">        error_page 404 /404.html; <span class="comment">#出错之后的提示页面等</span></span><br><span class="line">        location = /404.html &#123;</span><br><span class="line">        &#125;</span><br><span class="line">				error_page 500 502 503 504 /50x.html; </span><br><span class="line">        location = /50x.html &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">###修改完成之后如下</span></span><br><span class="line"><span class="comment">#内含变量，建议vim，使用cat &lt;&lt;END或echo都会出错</span></span><br><span class="line">user nginx;</span><br><span class="line">worker_processes auto; </span><br><span class="line">error_log /var/log/nginx/error.log;</span><br><span class="line">pid /run/nginx.pid;</span><br><span class="line">include /usr/share/nginx/modules/*.conf;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections 1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stream &#123;</span><br><span class="line">log_format main <span class="string">&#x27;$remote_addr $upstream_addr - [$time_local] $status</span></span><br><span class="line"><span class="string">$upstream_bytes_sent&#x27;</span>;</span><br><span class="line">access_log /var/log/nginx/web_cluster.log main;</span><br><span class="line"> upstream web_LB &#123; <span class="comment">#负载均衡设置</span></span><br><span class="line"> server 192.168.8.162:80;  <span class="comment">#添加要转发的地址与端口</span></span><br><span class="line"> server 192.168.8.163:80;</span><br><span class="line"> server 192.168.8.164:80;</span><br><span class="line"> &#125;</span><br><span class="line"> server &#123;</span><br><span class="line"> listen 80; <span class="comment">#本地监听的端口，可以修改</span></span><br><span class="line"> proxy_pass web_LB; <span class="comment"># 设置为通过负载均衡web_LB的方式进行代理</span></span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">#检查</span></span><br><span class="line">nginx -t</span><br><span class="line"><span class="comment">#nginx: the configuration file /etc/nginx/nginx.conf syntax is ok</span></span><br><span class="line"><span class="comment">#nginx: configuration file /etc/nginx/nginx.conf test is successful</span></span><br><span class="line">nginx -s reload <span class="comment">#重载配置文件</span></span><br></pre></td></tr></table></figure>
 
 <p>此时重新访问，发现访问160和161能访问到后端的web服务器，清除缓存后会变化</p>
 <p><img src="https://img-blog.csdnimg.cn/direct/447f92da860e4795b97f90d82a17b0be.png"></p>
 <h1 id="Nginx的负载分担方式"><a href="#Nginx的负载分担方式" class="headerlink" title="Nginx的负载分担方式"></a>Nginx的负载分担方式</h1><h2 id="最小连接"><a href="#最小连接" class="headerlink" title="最小连接"></a>最小连接</h2><p>通过判断哪一个服务器的负载最小，选择负载最小的服务器进行连接</p>
 <p>修改配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /etc/nginx/nginx.conf
-upstream web_LB <span class="token punctuation">&#123;</span>
-least_conn<span class="token punctuation">;</span>
-server <span class="token number">192.168</span>.8.162:80<span class="token punctuation">;</span> 
-server <span class="token number">192.168</span>.8.163:80<span class="token punctuation">;</span>
-server <span class="token number">192.168</span>.8.164:80<span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span>
-nginx <span class="token parameter variable">-t</span>
-nginx <span class="token parameter variable">-s</span> reload<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/nginx/nginx.conf</span><br><span class="line">upstream web_LB &#123;</span><br><span class="line">least_conn;</span><br><span class="line">server 192.168.8.162:80; </span><br><span class="line">server 192.168.8.163:80;</span><br><span class="line">server 192.168.8.164:80;</span><br><span class="line">&#125;</span><br><span class="line">nginx -t</span><br><span class="line">nginx -s reload</span><br></pre></td></tr></table></figure>
 
 <h2 id="权重轮询"><a href="#权重轮询" class="headerlink" title="权重轮询"></a>权重轮询</h2><p>通过修改weight值，根据权重进行负载的分配</p>
 <p>设置web1权重为1，web2权重为2，web3权重为3</p>
 <p>修改配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /etc/nginx/nginx.conf
-<span class="token comment">#upstream web_LB &#123; #负载均衡设置</span>
-<span class="token comment">#server 192.168.8.162:80 weight=1;  #添加地址与端口</span>
-<span class="token comment">#server 192.168.8.163:80 weight=2;</span>
-<span class="token comment">#server 192.168.8.164:80 weight=3;</span>
-<span class="token comment">#&#125;</span>
-nginx <span class="token parameter variable">-t</span>
-nginx <span class="token parameter variable">-s</span> reload<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/nginx/nginx.conf</span><br><span class="line"><span class="comment">#upstream web_LB &#123; #负载均衡设置</span></span><br><span class="line"><span class="comment">#server 192.168.8.162:80 weight=1;  #添加地址与端口</span></span><br><span class="line"><span class="comment">#server 192.168.8.163:80 weight=2;</span></span><br><span class="line"><span class="comment">#server 192.168.8.164:80 weight=3;</span></span><br><span class="line"><span class="comment">#&#125;</span></span><br><span class="line">nginx -t</span><br><span class="line">nginx -s reload</span><br></pre></td></tr></table></figure>
 
 <h2 id="IP哈希"><a href="#IP哈希" class="headerlink" title="IP哈希"></a>IP哈希</h2><p>根据源ip地址进行hash计算，根据计算值自动匹配到后端服务器</p>
 <p>同个ip固定匹配一个服务器</p>
 <p>适合流量大的时候使用，流量越多越均衡</p>
 <p>修改配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /etc/nginx/nginx.conf
-<span class="token comment">#upstream web_LB &#123;</span>
-<span class="token builtin class-name">hash</span> <span class="token variable">$remote_addr</span> consistent<span class="token punctuation">;</span>
-<span class="token comment">#server 192.168.8.162:80; </span>
-<span class="token comment">#server 192.168.8.163:80;</span>
-<span class="token comment">#server 192.168.8.164:80;</span>
-<span class="token comment">#&#125;</span>
-nginx <span class="token parameter variable">-t</span>
-nginx <span class="token parameter variable">-s</span> reload<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/nginx/nginx.conf</span><br><span class="line"><span class="comment">#upstream web_LB &#123;</span></span><br><span class="line"><span class="built_in">hash</span> <span class="variable">$remote_addr</span> consistent;</span><br><span class="line"><span class="comment">#server 192.168.8.162:80; </span></span><br><span class="line"><span class="comment">#server 192.168.8.163:80;</span></span><br><span class="line"><span class="comment">#server 192.168.8.164:80;</span></span><br><span class="line"><span class="comment">#&#125;</span></span><br><span class="line">nginx -t</span><br><span class="line">nginx -s reload</span><br></pre></td></tr></table></figure>
 
-<h1 id="keepalived节点搭建"><a href="#keepalived节点搭建" class="headerlink" title="keepalived节点搭建"></a>keepalived节点搭建</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#部署</span>
-yum <span class="token function">install</span> <span class="token parameter variable">-y</span> keepalived
-<span class="token function">cp</span> /etc/keepalived/keepalived.conf /etc/keepalived/keepalived.conf.bak
-
-<span class="token function">vim</span> /etc/keepalived/keepalived.conf
-根据实际情况修改
-<span class="token comment">###配置文件解析，并修改配置文件</span>
-<span class="token operator">!</span> Configuration File <span class="token keyword">for</span> keepalived
-
-global_defs <span class="token punctuation">&#123;</span>
-   notification_email <span class="token punctuation">&#123;</span>
-     acassen@firewall.loc
-     failover@firewall.loc
-     sysadmin@firewall.loc
-   <span class="token punctuation">&#125;</span>
-	 notification_email_from Alexandre.Cassen@firewall.loc
-   smtp_server <span class="token number">127.0</span>.0.1 <span class="token comment">#通过SMTP来发送邮件的地址</span>
-   smtp_connect_timeout <span class="token number">30</span>
-   router_id ha1 <span class="token comment">#路由器代号，挂了之后邮件提升的内容，主备节点需要不同，我写本机</span>
-   vrrp_skip_check_adv_addr
-   <span class="token comment">#vrrp_strict</span>
-   vrrp_garp_interval <span class="token number">0</span>
-   vrrp_gna_interval <span class="token number">0</span>
-<span class="token punctuation">&#125;</span>
-vrrp_instance VI_1 <span class="token punctuation">&#123;</span> <span class="token comment">#实例1，instance的概念与网络中的一致，可以设置多实例来允许多网段的访问</span>
-    state MASTER   <span class="token comment">#状态</span>
-    interface ens33 <span class="token comment">#keepalived的接口地址，我的虚机网卡是ens33</span>
-    virtual_router_id <span class="token number">100</span> <span class="token comment">#虚拟地址路由器routerid，主备节点需要相同，建议自定义1-255</span>
-    priority <span class="token number">100</span> <span class="token comment">#优先级，主节点的需要比备节点高</span>
-    advert_int <span class="token number">1</span> <span class="token comment">#心跳间隔1s</span>
-    authentication <span class="token punctuation">&#123;</span>  <span class="token comment">#认证配置</span>
-        auth_type PASS <span class="token comment">#开启认证</span>
-        auth_pass <span class="token number">1111</span> <span class="token comment">#密钥</span>
-    <span class="token punctuation">&#125;</span>
-    virtual_ipaddress <span class="token punctuation">&#123;</span> <span class="token comment">#虚拟的floating ip，支持多个</span>
-        <span class="token number">192.168</span>.8.200
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token comment">#启动服务</span>
-systemctl <span class="token builtin class-name">enable</span> keepalived <span class="token parameter variable">--now</span>
-systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="keepalived节点搭建"><a href="#keepalived节点搭建" class="headerlink" title="keepalived节点搭建"></a>keepalived节点搭建</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#部署</span></span><br><span class="line">yum install -y keepalived</span><br><span class="line"><span class="built_in">cp</span> /etc/keepalived/keepalived.conf /etc/keepalived/keepalived.conf.bak</span><br><span class="line"></span><br><span class="line">vim /etc/keepalived/keepalived.conf</span><br><span class="line">根据实际情况修改</span><br><span class="line"><span class="comment">###配置文件解析，并修改配置文件</span></span><br><span class="line">! Configuration File <span class="keyword">for</span> keepalived</span><br><span class="line"></span><br><span class="line">global_defs &#123;</span><br><span class="line">   notification_email &#123;</span><br><span class="line">     acassen@firewall.loc</span><br><span class="line">     failover@firewall.loc</span><br><span class="line">     sysadmin@firewall.loc</span><br><span class="line">   &#125;</span><br><span class="line">	 notification_email_from Alexandre.Cassen@firewall.loc</span><br><span class="line">   smtp_server 127.0.0.1 <span class="comment">#通过SMTP来发送邮件的地址</span></span><br><span class="line">   smtp_connect_timeout 30</span><br><span class="line">   router_id ha1 <span class="comment">#路由器代号，挂了之后邮件提升的内容，主备节点需要不同，我写本机</span></span><br><span class="line">   vrrp_skip_check_adv_addr</span><br><span class="line">   <span class="comment">#vrrp_strict</span></span><br><span class="line">   vrrp_garp_interval 0</span><br><span class="line">   vrrp_gna_interval 0</span><br><span class="line">&#125;</span><br><span class="line">vrrp_instance VI_1 &#123; <span class="comment">#实例1，instance的概念与网络中的一致，可以设置多实例来允许多网段的访问</span></span><br><span class="line">    state MASTER   <span class="comment">#状态</span></span><br><span class="line">    interface ens33 <span class="comment">#keepalived的接口地址，我的虚机网卡是ens33</span></span><br><span class="line">    virtual_router_id 100 <span class="comment">#虚拟地址路由器routerid，主备节点需要相同，建议自定义1-255</span></span><br><span class="line">    priority 100 <span class="comment">#优先级，主节点的需要比备节点高</span></span><br><span class="line">    advert_int 1 <span class="comment">#心跳间隔1s</span></span><br><span class="line">    authentication &#123;  <span class="comment">#认证配置</span></span><br><span class="line">        auth_type PASS <span class="comment">#开启认证</span></span><br><span class="line">        auth_pass 1111 <span class="comment">#密钥</span></span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123; <span class="comment">#虚拟的floating ip，支持多个</span></span><br><span class="line">        192.168.8.200</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">#启动服务</span></span><br><span class="line">systemctl <span class="built_in">enable</span> keepalived --now</span><br><span class="line">systemctl restart keepalived</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240426225409.png"></p>
 <h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>访问网页测试：</p>
@@ -6824,18 +6637,6 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6919,13 +6720,13 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7300,13 +7101,13 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7546,13 +7347,13 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8251,13 +8052,13 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8801,9 +8602,9 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8811,9 +8612,9 @@ systemctl restart keepalived<span aria-hidden="true" class="line-numbers-rows"><
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -504,38 +505,11 @@
 <li><strong>卸载模块</strong>：监控结束后，自动或手动移除内核模块。</li>
 </ol>
 <h3 id="安装与使用systemtap"><a href="#安装与使用systemtap" class="headerlink" title="安装与使用systemtap"></a>安装与使用systemtap</h3><p>正常情况下，SystemTap脚本只能在安装了SystemTap的系统上运行。这可能意味着在要分析的每个系统上安装完整的SystemTap编译器、内核头文件、源代码和debuginfo内核包<br><strong>也就是，需要一个专门的systemtap机器</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 安装</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> systemtap
-
-<span class="token comment"># 自动安装依赖</span>
-会自动安装kernel-debuginfo
-stap-prep
-
-<span class="token comment"># 手动启用仓库</span>
-yum-config-manager <span class="token parameter variable">--enable</span> debuginfo
-yum clean all
-yum makecache
-<span class="token comment"># 重新尝试安装</span>
-yum <span class="token function">install</span> <span class="token parameter variable">-y</span> kernel-devel-<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token parameter variable">-r</span><span class="token variable">)</span></span> kernel-debuginfo-<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token parameter variable">-r</span><span class="token variable">)</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装</span></span><br><span class="line">yum -y install systemtap</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动安装依赖</span></span><br><span class="line">会自动安装kernel-debuginfo</span><br><span class="line">stap-prep</span><br><span class="line"></span><br><span class="line"><span class="comment"># 手动启用仓库</span></span><br><span class="line">yum-config-manager --<span class="built_in">enable</span> debuginfo</span><br><span class="line">yum clean all</span><br><span class="line">yum makecache</span><br><span class="line"><span class="comment"># 重新尝试安装</span></span><br><span class="line">yum install -y kernel-devel-$(<span class="built_in">uname</span> -r) kernel-debuginfo-$(<span class="built_in">uname</span> -r)</span><br></pre></td></tr></table></figure>
 
 <p><strong>stap命令</strong>是systemtap的前端</p>
 <p>当脚本第一次编译时,systemtap会 在用户的家目录里面的.Systemtap目录中缓存一个已编译对象。如果检测到源脚本未被修改，则stap将在后续运行中使用缓存的对象</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">脚本执行的五个阶段pass：
-<span class="token number">1</span>.parse 检查语法错误
-<span class="token number">2</span>.elaborate 函数展开
-<span class="token number">3</span>.translate 将脚本转换成C文件
-<span class="token number">4</span>.build  将C源文件编译成内核模块
-<span class="token number">5</span>.run 将编译好的内核模块插入内核
-
-stap <span class="token parameter variable">-v</span> /usr/share/systemtap/examples/process/syscalls_by_proc.stp
-Pass <span class="token number">1</span>: parsed user script and <span class="token number">473</span> library scripts using 272056virt/69204res/3508shr/65836data kb, <span class="token keyword">in</span> 250usr/30sys/276real ms.
-Pass <span class="token number">2</span>: analyzed script: <span class="token number">4</span> probes, <span class="token number">2</span> functions, <span class="token number">101</span> embeds, <span class="token number">5</span> globals using 290032virt/87984res/6496shr/81712data kb, <span class="token keyword">in</span> 14520usr/4510sys/6555real ms.
-Missing separate debuginfos, use: debuginfo-install kernel-3.10.0-1160.119.1.el7.x86_64
-Pass <span class="token number">3</span>: translated to C into <span class="token string">"/tmp/stap98YNhM/stap_e2f1b5cd07262cd74d245a3f7b5661e9_132280_src.c"</span> using 290032virt/88188res/6700shr/81712data kb, <span class="token keyword">in</span> 10usr/0sys/20real ms.
-Pass <span class="token number">4</span>: compiled C into <span class="token string">"stap_e2f1b5cd07262cd74d245a3f7b5661e9_132280.ko"</span> <span class="token keyword">in</span> 7260usr/1380sys/8331real ms.
-Pass <span class="token number">5</span>: starting run.
-Collecting data<span class="token punctuation">..</span>. Type Ctrl-C to <span class="token builtin class-name">exit</span> and display results
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">脚本执行的五个阶段pass：</span><br><span class="line">1.parse 检查语法错误</span><br><span class="line">2.elaborate 函数展开</span><br><span class="line">3.translate 将脚本转换成C文件</span><br><span class="line">4.build  将C源文件编译成内核模块</span><br><span class="line">5.run 将编译好的内核模块插入内核</span><br><span class="line"></span><br><span class="line">stap -v /usr/share/systemtap/examples/process/syscalls_by_proc.stp</span><br><span class="line">Pass 1: parsed user script and 473 library scripts using 272056virt/69204res/3508shr/65836data kb, <span class="keyword">in</span> 250usr/30sys/276real ms.</span><br><span class="line">Pass 2: analyzed script: 4 probes, 2 <span class="built_in">functions</span>, 101 embeds, 5 globals using 290032virt/87984res/6496shr/81712data kb, <span class="keyword">in</span> 14520usr/4510sys/6555real ms.</span><br><span class="line">Missing separate debuginfos, use: debuginfo-install kernel-3.10.0-1160.119.1.el7.x86_64</span><br><span class="line">Pass 3: translated to C into <span class="string">&quot;/tmp/stap98YNhM/stap_e2f1b5cd07262cd74d245a3f7b5661e9_132280_src.c&quot;</span> using 290032virt/88188res/6700shr/81712data kb, <span class="keyword">in</span> 10usr/0sys/20real ms.</span><br><span class="line">Pass 4: compiled C into <span class="string">&quot;stap_e2f1b5cd07262cd74d245a3f7b5661e9_132280.ko&quot;</span> <span class="keyword">in</span> 7260usr/1380sys/8331real ms.</span><br><span class="line">Pass 5: starting run.</span><br><span class="line">Collecting data... Type Ctrl-C to <span class="built_in">exit</span> and display results</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h1 id="eBPF"><a href="#eBPF" class="headerlink" title="eBPF"></a>eBPF</h1><p>允许用户在不修改内核源码或加载内核模块的情况下，<strong>安全、高效地运行自定义程序</strong>，用于实时监控、网络处理、安全控制等场景</p>
 <p>从<strong>用户空间</strong>启用的，受限于它所使用的内存数量，并且对设备的访问受限</p>
@@ -577,143 +551,26 @@ Collecting data<span class="token punctuation">..</span>. Type Ctrl-C to <span c
 </tbody></table>
 <h2 id="BCC工具集"><a href="#BCC工具集" class="headerlink" title="BCC工具集"></a>BCC工具集</h2><p>编写eBPF程序需要从内核源代码编译并链接到eBPF库。这对于内核开发人员来说很好，但是对于其他人来说，比如那些在生产系统上工作的人，拥有现有的程序可能是更理想的方法。BCC包含编写程序所需的组件，还提供了示例程序和用于调试和诊断性能问题的现有工具。</p>
 <p><strong>BCC是一套基于 eBPF 技术的开源工具集，旨在简化 eBPF 程序的开发、调试和部署。它通过提供高层语言接口（如 Python、Lua）和预封装的内核观测工具，让开发者无需深入掌握底层内核细节即可快速实现性能分析、网络监控、安全控制等功能。</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> bcc-tools
-
-默认路径/usr/share/bcc/tools/
-也可以加到<span class="token environment constant">PATH</span>中
-
-工具文档：
-/usr/share/bcc/tools
-/usr/share/bcc/tools/doc<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">yum -y install bcc-tools</span><br><span class="line"></span><br><span class="line">默认路径/usr/share/bcc/tools/</span><br><span class="line">也可以加到PATH中</span><br><span class="line"></span><br><span class="line">工具文档：</span><br><span class="line">/usr/share/bcc/tools</span><br><span class="line">/usr/share/bcc/tools/doc</span><br></pre></td></tr></table></figure>
 
 <h3 id="execsnoop追踪execve-系统调用"><a href="#execsnoop追踪execve-系统调用" class="headerlink" title="execsnoop追踪execve()系统调用"></a><strong>execsnoop</strong>追踪execve()系统调用</h3><p>execsnoop追踪execve()系统调用并且展示参数和返回值的细节</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> /usr/share/bcc/tools/
-./execsnoop
-PCOMM            PID     <span class="token environment constant">PPID</span>    RET ARGS
-sshd             <span class="token number">117876</span>  <span class="token number">57783</span>     <span class="token number">0</span> /usr/sbin/sshd <span class="token parameter variable">-D</span> <span class="token parameter variable">-oCiphers</span><span class="token operator">=</span>aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,aes256-cbc,aes128-gcm@openssh.com,aes128-ctr,aes128-cb <span class="token parameter variable">-oMACs</span><span class="token operator">=</span>hmac-sha2-256-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2- <span class="token parameter variable">-oGSSAPIKexAlgorithms</span><span class="token operator">=</span>gss-curve25519-sha256-,gss-nistp256-sha256-,gss-group14-sha256-,gss-group16-sha512-,gss-gex-sha1-,gss-grou <span class="token parameter variable">-oKexAlgorithms</span><span class="token operator">=</span>curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-h <span class="token parameter variable">-oHostKeyAlgorithms</span><span class="token operator">=</span>ecdsa-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v0 <span class="token parameter variable">-oPubkeyAcceptedKeyTypes</span><span class="token operator">=</span>ecdsa-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-ce <span class="token parameter variable">-oCASignatureAlgorithms</span><span class="token operator">=</span>ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-ed25519,rsa-sha2-256,rsa-sha2-512,ssh-rs <span class="token parameter variable">-R</span>
-unix_chkpwd      <span class="token number">117878</span>  <span class="token number">117876</span>    <span class="token number">0</span> /usr/sbin/unix_chkpwd root nonull
-unix_chkpwd      <span class="token number">117879</span>  <span class="token number">117876</span>    <span class="token number">0</span> /usr/sbin/unix_chkpwd root chkexpiry
-sshd             <span class="token number">117881</span>  <span class="token number">57783</span>     <span class="token number">0</span> /usr/sbin/sshd <span class="token parameter variable">-D</span> <span class="token parameter variable">-oCiphers</span><span class="token operator">=</span>aes256-gcm@openssh.com,chacha20-pol
-
-PCOMM: 父进程的命令名称
-PID:   进程ID
-<span class="token environment constant">PPID</span><span class="token builtin class-name">:</span>  父进程ID
-RET:   返回值
-ARGS:  带参数的文件名<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/share/bcc/tools/</span><br><span class="line">./execsnoop</span><br><span class="line">PCOMM            PID     PPID    RET ARGS</span><br><span class="line">sshd             117876  57783     0 /usr/sbin/sshd -D -oCiphers=aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,aes256-cbc,aes128-gcm@openssh.com,aes128-ctr,aes128-cb -oMACs=hmac-sha2-256-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2- -oGSSAPIKexAlgorithms=gss-curve25519-sha256-,gss-nistp256-sha256-,gss-group14-sha256-,gss-group16-sha512-,gss-gex-sha1-,gss-grou -oKexAlgorithms=curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-h -oHostKeyAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v0 -oPubkeyAcceptedKeyTypes=ecdsa-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-ce -oCASignatureAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-ed25519,rsa-sha2-256,rsa-sha2-512,ssh-rs -R</span><br><span class="line">unix_chkpwd      117878  117876    0 /usr/sbin/unix_chkpwd root nonull</span><br><span class="line">unix_chkpwd      117879  117876    0 /usr/sbin/unix_chkpwd root chkexpiry</span><br><span class="line">sshd             117881  57783     0 /usr/sbin/sshd -D -oCiphers=aes256-gcm@openssh.com,chacha20-pol</span><br><span class="line"></span><br><span class="line">PCOMM: 父进程的命令名称</span><br><span class="line">PID:   进程ID</span><br><span class="line">PPID:  父进程ID</span><br><span class="line">RET:   返回值</span><br><span class="line">ARGS:  带参数的文件名</span><br></pre></td></tr></table></figure>
 
 <h3 id="opensnoop追踪open-系统调用"><a href="#opensnoop追踪open-系统调用" class="headerlink" title="opensnoop追踪open()系统调用"></a>opensnoop追踪open()系统调用</h3><p>opensnoop工具追踪open()系统调用，列出进程的名字和路径名字细节。opensnoop是一个在应用启动期间非常有用的<strong>发现配置文件和日志文件</strong>的工具</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> /usr/share/bcc/tools/
-./opensnoop
-PID    COMM               FD ERR <span class="token environment constant">PATH</span>
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/interrupts
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/stat
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/irq/29/smp_affinity
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/irq/27/smp_affinity
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/interrupts
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/stat
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/irq/29/smp_affinity
-<span class="token number">772</span>    irqbalance          <span class="token number">6</span>   <span class="token number">0</span> /proc/irq/27/smp_affinity
-
-敲回车，irqbalance为了监控中断状态，它会周期性地读取/proc中的文件<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/share/bcc/tools/</span><br><span class="line">./opensnoop</span><br><span class="line">PID    COMM               FD ERR PATH</span><br><span class="line">772    irqbalance          6   0 /proc/interrupts</span><br><span class="line">772    irqbalance          6   0 /proc/stat</span><br><span class="line">772    irqbalance          6   0 /proc/irq/29/smp_affinity</span><br><span class="line">772    irqbalance          6   0 /proc/irq/27/smp_affinity</span><br><span class="line">772    irqbalance          6   0 /proc/interrupts</span><br><span class="line">772    irqbalance          6   0 /proc/stat</span><br><span class="line">772    irqbalance          6   0 /proc/irq/29/smp_affinity</span><br><span class="line">772    irqbalance          6   0 /proc/irq/27/smp_affinity</span><br><span class="line"></span><br><span class="line">敲回车，irqbalance为了监控中断状态，它会周期性地读取/proc中的文件</span><br></pre></td></tr></table></figure>
 
 <h3 id="xfsslower追踪XFS操作"><a href="#xfsslower追踪XFS操作" class="headerlink" title="xfsslower追踪XFS操作"></a>xfsslower追踪XFS操作</h3><p>xfsslower显示xfs文件系统的读，写，打开，文件同步，默认查看慢于10ms的进程</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./xfsslower
-Tracing XFS operations slower than <span class="token number">10</span> ms
-TIME     COMM           PID    T BYTES   OFF_KB   LAT<span class="token punctuation">(</span>ms<span class="token punctuation">)</span> FILENAME
-02:08:32 b<span class="token string">'yum'</span>         <span class="token number">117971</span> S <span class="token number">0</span>       <span class="token number">0</span>          <span class="token number">14.36</span> b<span class="token string">'Group'</span>
-02:25:55 b<span class="token string">'yum'</span>         <span class="token number">118664</span> S <span class="token number">0</span>       <span class="token number">0</span>          <span class="token number">14.84</span> b<span class="token string">'containernetworking-plugins-1.4.'</span>
-02:26:51 b<span class="token string">'ldconfig'</span>    <span class="token number">119683</span> S <span class="token number">0</span>       <span class="token number">0</span>          <span class="token number">34.16</span> b<span class="token string">'ld.so.cache~'</span>
-02:26:51 b<span class="token string">'yum'</span>         <span class="token number">118664</span> S <span class="token number">0</span>       <span class="token number">0</span>          <span class="token number">11.01</span> b<span class="token string">'packages.db-journal'</span>
-
-TIME     - 时间戳
-COMM     - 执行文件操作的进程名
-PID      - 进程的PID
-T        - 操作类型（R<span class="token operator">=</span>读，W<span class="token operator">=</span>写，S<span class="token operator">=</span>同步等）
-BYTES    - 操作涉及的数据量大小（单位：字节）
-OFF_KB   - 文件内的偏移量（单位：千字节，KB）
-LAT<span class="token punctuation">(</span>ms<span class="token punctuation">)</span>  - 操作耗时
-FILENAME - 被操作的文件路径或名称<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">./xfsslower</span><br><span class="line">Tracing XFS operations slower than 10 ms</span><br><span class="line">TIME     COMM           PID    T BYTES   OFF_KB   LAT(ms) FILENAME</span><br><span class="line">02:08:32 b<span class="string">&#x27;yum&#x27;</span>         117971 S 0       0          14.36 b<span class="string">&#x27;Group&#x27;</span></span><br><span class="line">02:25:55 b<span class="string">&#x27;yum&#x27;</span>         118664 S 0       0          14.84 b<span class="string">&#x27;containernetworking-plugins-1.4.&#x27;</span></span><br><span class="line">02:26:51 b<span class="string">&#x27;ldconfig&#x27;</span>    119683 S 0       0          34.16 b<span class="string">&#x27;ld.so.cache~&#x27;</span></span><br><span class="line">02:26:51 b<span class="string">&#x27;yum&#x27;</span>         118664 S 0       0          11.01 b<span class="string">&#x27;packages.db-journal&#x27;</span></span><br><span class="line"></span><br><span class="line">TIME     - 时间戳</span><br><span class="line">COMM     - 执行文件操作的进程名</span><br><span class="line">PID      - 进程的PID</span><br><span class="line">T        - 操作类型（R=读，W=写，S=同步等）</span><br><span class="line">BYTES    - 操作涉及的数据量大小（单位：字节）</span><br><span class="line">OFF_KB   - 文件内的偏移量（单位：千字节，KB）</span><br><span class="line">LAT(ms)  - 操作耗时</span><br><span class="line">FILENAME - 被操作的文件路径或名称</span><br></pre></td></tr></table></figure>
 
 <h3 id="biolatency追踪块设备延迟"><a href="#biolatency追踪块设备延迟" class="headerlink" title="biolatency追踪块设备延迟"></a>biolatency追踪块设备延迟</h3><p>biolatency工具跟踪块设备I&#x2F;O(磁盘I&#x2F;O)，记录I&#x2F;O时延(时间)的分布。按下Ctrl+C键结束跟<br>踪，生成直方图并显示在终端上</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./biolatency
-Tracing block device I/O<span class="token punctuation">..</span>. Hit Ctrl-C to end.
-     usecs               <span class="token builtin class-name">:</span> count     distribution
-         <span class="token number">0</span> -<span class="token operator">></span> <span class="token number">1</span>          <span class="token builtin class-name">:</span> <span class="token number">0</span>        <span class="token operator">|</span>                                        <span class="token operator">|</span>
-         <span class="token number">2</span> -<span class="token operator">></span> <span class="token number">3</span>          <span class="token builtin class-name">:</span> <span class="token number">0</span>        <span class="token operator">|</span>                                        <span class="token operator">|</span>
-         <span class="token number">4</span> -<span class="token operator">></span> <span class="token number">7</span>          <span class="token builtin class-name">:</span> <span class="token number">0</span>        <span class="token operator">|</span>                                        <span class="token operator">|</span>
-         <span class="token number">8</span> -<span class="token operator">></span> <span class="token number">15</span>         <span class="token builtin class-name">:</span> <span class="token number">0</span>        <span class="token operator">|</span>                                        <span class="token operator">|</span>
-        <span class="token number">16</span> -<span class="token operator">></span> <span class="token number">31</span>         <span class="token builtin class-name">:</span> <span class="token number">0</span>        <span class="token operator">|</span>                                        <span class="token operator">|</span>
-        <span class="token number">32</span> -<span class="token operator">></span> <span class="token number">63</span>         <span class="token builtin class-name">:</span> <span class="token number">1</span>        <span class="token operator">|</span>*                                       <span class="token operator">|</span>
-        <span class="token number">64</span> -<span class="token operator">></span> <span class="token number">127</span>        <span class="token builtin class-name">:</span> <span class="token number">0</span>        <span class="token operator">|</span>                                        <span class="token operator">|</span>
-       <span class="token number">128</span> -<span class="token operator">></span> <span class="token number">255</span>        <span class="token builtin class-name">:</span> <span class="token number">11</span>       <span class="token operator">|</span>******************                      <span class="token operator">|</span>
-       <span class="token number">256</span> -<span class="token operator">></span> <span class="token number">511</span>        <span class="token builtin class-name">:</span> <span class="token number">24</span>       <span class="token operator">|</span>****************************************<span class="token operator">|</span>
-       <span class="token number">512</span> -<span class="token operator">></span> <span class="token number">1023</span>       <span class="token builtin class-name">:</span> <span class="token number">19</span>       <span class="token operator">|</span>*******************************         <span class="token operator">|</span>
-      <span class="token number">1024</span> -<span class="token operator">></span> <span class="token number">2047</span>       <span class="token builtin class-name">:</span> <span class="token number">1</span>        <span class="token operator">|</span>*                                       <span class="token operator">|</span>
-      <span class="token number">2048</span> -<span class="token operator">></span> <span class="token number">4095</span>       <span class="token builtin class-name">:</span> <span class="token number">1</span>        <span class="token operator">|</span>*                                       <span class="token operator">|</span>
-      <span class="token number">4096</span> -<span class="token operator">></span> <span class="token number">8191</span>       <span class="token builtin class-name">:</span> <span class="token number">17</span>       <span class="token operator">|</span>****************************            <span class="token operator">|</span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">./biolatency</span><br><span class="line">Tracing block device I/O... Hit Ctrl-C to end.</span><br><span class="line">     usecs               : count     distribution</span><br><span class="line">         0 -&gt; 1          : 0        |                                        |</span><br><span class="line">         2 -&gt; 3          : 0        |                                        |</span><br><span class="line">         4 -&gt; 7          : 0        |                                        |</span><br><span class="line">         8 -&gt; 15         : 0        |                                        |</span><br><span class="line">        16 -&gt; 31         : 0        |                                        |</span><br><span class="line">        32 -&gt; 63         : 1        |*                                       |</span><br><span class="line">        64 -&gt; 127        : 0        |                                        |</span><br><span class="line">       128 -&gt; 255        : 11       |******************                      |</span><br><span class="line">       256 -&gt; 511        : 24       |****************************************|</span><br><span class="line">       512 -&gt; 1023       : 19       |*******************************         |</span><br><span class="line">      1024 -&gt; 2047       : 1        |*                                       |</span><br><span class="line">      2048 -&gt; 4095       : 1        |*                                       |</span><br><span class="line">      4096 -&gt; 8191       : 17       |****************************            |</span><br><span class="line"></span><br><span class="line">usecs（延迟区间）延迟时间范围，单位是微秒（μs）。</span><br><span class="line">count（计数）该延迟区间内发生的 I/O 操作次数。</span><br><span class="line">distribution（分布直方图）用星号（*）直观展示各区间操作次数的比例，越长表示次数越多。</span><br></pre></td></tr></table></figure>
 
-usecs（延迟区间）延迟时间范围，单位是微秒（μs）。
-count（计数）该延迟区间内发生的 I/O 操作次数。
-distribution（分布直方图）用星号（*）直观展示各区间操作次数的比例，越长表示次数越多。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="biosnoop查看块设备IO情况"><a href="#biosnoop查看块设备IO情况" class="headerlink" title="biosnoop查看块设备IO情况"></a>biosnoop查看块设备IO情况</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./biosnoop
-TIME<span class="token punctuation">(</span>s<span class="token punctuation">)</span>     COMM           PID     DISK      T SECTOR     BYTES  LAT<span class="token punctuation">(</span>ms<span class="token punctuation">)</span>
-<span class="token number">0.000000</span>    kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.28</span>
-<span class="token number">2.048004</span>    kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.33</span>
-<span class="token number">4.095876</span>    kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.21</span>
-<span class="token number">4.354287</span>    kworker/u8:3   <span class="token number">38</span>      sda       W <span class="token number">58324592</span>   <span class="token number">4096</span>      <span class="token number">2.59</span>
-<span class="token number">6.143810</span>    kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.20</span>
-<span class="token number">8.192088</span>    kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.37</span>
-<span class="token number">10.240044</span>   kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.36</span>
-<span class="token number">12.287971</span>   kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.33</span>
-<span class="token number">14.335888</span>   kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.23</span>
-<span class="token number">16.383926</span>   kworker/0:2    <span class="token number">122248</span>  <span class="token operator">&lt;</span>unknown<span class="token operator">></span> R <span class="token number">18446744073709551615</span> <span class="token number">8</span>         <span class="token number">0.29</span>
-
-TIME<span class="token punctuation">(</span>s<span class="token punctuation">)</span>：工具启动后0秒时触发的操作。
-COMM：内核工作线程 kworker/0:2。
-PID：进程 ID 为 <span class="token number">122248</span>。
-DISK：目标磁盘未知（可能是虚拟设备或元数据操作）。
-T：读操作R，写操作W。
-SECTOR：扇区号
-BYTES：传输了 <span class="token number">8</span> 字节。
-LAT<span class="token punctuation">(</span>ms<span class="token punctuation">)</span>：操作耗时，单位毫秒。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="biosnoop查看块设备IO情况"><a href="#biosnoop查看块设备IO情况" class="headerlink" title="biosnoop查看块设备IO情况"></a>biosnoop查看块设备IO情况</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">./biosnoop</span><br><span class="line">TIME(s)     COMM           PID     DISK      T SECTOR     BYTES  LAT(ms)</span><br><span class="line">0.000000    kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.28</span><br><span class="line">2.048004    kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.33</span><br><span class="line">4.095876    kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.21</span><br><span class="line">4.354287    kworker/u8:3   38      sda       W 58324592   4096      2.59</span><br><span class="line">6.143810    kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.20</span><br><span class="line">8.192088    kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.37</span><br><span class="line">10.240044   kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.36</span><br><span class="line">12.287971   kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.33</span><br><span class="line">14.335888   kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.23</span><br><span class="line">16.383926   kworker/0:2    122248  &lt;unknown&gt; R 18446744073709551615 8         0.29</span><br><span class="line"></span><br><span class="line">TIME(s)：工具启动后0秒时触发的操作。</span><br><span class="line">COMM：内核工作线程 kworker/0:2。</span><br><span class="line">PID：进程 ID 为 122248。</span><br><span class="line">DISK：目标磁盘未知（可能是虚拟设备或元数据操作）。</span><br><span class="line">T：读操作R，写操作W。</span><br><span class="line">SECTOR：扇区号</span><br><span class="line">BYTES：传输了 8 字节。</span><br><span class="line">LAT(ms)：操作耗时，单位毫秒。</span><br></pre></td></tr></table></figure>
 
 <h3 id="cachestat跟踪内核页缓存函数—热点分析"><a href="#cachestat跟踪内核页缓存函数—热点分析" class="headerlink" title="cachestat跟踪内核页缓存函数—热点分析"></a>cachestat跟踪内核页缓存函数—热点分析</h3><p>cachestat工具跟踪内核页缓存函数，并以每秒的速度打印摘要。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./cachestat
-    HITS   MISSES  DIRTIES HITRATIO   BUFFERS_MB  CACHED_MB
-       <span class="token number">0</span>   <span class="token number">137824</span>        <span class="token number">0</span>    <span class="token number">0.00</span>%         <span class="token number">1620</span>       <span class="token number">1379</span>
-     <span class="token number">830</span>   <span class="token number">101376</span>        <span class="token number">0</span>    <span class="token number">0.81</span>%         <span class="token number">1725</span>       <span class="token number">1283</span>
-      <span class="token number">99</span>   <span class="token number">102400</span>        <span class="token number">0</span>    <span class="token number">0.10</span>%         <span class="token number">1817</span>       <span class="token number">1196</span>
-       <span class="token number">0</span>   <span class="token number">103034</span>        <span class="token number">0</span>    <span class="token number">0.00</span>%         <span class="token number">1886</span>       <span class="token number">1115</span>
-     <span class="token number">256</span>   <span class="token number">101376</span>        <span class="token number">0</span>    <span class="token number">0.25</span>%         <span class="token number">1957</span>       <span class="token number">1046</span>
-       <span class="token number">0</span>    <span class="token number">99529</span>        <span class="token number">0</span>    <span class="token number">0.00</span>%         <span class="token number">2010</span>        <span class="token number">992</span>
-     <span class="token number">671</span>    <span class="token number">98304</span>        <span class="token number">0</span>    <span class="token number">0.68</span>%         <span class="token number">2041</span>        <span class="token number">960</span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">./cachestat</span><br><span class="line">    HITS   MISSES  DIRTIES HITRATIO   BUFFERS_MB  CACHED_MB</span><br><span class="line">       0   137824        0    0.00%         1620       1379</span><br><span class="line">     830   101376        0    0.81%         1725       1283</span><br><span class="line">      99   102400        0    0.10%         1817       1196</span><br><span class="line">       0   103034        0    0.00%         1886       1115</span><br><span class="line">     256   101376        0    0.25%         1957       1046</span><br><span class="line">       0    99529        0    0.00%         2010        992</span><br><span class="line">     671    98304        0    0.68%         2041        960</span><br><span class="line"></span><br><span class="line">测试命令:</span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/sda2 of=/dev/null</span><br><span class="line"></span><br><span class="line">HITS：缓存命中次数；</span><br><span class="line">MISSES：缓存未命中次数；</span><br><span class="line">DIRTIES：加入缓存脏页数；</span><br><span class="line">RATIO：缓存命中率；</span><br><span class="line">BUFFERS_MB：buffers大小，单位：MB；</span><br><span class="line">CACHED_MB：cache大小，单位：MB；</span><br></pre></td></tr></table></figure>
 
-测试命令:
-<span class="token function">dd</span> <span class="token assign-left variable">if</span><span class="token operator">=</span>/dev/sda2 <span class="token assign-left variable">of</span><span class="token operator">=</span>/dev/null
-
-HITS：缓存命中次数；
-MISSES：缓存未命中次数；
-DIRTIES：加入缓存脏页数；
-RATIO：缓存命中率；
-BUFFERS_MB：buffers大小，单位：MB；
-CACHED_MB：cache大小，单位：MB；<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="gethostlatency追踪解析"><a href="#gethostlatency追踪解析" class="headerlink" title="gethostlatency追踪解析"></a>gethostlatency追踪解析</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./gethostlatency
-TIME      PID     COMM                  LATms HOST
-04:56:00  <span class="token number">122371</span>  <span class="token function">ping</span>                   <span class="token number">9.82</span> baidu.com
-04:56:05  <span class="token number">122372</span>  <span class="token function">ping</span>                   <span class="token number">1.71</span> google
-04:56:07  <span class="token number">122373</span>  <span class="token function">ping</span>                   <span class="token number">8.55</span> google.com
-04:57:07  <span class="token number">122374</span>  isc-worker0000         <span class="token number">0.02</span> <span class="token number">127.0</span>.0.1
-04:57:07  <span class="token number">122374</span>  isc-worker0000         <span class="token number">0.01</span> ::1
-04:57:18  <span class="token number">122379</span>  isc-worker0000         <span class="token number">0.01</span> <span class="token number">127.0</span>.0.1
-04:57:18  <span class="token number">122379</span>  isc-worker0000         <span class="token number">0.01</span> ::1
-
-TIME 操作触发的时间（时:分:秒）
-PID 发起主机名解析的进程 ID
-COMM 进程名称（例如 ping、isc-worker0000）
-LATms 主机名解析的延迟,单位：ms
-HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="gethostlatency追踪解析"><a href="#gethostlatency追踪解析" class="headerlink" title="gethostlatency追踪解析"></a>gethostlatency追踪解析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">./gethostlatency</span><br><span class="line">TIME      PID     COMM                  LATms HOST</span><br><span class="line">04:56:00  122371  ping                   9.82 baidu.com</span><br><span class="line">04:56:05  122372  ping                   1.71 google</span><br><span class="line">04:56:07  122373  ping                   8.55 google.com</span><br><span class="line">04:57:07  122374  isc-worker0000         0.02 127.0.0.1</span><br><span class="line">04:57:07  122374  isc-worker0000         0.01 ::1</span><br><span class="line">04:57:18  122379  isc-worker0000         0.01 127.0.0.1</span><br><span class="line">04:57:18  122379  isc-worker0000         0.01 ::1</span><br><span class="line"></span><br><span class="line">TIME 操作触发的时间（时:分:秒）</span><br><span class="line">PID 发起主机名解析的进程 ID</span><br><span class="line">COMM 进程名称（例如 ping、isc-worker0000）</span><br><span class="line">LATms 主机名解析的延迟,单位：ms</span><br><span class="line">HOST 进程尝试解析的目标主机名或 IP 地址</span><br></pre></td></tr></table></figure>
 
     </article>
     <!-- license -->
@@ -6793,18 +6650,6 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6888,13 +6733,13 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7269,13 +7114,13 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7515,13 +7360,13 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8220,13 +8065,13 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8770,9 +8615,9 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8780,9 +8625,9 @@ HOST 进程尝试解析的目标主机名或 IP 地址<span aria-hidden="true" c
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -498,333 +499,36 @@
 <li><strong>控制平面组件配置失效</strong><br>主节点上会有一些包含绑定到旧IP的配置，如apiserver的–advertise-address， etcd的–listen-peer-urls、–listen-client-urls、–initial-advertise-peer-urls、–advertise-client-urls</li>
 <li><strong>节点对象状态不一致</strong><br>工作节点状态信息（如 InternalIP）依然是旧IP，导致网络功能异常</li>
 </ul>
-<h2 id="仅主节点IP改变"><a href="#仅主节点IP改变" class="headerlink" title="仅主节点IP改变"></a>仅主节点IP改变</h2><h3 id="模拟故障"><a href="#模拟故障" class="headerlink" title="模拟故障"></a><strong>模拟故障</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 原ip 192.168.10.151</span>
-
-<span class="token comment"># 新ip 192.168.10.152</span>
-nmcli connection modify ens18 ipv4.method manual <span class="token punctuation">\</span>
-ipv4.addresses <span class="token number">192.168</span>.10.152/24 ipv4.gateway <span class="token number">192.168</span>.10.1 <span class="token punctuation">\</span>
-ipv4.dns <span class="token number">8.8</span>.8.8
-nmcli connection up ens18
-
-kubectl get nodes
-Unable to connect to the server: dial tcp <span class="token number">192.168</span>.10.151:6443: connect: no route to <span class="token function">host</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="仅主节点IP改变"><a href="#仅主节点IP改变" class="headerlink" title="仅主节点IP改变"></a>仅主节点IP改变</h2><h3 id="模拟故障"><a href="#模拟故障" class="headerlink" title="模拟故障"></a><strong>模拟故障</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 原ip 192.168.10.151</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 新ip 192.168.10.152</span></span><br><span class="line">nmcli connection modify ens18 ipv4.method manual \</span><br><span class="line">ipv4.addresses 192.168.10.152/24 ipv4.gateway 192.168.10.1 \</span><br><span class="line">ipv4.dns 8.8.8.8</span><br><span class="line">nmcli connection up ens18</span><br><span class="line"></span><br><span class="line">kubectl get nodes</span><br><span class="line">Unable to connect to the server: dial tcp 192.168.10.151:6443: connect: no route to host</span><br></pre></td></tr></table></figure>
 
 <h3 id="重新编辑kubeadm配置文件"><a href="#重新编辑kubeadm配置文件" class="headerlink" title="重新编辑kubeadm配置文件"></a><strong>重新编辑kubeadm配置文件</strong></h3><p>将其中的192.168.10.151改为192.168.10.152，然后我们使用kubeadm初始化新的证书与配置文件</p>
 <p><code>kubeadm init phase</code>用于分阶段执行集群初始化流程。它的核心作用是允许用户按需运行初始化过程中的某个独立步骤（Phase），而不是一次性执行完整的初始化流程。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> kubeadm.yaml
-apiVersion: kubeadm.k8s.io/v1beta3
-bootstrapTokens:
-- groups:
-  token: abcdef.0123456789abcdef
-  ttl: 24h0m0s
-  usages:
-kind: InitConfiguration
-localAPIEndpoint:
-  advertiseAddress: <span class="token number">192.168</span>.10.152
-  bindPort: <span class="token number">6443</span>
-nodeRegistration:
-  criSocket: unix://var/run/containerd/containerd.sock
-  imagePullPolicy: IfNotPresent
-  name: <span class="token builtin class-name">test</span>
-  taints: null
----
-apiServer:
-  timeoutForControlPlane: 4m0s
-apiVersion: kubeadm.k8s.io/v1beta3
-certificatesDir: /etc/kubernetes/pki
-clusterName: kubernetes
-controllerManager: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
-dns: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
-etcd:
-  local:
-    dataDir: /var/lib/etcd
-imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
-kind: ClusterConfiguration
-kubernetesVersion: <span class="token number">1.30</span>.0
-networking:
-  dnsDomain: cluster.local
-  serviceSubnet: <span class="token number">10.96</span>.0.0/12
-  podSubnet: <span class="token number">10.244</span>.0.0/16
-scheduler: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
----
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-mode: ipvs
----
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-cgroupDriver: systemd
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> kubeadm.yaml</span><br><span class="line">apiVersion: kubeadm.k8s.io/v1beta3</span><br><span class="line">bootstrapTokens:</span><br><span class="line">- <span class="built_in">groups</span>:</span><br><span class="line">  token: abcdef.0123456789abcdef</span><br><span class="line">  ttl: 24h0m0s</span><br><span class="line">  usages:</span><br><span class="line">kind: InitConfiguration</span><br><span class="line">localAPIEndpoint:</span><br><span class="line">  advertiseAddress: 192.168.10.152</span><br><span class="line">  bindPort: 6443</span><br><span class="line">nodeRegistration:</span><br><span class="line">  criSocket: unix://var/run/containerd/containerd.sock</span><br><span class="line">  imagePullPolicy: IfNotPresent</span><br><span class="line">  name: <span class="built_in">test</span></span><br><span class="line">  taints: null</span><br><span class="line">---</span><br><span class="line">apiServer:</span><br><span class="line">  timeoutForControlPlane: 4m0s</span><br><span class="line">apiVersion: kubeadm.k8s.io/v1beta3</span><br><span class="line">certificatesDir: /etc/kubernetes/pki</span><br><span class="line">clusterName: kubernetes</span><br><span class="line">controllerManager: &#123;&#125;</span><br><span class="line">dns: &#123;&#125;</span><br><span class="line">etcd:</span><br><span class="line">  <span class="built_in">local</span>:</span><br><span class="line">    dataDir: /var/lib/etcd</span><br><span class="line">imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers</span><br><span class="line">kind: ClusterConfiguration</span><br><span class="line">kubernetesVersion: 1.30.0</span><br><span class="line">networking:</span><br><span class="line">  dnsDomain: cluster.local</span><br><span class="line">  serviceSubnet: 10.96.0.0/12</span><br><span class="line">  podSubnet: 10.244.0.0/16</span><br><span class="line">scheduler: &#123;&#125;</span><br><span class="line">---</span><br><span class="line">apiVersion: kubeproxy.config.k8s.io/v1alpha1</span><br><span class="line">kind: KubeProxyConfiguration</span><br><span class="line">mode: ipvs</span><br><span class="line">---</span><br><span class="line">apiVersion: kubelet.config.k8s.io/v1beta1</span><br><span class="line">kind: KubeletConfiguration</span><br><span class="line">cgroupDriver: systemd</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h3 id="重新生成apiserver证书"><a href="#重新生成apiserver证书" class="headerlink" title="重新生成apiserver证书"></a><strong>重新生成apiserver证书</strong></h3><p>ca证书别动，etcd证书也别动</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 备份证书与配置文件</span>
-<span class="token function">cp</span> <span class="token parameter variable">-r</span> /etc/kubernetes /etc/kubernetes.bak
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 备份证书与配置文件</span></span><br><span class="line"><span class="built_in">cp</span> -r /etc/kubernetes /etc/kubernetes.bak</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只需要修改apiserver的证书，其他不要动</span></span><br><span class="line"><span class="built_in">cd</span> /etc/kubernetes/pki</span><br><span class="line"><span class="built_in">mv</span> apiserver.key apiserver.key.bak</span><br><span class="line"><span class="built_in">mv</span> apiserver.crt apiserver.crt.bak</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用kubeadm重新生成证书</span></span><br><span class="line">kubeadm init phase certs all --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line">[certs] Using certificateDir folder <span class="string">&quot;/etc/kubernetes/pki&quot;</span></span><br><span class="line">[certs] Using existing ca certificate authority</span><br><span class="line">[certs] Generating <span class="string">&quot;apiserver&quot;</span> certificate and key</span><br><span class="line">[certs] apiserver serving cert is signed <span class="keyword">for</span> DNS names [kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local <span class="built_in">test</span>] and IPs [10.96.0.1 192.168.10.151]</span><br><span class="line">[certs] Using existing apiserver-kubelet-client certificate and key on disk</span><br><span class="line">[certs] Using existing front-proxy-ca certificate authority</span><br><span class="line">[certs] Using existing front-proxy-client certificate and key on disk</span><br><span class="line">[certs] Using existing etcd/ca certificate authority</span><br><span class="line">[certs] Using existing etcd/server certificate and key on disk</span><br><span class="line">[certs] Using existing etcd/peer certificate and key on disk</span><br><span class="line">[certs] Using existing etcd/healthcheck-client certificate and key on disk</span><br><span class="line">[certs] Using existing apiserver-etcd-client certificate and key on disk</span><br><span class="line">[certs] Using the existing <span class="string">&quot;sa&quot;</span> key</span><br><span class="line"></span><br><span class="line"><span class="built_in">ls</span> -l /etc/kubernetes/pki/</span><br><span class="line">-rw-r--r-- 1 root root 1277 Jun 18 01:54 apiserver.crt</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">可见api-server证书，与etcd证书等均已经重新更新</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 只需要修改apiserver的证书，其他不要动</span>
-<span class="token builtin class-name">cd</span> /etc/kubernetes/pki
-<span class="token function">mv</span> apiserver.key apiserver.key.bak
-<span class="token function">mv</span> apiserver.crt apiserver.crt.bak
+<h3 id="更新控制平面配置文件"><a href="#更新控制平面配置文件" class="headerlink" title="更新控制平面配置文件"></a><strong>更新控制平面配置文件</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 备份一手</span></span><br><span class="line"><span class="built_in">cp</span> -a /etc/kubernetes/manifests /etc/kubernetes/manifests.backup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成新控制平面配置文件</span></span><br><span class="line">kubeadm init phase control-plane all --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line">[control-plane] Using manifest folder <span class="string">&quot;/etc/kubernetes/manifests&quot;</span></span><br><span class="line">[control-plane] Creating static Pod manifest <span class="keyword">for</span> <span class="string">&quot;kube-apiserver&quot;</span></span><br><span class="line">[control-plane] Creating static Pod manifest <span class="keyword">for</span> <span class="string">&quot;kube-controller-manager&quot;</span></span><br><span class="line">[control-plane] Creating static Pod manifest <span class="keyword">for</span> <span class="string">&quot;kube-scheduler&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /etc/kubernetes/manifests/kube-apiserver.yaml | grep 152</span><br><span class="line">    kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 192.168.10.152:6443</span><br><span class="line">    - --advertise-address=192.168.10.152</span><br><span class="line">        host: 192.168.10.152</span><br><span class="line">        host: 192.168.10.152</span><br><span class="line">        host: 192.168.10.152</span><br><span class="line">可见控制平面配置文件已经更新</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 使用kubeadm重新生成证书</span>
-kubeadm init phase certs all <span class="token parameter variable">--config</span> kubeadm.yaml
+<h3 id="更新etcd配置"><a href="#更新etcd配置" class="headerlink" title="更新etcd配置"></a><strong>更新etcd配置</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">kubeadm init phase etcd <span class="built_in">local</span> --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 用sed也可以</span></span><br><span class="line"><span class="comment"># sed -i &#x27;s/192.168.10.151/192.168.10.152/g&#x27; /etc/kubernetes/manifests/etcd.yaml</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /etc/kubernetes/manifests/etcd.yaml | grep -E <span class="string">&#x27;advertise-client-urls|listen-client-urls&#x27;</span></span><br><span class="line">  kubeadm.kubernetes.io/etcd.advertise-client-urls: https://192.168.10.152:2379</span><br><span class="line"></span><br><span class="line">systemctl restart kubelet</span><br></pre></td></tr></table></figure>
 
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using certificateDir folder <span class="token string">"/etc/kubernetes/pki"</span>
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing ca certificate authority
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Generating <span class="token string">"apiserver"</span> certificate and key
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> apiserver serving cert is signed <span class="token keyword">for</span> DNS names <span class="token punctuation">[</span>kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local test<span class="token punctuation">]</span> and IPs <span class="token punctuation">[</span><span class="token number">10.96</span>.0.1 <span class="token number">192.168</span>.10.151<span class="token punctuation">]</span>
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing apiserver-kubelet-client certificate and key on disk
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing front-proxy-ca certificate authority
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing front-proxy-client certificate and key on disk
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing etcd/ca certificate authority
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing etcd/server certificate and key on disk
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing etcd/peer certificate and key on disk
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing etcd/healthcheck-client certificate and key on disk
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using existing apiserver-etcd-client certificate and key on disk
-<span class="token punctuation">[</span>certs<span class="token punctuation">]</span> Using the existing <span class="token string">"sa"</span> key
+<h3 id="更新kubelet配置文件"><a href="#更新kubelet配置文件" class="headerlink" title="更新kubelet配置文件"></a>更新kubelet配置文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 重新生成/etc/kubernetes/kubelet.conf</span></span><br><span class="line"><span class="built_in">rm</span> -f /etc/kubernetes/kubelet.conf</span><br><span class="line">这个文件包含kubelet连接apiserver的证书，密钥和证书路径</span><br><span class="line"></span><br><span class="line">kubeadm init phase kubeconfig kubelet --config kubeadm.yaml</span><br><span class="line">[kubeconfig] Writing <span class="string">&quot;kubelet.conf&quot;</span> kubeconfig file</span><br><span class="line"></span><br><span class="line"><span class="comment">#  Kubelet服务配置文件</span></span><br><span class="line"><span class="built_in">rm</span> -f /var/lib/kubelet/config.yaml</span><br><span class="line"></span><br><span class="line">kubeadm init phase kubelet-start --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line">[kubelet-start] Writing kubelet environment file with flags to file <span class="string">&quot;/var/lib/kubelet/kubeadm-flags.env&quot;</span></span><br><span class="line">[kubelet-start] Writing kubelet configuration to file <span class="string">&quot;/var/lib/kubelet/config.yaml&quot;</span></span><br><span class="line">[kubelet-start] Starting the kubelet</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将改动写入文件</span></span><br><span class="line">kubeadm init phase kubelet-finalize all --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart kubelet</span><br></pre></td></tr></table></figure>
 
-<span class="token function">ls</span> <span class="token parameter variable">-l</span> /etc/kubernetes/pki/
--rw-r--r-- <span class="token number">1</span> root root <span class="token number">1277</span> Jun <span class="token number">18</span> 01:54 apiserver.crt
-<span class="token punctuation">..</span>.
+<h3 id="更新kubeconfig"><a href="#更新kubeconfig" class="headerlink" title="更新kubeconfig"></a><strong>更新kubeconfig</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">rm</span> -f /etc/kubernetes/&#123;admin.conf,kubelet.conf,controller-manager.conf,scheduler.conf&#125;</span><br><span class="line"><span class="built_in">rm</span> -f /etc/kubernetes/*.conf</span><br><span class="line"></span><br><span class="line">kubeadm init phase kubeconfig all --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line">[kubeconfig] Using kubeconfig folder <span class="string">&quot;/etc/kubernetes&quot;</span></span><br><span class="line">[kubeconfig] Writing <span class="string">&quot;admin.conf&quot;</span> kubeconfig file</span><br><span class="line">[kubeconfig] Writing <span class="string">&quot;super-admin.conf&quot;</span> kubeconfig file</span><br><span class="line">[kubeconfig] Writing <span class="string">&quot;kubelet.conf&quot;</span> kubeconfig file</span><br><span class="line">[kubeconfig] Writing <span class="string">&quot;controller-manager.conf&quot;</span> kubeconfig file</span><br><span class="line">[kubeconfig] Writing <span class="string">&quot;scheduler.conf&quot;</span> kubeconfig file</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新kubectl配置</span></span><br><span class="line"><span class="built_in">cp</span> -i /etc/kubernetes/admin.conf <span class="variable">$HOME</span>/.kube/config</span><br><span class="line"><span class="built_in">chown</span> $(<span class="built_in">id</span> -u):$(<span class="built_in">id</span> -g) <span class="variable">$HOME</span>/.kube/config</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启kubelet</span></span><br><span class="line">systemctl restart kubelet</span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME    STATUS   ROLES           AGE   VERSION</span><br><span class="line">slave   Ready    &lt;none&gt;          14h   v1.30.0</span><br><span class="line"><span class="built_in">test</span>    Ready    control-plane   14h   v1.30.0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-可见api-server证书，与etcd证书等均已经重新更新<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="更新configmap配置"><a href="#更新configmap配置" class="headerlink" title="更新configmap配置"></a>更新<strong>configmap配置</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">kubectl get cm -n kube-system</span><br><span class="line">NAME                                                   DATA   AGE</span><br><span class="line">coredns                                                1      35m</span><br><span class="line">extension-apiserver-authentication                     6      35m</span><br><span class="line">kube-apiserver-legacy-service-account-token-tracking   1      35m</span><br><span class="line">kube-proxy                                             2      35m</span><br><span class="line">kube-root-ca.crt                                       1      35m</span><br><span class="line">kubeadm-config                                         1      35m</span><br><span class="line">kubelet-config                                         1      35m</span><br><span class="line"></span><br><span class="line">kubeadm init phase upload-config kubeadm --config kubeadm.yaml</span><br><span class="line"></span><br><span class="line">kubectl -n kube-system edit cm kube-proxy</span><br><span class="line">将原IP修改为现在IP</span><br></pre></td></tr></table></figure>
 
-<h3 id="更新控制平面配置文件"><a href="#更新控制平面配置文件" class="headerlink" title="更新控制平面配置文件"></a><strong>更新控制平面配置文件</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 备份一手</span>
-<span class="token function">cp</span> <span class="token parameter variable">-a</span> /etc/kubernetes/manifests /etc/kubernetes/manifests.backup
-
-<span class="token comment"># 生成新控制平面配置文件</span>
-kubeadm init phase control-plane all <span class="token parameter variable">--config</span> kubeadm.yaml
-
-<span class="token punctuation">[</span>control-plane<span class="token punctuation">]</span> Using manifest folder <span class="token string">"/etc/kubernetes/manifests"</span>
-<span class="token punctuation">[</span>control-plane<span class="token punctuation">]</span> Creating static Pod manifest <span class="token keyword">for</span> <span class="token string">"kube-apiserver"</span>
-<span class="token punctuation">[</span>control-plane<span class="token punctuation">]</span> Creating static Pod manifest <span class="token keyword">for</span> <span class="token string">"kube-controller-manager"</span>
-<span class="token punctuation">[</span>control-plane<span class="token punctuation">]</span> Creating static Pod manifest <span class="token keyword">for</span> <span class="token string">"kube-scheduler"</span>
-
-<span class="token function">cat</span> /etc/kubernetes/manifests/kube-apiserver.yaml <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">152</span>
-    kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: <span class="token number">192.168</span>.10.152:6443
-    - --advertise-address<span class="token operator">=</span><span class="token number">192.168</span>.10.152
-        host: <span class="token number">192.168</span>.10.152
-        host: <span class="token number">192.168</span>.10.152
-        host: <span class="token number">192.168</span>.10.152
-可见控制平面配置文件已经更新<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="更新etcd配置"><a href="#更新etcd配置" class="headerlink" title="更新etcd配置"></a><strong>更新etcd配置</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubeadm init phase etcd <span class="token builtin class-name">local</span> <span class="token parameter variable">--config</span> kubeadm.yaml
-
-<span class="token comment"># 用sed也可以</span>
-<span class="token comment"># sed -i 's/192.168.10.151/192.168.10.152/g' /etc/kubernetes/manifests/etcd.yaml</span>
-
-<span class="token function">cat</span> /etc/kubernetes/manifests/etcd.yaml <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-E</span> <span class="token string">'advertise-client-urls|listen-client-urls'</span>
-  kubeadm.kubernetes.io/etcd.advertise-client-urls: https://192.168.10.152:2379
-
-systemctl restart kubelet<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="更新kubelet配置文件"><a href="#更新kubelet配置文件" class="headerlink" title="更新kubelet配置文件"></a>更新kubelet配置文件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 重新生成/etc/kubernetes/kubelet.conf</span>
-<span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/kubernetes/kubelet.conf
-这个文件包含kubelet连接apiserver的证书，密钥和证书路径
-
-kubeadm init phase kubeconfig kubelet <span class="token parameter variable">--config</span> kubeadm.yaml
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Writing <span class="token string">"kubelet.conf"</span> kubeconfig <span class="token function">file</span>
-
-<span class="token comment">#  Kubelet服务配置文件</span>
-<span class="token function">rm</span> <span class="token parameter variable">-f</span> /var/lib/kubelet/config.yaml
-
-kubeadm init phase kubelet-start <span class="token parameter variable">--config</span> kubeadm.yaml
-
-<span class="token punctuation">[</span>kubelet-start<span class="token punctuation">]</span> Writing kubelet environment <span class="token function">file</span> with flags to <span class="token function">file</span> <span class="token string">"/var/lib/kubelet/kubeadm-flags.env"</span>
-<span class="token punctuation">[</span>kubelet-start<span class="token punctuation">]</span> Writing kubelet configuration to <span class="token function">file</span> <span class="token string">"/var/lib/kubelet/config.yaml"</span>
-<span class="token punctuation">[</span>kubelet-start<span class="token punctuation">]</span> Starting the kubelet
-
-<span class="token comment"># 将改动写入文件</span>
-kubeadm init phase kubelet-finalize all <span class="token parameter variable">--config</span> kubeadm.yaml
-
-systemctl daemon-reload
-systemctl restart kubelet<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="更新kubeconfig"><a href="#更新kubeconfig" class="headerlink" title="更新kubeconfig"></a><strong>更新kubeconfig</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/kubernetes/<span class="token punctuation">&#123;</span>admin.conf,kubelet.conf,controller-manager.conf,scheduler.conf<span class="token punctuation">&#125;</span>
-<span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/kubernetes/*.conf
-
-kubeadm init phase kubeconfig all <span class="token parameter variable">--config</span> kubeadm.yaml
-
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Using kubeconfig folder <span class="token string">"/etc/kubernetes"</span>
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Writing <span class="token string">"admin.conf"</span> kubeconfig <span class="token function">file</span>
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Writing <span class="token string">"super-admin.conf"</span> kubeconfig <span class="token function">file</span>
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Writing <span class="token string">"kubelet.conf"</span> kubeconfig <span class="token function">file</span>
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Writing <span class="token string">"controller-manager.conf"</span> kubeconfig <span class="token function">file</span>
-<span class="token punctuation">[</span>kubeconfig<span class="token punctuation">]</span> Writing <span class="token string">"scheduler.conf"</span> kubeconfig <span class="token function">file</span>
-
-<span class="token comment"># 更新kubectl配置</span>
-<span class="token function">cp</span> <span class="token parameter variable">-i</span> /etc/kubernetes/admin.conf <span class="token environment constant">$HOME</span>/.kube/config
-<span class="token function">chown</span> <span class="token variable"><span class="token variable">$(</span><span class="token function">id</span> <span class="token parameter variable">-u</span><span class="token variable">)</span></span><span class="token builtin class-name">:</span><span class="token variable"><span class="token variable">$(</span><span class="token function">id</span> <span class="token parameter variable">-g</span><span class="token variable">)</span></span> <span class="token environment constant">$HOME</span>/.kube/config
-
-<span class="token comment"># 重启kubelet</span>
-systemctl restart kubelet
-
-<span class="token comment"># </span>
-kubectl get nodes
-NAME    STATUS   ROLES           AGE   VERSION
-slave   Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>          14h   v1.30.0
-<span class="token builtin class-name">test</span>    Ready    control-plane   14h   v1.30.0
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="更新configmap配置"><a href="#更新configmap配置" class="headerlink" title="更新configmap配置"></a>更新<strong>configmap配置</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get cm <span class="token parameter variable">-n</span> kube-system
-NAME                                                   DATA   AGE
-coredns                                                <span class="token number">1</span>      35m
-extension-apiserver-authentication                     <span class="token number">6</span>      35m
-kube-apiserver-legacy-service-account-token-tracking   <span class="token number">1</span>      35m
-kube-proxy                                             <span class="token number">2</span>      35m
-kube-root-ca.crt                                       <span class="token number">1</span>      35m
-kubeadm-config                                         <span class="token number">1</span>      35m
-kubelet-config                                         <span class="token number">1</span>      35m
-
-kubeadm init phase upload-config kubeadm <span class="token parameter variable">--config</span> kubeadm.yaml
-
-kubectl <span class="token parameter variable">-n</span> kube-system edit cm kube-proxy
-将原IP修改为现在IP<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="从节点kubelet配置调整"><a href="#从节点kubelet配置调整" class="headerlink" title="从节点kubelet配置调整"></a>从节点kubelet配置调整</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> /etc/kubernetes/kubelet.conf
-或者
-
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/192.168.10.151/192.168.10.152/g'</span> /etc/kubernetes/kubelet.conf
-
-systemctl restart kubelet<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="从节点kubelet配置调整"><a href="#从节点kubelet配置调整" class="headerlink" title="从节点kubelet配置调整"></a>从节点kubelet配置调整</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/kubernetes/kubelet.conf</span><br><span class="line">或者</span><br><span class="line"></span><br><span class="line">sed -i <span class="string">&#x27;s/192.168.10.151/192.168.10.152/g&#x27;</span> /etc/kubernetes/kubelet.conf</span><br><span class="line"></span><br><span class="line">systemctl restart kubelet</span><br></pre></td></tr></table></figure>
 
 <h3 id="重新安装网络插件（可选）"><a href="#重新安装网络插件（可选）" class="headerlink" title="重新安装网络插件（可选）"></a>重新安装网络插件（可选）</h3><p>直接重启也可以</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">我使用的是calico
-<span class="token comment"># 将calico的pod全部强制删除</span>
-kubectl delete pods <span class="token parameter variable">--all</span> <span class="token parameter variable">--namespace</span><span class="token operator">=</span>calico-apiserver <span class="token parameter variable">--force</span> --grace-period<span class="token operator">=</span><span class="token number">0</span>
-kubectl delete pods <span class="token parameter variable">--all</span> <span class="token parameter variable">--namespace</span><span class="token operator">=</span>calico-system <span class="token parameter variable">--force</span> --grace-period<span class="token operator">=</span><span class="token number">0</span>
-kubectl delete pods <span class="token parameter variable">--all</span> <span class="token parameter variable">--namespace</span><span class="token operator">=</span>tigera-operator <span class="token parameter variable">--force</span> --grace-period<span class="token operator">=</span><span class="token number">0</span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">我使用的是calico</span><br><span class="line"><span class="comment"># 将calico的pod全部强制删除</span></span><br><span class="line">kubectl delete pods --all --namespace=calico-apiserver --force --grace-period=0</span><br><span class="line">kubectl delete pods --all --namespace=calico-system --force --grace-period=0</span><br><span class="line">kubectl delete pods --all --namespace=tigera-operator --force --grace-period=0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新应用资源</span></span><br><span class="line">kubectl apply --server-side tigera-operator.yaml</span><br><span class="line">kubectl apply -f custom-resources.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启电脑</span></span><br><span class="line">systemctl reboot</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 重新应用资源</span>
-kubectl apply --server-side tigera-operator.yaml
-kubectl apply <span class="token parameter variable">-f</span> custom-resources.yaml
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pods -A -owide</span><br><span class="line">NAMESPACE          NAME                                       READY   STATUS    RESTARTS         AGE     IP               NODE    NOMINATED NODE   READINESS GATES</span><br><span class="line">calico-apiserver   calico-apiserver-7dbb565dd-7fbx2           1/1     Running   1 (6m40s ago)    7m12s   10.244.25.8      slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-apiserver   calico-apiserver-7dbb565dd-tq8rt           1/1     Running   0                7m12s   10.244.27.199    <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-kube-controllers-64c85b8c9f-vf274   1/1     Running   0                7m12s   10.244.25.7      slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-node-4lj9h                          1/1     Running   0                7m12s   192.168.10.231   slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-node-lzxfq                          1/1     Running   0                7m12s   192.168.10.152   <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-typha-84b5fbbc4f-skkpj              1/1     Running   0                7m12s   192.168.10.231   slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      csi-node-driver-92mhf                      2/2     Running   0                7m12s   10.244.25.9      slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      csi-node-driver-lptz7                      2/2     Running   0                7m12s   10.244.27.200    <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        coredns-6d58d46f65-2rw4q                   1/1     Running   1 (7m46s ago)    75m     10.244.27.197    <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        coredns-6d58d46f65-tqxvb                   1/1     Running   1 (7m46s ago)    75m     10.244.27.198    <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        etcd-test                                  1/1     Running   1 (7m46s ago)    60m     192.168.10.152   <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        kube-apiserver-test                        1/1     Running   1 (7m46s ago)    60m     192.168.10.152   <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        kube-controller-manager-test               1/1     Running   13 (7m46s ago)   75m     192.168.10.152   <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        kube-proxy-5pg9g                           1/1     Running   1 (7m49s ago)    73m     192.168.10.231   slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        kube-proxy-dkvk4                           1/1     Running   1 (7m46s ago)    75m     192.168.10.152   <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">kube-system        kube-scheduler-test                        1/1     Running   13 (7m46s ago)   75m     192.168.10.152   <span class="built_in">test</span>    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">tigera-operator    tigera-operator-767c6b76db-kjd65           1/1     Running   0                7m12s   192.168.10.231   slave   &lt;none&gt;           &lt;none&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 重启电脑</span>
-systemctl <span class="token function">reboot</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get pods <span class="token parameter variable">-A</span> <span class="token parameter variable">-owide</span>
-NAMESPACE          NAME                                       READY   STATUS    RESTARTS         AGE     IP               NODE    NOMINATED NODE   READINESS GATES
-calico-apiserver   calico-apiserver-7dbb565dd-7fbx2           <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>6m40s ago<span class="token punctuation">)</span>    7m12s   <span class="token number">10.244</span>.25.8      slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-apiserver   calico-apiserver-7dbb565dd-tq8rt           <span class="token number">1</span>/1     Running   <span class="token number">0</span>                7m12s   <span class="token number">10.244</span>.27.199    <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-kube-controllers-64c85b8c9f-vf274   <span class="token number">1</span>/1     Running   <span class="token number">0</span>                7m12s   <span class="token number">10.244</span>.25.7      slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-node-4lj9h                          <span class="token number">1</span>/1     Running   <span class="token number">0</span>                7m12s   <span class="token number">192.168</span>.10.231   slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-node-lzxfq                          <span class="token number">1</span>/1     Running   <span class="token number">0</span>                7m12s   <span class="token number">192.168</span>.10.152   <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-typha-84b5fbbc4f-skkpj              <span class="token number">1</span>/1     Running   <span class="token number">0</span>                7m12s   <span class="token number">192.168</span>.10.231   slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      csi-node-driver-92mhf                      <span class="token number">2</span>/2     Running   <span class="token number">0</span>                7m12s   <span class="token number">10.244</span>.25.9      slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      csi-node-driver-lptz7                      <span class="token number">2</span>/2     Running   <span class="token number">0</span>                7m12s   <span class="token number">10.244</span>.27.200    <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        coredns-6d58d46f65-2rw4q                   <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>    75m     <span class="token number">10.244</span>.27.197    <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        coredns-6d58d46f65-tqxvb                   <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>    75m     <span class="token number">10.244</span>.27.198    <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        etcd-test                                  <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>    60m     <span class="token number">192.168</span>.10.152   <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        kube-apiserver-test                        <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>    60m     <span class="token number">192.168</span>.10.152   <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        kube-controller-manager-test               <span class="token number">1</span>/1     Running   <span class="token number">13</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>   75m     <span class="token number">192.168</span>.10.152   <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        kube-proxy-5pg9g                           <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>7m49s ago<span class="token punctuation">)</span>    73m     <span class="token number">192.168</span>.10.231   slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        kube-proxy-dkvk4                           <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>    75m     <span class="token number">192.168</span>.10.152   <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-kube-system        kube-scheduler-test                        <span class="token number">1</span>/1     Running   <span class="token number">13</span> <span class="token punctuation">(</span>7m46s ago<span class="token punctuation">)</span>   75m     <span class="token number">192.168</span>.10.152   <span class="token builtin class-name">test</span>    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-tigera-operator    tigera-operator-767c6b76db-kjd65           <span class="token number">1</span>/1     Running   <span class="token number">0</span>                7m12s   <span class="token number">192.168</span>.10.231   slave   <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="快速脚本"><a href="#快速脚本" class="headerlink" title="快速脚本"></a>快速脚本</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token shebang important">#!/bin/bash</span>
-<span class="token builtin class-name">export</span> <span class="token assign-left variable">oldip1</span><span class="token operator">=</span><span class="token number">192.168</span>.10.152
-<span class="token builtin class-name">export</span> <span class="token assign-left variable">newip1</span><span class="token operator">=</span><span class="token number">192.168</span>.10.151
-
-<span class="token function">find</span> /etc/kubernetes <span class="token parameter variable">-type</span> f <span class="token operator">|</span> <span class="token function">xargs</span> <span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s/<span class="token variable">$oldip1</span>/<span class="token variable">$newip1</span>/"</span>
-<span class="token function">find</span> /root/.kube/config <span class="token parameter variable">-type</span> f <span class="token operator">|</span> <span class="token function">xargs</span> <span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s/<span class="token variable">$oldip1</span>/<span class="token variable">$newip1</span>/"</span>
-
-<span class="token builtin class-name">cd</span> /root/.kube/cache/discovery
-<span class="token function">mv</span> <span class="token variable">$&#123;oldip1&#125;</span>_6443 <span class="token variable">$&#123;newip1&#125;</span>_6443
-
-<span class="token builtin class-name">cd</span> /etc/kubernetes/pki
-<span class="token function">mv</span> <span class="token parameter variable">-f</span> apiserver.key apiserver.key.bak
-<span class="token function">mv</span> <span class="token parameter variable">-f</span> apiserver.crt apiserver.crt.bak
-
-<span class="token builtin class-name">cd</span> ~
-kubeadm init phase certs all <span class="token parameter variable">--config</span> kubeadm.yaml
-systemctl restart kubelet
-
-kubectl <span class="token parameter variable">-n</span> kube-system edit cm kube-proxy
-修改为新IP
-
-systemctl <span class="token function">reboot</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="快速脚本"><a href="#快速脚本" class="headerlink" title="快速脚本"></a>快速脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="built_in">export</span> oldip1=192.168.10.152</span><br><span class="line"><span class="built_in">export</span> newip1=192.168.10.151</span><br><span class="line"></span><br><span class="line">find /etc/kubernetes -<span class="built_in">type</span> f | xargs sed -i <span class="string">&quot;s/<span class="variable">$oldip1</span>/<span class="variable">$newip1</span>/&quot;</span></span><br><span class="line">find /root/.kube/config -<span class="built_in">type</span> f | xargs sed -i <span class="string">&quot;s/<span class="variable">$oldip1</span>/<span class="variable">$newip1</span>/&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> /root/.kube/cache/discovery</span><br><span class="line"><span class="built_in">mv</span> <span class="variable">$&#123;oldip1&#125;</span>_6443 <span class="variable">$&#123;newip1&#125;</span>_6443</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> /etc/kubernetes/pki</span><br><span class="line"><span class="built_in">mv</span> -f apiserver.key apiserver.key.bak</span><br><span class="line"><span class="built_in">mv</span> -f apiserver.crt apiserver.crt.bak</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">kubeadm init phase certs all --config kubeadm.yaml</span><br><span class="line">systemctl restart kubelet</span><br><span class="line"></span><br><span class="line">kubectl -n kube-system edit cm kube-proxy</span><br><span class="line">修改为新IP</span><br><span class="line"></span><br><span class="line">systemctl reboot</span><br></pre></td></tr></table></figure>
 
 <h2 id="主节点与从节点地址均改变"><a href="#主节点与从节点地址均改变" class="headerlink" title="主节点与从节点地址均改变"></a>主节点与从节点地址均改变</h2><p>在修改主节点操作的基础上进行操作</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 原IP 192.168.10.231</span>
-<span class="token comment"># 现IP 192.168.10.232</span>
-nmcli connection modify ens18 ipv4.method manual <span class="token punctuation">\</span>
-ipv4.addresses <span class="token number">192.168</span>.10.232/24 ipv4.gateway <span class="token number">192.168</span>.10.1 <span class="token punctuation">\</span>
-ipv4.dns <span class="token number">8.8</span>.8.8
-nmcli connection up ens18
-
-<span class="token comment"># 测试功能</span>
-kubectl apply <span class="token parameter variable">-f</span> test-deploy.yaml
-
-kubectl get pods
-NAME                          READY   STATUS    RESTARTS      AGE
-nginx-test-8458968cc8-4z78w   <span class="token number">0</span>/1     Running   <span class="token number">2</span> <span class="token punctuation">(</span>17s ago<span class="token punctuation">)</span>   5m58s
-nginx-test-8458968cc8-vjlps   <span class="token number">0</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>37s ago<span class="token punctuation">)</span>   5m58s
-nginx-test-8458968cc8-xgcr4   <span class="token number">0</span>/1     Running   <span class="token number">2</span> <span class="token punctuation">(</span>17s ago<span class="token punctuation">)</span>   5m58s
-有镜像但跑不起来，网络原因
-
-<span class="token comment"># 主节点删除旧节点记录</span>
-<span class="token comment"># kubectl get nodes -o name | xargs kubectl delete node </span>
-kubectl get nodes <span class="token parameter variable">-o</span> name
-node/slave
-node/test
-
-kubectl delete <span class="token function">node</span> slave
-<span class="token function">node</span> <span class="token string">"slave"</span> deleted
-
-kubectl <span class="token builtin class-name">set</span> <span class="token function">env</span> daemonset/calico-node <span class="token parameter variable">-n</span> calico-system <span class="token assign-left variable">IP_AUTODETECTION_METHOD</span><span class="token operator">=</span>can-reach<span class="token operator">=</span><span class="token number">192.168</span>.10.151
-
-<span class="token comment"># 重置从节点</span>
-kubeadm reset <span class="token parameter variable">-f</span>
-iptables <span class="token parameter variable">-F</span> <span class="token operator">&amp;&amp;</span> iptables <span class="token parameter variable">-t</span> nat <span class="token parameter variable">-F</span>
-<span class="token function">rm</span> <span class="token parameter variable">-rf</span> /etc/cni/net.d
-
-<span class="token comment"># 重新加入集群 </span>
-kubeadm <span class="token function">join</span> <span class="token number">192.168</span>.10.151:6443 <span class="token parameter variable">--token</span> w9o87t.mmpxgomqej2h1ifz <span class="token punctuation">\</span> 
---discovery-token-ca-cert-hash <span class="token punctuation">\</span>
-sha256:52502b8be55539e174c2a3ebdafaecc4b94ee6e976cf0c72aaa13c26aff6023c
-
-<span class="token comment">#此时calico安装会卡住，需要从节点进行重启</span>
-kubectl get pods <span class="token parameter variable">-A</span> <span class="token parameter variable">-w</span> <span class="token parameter variable">-owide</span>
-NAMESPACE          NAME                                       READY   STATUS              RESTARTS        AGE     IP               NODE     NOMINATED NODE   READINESS GATES
-calico-apiserver   calico-apiserver-7dbb565dd-chvhh           <span class="token number">1</span>/1     Running             <span class="token number">0</span>               7m6s    <span class="token number">10.244</span>.27.206    <span class="token builtin class-name">test</span>     <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-apiserver   calico-apiserver-7dbb565dd-tq8rt           <span class="token number">1</span>/1     Running             <span class="token number">1</span> <span class="token punctuation">(</span>135m ago<span class="token punctuation">)</span>    147m    <span class="token number">10.244</span>.27.201    <span class="token builtin class-name">test</span>     <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-kube-controllers-64c85b8c9f-tqttr   <span class="token number">1</span>/1     Running             <span class="token number">0</span>               7m6s    <span class="token number">10.244</span>.27.205    <span class="token builtin class-name">test</span>     <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-node-k68rj                          <span class="token number">0</span>/1     Running             <span class="token number">0</span>               7s      <span class="token number">192.168</span>.10.151   <span class="token builtin class-name">test</span>     <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-node-qjk68                          <span class="token number">1</span>/1     Running             <span class="token number">0</span>               6m20s   <span class="token number">192.168</span>.10.232   slave    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      calico-typha-84b5fbbc4f-4xsl7              <span class="token number">1</span>/1     Running             <span class="token number">0</span>               7m6s    <span class="token number">192.168</span>.10.151   <span class="token builtin class-name">test</span>     <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      csi-node-driver-cx5ds                      <span class="token number">0</span>/2     ContainerCreating   <span class="token number">0</span>               6m20s   <span class="token operator">&lt;</span>none<span class="token operator">></span>           slave    <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-calico-system      csi-node-driver-lptz7                      <span class="token number">2</span>/2     Running             <span class="token number">3</span> <span class="token punctuation">(</span>135m ago<span class="token punctuation">)</span>    147m    <span class="token number">10.244</span>.27.202    <span class="token builtin class-name">test</span>     <span class="token operator">&lt;</span>none<span class="token operator">></span>           <span class="token operator">&lt;</span>none<span class="token operator">></span>
-
-<span class="token comment"># 重启完成</span>
-此时calico与nginx均可以正常运行，节点状态也处于Ready
-kubectl get pods <span class="token parameter variable">-A</span>
-NAMESPACE          NAME                                       READY   STATUS    RESTARTS        AGE
-calico-apiserver   calico-apiserver-7dbb565dd-chvhh           <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-calico-apiserver   calico-apiserver-7dbb565dd-tq8rt           <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    151m
-calico-system      calico-kube-controllers-64c85b8c9f-tqttr   <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-calico-system      calico-node-k68rj                          <span class="token number">1</span>/1     Running   <span class="token number">0</span>               3m22s
-calico-system      calico-node-qjk68                          <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>2m9s ago<span class="token punctuation">)</span>    9m35s
-calico-system      calico-typha-84b5fbbc4f-4xsl7              <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-calico-system      csi-node-driver-cx5ds                      <span class="token number">2</span>/2     Running   <span class="token number">0</span>               9m35s
-calico-system      csi-node-driver-lptz7                      <span class="token number">2</span>/2     Running   <span class="token number">3</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    151m
-default            nginx-test-8458968cc8-8qp65                <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-default            nginx-test-8458968cc8-gmwsw                <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-default            nginx-test-8458968cc8-m7j7f                <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-kube-system        coredns-6d58d46f65-2rw4q                   <span class="token number">1</span>/1     Running   <span class="token number">2</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    3h39m
-kube-system        coredns-6d58d46f65-tqxvb                   <span class="token number">1</span>/1     Running   <span class="token number">2</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    3h39m
-kube-system        etcd-test                                  <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    141m
-kube-system        kube-apiserver-test                        <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    141m
-kube-system        kube-controller-manager-test               <span class="token number">1</span>/1     Running   <span class="token number">15</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>   3h39m
-kube-system        kube-proxy-6dgxp                           <span class="token number">1</span>/1     Running   <span class="token number">1</span> <span class="token punctuation">(</span>2m9s ago<span class="token punctuation">)</span>    9m35s
-kube-system        kube-proxy-dkvk4                           <span class="token number">1</span>/1     Running   <span class="token number">2</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>    3h39m
-kube-system        kube-scheduler-test                        <span class="token number">1</span>/1     Running   <span class="token number">15</span> <span class="token punctuation">(</span>138m ago<span class="token punctuation">)</span>   3h39m
-tigera-operator    tigera-operator-767c6b76db-q4j2q           <span class="token number">1</span>/1     Running   <span class="token number">0</span>               10m
-
-kubectl get nodes
-NAME    STATUS   ROLES           AGE     VERSION
-slave   Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>          8m21s   v1.30.0
-<span class="token builtin class-name">test</span>    Ready    control-plane   3h38m   v1.30.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 原IP 192.168.10.231</span></span><br><span class="line"><span class="comment"># 现IP 192.168.10.232</span></span><br><span class="line">nmcli connection modify ens18 ipv4.method manual \</span><br><span class="line">ipv4.addresses 192.168.10.232/24 ipv4.gateway 192.168.10.1 \</span><br><span class="line">ipv4.dns 8.8.8.8</span><br><span class="line">nmcli connection up ens18</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试功能</span></span><br><span class="line">kubectl apply -f test-deploy.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pods</span><br><span class="line">NAME                          READY   STATUS    RESTARTS      AGE</span><br><span class="line">nginx-test-8458968cc8-4z78w   0/1     Running   2 (17s ago)   5m58s</span><br><span class="line">nginx-test-8458968cc8-vjlps   0/1     Running   1 (37s ago)   5m58s</span><br><span class="line">nginx-test-8458968cc8-xgcr4   0/1     Running   2 (17s ago)   5m58s</span><br><span class="line">有镜像但跑不起来，网络原因</span><br><span class="line"></span><br><span class="line"><span class="comment"># 主节点删除旧节点记录</span></span><br><span class="line"><span class="comment"># kubectl get nodes -o name | xargs kubectl delete node </span></span><br><span class="line">kubectl get nodes -o name</span><br><span class="line">node/slave</span><br><span class="line">node/test</span><br><span class="line"></span><br><span class="line">kubectl delete node slave</span><br><span class="line">node <span class="string">&quot;slave&quot;</span> deleted</span><br><span class="line"></span><br><span class="line">kubectl <span class="built_in">set</span> <span class="built_in">env</span> daemonset/calico-node -n calico-system IP_AUTODETECTION_METHOD=can-reach=192.168.10.151</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重置从节点</span></span><br><span class="line">kubeadm reset -f</span><br><span class="line">iptables -F &amp;&amp; iptables -t nat -F</span><br><span class="line"><span class="built_in">rm</span> -rf /etc/cni/net.d</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新加入集群 </span></span><br><span class="line">kubeadm <span class="built_in">join</span> 192.168.10.151:6443 --token w9o87t.mmpxgomqej2h1ifz \ </span><br><span class="line">--discovery-token-ca-cert-hash \</span><br><span class="line">sha256:52502b8be55539e174c2a3ebdafaecc4b94ee6e976cf0c72aaa13c26aff6023c</span><br><span class="line"></span><br><span class="line"><span class="comment">#此时calico安装会卡住，需要从节点进行重启</span></span><br><span class="line">kubectl get pods -A -w -owide</span><br><span class="line">NAMESPACE          NAME                                       READY   STATUS              RESTARTS        AGE     IP               NODE     NOMINATED NODE   READINESS GATES</span><br><span class="line">calico-apiserver   calico-apiserver-7dbb565dd-chvhh           1/1     Running             0               7m6s    10.244.27.206    <span class="built_in">test</span>     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-apiserver   calico-apiserver-7dbb565dd-tq8rt           1/1     Running             1 (135m ago)    147m    10.244.27.201    <span class="built_in">test</span>     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-kube-controllers-64c85b8c9f-tqttr   1/1     Running             0               7m6s    10.244.27.205    <span class="built_in">test</span>     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-node-k68rj                          0/1     Running             0               7s      192.168.10.151   <span class="built_in">test</span>     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-node-qjk68                          1/1     Running             0               6m20s   192.168.10.232   slave    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      calico-typha-84b5fbbc4f-4xsl7              1/1     Running             0               7m6s    192.168.10.151   <span class="built_in">test</span>     &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      csi-node-driver-cx5ds                      0/2     ContainerCreating   0               6m20s   &lt;none&gt;           slave    &lt;none&gt;           &lt;none&gt;</span><br><span class="line">calico-system      csi-node-driver-lptz7                      2/2     Running             3 (135m ago)    147m    10.244.27.202    <span class="built_in">test</span>     &lt;none&gt;           &lt;none&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启完成</span></span><br><span class="line">此时calico与nginx均可以正常运行，节点状态也处于Ready</span><br><span class="line">kubectl get pods -A</span><br><span class="line">NAMESPACE          NAME                                       READY   STATUS    RESTARTS        AGE</span><br><span class="line">calico-apiserver   calico-apiserver-7dbb565dd-chvhh           1/1     Running   0               10m</span><br><span class="line">calico-apiserver   calico-apiserver-7dbb565dd-tq8rt           1/1     Running   1 (138m ago)    151m</span><br><span class="line">calico-system      calico-kube-controllers-64c85b8c9f-tqttr   1/1     Running   0               10m</span><br><span class="line">calico-system      calico-node-k68rj                          1/1     Running   0               3m22s</span><br><span class="line">calico-system      calico-node-qjk68                          1/1     Running   1 (2m9s ago)    9m35s</span><br><span class="line">calico-system      calico-typha-84b5fbbc4f-4xsl7              1/1     Running   0               10m</span><br><span class="line">calico-system      csi-node-driver-cx5ds                      2/2     Running   0               9m35s</span><br><span class="line">calico-system      csi-node-driver-lptz7                      2/2     Running   3 (138m ago)    151m</span><br><span class="line">default            nginx-test-8458968cc8-8qp65                1/1     Running   0               10m</span><br><span class="line">default            nginx-test-8458968cc8-gmwsw                1/1     Running   0               10m</span><br><span class="line">default            nginx-test-8458968cc8-m7j7f                1/1     Running   0               10m</span><br><span class="line">kube-system        coredns-6d58d46f65-2rw4q                   1/1     Running   2 (138m ago)    3h39m</span><br><span class="line">kube-system        coredns-6d58d46f65-tqxvb                   1/1     Running   2 (138m ago)    3h39m</span><br><span class="line">kube-system        etcd-test                                  1/1     Running   1 (138m ago)    141m</span><br><span class="line">kube-system        kube-apiserver-test                        1/1     Running   1 (138m ago)    141m</span><br><span class="line">kube-system        kube-controller-manager-test               1/1     Running   15 (138m ago)   3h39m</span><br><span class="line">kube-system        kube-proxy-6dgxp                           1/1     Running   1 (2m9s ago)    9m35s</span><br><span class="line">kube-system        kube-proxy-dkvk4                           1/1     Running   2 (138m ago)    3h39m</span><br><span class="line">kube-system        kube-scheduler-test                        1/1     Running   15 (138m ago)   3h39m</span><br><span class="line">tigera-operator    tigera-operator-767c6b76db-q4j2q           1/1     Running   0               10m</span><br><span class="line"></span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME    STATUS   ROLES           AGE     VERSION</span><br><span class="line">slave   Ready    &lt;none&gt;          8m21s   v1.30.0</span><br><span class="line"><span class="built_in">test</span>    Ready    control-plane   3h38m   v1.30.0</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6903,18 +6607,6 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6998,13 +6690,13 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7379,13 +7071,13 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7625,13 +7317,13 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8330,13 +8022,13 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8880,9 +8572,9 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8890,9 +8582,9 @@ slave   Ready    <span class="token operator">&lt;</span>none<span class="token 
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

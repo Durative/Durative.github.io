@@ -201,12 +201,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -214,7 +216,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -523,163 +524,19 @@
 <td>需要精准参数传递</td>
 </tr>
 </tbody></table>
-<h2 id="agent简单调用"><a href="#agent简单调用" class="headerlink" title="agent简单调用"></a>agent简单调用</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python">pip install ddgs wikipedia<span class="token operator">-</span>api requests numexpr
-
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> initialize_agent<span class="token punctuation">,</span>AgentType<span class="token punctuation">,</span>Tool
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> ddgs <span class="token keyword">import</span> DDGS
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> LLMMathChain
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-search <span class="token operator">=</span> DDGS<span class="token punctuation">(</span><span class="token punctuation">)</span>
-llm_math <span class="token operator">=</span> LLMMathChain<span class="token punctuation">.</span>from_llm<span class="token punctuation">(</span>llm<span class="token punctuation">)</span>
-
-tools <span class="token operator">=</span> <span class="token punctuation">[</span>
-    Tool<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Search"</span><span class="token punctuation">,</span> func<span class="token operator">=</span>search<span class="token punctuation">.</span>text<span class="token punctuation">,</span> description<span class="token operator">=</span><span class="token string">"搜索信息"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    Tool<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Lookup"</span><span class="token punctuation">,</span>func<span class="token operator">=</span>search<span class="token punctuation">.</span>text<span class="token punctuation">,</span>description<span class="token operator">=</span><span class="token string">"查找时使用"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    Tool<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Calculator"</span><span class="token punctuation">,</span> func<span class="token operator">=</span>llm_math<span class="token punctuation">.</span>run<span class="token punctuation">,</span> description<span class="token operator">=</span><span class="token string">"数学计算"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token punctuation">]</span>
-agent <span class="token operator">=</span> initialize_agent<span class="token punctuation">(</span>
-    tools<span class="token punctuation">,</span>
-    llm<span class="token punctuation">,</span>
-    agent<span class="token operator">=</span>AgentType<span class="token punctuation">.</span>ZERO_SHOT_REACT_DESCRIPTION<span class="token punctuation">,</span>
-    <span class="token comment">#verbose=True,</span>
-    handle_parsing_errors<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>agent<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"北京奥运会召开的年份除以四，得到的结果开根是多少"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>agent<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"中华人民共和国是什么时候成立的"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token comment">#**Thought:** 北京奥运会是2008年举办的。先除以4，再开平方根。  </span>
-<span class="token comment"># **Action:** Calculator  </span>
-<span class="token comment"># **Action Input:** 2008 ÷ 4 = 502，然后 sqrt(502)  </span>
-
-<span class="token comment"># **Observation:** 2008 ÷ 4 = 502，√502 ≈ 22.40535650240808  </span>
-
-<span class="token comment"># **Thought:** 现在得到最终答案。  </span>
-<span class="token comment"># **Final Answer:** 约等于 22.405</span>
-
-<span class="token comment"># &#123;'input': '中华人民共和国是什么时候成立的', 'output': '** 中华人民共和国成立于1949年10月1日。'&#125;</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="agent简单调用"><a href="#agent简单调用" class="headerlink" title="agent简单调用"></a>agent简单调用</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">pip install ddgs wikipedia-api requests numexpr</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> initialize_agent,AgentType,Tool</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> ddgs <span class="keyword">import</span> DDGS</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> LLMMathChain</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line">search = DDGS()</span><br><span class="line">llm_math = LLMMathChain.from_llm(llm)</span><br><span class="line"></span><br><span class="line">tools = [</span><br><span class="line">    Tool(name=<span class="string">&quot;Search&quot;</span>, func=search.text, description=<span class="string">&quot;搜索信息&quot;</span>),</span><br><span class="line">    Tool(name=<span class="string">&quot;Lookup&quot;</span>,func=search.text,description=<span class="string">&quot;查找时使用&quot;</span>),</span><br><span class="line">    Tool(name=<span class="string">&quot;Calculator&quot;</span>, func=llm_math.run, description=<span class="string">&quot;数学计算&quot;</span>),</span><br><span class="line">]</span><br><span class="line">agent = initialize_agent(</span><br><span class="line">    tools,</span><br><span class="line">    llm,</span><br><span class="line">    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,</span><br><span class="line">    <span class="comment">#verbose=True,</span></span><br><span class="line">    handle_parsing_errors=<span class="literal">True</span>,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(agent.invoke(<span class="string">&quot;北京奥运会召开的年份除以四，得到的结果开根是多少&quot;</span>))</span><br><span class="line"><span class="built_in">print</span>(agent.invoke(<span class="string">&quot;中华人民共和国是什么时候成立的&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment">#**Thought:** 北京奥运会是2008年举办的。先除以4，再开平方根。  </span></span><br><span class="line"><span class="comment"># **Action:** Calculator  </span></span><br><span class="line"><span class="comment"># **Action Input:** 2008 ÷ 4 = 502，然后 sqrt(502)  </span></span><br><span class="line"></span><br><span class="line"><span class="comment"># **Observation:** 2008 ÷ 4 = 502，√502 ≈ 22.40535650240808  </span></span><br><span class="line"></span><br><span class="line"><span class="comment"># **Thought:** 现在得到最终答案。  </span></span><br><span class="line"><span class="comment"># **Final Answer:** 约等于 22.405</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># &#123;&#x27;input&#x27;: &#x27;中华人民共和国是什么时候成立的&#x27;, &#x27;output&#x27;: &#x27;** 中华人民共和国成立于1949年10月1日。&#x27;&#125;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h2 id="Conversational-agent"><a href="#Conversational-agent" class="headerlink" title="Conversational agent"></a>Conversational agent</h2><p>专为对话优化的代理，一般会与memory相结合</p>
 <p>使用ddgs（免费的网上搜索工具，但信息滞后</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> Tool<span class="token punctuation">,</span>AgentType<span class="token punctuation">,</span>initialize_agent
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>memory <span class="token keyword">import</span> ConversationBufferMemory
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> ddgs <span class="token keyword">import</span> DDGS
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-
-<span class="token comment"># DDGS搜索返回的是历史数据，搜索结果来自2024年7月等历史时间</span>
-search <span class="token operator">=</span> DDGS<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-tools <span class="token operator">=</span> <span class="token punctuation">[</span>
-    Tool<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Search"</span><span class="token punctuation">,</span>func<span class="token operator">=</span>search<span class="token punctuation">.</span>text<span class="token punctuation">,</span>description<span class="token operator">=</span><span class="token string">"useful for searching the internet"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token punctuation">]</span>
-memory <span class="token operator">=</span> ConversationBufferMemory<span class="token punctuation">(</span>memory_key<span class="token operator">=</span><span class="token string">"chat_history"</span><span class="token punctuation">)</span>
-
-agent_chain <span class="token operator">=</span> initialize_agent<span class="token punctuation">(</span>
-    tools<span class="token punctuation">,</span>
-    llm<span class="token punctuation">,</span> 
-    agent<span class="token operator">=</span>AgentType<span class="token punctuation">.</span>CONVERSATIONAL_REACT_DESCRIPTION<span class="token punctuation">,</span> 
-    memory<span class="token operator">=</span>memory<span class="token punctuation">,</span> 
-    verbose<span class="token operator">=</span><span class="token boolean">True</span>
-<span class="token punctuation">)</span>
-
-agent_chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"中国的首都是哪里?"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token comment"># 常识性问题，不需要用工具</span>
-agent_chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"今天是几月几号?"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token comment"># DDGS数据滞后，如果要用专业api，需要花钱</span>
-agent_chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"小明今年2025年15岁"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-agent_chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"2015年小明几岁？"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token comment"># 上下文记忆</span>
-agent_chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"input"</span><span class="token punctuation">:</span> <span class="token string">"北京和上海今天天气如何"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token comment"># 用工具搜索</span>
-
-<span class="token comment"># 根据已知信息，小明在2025年是15岁，因此他出生于2010年。那么在2015年，他的年龄是2015减去2010，也就是5岁。</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> Tool,AgentType,initialize_agent</span><br><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> ddgs <span class="keyword">import</span> DDGS</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># DDGS搜索返回的是历史数据，搜索结果来自2024年7月等历史时间</span></span><br><span class="line">search = DDGS()</span><br><span class="line"></span><br><span class="line">tools = [</span><br><span class="line">    Tool(name=<span class="string">&quot;Search&quot;</span>,func=search.text,description=<span class="string">&quot;useful for searching the internet&quot;</span>),</span><br><span class="line">]</span><br><span class="line">memory = ConversationBufferMemory(memory_key=<span class="string">&quot;chat_history&quot;</span>)</span><br><span class="line"></span><br><span class="line">agent_chain = initialize_agent(</span><br><span class="line">    tools,</span><br><span class="line">    llm, </span><br><span class="line">    agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION, </span><br><span class="line">    memory=memory, </span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">agent_chain.invoke(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;中国的首都是哪里?&quot;</span>&#125;) <span class="comment"># 常识性问题，不需要用工具</span></span><br><span class="line">agent_chain.invoke(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;今天是几月几号?&quot;</span>&#125;) <span class="comment"># DDGS数据滞后，如果要用专业api，需要花钱</span></span><br><span class="line">agent_chain.invoke(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;小明今年2025年15岁&quot;</span>&#125;)</span><br><span class="line">agent_chain.invoke(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;2015年小明几岁？&quot;</span>&#125;) <span class="comment"># 上下文记忆</span></span><br><span class="line">agent_chain.invoke(&#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;北京和上海今天天气如何&quot;</span>&#125;) <span class="comment"># 用工具搜索</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 根据已知信息，小明在2025年是15岁，因此他出生于2010年。那么在2015年，他的年龄是2015减去2010，也就是5岁。</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="OpenAI-multi-function-agent（略）"><a href="#OpenAI-multi-function-agent（略）" class="headerlink" title="OpenAI multi function agent（略）"></a>OpenAI multi function agent（略）</h2><h2 id="Self-ask-with-search"><a href="#Self-ask-with-search" class="headerlink" title="Self ask with search"></a>Self ask with search</h2><p>自问自答的方式拆解问题，</p>
 <p>我新使用了GoogleSerperAPIWrapper谷歌的网上检索工具，官网<a target="_blank" rel="noopener" href="https://serper.dev/%EF%BC%8C%E6%96%B0%E6%B3%A8%E5%86%8C%E5%8F%AF%E4%BB%A5%E6%9C%892500%E6%AC%A1%E5%85%8D%E8%B4%B9%E8%AE%BF%E9%97%AE%E6%AC%A1%E6%95%B0">https://serper.dev/，新注册可以有2500次免费访问次数</a></p>
 <p>我这里有报错，是因为AgentType.SELF_ASK_WITH_SEARCH对输出格式的要求很高，如果使用gpt就可以，但是我使用的是deepseek，所以最后报错，但中间推理过程是没问题的</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>utilities <span class="token keyword">import</span> GoogleSerperAPIWrapper
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> AgentType<span class="token punctuation">,</span> initialize_agent<span class="token punctuation">,</span> Tool
-
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-search <span class="token operator">=</span> GoogleSerperAPIWrapper<span class="token punctuation">(</span><span class="token punctuation">)</span>
-tools <span class="token operator">=</span> <span class="token punctuation">[</span>Tool<span class="token punctuation">(</span>
-    name<span class="token operator">=</span><span class="token string">"Intermediate Answer"</span><span class="token punctuation">,</span> <span class="token comment"># 必须是这个名字</span>
-    func<span class="token operator">=</span>search<span class="token punctuation">.</span>run<span class="token punctuation">,</span>
-    description<span class="token operator">=</span><span class="token string">"useful for when you need to answer questions about current events"</span><span class="token punctuation">,</span>
-<span class="token punctuation">)</span><span class="token punctuation">]</span>
-
-self_ask_agent_chain <span class="token operator">=</span> initialize_agent<span class="token punctuation">(</span>
-    tools<span class="token punctuation">,</span> 
-    llm<span class="token punctuation">,</span> 
-    agent<span class="token operator">=</span>AgentType<span class="token punctuation">.</span>SELF_ASK_WITH_SEARCH<span class="token punctuation">,</span>
-    verbose<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
-    handle_parsing_errors<span class="token operator">=</span><span class="token boolean">True</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>self_ask_agent_chain<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token string">"“java之父”的故乡在哪里？"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token comment"># **后续问题：** “java之父”是谁？</span>
-<span class="token comment"># **中间答案：** “Java之父”是詹姆斯·高斯林（James Gosling）。  </span>
-
-<span class="token comment"># **后续问题：** 詹姆斯·高斯林的故乡是哪里？  </span>
-<span class="token comment"># **中间答案：** 他出生在加拿大阿尔伯塔省的卡尔加里附近。  </span>
-
-<span class="token comment"># 所以最终答案是：**加拿大阿尔伯塔省卡尔加里附近**。</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.utilities <span class="keyword">import</span> GoogleSerperAPIWrapper</span><br><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> AgentType, initialize_agent, Tool</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line">search = GoogleSerperAPIWrapper()</span><br><span class="line">tools = [Tool(</span><br><span class="line">    name=<span class="string">&quot;Intermediate Answer&quot;</span>, <span class="comment"># 必须是这个名字</span></span><br><span class="line">    func=search.run,</span><br><span class="line">    description=<span class="string">&quot;useful for when you need to answer questions about current events&quot;</span>,</span><br><span class="line">)]</span><br><span class="line"></span><br><span class="line">self_ask_agent_chain = initialize_agent(</span><br><span class="line">    tools, </span><br><span class="line">    llm, </span><br><span class="line">    agent=AgentType.SELF_ASK_WITH_SEARCH,</span><br><span class="line">    verbose=<span class="literal">False</span>,</span><br><span class="line">    handle_parsing_errors=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(self_ask_agent_chain.run(<span class="string">&quot;“java之父”的故乡在哪里？&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># **后续问题：** “java之父”是谁？</span></span><br><span class="line"><span class="comment"># **中间答案：** “Java之父”是詹姆斯·高斯林（James Gosling）。  </span></span><br><span class="line"></span><br><span class="line"><span class="comment"># **后续问题：** 詹姆斯·高斯林的故乡是哪里？  </span></span><br><span class="line"><span class="comment"># **中间答案：** 他出生在加拿大阿尔伯塔省的卡尔加里附近。  </span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 所以最终答案是：**加拿大阿尔伯塔省卡尔加里附近**。</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="自定义的工具multi-input-Tools"><a href="#自定义的工具multi-input-Tools" class="headerlink" title="自定义的工具multi-input Tools"></a>自定义的工具multi-input Tools</h2><p>定义一个计算工具 </p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> initialize_agent<span class="token punctuation">,</span>AgentType
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>tools <span class="token keyword">import</span> StructuredTool
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 定义工具函数</span>
-<span class="token keyword">def</span> <span class="token function">multipliter</span><span class="token punctuation">(</span>a<span class="token punctuation">:</span><span class="token builtin">float</span><span class="token punctuation">,</span> b<span class="token punctuation">:</span><span class="token builtin">float</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">float</span><span class="token punctuation">:</span>
-    <span class="token triple-quoted-string string">"""将两个数字相乘，返回乘积"""</span> <span class="token comment"># 这个注释是必须给的，用于描述工具函数的功能</span>
-    <span class="token keyword">return</span> a <span class="token operator">*</span> b
-tool <span class="token operator">=</span> <span class="token punctuation">[</span>StructuredTool<span class="token punctuation">.</span>from_function<span class="token punctuation">(</span>multipliter<span class="token punctuation">)</span><span class="token punctuation">]</span>
-
-<span class="token comment"># 初始化agent</span>
-agent_executor <span class="token operator">=</span> initialize_agent<span class="token punctuation">(</span>
-    tools<span class="token operator">=</span>tool<span class="token punctuation">,</span>
-    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
-    agent<span class="token operator">=</span>AgentType<span class="token punctuation">.</span>STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION<span class="token punctuation">,</span> <span class="token comment"># 使用STRUCTURED</span>
-    verbose<span class="token operator">=</span><span class="token boolean">True</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>agent_executor<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"10乘以10是多少"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token comment"># Thought:用户想知道10乘以10的结果，我可以使用乘法工具来计算。</span>
-
-<span class="token comment"># Action:</span>
-<span class="token comment"># ```</span>
-<span class="token comment"># &#123;</span>
-<span class="token comment">#   "action": "multipliter",</span>
-<span class="token comment">#   "action_input": &#123;"a": 10, "b": 10&#125;</span>
-<span class="token comment"># &#125;</span>
-<span class="token comment"># ```</span>
-<span class="token comment"># Observation: 100.0</span>
-<span class="token comment"># Thought:我已经通过乘法工具计算出了10乘以10的结果，现在可以给出最终答案。</span>
-
-<span class="token comment"># Action:</span>
-<span class="token comment"># ```</span>
-<span class="token comment"># &#123;</span>
-<span class="token comment">#   "action": "Final Answer",</span>
-<span class="token comment">#   "action_input": "10乘以10等于100。"</span>
-<span class="token comment"># &#125;</span>
-<span class="token comment"># ```</span>
-
-<span class="token comment"># > Finished chain.</span>
-<span class="token comment"># &#123;'input': '10乘以10是多少', 'output': '10乘以10等于100。'&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> initialize_agent,AgentType</span><br><span class="line"><span class="keyword">from</span> langchain.tools <span class="keyword">import</span> StructuredTool</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义工具函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">multipliter</span>(<span class="params">a:<span class="built_in">float</span>, b:<span class="built_in">float</span></span>) -&gt; <span class="built_in">float</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;将两个数字相乘，返回乘积&quot;&quot;&quot;</span> <span class="comment"># 这个注释是必须给的，用于描述工具函数的功能</span></span><br><span class="line">    <span class="keyword">return</span> a * b</span><br><span class="line">tool = [StructuredTool.from_function(multipliter)]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化agent</span></span><br><span class="line">agent_executor = initialize_agent(</span><br><span class="line">    tools=tool,</span><br><span class="line">    llm=llm,</span><br><span class="line">    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, <span class="comment"># 使用STRUCTURED</span></span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(agent_executor.invoke(<span class="string">&quot;10乘以10是多少&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># Thought:用户想知道10乘以10的结果，我可以使用乘法工具来计算。</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Action:</span></span><br><span class="line"><span class="comment"># ```</span></span><br><span class="line"><span class="comment"># &#123;</span></span><br><span class="line"><span class="comment">#   &quot;action&quot;: &quot;multipliter&quot;,</span></span><br><span class="line"><span class="comment">#   &quot;action_input&quot;: &#123;&quot;a&quot;: 10, &quot;b&quot;: 10&#125;</span></span><br><span class="line"><span class="comment"># &#125;</span></span><br><span class="line"><span class="comment"># ```</span></span><br><span class="line"><span class="comment"># Observation: 100.0</span></span><br><span class="line"><span class="comment"># Thought:我已经通过乘法工具计算出了10乘以10的结果，现在可以给出最终答案。</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Action:</span></span><br><span class="line"><span class="comment"># ```</span></span><br><span class="line"><span class="comment"># &#123;</span></span><br><span class="line"><span class="comment">#   &quot;action&quot;: &quot;Final Answer&quot;,</span></span><br><span class="line"><span class="comment">#   &quot;action_input&quot;: &quot;10乘以10等于100。&quot;</span></span><br><span class="line"><span class="comment"># &#125;</span></span><br><span class="line"><span class="comment"># ```</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># &gt; Finished chain.</span></span><br><span class="line"><span class="comment"># &#123;&#x27;input&#x27;: &#x27;10乘以10是多少&#x27;, &#x27;output&#x27;: &#x27;10乘以10等于100。&#x27;&#125;</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="工具输入规范Tool-input-Schema"><a href="#工具输入规范Tool-input-Schema" class="headerlink" title="工具输入规范Tool input Schema"></a>工具输入规范Tool input Schema</h2><p>定义工具输入参数结构的组件，<strong>是给LLM看的，不是给人看的</strong></p>
 <p>使用 Pydantic 模型来指定工具接受什么参数、每个参数的类型、描述等，</p>
@@ -689,126 +546,10 @@ agent_executor <span class="token operator">=</span> initialize_agent<span class
 <li>知道需要提供哪些参数</li>
 <li>自动从用户问题中提取参数值</li>
 </ul>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python">pip install tldextract
-
-<span class="token keyword">from</span> pydantic <span class="token keyword">import</span> BaseModel<span class="token punctuation">,</span> Field<span class="token punctuation">,</span> model_validator
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>tools <span class="token keyword">import</span> RequestsGetTool
-<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>utilities<span class="token punctuation">.</span>requests <span class="token keyword">import</span> TextRequestsWrapper
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> initialize_agent<span class="token punctuation">,</span> AgentType
-<span class="token keyword">import</span> tldextract
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-<span class="token keyword">from</span> urllib<span class="token punctuation">.</span>parse <span class="token keyword">import</span> urlparse
-
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 定义域名访问白名单，只允许访问这些域名的网站</span>
-_APPRES_DOMAINS <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token string">"google"</span><span class="token punctuation">,</span> <span class="token string">"wikipedia"</span><span class="token punctuation">,</span> <span class="token string">"github"</span><span class="token punctuation">,</span> <span class="token string">"stackoverflow"</span><span class="token punctuation">,</span><span class="token string">"baidu"</span><span class="token punctuation">&#125;</span>
-
-<span class="token comment"># 定义工具输入的数据模型，使用Pydantic进行数据验证</span>
-<span class="token keyword">class</span> <span class="token class-name">Toolinput</span><span class="token punctuation">(</span>BaseModel<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token comment"># url字段，必填</span>
-    url<span class="token punctuation">:</span> <span class="token builtin">str</span> <span class="token operator">=</span> Field<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">,</span> description<span class="token operator">=</span><span class="token string">"The URL to access"</span><span class="token punctuation">)</span>
-    
-    <span class="token comment"># 模型验证器，在实例化后执行，用于验证URL</span>
-    <span class="token decorator annotation punctuation">@model_validator</span><span class="token punctuation">(</span>mode<span class="token operator">=</span><span class="token string">'after'</span><span class="token punctuation">)</span>
-    <span class="token keyword">def</span> <span class="token function">validate_url</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token string">'Toolinput'</span><span class="token punctuation">:</span>
-        <span class="token comment"># 解析URL，检查是否有协议头（如http://或https://）</span>
-        parsed <span class="token operator">=</span> urlparse<span class="token punctuation">(</span>self<span class="token punctuation">.</span>url<span class="token punctuation">)</span>
-        <span class="token keyword">if</span> <span class="token keyword">not</span> parsed<span class="token punctuation">.</span>scheme<span class="token punctuation">:</span>
-            <span class="token comment"># 如果没有协议头，自动添加https://</span>
-            self<span class="token punctuation">.</span>url <span class="token operator">=</span> <span class="token string">"https://"</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>url
-
-        <span class="token comment"># 使用tldextract提取域名</span>
-        domain <span class="token operator">=</span> tldextract<span class="token punctuation">.</span>extract<span class="token punctuation">(</span>self<span class="token punctuation">.</span>url<span class="token punctuation">)</span><span class="token punctuation">.</span>domain
-        <span class="token comment"># 检查域名是否在白名单中</span>
-        <span class="token keyword">if</span> domain <span class="token keyword">not</span> <span class="token keyword">in</span> _APPRES_DOMAINS<span class="token punctuation">:</span>
-            <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Access to </span><span class="token interpolation"><span class="token punctuation">&#123;</span>self<span class="token punctuation">.</span>url<span class="token punctuation">&#125;</span></span><span class="token string"> is not allowed"</span></span><span class="token punctuation">)</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Accessing </span><span class="token interpolation"><span class="token punctuation">&#123;</span>self<span class="token punctuation">.</span>url<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-        <span class="token keyword">return</span> self
-
-<span class="token comment"># 创建请求工具实例</span>
-tools <span class="token operator">=</span> RequestsGetTool<span class="token punctuation">(</span>
-    <span class="token comment"># 指定输入参数的数据模型</span>
-    args_schema<span class="token operator">=</span>Toolinput<span class="token punctuation">,</span>
-    <span class="token comment"># 允许危险请求（网络请求可能带来安全风险，需要显式启用）</span>
-    allow_dangerous_requests<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
-    <span class="token comment"># 请求包装器，用于处理HTTP请求</span>
-    requests_wrapper<span class="token operator">=</span>TextRequestsWrapper<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token punctuation">)</span>
-
-<span class="token comment"># 初始化代理（智能体），将工具和语言模型结合起来</span>
-agent <span class="token operator">=</span> initialize_agent<span class="token punctuation">(</span>
-    <span class="token punctuation">[</span>tools<span class="token punctuation">]</span><span class="token punctuation">,</span>
-    llm<span class="token punctuation">,</span>
-    <span class="token comment"># 代理类型：零样本反应描述，适用于简单任务</span>
-    agent<span class="token operator">=</span>AgentType<span class="token punctuation">.</span>ZERO_SHOT_REACT_DESCRIPTION<span class="token punctuation">,</span>
-    verbose<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>agent<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token string">"www.google.com的主题是什么"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">pip install tldextract</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field, model_validator</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> RequestsGetTool</span><br><span class="line"><span class="keyword">from</span> langchain_community.utilities.requests <span class="keyword">import</span> TextRequestsWrapper</span><br><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> initialize_agent, AgentType</span><br><span class="line"><span class="keyword">import</span> tldextract</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"><span class="keyword">from</span> urllib.parse <span class="keyword">import</span> urlparse</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义域名访问白名单，只允许访问这些域名的网站</span></span><br><span class="line">_APPRES_DOMAINS = &#123;<span class="string">&quot;google&quot;</span>, <span class="string">&quot;wikipedia&quot;</span>, <span class="string">&quot;github&quot;</span>, <span class="string">&quot;stackoverflow&quot;</span>,<span class="string">&quot;baidu&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义工具输入的数据模型，使用Pydantic进行数据验证</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Toolinput</span>(<span class="title class_ inherited__">BaseModel</span>):</span><br><span class="line">    <span class="comment"># url字段，必填</span></span><br><span class="line">    url: <span class="built_in">str</span> = Field(..., description=<span class="string">&quot;The URL to access&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 模型验证器，在实例化后执行，用于验证URL</span></span><br><span class="line"><span class="meta">    @model_validator(<span class="params">mode=<span class="string">&#x27;after&#x27;</span></span>)</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">validate_url</span>(<span class="params">self</span>) -&gt; <span class="string">&#x27;Toolinput&#x27;</span>:</span><br><span class="line">        <span class="comment"># 解析URL，检查是否有协议头（如http://或https://）</span></span><br><span class="line">        parsed = urlparse(self.url)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> parsed.scheme:</span><br><span class="line">            <span class="comment"># 如果没有协议头，自动添加https://</span></span><br><span class="line">            self.url = <span class="string">&quot;https://&quot;</span> + self.url</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 使用tldextract提取域名</span></span><br><span class="line">        domain = tldextract.extract(self.url).domain</span><br><span class="line">        <span class="comment"># 检查域名是否在白名单中</span></span><br><span class="line">        <span class="keyword">if</span> domain <span class="keyword">not</span> <span class="keyword">in</span> _APPRES_DOMAINS:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f&quot;Access to <span class="subst">&#123;self.url&#125;</span> is not allowed&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Accessing <span class="subst">&#123;self.url&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> self</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建请求工具实例</span></span><br><span class="line">tools = RequestsGetTool(</span><br><span class="line">    <span class="comment"># 指定输入参数的数据模型</span></span><br><span class="line">    args_schema=Toolinput,</span><br><span class="line">    <span class="comment"># 允许危险请求（网络请求可能带来安全风险，需要显式启用）</span></span><br><span class="line">    allow_dangerous_requests=<span class="literal">True</span>,</span><br><span class="line">    <span class="comment"># 请求包装器，用于处理HTTP请求</span></span><br><span class="line">    requests_wrapper=TextRequestsWrapper()</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化代理（智能体），将工具和语言模型结合起来</span></span><br><span class="line">agent = initialize_agent(</span><br><span class="line">    [tools],</span><br><span class="line">    llm,</span><br><span class="line">    <span class="comment"># 代理类型：零样本反应描述，适用于简单任务</span></span><br><span class="line">    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,</span><br><span class="line">    verbose=<span class="literal">True</span>,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(agent.run(<span class="string">&quot;www.google.com的主题是什么&quot;</span>))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h2 id="人为参与验证Human-in-the-loop-Tool-Validation"><a href="#人为参与验证Human-in-the-loop-Tool-Validation" class="headerlink" title="人为参与验证Human-in-the-loop Tool Validation"></a>人为参与验证Human-in-the-loop Tool Validation</h2><p>人为参与验证是一种开发与测试方法，即在工具或系统（尤其是AI或自动化工具）的关键环节中，主动引入人类判断来检查、验证或修正输出结果，以确保其<strong>正确性、可靠性及安全性</strong>。</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>callbacks <span class="token keyword">import</span> HumanApprovalCallbackHandler
-<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>tools <span class="token keyword">import</span> ShellTool
-
-<span class="token comment"># 使用ShellTool进行人工判断</span>
-tool <span class="token operator">=</span> ShellTool<span class="token punctuation">(</span>callbacks<span class="token operator">=</span><span class="token punctuation">[</span>HumanApprovalCallbackHandler<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>tool<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token string">"pwd"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token comment"># Do you approve of the following input? Anything except 'Y'/'Yes' (case-insensitive) will be treated as a no.</span>
-<span class="token comment"># y</span>
-<span class="token comment"># Executing command:</span>
-<span class="token comment">#  pwd</span>
-<span class="token comment"># /root/python-langchain</span>
-
-<span class="token keyword">def</span> <span class="token function">_should_check</span><span class="token punctuation">(</span>serialized_obj<span class="token punctuation">:</span> <span class="token builtin">dict</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">bool</span><span class="token punctuation">:</span>
-    <span class="token comment"># 表示仅对Shell工具进行验证</span>
-    <span class="token keyword">return</span> serialized_obj<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"name"</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">"terminal"</span>
-
-<span class="token keyword">def</span> <span class="token function">_approve</span><span class="token punctuation">(</span>_input<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token builtin">bool</span><span class="token punctuation">:</span>
-    <span class="token comment"># 白名单机制：自动批准安全命令pwd</span>
-    <span class="token keyword">if</span> _input <span class="token operator">==</span> <span class="token string">"pwd"</span><span class="token punctuation">:</span>
-        <span class="token keyword">return</span> <span class="token boolean">True</span>
-    msg <span class="token operator">=</span> <span class="token punctuation">(</span>
-        <span class="token string">"你是否批准以下输入？"</span>
-        <span class="token string">"除了Y和Yes之外的任何内容都将视为不批准"</span>
-    <span class="token punctuation">)</span>
-    msg <span class="token operator">+=</span> <span class="token string">"\n\n"</span> <span class="token operator">+</span> _input <span class="token operator">+</span> <span class="token string">"\n"</span>
-    resp <span class="token operator">=</span> <span class="token builtin">input</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span>
-    <span class="token comment"># 返回True仅当用户明确输入"y"或"yes"（不区分大小写）</span>
-    <span class="token keyword">return</span> resp<span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">in</span> <span class="token punctuation">(</span><span class="token string">"yes"</span><span class="token punctuation">,</span><span class="token string">"y"</span><span class="token punctuation">)</span>
-
-callbacks <span class="token operator">=</span> <span class="token punctuation">[</span>
-    HumanApprovalCallbackHandler<span class="token punctuation">(</span>
-        should_check<span class="token operator">=</span>_should_check<span class="token punctuation">,</span>  <span class="token comment"># 绑定条件检查函数</span>
-        approve<span class="token operator">=</span>_approve             <span class="token comment"># 绑定批准逻辑函数</span>
-    <span class="token punctuation">)</span>
-<span class="token punctuation">]</span>
-
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> initialize_agent<span class="token punctuation">,</span>AgentType
-<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>agent_toolkits<span class="token punctuation">.</span>load_tools <span class="token keyword">import</span> load_tools
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-tools <span class="token operator">=</span> load_tools<span class="token punctuation">(</span>
-    <span class="token punctuation">[</span><span class="token string">"llm-math"</span><span class="token punctuation">,</span> <span class="token string">"terminal"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>  <span class="token comment"># 工具列表：数学工具和Shell终端</span>
-    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
-    allow_dangerous_tools<span class="token operator">=</span><span class="token boolean">True</span>  <span class="token comment"># 必须显式启用才能使用危险工具</span>
-<span class="token punctuation">)</span>
-agent <span class="token operator">=</span> initialize_agent<span class="token punctuation">(</span>
-    tools<span class="token punctuation">,</span>
-    llm<span class="token punctuation">,</span>
-    agent<span class="token operator">=</span>AgentType<span class="token punctuation">.</span>ZERO_SHOT_REACT_DESCRIPTION<span class="token punctuation">,</span> <span class="token comment"># 代理类型：零样本推理</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>agent<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"echo 'hello world' in terminal"</span><span class="token punctuation">,</span>callbacks<span class="token operator">=</span>callbacks<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token comment"># &#123;'input': "echo 'hello world' in terminal", 'output': 'The command `echo \'hello world\'` was executed and the output was "hello world".'&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.callbacks <span class="keyword">import</span> HumanApprovalCallbackHandler</span><br><span class="line"><span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> ShellTool</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用ShellTool进行人工判断</span></span><br><span class="line">tool = ShellTool(callbacks=[HumanApprovalCallbackHandler()])</span><br><span class="line"><span class="built_in">print</span>(tool.run(<span class="string">&quot;pwd&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># Do you approve of the following input? Anything except &#x27;Y&#x27;/&#x27;Yes&#x27; (case-insensitive) will be treated as a no.</span></span><br><span class="line"><span class="comment"># y</span></span><br><span class="line"><span class="comment"># Executing command:</span></span><br><span class="line"><span class="comment">#  pwd</span></span><br><span class="line"><span class="comment"># /root/python-langchain</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">_should_check</span>(<span class="params">serialized_obj: <span class="built_in">dict</span></span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">    <span class="comment"># 表示仅对Shell工具进行验证</span></span><br><span class="line">    <span class="keyword">return</span> serialized_obj.get(<span class="string">&quot;name&quot;</span>) == <span class="string">&quot;terminal&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">_approve</span>(<span class="params">_<span class="built_in">input</span>: <span class="built_in">str</span></span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">    <span class="comment"># 白名单机制：自动批准安全命令pwd</span></span><br><span class="line">    <span class="keyword">if</span> _<span class="built_in">input</span> == <span class="string">&quot;pwd&quot;</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    msg = (</span><br><span class="line">        <span class="string">&quot;你是否批准以下输入？&quot;</span></span><br><span class="line">        <span class="string">&quot;除了Y和Yes之外的任何内容都将视为不批准&quot;</span></span><br><span class="line">    )</span><br><span class="line">    msg += <span class="string">&quot;\n\n&quot;</span> + _<span class="built_in">input</span> + <span class="string">&quot;\n&quot;</span></span><br><span class="line">    resp = <span class="built_in">input</span>(msg)</span><br><span class="line">    <span class="comment"># 返回True仅当用户明确输入&quot;y&quot;或&quot;yes&quot;（不区分大小写）</span></span><br><span class="line">    <span class="keyword">return</span> resp.lower() <span class="keyword">in</span> (<span class="string">&quot;yes&quot;</span>,<span class="string">&quot;y&quot;</span>)</span><br><span class="line"></span><br><span class="line">callbacks = [</span><br><span class="line">    HumanApprovalCallbackHandler(</span><br><span class="line">        should_check=_should_check,  <span class="comment"># 绑定条件检查函数</span></span><br><span class="line">        approve=_approve             <span class="comment"># 绑定批准逻辑函数</span></span><br><span class="line">    )</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> initialize_agent,AgentType</span><br><span class="line"><span class="keyword">from</span> langchain_community.agent_toolkits.load_tools <span class="keyword">import</span> load_tools</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line">tools = load_tools(</span><br><span class="line">    [<span class="string">&quot;llm-math&quot;</span>, <span class="string">&quot;terminal&quot;</span>],  <span class="comment"># 工具列表：数学工具和Shell终端</span></span><br><span class="line">    llm=llm,</span><br><span class="line">    allow_dangerous_tools=<span class="literal">True</span>  <span class="comment"># 必须显式启用才能使用危险工具</span></span><br><span class="line">)</span><br><span class="line">agent = initialize_agent(</span><br><span class="line">    tools,</span><br><span class="line">    llm,</span><br><span class="line">    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, <span class="comment"># 代理类型：零样本推理</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(agent.invoke(<span class="string">&quot;echo &#x27;hello world&#x27; in terminal&quot;</span>,callbacks=callbacks))</span><br><span class="line"></span><br><span class="line"><span class="comment"># &#123;&#x27;input&#x27;: &quot;echo &#x27;hello world&#x27; in terminal&quot;, &#x27;output&#x27;: &#x27;The command `echo \&#x27;hello world\&#x27;` was executed and the output was &quot;hello world&quot;.&#x27;&#125;</span></span><br></pre></td></tr></table></figure>
 
 
     </article>
@@ -6889,18 +6630,6 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6984,13 +6713,13 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7365,13 +7094,13 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7611,13 +7340,13 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8316,13 +8045,13 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8866,9 +8595,9 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8876,9 +8605,9 @@ agent <span class="token operator">=</span> initialize_agent<span class="token p
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

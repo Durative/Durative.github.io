@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="kubespray在2.28版本新增了支持纯ipv6的特性这个ipv6的ceph集群还有点问题，image无法正常映射，之后再研究  环境说明 管理网络: 10.163.2.0&#x2F;24 (eth0) k8s集群网络: 1::0&#x2F;64 (eth1) k8s存储网络&#x2F;ceph集群网络: 2::0&#x2F;64 (eth2) k8s VIP 1::100&#x2F;64 10.163.2.143 1::20&#x2F;64 ansi">
+    <meta name="description" content="kubespray在2.28版本新增了支持纯ipv6的特性这个ipv6的ceph集群还有点问题，image无法正常映射，之后再研究  环境说明 123456789101112131415161718192021222324管理网络: 10.163.2.0&#x2F;24 (eth0)k8s集群网络: 1::0&#x2F;64 (eth1)k8s存储网络&#x2F;ceph集群网络: 2::0&#x2F;64 (eth2)k8s VIP">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kubespray部署纯ipv6 k8s+ceph集群">
 <meta property="og:url" content="https://akemi.zj.cn/2025/10/03/K8s-ipv6/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="kubespray在2.28版本新增了支持纯ipv6的特性这个ipv6的ceph集群还有点问题，image无法正常映射，之后再研究  环境说明 管理网络: 10.163.2.0&#x2F;24 (eth0) k8s集群网络: 1::0&#x2F;64 (eth1) k8s存储网络&#x2F;ceph集群网络: 2::0&#x2F;64 (eth2) k8s VIP 1::100&#x2F;64 10.163.2.143 1::20&#x2F;64 ansi">
+<meta property="og:description" content="kubespray在2.28版本新增了支持纯ipv6的特性这个ipv6的ceph集群还有点问题，image无法正常映射，之后再研究  环境说明 123456789101112131415161718192021222324管理网络: 10.163.2.0&#x2F;24 (eth0)k8s集群网络: 1::0&#x2F;64 (eth1)k8s存储网络&#x2F;ceph集群网络: 2::0&#x2F;64 (eth2)k8s VIP">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250929110350619.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250929175000422.png">
@@ -204,12 +204,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -217,7 +219,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -497,619 +498,39 @@
         <p>kubespray在2.28版本新增了支持纯ipv6的特性<br>这个ipv6的ceph集群还有点问题，image无法正常映射，之后再研究</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250929110350619.png"></p>
 <p><strong>环境说明</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">管理网络: <span class="token number">10.163</span>.2.0/24 <span class="token punctuation">(</span>eth0<span class="token punctuation">)</span>
-k8s集群网络: <span class="token number">1</span>::0/64 <span class="token punctuation">(</span>eth1<span class="token punctuation">)</span>
-k8s存储网络/ceph集群网络: <span class="token number">2</span>::0/64 <span class="token punctuation">(</span>eth2<span class="token punctuation">)</span>
-k8s VIP <span class="token number">1</span>::100/64
-<span class="token number">10.163</span>.2.143 <span class="token number">1</span>::20/64 ansible （k8s客户端机）
-<span class="token number">10.163</span>.2.102 <span class="token number">1</span>::1/64 <span class="token number">2</span>::1/64 master1
-<span class="token number">10.163</span>.2.101 <span class="token number">1</span>::2/64 <span class="token number">2</span>::2/64 master2
-<span class="token number">10.163</span>.2.109 <span class="token number">1</span>::3/64 <span class="token number">2</span>::3/64 master3
-<span class="token number">10.163</span>.2.108 <span class="token number">1</span>::4/64 <span class="token number">2</span>::4/64 worker1
-<span class="token number">10.163</span>.2.131 <span class="token number">1</span>::5/64 <span class="token number">2</span>::5/64 worker2
-<span class="token number">10.163</span>.2.110 <span class="token number">1</span>::6/64 <span class="token number">2</span>::6/64 worker3
-<span class="token number">10.163</span>.2.136 <span class="token number">2</span>::11/64 ceph1
-<span class="token number">10.163</span>.2.137 <span class="token number">2</span>::12/64 ceph2
-<span class="token number">10.163</span>.2.144 <span class="token number">2</span>::13/64 ceph3
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">管理网络: 10.163.2.0/24 (eth0)</span><br><span class="line">k8s集群网络: 1::0/64 (eth1)</span><br><span class="line">k8s存储网络/ceph集群网络: 2::0/64 (eth2)</span><br><span class="line">k8s VIP 1::100/64</span><br><span class="line">10.163.2.143 1::20/64 ansible （k8s客户端机）</span><br><span class="line">10.163.2.102 1::1/64 2::1/64 master1</span><br><span class="line">10.163.2.101 1::2/64 2::2/64 master2</span><br><span class="line">10.163.2.109 1::3/64 2::3/64 master3</span><br><span class="line">10.163.2.108 1::4/64 2::4/64 worker1</span><br><span class="line">10.163.2.131 1::5/64 2::5/64 worker2</span><br><span class="line">10.163.2.110 1::6/64 2::6/64 worker3</span><br><span class="line">10.163.2.136 2::11/64 ceph1</span><br><span class="line">10.163.2.137 2::12/64 ceph2</span><br><span class="line">10.163.2.144 2::13/64 ceph3</span><br><span class="line"></span><br><span class="line">ceph v17.2.7 quincy</span><br><span class="line">k8s v1.32.8</span><br><span class="line">calico 3.29.5</span><br><span class="line">ceph-csi 3.14.0</span><br><span class="line"></span><br><span class="line">ansible ubuntu 24.03 LTS</span><br><span class="line">其余均为alma 9.6</span><br><span class="line">root密码均为1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-ceph v17.2.7 quincy
-k8s v1.32.8
-calico <span class="token number">3.29</span>.5
-ceph-csi <span class="token number">3.14</span>.0
+<h1 id="kubespray部署k8s"><a href="#kubespray部署k8s" class="headerlink" title="kubespray部署k8s"></a>kubespray部署k8s</h1><h2 id="ansible与k8s环境初始化"><a href="#ansible与k8s环境初始化" class="headerlink" title="ansible与k8s环境初始化"></a>ansible与k8s环境初始化</h2><h3 id="做免密"><a href="#做免密" class="headerlink" title="做免密"></a><strong>做免密</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ansible节点</span></span><br><span class="line">sudo -i</span><br><span class="line">hostnamectl set-hostname ansible &amp;&amp; bash</span><br><span class="line">apt -y install python3-pip sshpass python3.12-venv</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;10.163.2.143 ansible</span></span><br><span class="line"><span class="string">10.163.2.102 master1</span></span><br><span class="line"><span class="string">10.163.2.101 master2</span></span><br><span class="line"><span class="string">10.163.2.109 master3</span></span><br><span class="line"><span class="string">10.163.2.108 worker1</span></span><br><span class="line"><span class="string">10.163.2.131 worker2</span></span><br><span class="line"><span class="string">10.163.2.110 worker3</span></span><br><span class="line"><span class="string">10.163.2.136 ceph1</span></span><br><span class="line"><span class="string">10.163.2.137 ceph2</span></span><br><span class="line"><span class="string">10.163.2.144 ceph3&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"></span><br><span class="line">git <span class="built_in">clone</span> -b release-2.28 https://github.com/kubernetes-sigs/kubespray.git</span><br><span class="line"><span class="built_in">cd</span> kubespray/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建python虚拟环境</span></span><br><span class="line">python3 -m venv /root/kubespray/venv/</span><br><span class="line"><span class="built_in">source</span> /root/kubespray/venv/bin/activate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装python依赖，这一步会把ansible也安装完</span></span><br><span class="line">pip3 install -r requirements.txt \</span><br><span class="line">-i https://mirrors.aliyun.com/pypi/simple/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义inventory</span></span><br><span class="line">vim inventory/sample/inventory.ini</span><br><span class="line">[all]</span><br><span class="line">master1 ansible_host=10.163.2.102 ip6=1::1</span><br><span class="line">master2 ansible_host=10.163.2.101 ip6=1::2</span><br><span class="line">master3 ansible_host=10.163.2.109 ip6=1::3</span><br><span class="line">worker1 ansible_host=10.163.2.108 ip6=1::4</span><br><span class="line">worker2 ansible_host=10.163.2.131 ip6=1::5</span><br><span class="line">worker3 ansible_host=10.163.2.110 ip6=1::6</span><br><span class="line">[kube-master]</span><br><span class="line">master1</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line">[etcd]</span><br><span class="line">master1</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line">[kube-node]</span><br><span class="line">master1</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line">worker1</span><br><span class="line">worker2</span><br><span class="line">worker3</span><br><span class="line">[calico_rr]</span><br><span class="line"></span><br><span class="line">[k8s_cluster:children]</span><br><span class="line">kube-master</span><br><span class="line">kube-node</span><br><span class="line">calico_rr</span><br><span class="line"></span><br><span class="line"><span class="comment"># 给所有节点装sshpass</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -a <span class="string">&quot;yum -y install sshpass&quot;</span> -u root -k all</span><br><span class="line"></span><br><span class="line"><span class="comment"># 脚本分发密钥，将/etc/hosts中的主机全部做互信</span></span><br><span class="line">ssh-keygen -N <span class="string">&#x27;&#x27;</span> -f ~/.ssh/id_rsa</span><br><span class="line"><span class="built_in">cat</span> &gt; share_key.sh &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line"><span class="comment">#!/bin/bash</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">check</span></span>() &#123;</span><br><span class="line">    <span class="keyword">if</span> [ $? == 0 ]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> -e <span class="string">&quot;\033[32m<span class="variable">$&#123;1&#125;</span>=======&gt;success\033[0m&quot;</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">echo</span> -e <span class="string">&quot;\033[31m<span class="variable">$&#123;1&#125;</span>=======&gt;fail\033[0m&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;检查依赖&quot;</span></span><br><span class="line">sshpass &amp;&gt;&gt;/dev/null</span><br><span class="line"><span class="keyword">if</span> [ $? != 0 ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> -e <span class="string">&quot;检查失败，未安装sshpass，程序退出&quot;</span></span><br><span class="line">    <span class="built_in">exit</span> 1</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;检查完成&quot;</span></span><br><span class="line"></span><br><span class="line">ip=$(<span class="built_in">cat</span> /etc/hosts |awk <span class="string">&#x27;NR &gt; 3 &#123;print $1&#125;&#x27;</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="variable">$ip</span>; <span class="keyword">do</span></span><br><span class="line">    ping -c 1 -i 1 <span class="variable">$&#123;i&#125;</span> &amp;&gt;&gt; /dev/null</span><br><span class="line">    <span class="keyword">if</span> [ $? == 0 ]; <span class="keyword">then</span></span><br><span class="line">        sshpass -p1 ssh-copy-id -i ~/.ssh/id_rsa.pub -o StrictHostKeyChecking=no root@<span class="variable">$&#123;i&#125;</span> &amp;&gt;&gt;/dev/null</span><br><span class="line">        check <span class="string">&quot;<span class="variable">$&#123;i&#125;</span>免密登录&quot;</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$&#123;i&#125;</span>主机不在线&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"><span class="built_in">wait</span>  <span class="comment"># 等待并行结束</span></span><br><span class="line">EOF</span><br><span class="line"><span class="built_in">chmod</span> +x share_key.sh</span><br><span class="line">./share_key.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 节点安全相关</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini all \</span><br><span class="line">-a <span class="string">&quot;sed -i &#x27;s/^SELINUX=.*/SELINUX=disable/g&#x27; /etc/selinux/config&quot;</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini all -a <span class="string">&quot;setenforce 0&quot;</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini all -m service \</span><br><span class="line">-a <span class="string">&quot;name=firewalld state=stopped enabled=false&quot;</span></span><br></pre></td></tr></table></figure>
 
-ansible ubuntu <span class="token number">24.03</span> LTS
-其余均为alma <span class="token number">9.6</span>
-root密码均为1
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="k8s节点ipv6配置"><a href="#k8s节点ipv6配置" class="headerlink" title="k8s节点ipv6配置"></a><strong>k8s节点ipv6配置</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群网络配置</span></span><br><span class="line">ssh master1 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::1/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh master2 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::2/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh master3 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::3/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh worker1 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::4/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh worker2 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::5/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh worker3 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::6/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 存储网络配置</span></span><br><span class="line">ssh master1 <span class="string">&quot;nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::1/64 &amp;&amp; nmcli con up eth2&quot;</span></span><br><span class="line">ssh master2 <span class="string">&quot;nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::2/64 &amp;&amp; nmcli con up eth2&quot;</span></span><br><span class="line">ssh master3 <span class="string">&quot;nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::3/64 &amp;&amp; nmcli con up eth2&quot;</span></span><br><span class="line">ssh worker1 <span class="string">&quot;nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::4/64 &amp;&amp; nmcli con up eth2&quot;</span></span><br><span class="line">ssh worker2 <span class="string">&quot;nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::5/64 &amp;&amp; nmcli con up eth2&quot;</span></span><br><span class="line">ssh worker3 <span class="string">&quot;nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::6/64 &amp;&amp; nmcli con up eth2&quot;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<h1 id="kubespray部署k8s"><a href="#kubespray部署k8s" class="headerlink" title="kubespray部署k8s"></a>kubespray部署k8s</h1><h2 id="ansible与k8s环境初始化"><a href="#ansible与k8s环境初始化" class="headerlink" title="ansible与k8s环境初始化"></a>ansible与k8s环境初始化</h2><h3 id="做免密"><a href="#做免密" class="headerlink" title="做免密"></a><strong>做免密</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ansible节点</span>
-<span class="token function">sudo</span> <span class="token parameter variable">-i</span>
-hostnamectl set-hostname ansible <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-<span class="token function">apt</span> <span class="token parameter variable">-y</span> <span class="token function">install</span> python3-pip sshpass python3.12-venv
+<h2 id="准备高可用组件"><a href="#准备高可用组件" class="headerlink" title="准备高可用组件"></a>准备高可用组件</h2><h3 id="安装keepalived"><a href="#安装keepalived" class="headerlink" title="安装keepalived"></a><strong>安装keepalived</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m yum -a \</span><br><span class="line"><span class="string">&quot;name=keepalived state=latest&quot;</span> kube-master</span><br><span class="line"></span><br><span class="line"><span class="comment"># 制作一个keepalived配置文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; keepalived.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">! Configuration File for keepalived</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">global_defs &#123;</span></span><br><span class="line"><span class="string">   router_id LVS_DEVEL</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">vrrp_instance VI_1 &#123;</span></span><br><span class="line"><span class="string">    state MASTER</span></span><br><span class="line"><span class="string">    interface eth1</span></span><br><span class="line"><span class="string">    virtual_router_id 51</span></span><br><span class="line"><span class="string">    priority 100</span></span><br><span class="line"><span class="string">    advert_int 1</span></span><br><span class="line"><span class="string">    authentication &#123;</span></span><br><span class="line"><span class="string">        auth_type PASS</span></span><br><span class="line"><span class="string">        auth_pass 1111</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    virtual_ipaddress &#123;</span></span><br><span class="line"><span class="string">       1::100/64</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 复制文件到对应节点</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m copy -a \</span><br><span class="line"><span class="string">&quot;src=keepalived.conf dest=/etc/keepalived/keepalived.conf&quot;</span> kube-master</span><br><span class="line"><span class="comment"># 开机自启</span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m service -a \</span><br><span class="line"><span class="string">&quot;name=keepalived state=restarted enabled=true&quot;</span> kube-master</span><br></pre></td></tr></table></figure>
 
-<span class="token builtin class-name">echo</span> <span class="token string">"10.163.2.143 ansible
-10.163.2.102 master1
-10.163.2.101 master2
-10.163.2.109 master3
-10.163.2.108 worker1
-10.163.2.131 worker2
-10.163.2.110 worker3
-10.163.2.136 ceph1
-10.163.2.137 ceph2
-10.163.2.144 ceph3"</span> <span class="token operator">>></span> /etc/hosts
-
-<span class="token function">git</span> clone <span class="token parameter variable">-b</span> release-2.28 https://github.com/kubernetes-sigs/kubespray.git
-<span class="token builtin class-name">cd</span> kubespray/
-
-<span class="token comment"># 创建python虚拟环境</span>
-python3 <span class="token parameter variable">-m</span> venv /root/kubespray/venv/
-<span class="token builtin class-name">source</span> /root/kubespray/venv/bin/activate
-
-<span class="token comment"># 安装python依赖，这一步会把ansible也安装完</span>
-pip3 <span class="token function">install</span> <span class="token parameter variable">-r</span> requirements.txt <span class="token punctuation">\</span>
-<span class="token parameter variable">-i</span> https://mirrors.aliyun.com/pypi/simple/
-
-<span class="token comment"># 定义inventory</span>
-<span class="token function">vim</span> inventory/sample/inventory.ini
-<span class="token punctuation">[</span>all<span class="token punctuation">]</span>
-master1 <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.163</span>.2.102 <span class="token assign-left variable">ip6</span><span class="token operator">=</span><span class="token number">1</span>::1
-master2 <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.163</span>.2.101 <span class="token assign-left variable">ip6</span><span class="token operator">=</span><span class="token number">1</span>::2
-master3 <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.163</span>.2.109 <span class="token assign-left variable">ip6</span><span class="token operator">=</span><span class="token number">1</span>::3
-worker1 <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.163</span>.2.108 <span class="token assign-left variable">ip6</span><span class="token operator">=</span><span class="token number">1</span>::4
-worker2 <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.163</span>.2.131 <span class="token assign-left variable">ip6</span><span class="token operator">=</span><span class="token number">1</span>::5
-worker3 <span class="token assign-left variable">ansible_host</span><span class="token operator">=</span><span class="token number">10.163</span>.2.110 <span class="token assign-left variable">ip6</span><span class="token operator">=</span><span class="token number">1</span>::6
-<span class="token punctuation">[</span>kube-master<span class="token punctuation">]</span>
-master1
-master2
-master3
-<span class="token punctuation">[</span>etcd<span class="token punctuation">]</span>
-master1
-master2
-master3
-<span class="token punctuation">[</span>kube-node<span class="token punctuation">]</span>
-master1
-master2
-master3
-worker1
-worker2
-worker3
-<span class="token punctuation">[</span>calico_rr<span class="token punctuation">]</span>
-
-<span class="token punctuation">[</span>k8s_cluster:children<span class="token punctuation">]</span>
-kube-master
-kube-node
-calico_rr
-
-<span class="token comment"># 给所有节点装sshpass</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-a</span> <span class="token string">"yum -y install sshpass"</span> <span class="token parameter variable">-u</span> root <span class="token parameter variable">-k</span> all
-
-<span class="token comment"># 脚本分发密钥，将/etc/hosts中的主机全部做互信</span>
-ssh-keygen <span class="token parameter variable">-N</span> <span class="token string">''</span> <span class="token parameter variable">-f</span> ~/.ssh/id_rsa
-<span class="token function">cat</span> <span class="token operator">></span> share_key.sh <span class="token operator">&lt;&lt;</span><span class="token string">'EOF'
-#!/bin/bash
-function check() &#123;
-    if [ $? == 0 ]; then
-        echo -e "\033[32m$&#123;1&#125;=======>success\033[0m"
-    else
-        echo -e "\033[31m$&#123;1&#125;=======>fail\033[0m"
-    fi
-&#125;
-echo "检查依赖"
-sshpass &amp;>>/dev/null
-if [ $? != 0 ]; then
-    echo -e "检查失败，未安装sshpass，程序退出"
-    exit 1
-fi
-echo "检查完成"
-
-ip=$(cat /etc/hosts |awk 'NR > 3 &#123;print $1&#125;')
-for i in $ip; do
-    ping -c 1 -i 1 $&#123;i&#125; &amp;>> /dev/null
-    if [ $? == 0 ]; then
-        sshpass -p1 ssh-copy-id -i ~/.ssh/id_rsa.pub -o StrictHostKeyChecking=no root@$&#123;i&#125; &amp;>>/dev/null
-        check "$&#123;i&#125;免密登录"
-    else
-        echo "$&#123;i&#125;主机不在线"
-    fi
-done
-wait  # 等待并行结束
-EOF</span>
-<span class="token function">chmod</span> +x share_key.sh
-./share_key.sh
-
-<span class="token comment"># 节点安全相关</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini all <span class="token punctuation">\</span>
-<span class="token parameter variable">-a</span> <span class="token string">"sed -i 's/^SELINUX=.*/SELINUX=disable/g' /etc/selinux/config"</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini all <span class="token parameter variable">-a</span> <span class="token string">"setenforce 0"</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini all <span class="token parameter variable">-m</span> <span class="token function">service</span> <span class="token punctuation">\</span>
-<span class="token parameter variable">-a</span> <span class="token string">"name=firewalld state=stopped enabled=false"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="k8s节点ipv6配置"><a href="#k8s节点ipv6配置" class="headerlink" title="k8s节点ipv6配置"></a><strong>k8s节点ipv6配置</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 集群网络配置</span>
-<span class="token function">ssh</span> master1 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::1/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> master2 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::2/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> master3 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::3/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> worker1 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::4/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> worker2 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::5/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> worker3 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 1::6/64 &amp;&amp; nmcli con up eth1"</span>
-
-<span class="token comment"># 存储网络配置</span>
-<span class="token function">ssh</span> master1 <span class="token string">"nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::1/64 &amp;&amp; nmcli con up eth2"</span>
-<span class="token function">ssh</span> master2 <span class="token string">"nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::2/64 &amp;&amp; nmcli con up eth2"</span>
-<span class="token function">ssh</span> master3 <span class="token string">"nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::3/64 &amp;&amp; nmcli con up eth2"</span>
-<span class="token function">ssh</span> worker1 <span class="token string">"nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::4/64 &amp;&amp; nmcli con up eth2"</span>
-<span class="token function">ssh</span> worker2 <span class="token string">"nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::5/64 &amp;&amp; nmcli con up eth2"</span>
-<span class="token function">ssh</span> worker3 <span class="token string">"nmcli con add con-name eth2 ifname eth2 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::6/64 &amp;&amp; nmcli con up eth2"</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="准备高可用组件"><a href="#准备高可用组件" class="headerlink" title="准备高可用组件"></a>准备高可用组件</h2><h3 id="安装keepalived"><a href="#安装keepalived" class="headerlink" title="安装keepalived"></a><strong>安装keepalived</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 安装</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-m</span> yum <span class="token parameter variable">-a</span> <span class="token punctuation">\</span>
-<span class="token string">"name=keepalived state=latest"</span> kube-master
-
-<span class="token comment"># 制作一个keepalived配置文件</span>
-<span class="token function">cat</span> <span class="token operator">></span> keepalived.conf <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-! Configuration File for keepalived
-
-global_defs &#123;
-   router_id LVS_DEVEL
-&#125;
-
-vrrp_instance VI_1 &#123;
-    state MASTER
-    interface eth1
-    virtual_router_id 51
-    priority 100
-    advert_int 1
-    authentication &#123;
-        auth_type PASS
-        auth_pass 1111
-    &#125;
-    virtual_ipaddress &#123;
-       1::100/64
-    &#125;
-&#125;
-EOF</span>
-
-<span class="token comment"># 复制文件到对应节点</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-m</span> copy <span class="token parameter variable">-a</span> <span class="token punctuation">\</span>
-<span class="token string">"src=keepalived.conf dest=/etc/keepalived/keepalived.conf"</span> kube-master
-<span class="token comment"># 开机自启</span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-m</span> <span class="token function">service</span> <span class="token parameter variable">-a</span> <span class="token punctuation">\</span>
-<span class="token string">"name=keepalived state=restarted enabled=true"</span> kube-master<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="安装HAProxy"><a href="#安装HAProxy" class="headerlink" title="安装HAProxy"></a><strong>安装HAProxy</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-m</span> yum <span class="token parameter variable">-a</span> <span class="token punctuation">\</span>
-<span class="token string">"name=haproxy state=latest"</span> kube-master
-
-<span class="token comment"># 搞个配置文件</span>
-<span class="token function">cat</span> <span class="token operator">></span> haproxy.cfg <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-global
-    daemon
-    maxconn 4000
-    user haproxy
-    group haproxy
-    pidfile /var/run/haproxy.pid
-
-defaults
-    mode tcp
-    timeout connect 10s
-    timeout client 1mc
-    timeout server 1m
-    retries 3
-    maxconn 3000
-
-frontend fe_k8s
-    bind [::]:6444
-    default_backend be_k8s
-
-backend be_k8s
-    balance roundrobin
-    server master1 [1::1]:6443 check
-    server master2 [1::2]:6443 check
-    server master3 [1::3]:6443 check
-EOF</span>
-
-<span class="token comment"># </span>
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-m</span> copy <span class="token parameter variable">-a</span> <span class="token punctuation">\</span>
-<span class="token string">"src=haproxy.cfg dest=/etc/haproxy/haproxy.cfg"</span> kube-master
-
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini <span class="token parameter variable">-m</span> <span class="token function">service</span> <span class="token parameter variable">-a</span> <span class="token punctuation">\</span>
-<span class="token string">"name=haproxy state=restarted enabled=true"</span> kube-master
-
-<span class="token comment"># 可以先ping一下vip确保工作正常</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="安装HAProxy"><a href="#安装HAProxy" class="headerlink" title="安装HAProxy"></a><strong>安装HAProxy</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">ansible -i inventory/sample/inventory.ini -m yum -a \</span><br><span class="line"><span class="string">&quot;name=haproxy state=latest&quot;</span> kube-master</span><br><span class="line"></span><br><span class="line"><span class="comment"># 搞个配置文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; haproxy.cfg &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">global</span></span><br><span class="line"><span class="string">    daemon</span></span><br><span class="line"><span class="string">    maxconn 4000</span></span><br><span class="line"><span class="string">    user haproxy</span></span><br><span class="line"><span class="string">    group haproxy</span></span><br><span class="line"><span class="string">    pidfile /var/run/haproxy.pid</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">defaults</span></span><br><span class="line"><span class="string">    mode tcp</span></span><br><span class="line"><span class="string">    timeout connect 10s</span></span><br><span class="line"><span class="string">    timeout client 1mc</span></span><br><span class="line"><span class="string">    timeout server 1m</span></span><br><span class="line"><span class="string">    retries 3</span></span><br><span class="line"><span class="string">    maxconn 3000</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">frontend fe_k8s</span></span><br><span class="line"><span class="string">    bind [::]:6444</span></span><br><span class="line"><span class="string">    default_backend be_k8s</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">backend be_k8s</span></span><br><span class="line"><span class="string">    balance roundrobin</span></span><br><span class="line"><span class="string">    server master1 [1::1]:6443 check</span></span><br><span class="line"><span class="string">    server master2 [1::2]:6443 check</span></span><br><span class="line"><span class="string">    server master3 [1::3]:6443 check</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m copy -a \</span><br><span class="line"><span class="string">&quot;src=haproxy.cfg dest=/etc/haproxy/haproxy.cfg&quot;</span> kube-master</span><br><span class="line"></span><br><span class="line">ansible -i inventory/sample/inventory.ini -m service -a \</span><br><span class="line"><span class="string">&quot;name=haproxy state=restarted enabled=true&quot;</span> kube-master</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可以先ping一下vip确保工作正常</span></span><br></pre></td></tr></table></figure>
 
 <p><strong>高可用相关变量</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">inventory/sample/group_vars/all/all.yml
-添加
-<span class="token punctuation">..</span>.
-loadbalancer_apiserver:
-  address: <span class="token string">"1::100"</span>
-  port: <span class="token number">6444</span>
-loadbalancer_apiserver_type: haproxy
-loadbalancer_apiserver_port: <span class="token number">6443</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">inventory/sample/group_vars/all/all.yml</span><br><span class="line">添加</span><br><span class="line">...</span><br><span class="line">loadbalancer_apiserver:</span><br><span class="line">  address: <span class="string">&quot;1::100&quot;</span></span><br><span class="line">  port: 6444</span><br><span class="line">loadbalancer_apiserver_type: haproxy</span><br><span class="line">loadbalancer_apiserver_port: 6443</span><br></pre></td></tr></table></figure>
 
 <h2 id="调整ansible变量与部署"><a href="#调整ansible变量与部署" class="headerlink" title="调整ansible变量与部署"></a>调整ansible变量与部署</h2><p>CNI相关参考文档<br><a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/kubespray/blob/master/docs/CNI/calico.md">https://github.com/kubernetes-sigs/kubespray/blob/master/docs/CNI/calico.md</a></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 开启ipv6</span>
-roles/kubespray_defaults/defaults/main/main.yml
-<span class="token punctuation">..</span>.
-ipv4_stack: <span class="token boolean">false</span>
-ipv6_stack: <span class="token boolean">true</span>
-<span class="token comment"># 可选ipv6配置（以下为默认）</span>
-kube_service_addresses_ipv6: fd85:ee78:d8a6:8607::1000/116
-kube_pods_subnet_ipv6: fd85:ee78:d8a6:8607::1:0000/112
-kube_network_node_prefix_ipv6: <span class="token number">120</span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 开启ipv6</span></span><br><span class="line">roles/kubespray_defaults/defaults/main/main.yml</span><br><span class="line">...</span><br><span class="line">ipv4_stack: <span class="literal">false</span></span><br><span class="line">ipv6_stack: <span class="literal">true</span></span><br><span class="line"><span class="comment"># 可选ipv6配置（以下为默认）</span></span><br><span class="line">kube_service_addresses_ipv6: fd85:ee78:d8a6:8607::1000/116</span><br><span class="line">kube_pods_subnet_ipv6: fd85:ee78:d8a6:8607::1:0000/112</span><br><span class="line">kube_network_node_prefix_ipv6: 120</span><br><span class="line"></span><br><span class="line"><span class="comment"># 代理配置，忽略pod网段、service网段、VIP域名</span></span><br><span class="line">inventory/sample/group_vars/all/all.yml</span><br><span class="line">http_proxy: <span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line">https_proxy: <span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line">no_proxy: <span class="string">&quot;lb-apiserver.kubernetes.local,fd85:ee78:d8a6:8607::1000/116,fd85:ee78:d8a6:8607::1:0000/112&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 网络插件相关，使用calico的subcross模式</span></span><br><span class="line"><span class="comment">#inventory/sample/group_vars/k8s_cluster/k8s-net-calico.yml</span></span><br><span class="line"><span class="comment">#calico_network_backend: &quot;bird&quot;</span></span><br><span class="line"><span class="comment">#calico_ipip_mode: &quot;CrossSubnet&quot;</span></span><br><span class="line"><span class="comment">#calico_vxlan_mode: &quot;Never&quot;</span></span><br><span class="line">这段crosssubnet配置在ipv6中不适用，别用</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始部署</span></span><br><span class="line">ansible-playbook -i inventory/sample/inventory.ini cluster.yml -v</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 代理配置，忽略pod网段、service网段、VIP域名</span>
-inventory/sample/group_vars/all/all.yml
-http_proxy: <span class="token string">"http://192.168.10.238:7897"</span>
-https_proxy: <span class="token string">"http://192.168.10.238:7897"</span>
-no_proxy: <span class="token string">"lb-apiserver.kubernetes.local,fd85:ee78:d8a6:8607::1000/116,fd85:ee78:d8a6:8607::1:0000/112"</span>
+<h1 id="cephadm部署ceph"><a href="#cephadm部署ceph" class="headerlink" title="cephadm部署ceph"></a>cephadm部署ceph</h1><h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># </span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/ceph/cephadm-ansible.git</span><br><span class="line"><span class="built_in">cd</span> cephadm-ansible</span><br><span class="line"></span><br><span class="line"><span class="comment"># 前面做过免密登录了，这里就不做了</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 虚拟环境</span></span><br><span class="line">python3 -m venv ./venv/</span><br><span class="line"><span class="built_in">source</span> ./venv/bin/activate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装依赖</span></span><br><span class="line">pip3 install -r requirements.txt \</span><br><span class="line">-i https://mirrors.aliyun.com/pypi/simple/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 清单文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; inventory &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[storage]</span></span><br><span class="line"><span class="string">ceph1 ansible_host=10.163.2.136</span></span><br><span class="line"><span class="string">ceph2 ansible_host=10.163.2.137</span></span><br><span class="line"><span class="string">ceph3 ansible_host=10.163.2.144</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整版本与镜像源</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^ceph_release.*/ceph_release: 17.2.7/g&#x27;</span> ceph_defaults/defaults/main.yml</span><br><span class="line">sed -i <span class="string">&#x27;s#^ceph_mirror.*#ceph_mirror: https://mirrors.aliyun.com/ceph#g&#x27;</span>  ceph_defaults/defaults/main.yml</span><br><span class="line">sed -i <span class="string">&#x27;s#^ceph_stable_key.*#ceph_stable_key: https://mirrors.aliyun.com/ceph/keys/release.asc#g&#x27;</span>  ceph_defaults/defaults/main.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化集群节点，这里安装epel建议挂代理，不然贼慢</span></span><br><span class="line">ansible -i inventory storage -a <span class="string">&quot;hostnamectl set-hostname &#123;&#123; inventory_hostname &#125;&#125;&quot;</span> -b</span><br><span class="line">ansible -i inventory storage -m shell -a <span class="string">&#x27;export http_proxy=&quot;http://192.168.10.238:7897&quot; &amp;&amp; export https_proxy=&quot;http://192.168.10.238:7897&quot; &amp;&amp; yum -y install epel-release&#x27;</span> </span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置ipv6地址</span></span><br><span class="line">ssh ceph1 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::11/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh ceph2 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::12/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line">ssh ceph3 <span class="string">&quot;nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::13/64 &amp;&amp; nmcli con up eth1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安全相关</span></span><br><span class="line">ansible -i inventory all -a <span class="string">&quot;sed -i &#x27;s/^SELINUX=.*/SELINUX=disable/g&#x27; /etc/selinux/config&quot;</span></span><br><span class="line">ansible -i inventory all -a <span class="string">&quot;setenforce 0&quot;</span></span><br><span class="line">ansible -i inventory all -m service -a <span class="string">&quot;name=firewalld state=stopped enabled=false&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; environment &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">http_proxy=&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="string">https_proxy=&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">ansible -i inventory all -m copy \</span><br><span class="line">-a <span class="string">&quot;src=./environment dest=/etc/environment&quot;</span> </span><br><span class="line">ansible -i inventory all -m shell \</span><br><span class="line">-a <span class="string">&quot;source /etc/environment&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 环境预安装</span></span><br><span class="line">ansible-playbook -i inventory cephadm-preflight.yml -v</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备同步hosts文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; hosts &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">10.163.2.136 ceph1</span></span><br><span class="line"><span class="string">10.163.2.137 ceph2</span></span><br><span class="line"><span class="string">10.163.2.144 ceph3</span></span><br><span class="line"><span class="string">2::11 ceph1</span></span><br><span class="line"><span class="string">2::12 ceph2</span></span><br><span class="line"><span class="string">2::13 ceph3</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">ansible -i inventory all -m copy -a <span class="string">&quot;src=./hosts dest=/etc/&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备ceph节点podman的镜像加速</span></span><br><span class="line"><span class="built_in">cat</span> &gt; registries.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">unqualified-search-registries = [&quot;docker.io&quot;,&quot;quay.io&quot;]</span></span><br><span class="line"><span class="string">[[registry]]</span></span><br><span class="line"><span class="string">prefix = &quot;docker.io&quot;</span></span><br><span class="line"><span class="string">location = &quot;a88uijg4.mirror.aliyuncs.com&quot;</span></span><br><span class="line"><span class="string">insecure = true</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;docker.lmirror.top&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;docker.m.daocloud.io&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;hub.uuuadc.top&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;docker.anyhub.us.kg&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;dockerhub.jobcher.com&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;dockerhub.icu&quot;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[[registry]]</span></span><br><span class="line"><span class="string">prefix = &quot;quay.io&quot;</span></span><br><span class="line"><span class="string">location = &quot;quay.lmirror.top&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;quay.m.daocloud.io&quot;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">ansible -i inventory storage -m copy -a <span class="string">&#x27;src=./registries.conf dest=/etc/containers/registries.conf&#x27;</span></span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 网络插件相关，使用calico的subcross模式</span>
-<span class="token comment">#inventory/sample/group_vars/k8s_cluster/k8s-net-calico.yml</span>
-<span class="token comment">#calico_network_backend: "bird"</span>
-<span class="token comment">#calico_ipip_mode: "CrossSubnet"</span>
-<span class="token comment">#calico_vxlan_mode: "Never"</span>
-这段crosssubnet配置在ipv6中不适用，别用
+<h2 id="bootstrap引导部署"><a href="#bootstrap引导部署" class="headerlink" title="bootstrap引导部署"></a>bootstrap引导部署</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 进入ceph1节点</span></span><br><span class="line">ssh ceph1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 代理</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=<span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="built_in">export</span> https_proxy=<span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"></span><br><span class="line">cephadm bootstrap --mon-ip=[2::11] \</span><br><span class="line">--initial-dashboard-user=admin \</span><br><span class="line">--initial-dashboard-password=wangsheng \</span><br><span class="line">--dashboard-password-noupdate \</span><br><span class="line">--allow-overwrite</span><br><span class="line"></span><br><span class="line">ceph -v</span><br><span class="line"><span class="comment">#ceph version 17.2.7 (b12291d110049b2f35e32e0de30d70e9a4c060d2) quincy (stable)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 传送ceph公钥</span></span><br><span class="line">ssh-copy-id -f -i /etc/ceph/ceph.pub root@ceph2</span><br><span class="line">ssh-copy-id -f -i /etc/ceph/ceph.pub root@ceph3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加ceph节点</span></span><br><span class="line">ceph orch host add ceph2 [2::12] --labels _admin</span><br><span class="line">ceph orch host add ceph3 [2::13] --labels _admin</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加mon与mgr</span></span><br><span class="line">ceph orch apply mon ceph1,ceph2,ceph3</span><br><span class="line">ceph orch apply mgr --placement <span class="string">&quot;ceph1 ceph2 ceph3&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加所有可用osd</span></span><br><span class="line">ceph orch apply osd --all-available-devices</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等待ceph就绪</span></span><br><span class="line">ceph orch <span class="built_in">ls</span></span><br><span class="line">NAME                       PORTS        RUNNING  REFRESHED  AGE  PLACEMENT</span><br><span class="line">alertmanager               ?:9093,9094      1/1  43s ago    27m  count:1</span><br><span class="line">crash                                       3/3  43s ago    27m  *</span><br><span class="line">grafana                    ?:3000           1/1  -          27m  count:1</span><br><span class="line">mgr                                         3/3  43s ago    6m   ceph1;ceph2;ceph3</span><br><span class="line">mon                                         3/3  43s ago    6m   ceph1;ceph2;ceph3</span><br><span class="line">node-exporter              ?:9100           3/3  43s ago    27m  *</span><br><span class="line">osd.all-available-devices                     9  43s ago    5m   *</span><br><span class="line">prometheus                 ?:9095           1/1  43s ago    27m  count:1</span><br><span class="line"></span><br><span class="line">ceph orch host <span class="built_in">ls</span></span><br><span class="line">HOST   ADDR   LABELS  STATUS</span><br><span class="line">ceph1  2::11  _admin</span><br><span class="line">ceph2  2::12  _admin</span><br><span class="line">ceph3  2::13  _admin</span><br><span class="line">3 hosts <span class="keyword">in</span> cluster</span><br><span class="line"></span><br><span class="line">ceph -w</span><br><span class="line">  cluster:</span><br><span class="line">    <span class="built_in">id</span>:     2e8aabea-9d0d-11f0-ba99-5000000a0000</span><br><span class="line">    health: HEALTH_OK</span><br><span class="line"></span><br><span class="line">  services:</span><br><span class="line">    mon: 3 daemons, quorum ceph1,ceph2,ceph3 (age 5m)</span><br><span class="line">    mgr: ceph1.ywcpof(active, since 24m), standbys: ceph2.vyyrjm, ceph3.wanwzo</span><br><span class="line">    osd: 9 osds: 9 up (since 2m), 9 <span class="keyword">in</span> (since 3m)</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   1 pools, 1 pgs</span><br><span class="line">    objects: 2 objects, 577 KiB</span><br><span class="line">    usage:   2.9 GiB used, 4.4 TiB / 4.4 TiB avail</span><br><span class="line">    pgs:     1 active+clean</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 开始部署</span>
-ansible-playbook <span class="token parameter variable">-i</span> inventory/sample/inventory.ini cluster.yml <span class="token parameter variable">-v</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h1 id="cephadm部署ceph"><a href="#cephadm部署ceph" class="headerlink" title="cephadm部署ceph"></a>cephadm部署ceph</h1><h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># </span>
-<span class="token function">git</span> clone https://github.com/ceph/cephadm-ansible.git
-<span class="token builtin class-name">cd</span> cephadm-ansible
-
-<span class="token comment"># 前面做过免密登录了，这里就不做了</span>
-
-<span class="token comment"># 虚拟环境</span>
-python3 <span class="token parameter variable">-m</span> venv ./venv/
-<span class="token builtin class-name">source</span> ./venv/bin/activate
-
-<span class="token comment"># 安装依赖</span>
-pip3 <span class="token function">install</span> <span class="token parameter variable">-r</span> requirements.txt <span class="token punctuation">\</span>
-<span class="token parameter variable">-i</span> https://mirrors.aliyun.com/pypi/simple/
-
-<span class="token comment"># 清单文件</span>
-<span class="token function">cat</span> <span class="token operator">></span> inventory <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-[storage]
-ceph1 ansible_host=10.163.2.136
-ceph2 ansible_host=10.163.2.137
-ceph3 ansible_host=10.163.2.144
-EOF</span>
-
-<span class="token comment"># 调整版本与镜像源</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^ceph_release.*/ceph_release: 17.2.7/g'</span> ceph_defaults/defaults/main.yml
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#^ceph_mirror.*#ceph_mirror: https://mirrors.aliyun.com/ceph#g'</span>  ceph_defaults/defaults/main.yml
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#^ceph_stable_key.*#ceph_stable_key: https://mirrors.aliyun.com/ceph/keys/release.asc#g'</span>  ceph_defaults/defaults/main.yml
-
-<span class="token comment"># 初始化集群节点，这里安装epel建议挂代理，不然贼慢</span>
-ansible <span class="token parameter variable">-i</span> inventory storage <span class="token parameter variable">-a</span> <span class="token string">"hostnamectl set-hostname &#123;&#123; inventory_hostname &#125;&#125;"</span> <span class="token parameter variable">-b</span>
-ansible <span class="token parameter variable">-i</span> inventory storage <span class="token parameter variable">-m</span> shell <span class="token parameter variable">-a</span> <span class="token string">'export http_proxy="http://192.168.10.238:7897" &amp;&amp; export https_proxy="http://192.168.10.238:7897" &amp;&amp; yum -y install epel-release'</span> 
-
-<span class="token comment"># 设置ipv6地址</span>
-<span class="token function">ssh</span> ceph1 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::11/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> ceph2 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::12/64 &amp;&amp; nmcli con up eth1"</span>
-<span class="token function">ssh</span> ceph3 <span class="token string">"nmcli con add con-name eth1 ifname eth1 type ethernet ipv4.method disabled ipv6.method manual ipv6.addresses 2::13/64 &amp;&amp; nmcli con up eth1"</span>
-
-<span class="token comment"># 安全相关</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-a</span> <span class="token string">"sed -i 's/^SELINUX=.*/SELINUX=disable/g' /etc/selinux/config"</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-a</span> <span class="token string">"setenforce 0"</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> <span class="token function">service</span> <span class="token parameter variable">-a</span> <span class="token string">"name=firewalld state=stopped enabled=false"</span>
-
-<span class="token function">cat</span> <span class="token operator">></span> environment <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-http_proxy="http://192.168.10.238:7897"
-https_proxy="http://192.168.10.238:7897"
-EOF</span>
-
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> copy <span class="token punctuation">\</span>
-<span class="token parameter variable">-a</span> <span class="token string">"src=./environment dest=/etc/environment"</span> 
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> shell <span class="token punctuation">\</span>
-<span class="token parameter variable">-a</span> <span class="token string">"source /etc/environment"</span>
-
-<span class="token comment"># 环境预安装</span>
-ansible-playbook <span class="token parameter variable">-i</span> inventory cephadm-preflight.yml <span class="token parameter variable">-v</span>
-
-<span class="token comment"># 准备同步hosts文件</span>
-<span class="token function">cat</span> <span class="token operator">></span> hosts <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-10.163.2.136 ceph1
-10.163.2.137 ceph2
-10.163.2.144 ceph3
-2::11 ceph1
-2::12 ceph2
-2::13 ceph3
-EOF</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> copy <span class="token parameter variable">-a</span> <span class="token string">"src=./hosts dest=/etc/"</span>
-
-<span class="token comment"># 准备ceph节点podman的镜像加速</span>
-<span class="token function">cat</span> <span class="token operator">></span> registries.conf <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-unqualified-search-registries = ["docker.io","quay.io"]
-[[registry]]
-prefix = "docker.io"
-location = "a88uijg4.mirror.aliyuncs.com"
-insecure = true
-[[registry.mirror]]
-location = "docker.lmirror.top"
-[[registry.mirror]]
-location = "docker.m.daocloud.io"
-[[registry.mirror]]
-location = "hub.uuuadc.top"
-[[registry.mirror]]
-location = "docker.anyhub.us.kg"
-[[registry.mirror]]
-location = "dockerhub.jobcher.com"
-[[registry.mirror]]
-location = "dockerhub.icu"
-
-[[registry]]
-prefix = "quay.io"
-location = "quay.lmirror.top"
-[[registry.mirror]]
-location = "quay.m.daocloud.io"
-EOF</span>
-
-ansible <span class="token parameter variable">-i</span> inventory storage <span class="token parameter variable">-m</span> copy <span class="token parameter variable">-a</span> <span class="token string">'src=./registries.conf dest=/etc/containers/registries.conf'</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="bootstrap引导部署"><a href="#bootstrap引导部署" class="headerlink" title="bootstrap引导部署"></a>bootstrap引导部署</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进入ceph1节点</span>
-<span class="token function">ssh</span> ceph1
-
-<span class="token comment"># 代理</span>
-<span class="token builtin class-name">export</span> <span class="token assign-left variable">http_proxy</span><span class="token operator">=</span><span class="token string">"http://192.168.10.238:7897"</span>
-<span class="token builtin class-name">export</span> <span class="token assign-left variable">https_proxy</span><span class="token operator">=</span><span class="token string">"http://192.168.10.238:7897"</span>
-
-cephadm bootstrap --mon-ip<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">2</span>::11<span class="token punctuation">]</span> <span class="token punctuation">\</span>
---initial-dashboard-user<span class="token operator">=</span>admin <span class="token punctuation">\</span>
---initial-dashboard-password<span class="token operator">=</span>wangsheng <span class="token punctuation">\</span>
---dashboard-password-noupdate <span class="token punctuation">\</span>
---allow-overwrite
-
-ceph <span class="token parameter variable">-v</span>
-<span class="token comment">#ceph version 17.2.7 (b12291d110049b2f35e32e0de30d70e9a4c060d2) quincy (stable)</span>
-
-<span class="token comment"># 传送ceph公钥</span>
-ssh-copy-id <span class="token parameter variable">-f</span> <span class="token parameter variable">-i</span> /etc/ceph/ceph.pub root@ceph2
-ssh-copy-id <span class="token parameter variable">-f</span> <span class="token parameter variable">-i</span> /etc/ceph/ceph.pub root@ceph3
-
-<span class="token comment"># 添加ceph节点</span>
-ceph orch <span class="token function">host</span> <span class="token function">add</span> ceph2 <span class="token punctuation">[</span><span class="token number">2</span>::12<span class="token punctuation">]</span> <span class="token parameter variable">--labels</span> _admin
-ceph orch <span class="token function">host</span> <span class="token function">add</span> ceph3 <span class="token punctuation">[</span><span class="token number">2</span>::13<span class="token punctuation">]</span> <span class="token parameter variable">--labels</span> _admin
-
-<span class="token comment"># 添加mon与mgr</span>
-ceph orch apply mon ceph1,ceph2,ceph3
-ceph orch apply mgr <span class="token parameter variable">--placement</span> <span class="token string">"ceph1 ceph2 ceph3"</span>
-
-<span class="token comment"># 添加所有可用osd</span>
-ceph orch apply osd --all-available-devices
-
-<span class="token comment"># 等待ceph就绪</span>
-ceph orch <span class="token function">ls</span>
-NAME                       PORTS        RUNNING  REFRESHED  AGE  PLACEMENT
-alertmanager               ?:9093,9094      <span class="token number">1</span>/1  43s ago    27m  count:1
-crash                                       <span class="token number">3</span>/3  43s ago    27m  *
-grafana                    ?:3000           <span class="token number">1</span>/1  -          27m  count:1
-mgr                                         <span class="token number">3</span>/3  43s ago    6m   ceph1<span class="token punctuation">;</span>ceph2<span class="token punctuation">;</span>ceph3
-mon                                         <span class="token number">3</span>/3  43s ago    6m   ceph1<span class="token punctuation">;</span>ceph2<span class="token punctuation">;</span>ceph3
-node-exporter              ?:9100           <span class="token number">3</span>/3  43s ago    27m  *
-osd.all-available-devices                     <span class="token number">9</span>  43s ago    5m   *
-prometheus                 ?:9095           <span class="token number">1</span>/1  43s ago    27m  count:1
-
-ceph orch <span class="token function">host</span> <span class="token function">ls</span>
-HOST   ADDR   LABELS  STATUS
-ceph1  <span class="token number">2</span>::11  _admin
-ceph2  <span class="token number">2</span>::12  _admin
-ceph3  <span class="token number">2</span>::13  _admin
-<span class="token number">3</span> hosts <span class="token keyword">in</span> cluster
-
-ceph <span class="token parameter variable">-w</span>
-  cluster:
-    id:     2e8aabea-9d0d-11f0-ba99-5000000a0000
-    health: HEALTH_OK
-
-  services:
-    mon: <span class="token number">3</span> daemons, quorum ceph1,ceph2,ceph3 <span class="token punctuation">(</span>age 5m<span class="token punctuation">)</span>
-    mgr: ceph1.ywcpof<span class="token punctuation">(</span>active, since 24m<span class="token punctuation">)</span>, standbys: ceph2.vyyrjm, ceph3.wanwzo
-    osd: <span class="token number">9</span> osds: <span class="token number">9</span> up <span class="token punctuation">(</span>since 2m<span class="token punctuation">)</span>, <span class="token number">9</span> <span class="token keyword">in</span> <span class="token punctuation">(</span>since 3m<span class="token punctuation">)</span>
-
-  data:
-    pools:   <span class="token number">1</span> pools, <span class="token number">1</span> pgs
-    objects: <span class="token number">2</span> objects, <span class="token number">577</span> KiB
-    usage:   <span class="token number">2.9</span> GiB used, <span class="token number">4.4</span> TiB / <span class="token number">4.4</span> TiB avail
-    pgs:     <span class="token number">1</span> active+clean
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h1 id="k8s对接ceph"><a href="#k8s对接ceph" class="headerlink" title="k8s对接ceph"></a>k8s对接ceph</h1><h2 id="准备块存储"><a href="#准备块存储" class="headerlink" title="准备块存储"></a>准备块存储</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph osd pool create k8s-main <span class="token number">64</span> <span class="token number">64</span>
-rbd pool init k8s-main
-ceph osd pool application <span class="token builtin class-name">enable</span> k8s-main rbd
-
-<span class="token comment"># 准备keyring</span>
-ceph auth get-or-create client.k8s <span class="token punctuation">\</span>
-  mon <span class="token string">'profile rbd'</span> mgr <span class="token string">'allow r'</span> <span class="token punctuation">\</span>
-  osd <span class="token string">'allow rwx pool=k8s-main'</span> <span class="token punctuation">\</span>
-  <span class="token parameter variable">-o</span> /etc/ceph/ceph.client.k8s.keyring
-
-<span class="token function">cat</span> /etc/ceph/ceph.client.k8s.keyring
-<span class="token punctuation">[</span>client.k8s<span class="token punctuation">]</span>
-        key <span class="token operator">=</span> <span class="token assign-left variable">AQBN19toVQmvBhAAi3kMM4BcoFzi5mDPC5oSnQ</span><span class="token operator">==</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="k8s对接ceph"><a href="#k8s对接ceph" class="headerlink" title="k8s对接ceph"></a>k8s对接ceph</h1><h2 id="准备块存储"><a href="#准备块存储" class="headerlink" title="准备块存储"></a>准备块存储</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ceph osd pool create k8s-main 64 64</span><br><span class="line">rbd pool init k8s-main</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> k8s-main rbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备keyring</span></span><br><span class="line">ceph auth get-or-create client.k8s \</span><br><span class="line">  mon <span class="string">&#x27;profile rbd&#x27;</span> mgr <span class="string">&#x27;allow r&#x27;</span> \</span><br><span class="line">  osd <span class="string">&#x27;allow rwx pool=k8s-main&#x27;</span> \</span><br><span class="line">  -o /etc/ceph/ceph.client.k8s.keyring</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /etc/ceph/ceph.client.k8s.keyring</span><br><span class="line">[client.k8s]</span><br><span class="line">        key = AQBN19toVQmvBhAAi3kMM4BcoFzi5mDPC5oSnQ==</span><br></pre></td></tr></table></figure>
 
 <h2 id="环境准备-1"><a href="#环境准备-1" class="headerlink" title="环境准备"></a>环境准备</h2><p>这个环境中为了方便管理，我给ansible一个ipv6地址，使其可以与k8s集群通信，当做客户端来用</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250929175000422.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ansible</span>
-<span class="token comment"># 给个IP</span>
-<span class="token function">cat</span> <span class="token operator">></span> /etc/netplan/01-static-ipv6.yaml<span class="token operator">&lt;&lt;</span><span class="token string">EOF
-network:
-  version: 2
-  ethernets:
-    eth1:
-      addresses:
-        - 1::20/64
-EOF</span>
-netplan apply
-
-<span class="token comment"># 安装kubectl</span>
-<span class="token function">curl</span> <span class="token parameter variable">-LO</span> https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl
-<span class="token function">chmod</span> +x kubectl
-<span class="token function">cp</span> kubectl /usr/bin/
-
-<span class="token function">mkdir</span> /root/.kube
-<span class="token function">scp</span> master1:/root/.kube/config /root/.kube/config
-<span class="token builtin class-name">echo</span> <span class="token string">"1::100 lb-apiserver.kubernetes.local"</span> <span class="token operator">>></span> /etc/hosts
-
-<span class="token builtin class-name">echo</span> <span class="token string">"source &lt;(kubectl completion bash)"</span> <span class="token operator">>></span> ~/.bashrc
-<span class="token builtin class-name">source</span> ~/.bashrc
-
-kubectl get pods
-<span class="token comment"># No resources found in default namespace.</span>
-
-<span class="token comment"># 搞个代理，懒得配containerd的加速器了</span>
-<span class="token builtin class-name">cd</span> ~/kubespray
-<span class="token builtin class-name">source</span> venv/bin/activate
-<span class="token function">cat</span> <span class="token operator">></span> environment <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-http_proxy="http://192.168.10.238:7897"
-https_proxy="http://192.168.10.238:7897"
-no_proxy="lb-apiserver.kubernetes.local,fd85:ee78:d8a6:8607::1000/116,fd85:ee78:d8a6:8607::1:0000/112"
-EOF</span>
-
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini all <span class="token parameter variable">-m</span> copy <span class="token punctuation">\</span>
-<span class="token parameter variable">-a</span> <span class="token string">"src=./environment dest=/etc/environment"</span> 
-ansible <span class="token parameter variable">-i</span> inventory/sample/inventory.ini all <span class="token parameter variable">-m</span> shell <span class="token punctuation">\</span>
-<span class="token parameter variable">-a</span> <span class="token string">"source /etc/environment"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ansible</span></span><br><span class="line"><span class="comment"># 给个IP</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/netplan/01-static-ipv6.yaml&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">network:</span></span><br><span class="line"><span class="string">  version: 2</span></span><br><span class="line"><span class="string">  ethernets:</span></span><br><span class="line"><span class="string">    eth1:</span></span><br><span class="line"><span class="string">      addresses:</span></span><br><span class="line"><span class="string">        - 1::20/64</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">netplan apply</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装kubectl</span></span><br><span class="line">curl -LO https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl</span><br><span class="line"><span class="built_in">chmod</span> +x kubectl</span><br><span class="line"><span class="built_in">cp</span> kubectl /usr/bin/</span><br><span class="line"></span><br><span class="line"><span class="built_in">mkdir</span> /root/.kube</span><br><span class="line">scp master1:/root/.kube/config /root/.kube/config</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;1::100 lb-apiserver.kubernetes.local&quot;</span> &gt;&gt; /etc/hosts</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;source &lt;(kubectl completion bash)&quot;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br><span class="line"></span><br><span class="line">kubectl get pods</span><br><span class="line"><span class="comment"># No resources found in default namespace.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 搞个代理，懒得配containerd的加速器了</span></span><br><span class="line"><span class="built_in">cd</span> ~/kubespray</span><br><span class="line"><span class="built_in">source</span> venv/bin/activate</span><br><span class="line"><span class="built_in">cat</span> &gt; environment &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">http_proxy=&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="string">https_proxy=&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="string">no_proxy=&quot;lb-apiserver.kubernetes.local,fd85:ee78:d8a6:8607::1000/116,fd85:ee78:d8a6:8607::1:0000/112&quot;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">ansible -i inventory/sample/inventory.ini all -m copy \</span><br><span class="line">-a <span class="string">&quot;src=./environment dest=/etc/environment&quot;</span> </span><br><span class="line">ansible -i inventory/sample/inventory.ini all -m shell \</span><br><span class="line">-a <span class="string">&quot;source /etc/environment&quot;</span></span><br></pre></td></tr></table></figure>
 <h2 id="部署CSI-使用helm"><a href="#部署CSI-使用helm" class="headerlink" title="部署CSI-使用helm"></a>部署CSI-使用helm</h2><p>由于我k8s集群是v1.32，对应需要Ceph CSI选用v3.14.0及以上的版本</p>
 <p>使用yaml部署参考：<a href="https://akemi.zj.cn/2025/09/15/Ceph-csi/">Ceph-csi供应商给kubernetes集群提供存储 · Akemi</a><br>但是yaml部署好像还不兼容ipv6的环境，我试了3.14和3.15都失败了</p>
 <p>推荐使用helm部署，版本为v3.14.0</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 安装helm</span>
-<span class="token function">wget</span> https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz
-<span class="token function">tar</span> <span class="token parameter variable">-xf</span> helm-v3.19.0-linux-amd64.tar.gz
-<span class="token function">cp</span> linux-amd64/helm /usr/bin/
-
-<span class="token comment"># 从git中获取charts（二选一）</span>
-<span class="token function">git</span> clone <span class="token parameter variable">-b</span> release-v3.14 https://github.com/ceph/ceph-csi.git
-<span class="token builtin class-name">cd</span> ceph-csi/charts/ceph-csi-rbd
-
-<span class="token comment"># 从仓库中搜索下载（二选一）</span>
-helm repo <span class="token function">add</span> ceph-csi https://ceph.github.io/csi-charts
-helm search repo ceph-csi
-<span class="token comment">#NAME                            CHART VERSION   APP VERSION     DESCRIPTION</span>
-<span class="token comment">#ceph-csi/ceph-csi-cephfs        3.15.0          3.15.0          Container Storage Interface (CSI) driver, provi...</span>
-<span class="token comment">#ceph-csi/ceph-csi-rbd           3.15.0          3.15.0          Container Storage Interface (CSI) driver, provi...</span>
-
-helm search repo ceph-csi/ceph-csi-rbd <span class="token parameter variable">-l</span>
-<span class="token comment">#NAME                    CHART VERSION   APP VERSION     DESCRIPTION</span>
-<span class="token comment">#ceph-csi/ceph-csi-rbd   3.15.0          3.15.0          Container Storage Interface (CSI) driver, provi...</span>
-<span class="token comment">#ceph-csi/ceph-csi-rbd   3.14.2          3.14.2          Container Storage Interface (CSI) driver, provi...</span>
-<span class="token comment">#ceph-csi/ceph-csi-rbd   3.14.1          3.14.1          Container Storage Interface (CSI) driver, provi...</span>
-<span class="token comment">#ceph-csi/ceph-csi-rbd   3.14.0          3.14.0          Container Storage Interface (CSI) driver, provi...</span>
-<span class="token comment">#ceph-csi/ceph-csi-rbd   3.13.1          3.13.1          Container Storage Interface (CSI) driver, provi...</span>
-
-helm pull ceph-csi/ceph-csi-rbd <span class="token parameter variable">--version</span> <span class="token number">3.14</span>.0
-<span class="token function">tar</span> <span class="token parameter variable">-xf</span> ceph-csi-rbd-3.14.0.tgz
-<span class="token builtin class-name">cd</span> ceph-csi-rbd/
-
-<span class="token comment"># 修改values文件</span>
-添加
-<span class="token punctuation">..</span>.
-csiConfig:
-    monitors:
-      - <span class="token string">"[2::11]:6789"</span>
-      - <span class="token string">"[2::12]:6789"</span>
-      - <span class="token string">"[2::13]:6789"</span>
-    rbd:
-      netNamespaceFilePath: <span class="token string">"&#123;&#123; .kubeletDir &#125;&#125;/plugins/&#123;&#123; .driverName &#125;&#125;/net"</span>
-      mirrorDaemonCount: <span class="token number">1</span>
-    readAffinity:
-      enabled: <span class="token boolean">true</span>
-      crushLocationLabels:
-        - topology.kubernetes.io/region
-        - topology.kubernetes.io/zone
-<span class="token punctuation">..</span>.
-encryptionKMSConfig:
-  vault-unique-id-1:
-    encryptionKMSType: vault
-    vaultAddress: https://vault.example.com
-    vaultAuthPath: /v1/auth/kubernetes/login
-    vaultRole: csi-kubernetes
-    vaultPassphraseRoot: /v1/secret
-    vaultPassphrasePath: ceph-csi/
-    vaultCAVerify: <span class="token string">"false"</span>
-<span class="token punctuation">..</span>.
-storageClass:
-  <span class="token punctuation">..</span>.
-  create: <span class="token boolean">true</span>
-  clusterID: 2e8aabea-9d0d-11f0-ba99-5000000a0000
-  pool: k8s-main 
-<span class="token punctuation">..</span>.
-secret:
-  create: <span class="token boolean">true</span>
-  userID: k8s
-  userKey: <span class="token assign-left variable">AQBN19toVQmvBhAAi3kMM4BcoFzi5mDPC5oSnQ</span><span class="token operator">==</span>
-<span class="token punctuation">..</span>.
-<span class="token comment"># 为供应商启用主机网络：直接使用集群节点端口。不然和ceph无法通信，会报连接ceph超时</span>
-<span class="token comment"># 但有端口冲突的风险</span>
-provisioner:
-  enableHostNetwork: <span class="token boolean">true</span>
-  <span class="token punctuation">..</span>.
-  httpMetrics:
-    containerPort: <span class="token number">18080</span>
-<span class="token comment"># httpMetrics会使用8080端口，与现有主机端口冲突，修改其端口</span>
-
-<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /var/lib/kubelet/plugins/rbd.csi.ceph.com/net <span class="token operator">&amp;&amp;</span> <span class="token function">chown</span> kube:kube /var/lib/kubelet/plugins/rbd.csi.ceph.com/net
-
-<span class="token comment"># 部署chart</span>
-kubectl create ns ceph-csi-rbd
-helm <span class="token function">install</span> ceph-csi-rbd <span class="token parameter variable">-n</span> ceph-csi-rbd ./ <span class="token parameter variable">-f</span> values.yaml
-
-<span class="token comment"># 更新</span>
-helm upgrade ceph-csi-rbd <span class="token parameter variable">-n</span> ceph-csi-rbd ./ <span class="token parameter variable">-f</span> values.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装helm</span></span><br><span class="line">wget https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz</span><br><span class="line">tar -xf helm-v3.19.0-linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> linux-amd64/helm /usr/bin/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 从git中获取charts（二选一）</span></span><br><span class="line">git <span class="built_in">clone</span> -b release-v3.14 https://github.com/ceph/ceph-csi.git</span><br><span class="line"><span class="built_in">cd</span> ceph-csi/charts/ceph-csi-rbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 从仓库中搜索下载（二选一）</span></span><br><span class="line">helm repo add ceph-csi https://ceph.github.io/csi-charts</span><br><span class="line">helm search repo ceph-csi</span><br><span class="line"><span class="comment">#NAME                            CHART VERSION   APP VERSION     DESCRIPTION</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-cephfs        3.15.0          3.15.0          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-rbd           3.15.0          3.15.0          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"></span><br><span class="line">helm search repo ceph-csi/ceph-csi-rbd -l</span><br><span class="line"><span class="comment">#NAME                    CHART VERSION   APP VERSION     DESCRIPTION</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-rbd   3.15.0          3.15.0          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-rbd   3.14.2          3.14.2          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-rbd   3.14.1          3.14.1          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-rbd   3.14.0          3.14.0          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"><span class="comment">#ceph-csi/ceph-csi-rbd   3.13.1          3.13.1          Container Storage Interface (CSI) driver, provi...</span></span><br><span class="line"></span><br><span class="line">helm pull ceph-csi/ceph-csi-rbd --version 3.14.0</span><br><span class="line">tar -xf ceph-csi-rbd-3.14.0.tgz</span><br><span class="line"><span class="built_in">cd</span> ceph-csi-rbd/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改values文件</span></span><br><span class="line">添加</span><br><span class="line">...</span><br><span class="line">csiConfig:</span><br><span class="line">    monitors:</span><br><span class="line">      - <span class="string">&quot;[2::11]:6789&quot;</span></span><br><span class="line">      - <span class="string">&quot;[2::12]:6789&quot;</span></span><br><span class="line">      - <span class="string">&quot;[2::13]:6789&quot;</span></span><br><span class="line">    rbd:</span><br><span class="line">      netNamespaceFilePath: <span class="string">&quot;&#123;&#123; .kubeletDir &#125;&#125;/plugins/&#123;&#123; .driverName &#125;&#125;/net&quot;</span></span><br><span class="line">      mirrorDaemonCount: 1</span><br><span class="line">    readAffinity:</span><br><span class="line">      enabled: <span class="literal">true</span></span><br><span class="line">      crushLocationLabels:</span><br><span class="line">        - topology.kubernetes.io/region</span><br><span class="line">        - topology.kubernetes.io/zone</span><br><span class="line">...</span><br><span class="line">encryptionKMSConfig:</span><br><span class="line">  vault-unique-id-1:</span><br><span class="line">    encryptionKMSType: vault</span><br><span class="line">    vaultAddress: https://vault.example.com</span><br><span class="line">    vaultAuthPath: /v1/auth/kubernetes/login</span><br><span class="line">    vaultRole: csi-kubernetes</span><br><span class="line">    vaultPassphraseRoot: /v1/secret</span><br><span class="line">    vaultPassphrasePath: ceph-csi/</span><br><span class="line">    vaultCAVerify: <span class="string">&quot;false&quot;</span></span><br><span class="line">...</span><br><span class="line">storageClass:</span><br><span class="line">  ...</span><br><span class="line">  create: <span class="literal">true</span></span><br><span class="line">  clusterID: 2e8aabea-9d0d-11f0-ba99-5000000a0000</span><br><span class="line">  pool: k8s-main </span><br><span class="line">...</span><br><span class="line">secret:</span><br><span class="line">  create: <span class="literal">true</span></span><br><span class="line">  userID: k8s</span><br><span class="line">  userKey: AQBN19toVQmvBhAAi3kMM4BcoFzi5mDPC5oSnQ==</span><br><span class="line">...</span><br><span class="line"><span class="comment"># 为供应商启用主机网络：直接使用集群节点端口。不然和ceph无法通信，会报连接ceph超时</span></span><br><span class="line"><span class="comment"># 但有端口冲突的风险</span></span><br><span class="line">provisioner:</span><br><span class="line">  enableHostNetwork: <span class="literal">true</span></span><br><span class="line">  ...</span><br><span class="line">  httpMetrics:</span><br><span class="line">    containerPort: 18080</span><br><span class="line"><span class="comment"># httpMetrics会使用8080端口，与现有主机端口冲突，修改其端口</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">mkdir</span> -p /var/lib/kubelet/plugins/rbd.csi.ceph.com/net &amp;&amp; <span class="built_in">chown</span> kube:kube /var/lib/kubelet/plugins/rbd.csi.ceph.com/net</span><br><span class="line"></span><br><span class="line"><span class="comment"># 部署chart</span></span><br><span class="line">kubectl create ns ceph-csi-rbd</span><br><span class="line">helm install ceph-csi-rbd -n ceph-csi-rbd ./ -f values.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新</span></span><br><span class="line">helm upgrade ceph-csi-rbd -n ceph-csi-rbd ./ -f values.yaml</span><br></pre></td></tr></table></figure>
 
 <h1 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h1><p>可见csi已经完全起来了</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250929201537733.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
-<span class="token comment"># 查看存储类</span>
-kubectl get sc
-NAME         PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
-csi-rbd-sc   rbd.csi.ceph.com   Delete          Immediate           <span class="token boolean">true</span>                   21m
-
-<span class="token comment"># 让AI生成了一个资源文件，直接用卷申请模板测试一下</span>
-<span class="token function">cat</span> <span class="token operator">></span> test_statefulset.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-apiVersion: apps/v
-kind: StatefulSet
-metadata:
-  name: ceph-rbd-test
-  namespace: default
-spec:
-  serviceName: "ceph-rbd-test"
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ceph-rbd-test
-  template:
-    metadata:
-      labels:
-        app: ceph-rbd-test
-    spec:
-      containers:
-      - name: test-container
-        image: alpine:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            echo "Pod <span class="token variable"><span class="token variable">$(</span><span class="token function">hostname</span><span class="token variable">)</span></span> started at <span class="token variable"><span class="token variable">$(</span><span class="token function">date</span><span class="token variable">)</span></span>" > /data/pod-info.txt;
-            echo "Testing write operation..." >> /data/pod-info.txt;
-            while true; do sleep 3600; done
-        volumeMounts:
-        - name: data
-          mountPath: /data
-  volumeClaimTemplates:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "csi-rbd-sc"
-      resources:
-        requests:
-          storage: 1Gi
-EOF</span>
-
-kubectl apply <span class="token parameter variable">-f</span> test_statefulset.yaml
-
-kubectl get pvc
-NAME                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi        RWO            csi-rbd-sc     <span class="token operator">&lt;</span>unset<span class="token operator">></span>                 4m35s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 查看存储类</span></span><br><span class="line">kubectl get sc</span><br><span class="line">NAME         PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE</span><br><span class="line">csi-rbd-sc   rbd.csi.ceph.com   Delete          Immediate           <span class="literal">true</span>                   21m</span><br><span class="line"></span><br><span class="line"><span class="comment"># 让AI生成了一个资源文件，直接用卷申请模板测试一下</span></span><br><span class="line"><span class="built_in">cat</span> &gt; test_statefulset.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: apps/v</span></span><br><span class="line"><span class="string">kind: StatefulSet</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: ceph-rbd-test</span></span><br><span class="line"><span class="string">  namespace: default</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  serviceName: &quot;ceph-rbd-test&quot;</span></span><br><span class="line"><span class="string">  replicas: 2</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">    matchLabels:</span></span><br><span class="line"><span class="string">      app: ceph-rbd-test</span></span><br><span class="line"><span class="string">  template:</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      labels:</span></span><br><span class="line"><span class="string">        app: ceph-rbd-test</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">      - name: test-container</span></span><br><span class="line"><span class="string">        image: alpine:latest</span></span><br><span class="line"><span class="string">        command: [&quot;/bin/sh&quot;, &quot;-c&quot;]</span></span><br><span class="line"><span class="string">        args:</span></span><br><span class="line"><span class="string">          - |</span></span><br><span class="line"><span class="string">            echo &quot;Pod $(hostname) started at $(date)&quot; &gt; /data/pod-info.txt;</span></span><br><span class="line"><span class="string">            echo &quot;Testing write operation...&quot; &gt;&gt; /data/pod-info.txt;</span></span><br><span class="line"><span class="string">            while true; do sleep 3600; done</span></span><br><span class="line"><span class="string">        volumeMounts:</span></span><br><span class="line"><span class="string">        - name: data</span></span><br><span class="line"><span class="string">          mountPath: /data</span></span><br><span class="line"><span class="string">  volumeClaimTemplates:</span></span><br><span class="line"><span class="string">      name: data</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">      accessModes: [ &quot;ReadWriteOnce&quot; ]</span></span><br><span class="line"><span class="string">      storageClassName: &quot;csi-rbd-sc&quot;</span></span><br><span class="line"><span class="string">      resources:</span></span><br><span class="line"><span class="string">        requests:</span></span><br><span class="line"><span class="string">          storage: 1Gi</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kubectl apply -f test_statefulset.yaml</span><br><span class="line"></span><br><span class="line">kubectl get pvc</span><br><span class="line">NAME                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE</span><br><span class="line">data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi        RWO            csi-rbd-sc     &lt;<span class="built_in">unset</span>&gt;                 4m35s</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -7188,18 +6609,6 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7283,13 +6692,13 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7664,13 +7073,13 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7910,13 +7319,13 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8615,13 +8024,13 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -9165,9 +8574,9 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -9175,9 +8584,9 @@ data-ceph-rbd-test-0   Bound    pvc-b7e56841-10f6-4826-9482-3565cb5100c8   1Gi  
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

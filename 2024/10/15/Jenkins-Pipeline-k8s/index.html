@@ -203,12 +203,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -216,7 +218,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -504,90 +505,7 @@
 <p>在k8s的master节点上创建jenkins的工作目录，将其作为jenkins-slave使用，写入脚本创建资源</p>
 <p>流程说明：<br>添加jenkins-slave→git checkout→maven→docker build and push→k8s拉取images→创建资源文件→创建资源</p>
 <h1 id="pipeline脚本"><a href="#pipeline脚本" class="headerlink" title="pipeline脚本"></a>pipeline脚本</h1><p>我这里的环境和上一篇《jenkins构建pipeline项目到docker》一致，代码同样是用的hellowolrd的一个项目</p>
-<pre class="line-numbers language-groovy" data-language="groovy"><code class="language-groovy">node <span class="token punctuation">(</span><span class="token interpolation-string"><span class="token string">"k8s-master"</span></span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'git checkout'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-		git branch<span class="token punctuation">:</span> <span class="token string">'main'</span><span class="token punctuation">,</span> credentialsId<span class="token punctuation">:</span> <span class="token string">'3ecfd94e-fbba-458e-b3f6-4a65f5762751'</span><span class="token punctuation">,</span> url<span class="token punctuation">:</span> <span class="token string">'http://gitlab.wangsheng.com/group01/java_discuz.git'</span>
-	<span class="token punctuation">&#125;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'maven build'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	  sh <span class="token string">'''export JAVA_HOME=/usr/java/jdk-11
-/usr/local/maven/bin/mvn clean package -Dmaven.test.skip=true'''</span>
-	<span class="token punctuation">&#125;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'build and push images'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-		sh <span class="token string">'''docker pull 192.168.10.130/jenkins-demo/tomcat8:v1
-cat > Dockerfile &lt;&lt; EOF
-FROM 192.168.10.130/jenkins-demo/tomcat8:v1
-RUN rm -rf /usr/local/tomcat8/webapps/* &amp;&amp; mkdir /usr/local/tomcat8/webapps/ROOT
-ADD webapp/target/webapp.war /usr/local/tomcat8/webapps/hello-world.war
-EOF
-docker build -t 192.168.10.130/jenkins-demo/tomcat8-demo:latest .
-docker push 192.168.10.130/jenkins-demo/tomcat8-demo:latest
-'''</span>
-	<span class="token punctuation">&#125;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'镜像测试'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">//测试镜像是否可以正常运行</span>
-				sh <span class="token string">'''docker rm -f jenkins-test | true'''</span>
-        sh <span class="token string">'''docker run -itd -p 8081:8080 --name jenkins-test 192.168.10.130/jenkins-demo/tomcat8-demo:latest /bin/bash'''</span>
-        sh <span class="token string">'''docker ps | grep -i -w -q jenkins-test &amp;&amp; echo "deploy successfully"'''</span>
-        sh <span class="token string">'''docker rm -f jenkins-test'''</span>
-	<span class="token punctuation">&#125;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'传送镜像'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-				sh <span class="token string">'''docker save -o tomcat.tar.gz 192.168.10.130/jenkins-demo/tomcat8-demo:latest
-scp tomcat.tar.gz ws-k8s-node1:/root/
-ssh ws-k8s-node1 "ctr -n=k8s.io image import tomcat.tar.gz"'''</span>
-	<span class="token punctuation">&#125;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'dp资源文件'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// 该文件也可以放在项目中直接上传</span>
-sh <span class="token string">'''cat > deployment.yaml&lt;&lt;EOF
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tomcat-dp
-  namespace: default
-  labels:
-    app: tomcat
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: test
-  template:
-    metadata:
-      name: tomcat-test
-      labels:
-        app: test
-    spec:
-			nodeName: ws-k8s-node1
-      containers:
-        - name: tomcat-dp1
-          image: 192.168.10.130/jenkins-demo/tomcat8-demo:latest
-          imagePullPolicy: IfNotPresent
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tomcat-service
-spec:
-  type: NodePort
-  ports:
-   - port: 80
-     protocol: TCP
-     targetPort: 8080
-     nodePort: 30080
-  selector:
-     app: test
-EOF
-'''</span>
-sh <span class="token string">'''kubectl delete deployments.apps tomcat-dp| true'''</span> <span class="token comment">//删除原有dp</span>
-sh <span class="token string">'''kubectl apply -f deployment.yaml &amp;&amp; echo "deploy sucessful" '''</span> <span class="token comment">//部署新dp</span>
-	<span class="token punctuation">&#125;</span>
-	<span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'页面测试'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">//通过curl返回的http状态码判断网页状态</span>
-sh <span class="token string">'''HTTP_CODE=$(curl -o /dev/null -s -w "%&#123;http_code&#125;\n" 192.168.10.131:30080/hello-world)
-if [[ $HTTP_CODE =~ ^(200|301|302)$ ]];then
-echo "operational testing sucessfully"
-else echo "operational testing failed"
-fi '''</span>
-	<span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">node (<span class="string">&quot;k8s-master&quot;</span>) &#123;</span><br><span class="line">	stage(<span class="string">&#x27;git checkout&#x27;</span>) &#123;</span><br><span class="line">		git <span class="attr">branch:</span> <span class="string">&#x27;main&#x27;</span>, <span class="attr">credentialsId:</span> <span class="string">&#x27;3ecfd94e-fbba-458e-b3f6-4a65f5762751&#x27;</span>, <span class="attr">url:</span> <span class="string">&#x27;http://gitlab.wangsheng.com/group01/java_discuz.git&#x27;</span></span><br><span class="line">	&#125;</span><br><span class="line">	stage(<span class="string">&#x27;maven build&#x27;</span>) &#123;</span><br><span class="line">	  sh <span class="string">&#x27;&#x27;&#x27;export JAVA_HOME=/usr/java/jdk-11</span></span><br><span class="line"><span class="string">/usr/local/maven/bin/mvn clean package -Dmaven.test.skip=true&#x27;&#x27;&#x27;</span></span><br><span class="line">	&#125;</span><br><span class="line">	stage(<span class="string">&#x27;build and push images&#x27;</span>) &#123;</span><br><span class="line">		sh <span class="string">&#x27;&#x27;&#x27;docker pull 192.168.10.130/jenkins-demo/tomcat8:v1</span></span><br><span class="line"><span class="string">cat &gt; Dockerfile &lt;&lt; EOF</span></span><br><span class="line"><span class="string">FROM 192.168.10.130/jenkins-demo/tomcat8:v1</span></span><br><span class="line"><span class="string">RUN rm -rf /usr/local/tomcat8/webapps/* &amp;&amp; mkdir /usr/local/tomcat8/webapps/ROOT</span></span><br><span class="line"><span class="string">ADD webapp/target/webapp.war /usr/local/tomcat8/webapps/hello-world.war</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="string">docker build -t 192.168.10.130/jenkins-demo/tomcat8-demo:latest .</span></span><br><span class="line"><span class="string">docker push 192.168.10.130/jenkins-demo/tomcat8-demo:latest</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line">	&#125;</span><br><span class="line">	stage(<span class="string">&#x27;镜像测试&#x27;</span>) &#123; <span class="comment">//测试镜像是否可以正常运行</span></span><br><span class="line">				sh <span class="string">&#x27;&#x27;&#x27;docker rm -f jenkins-test | true&#x27;&#x27;&#x27;</span></span><br><span class="line">        sh <span class="string">&#x27;&#x27;&#x27;docker run -itd -p 8081:8080 --name jenkins-test 192.168.10.130/jenkins-demo/tomcat8-demo:latest /bin/bash&#x27;&#x27;&#x27;</span></span><br><span class="line">        sh <span class="string">&#x27;&#x27;&#x27;docker ps | grep -i -w -q jenkins-test &amp;&amp; echo &quot;deploy successfully&quot;&#x27;&#x27;&#x27;</span></span><br><span class="line">        sh <span class="string">&#x27;&#x27;&#x27;docker rm -f jenkins-test&#x27;&#x27;&#x27;</span></span><br><span class="line">	&#125;</span><br><span class="line">	stage(<span class="string">&#x27;传送镜像&#x27;</span>) &#123;</span><br><span class="line">				sh <span class="string">&#x27;&#x27;&#x27;docker save -o tomcat.tar.gz 192.168.10.130/jenkins-demo/tomcat8-demo:latest</span></span><br><span class="line"><span class="string">scp tomcat.tar.gz ws-k8s-node1:/root/</span></span><br><span class="line"><span class="string">ssh ws-k8s-node1 &quot;ctr -n=k8s.io image import tomcat.tar.gz&quot;&#x27;&#x27;&#x27;</span></span><br><span class="line">	&#125;</span><br><span class="line">	stage(<span class="string">&#x27;dp资源文件&#x27;</span>) &#123; <span class="comment">// 该文件也可以放在项目中直接上传</span></span><br><span class="line">sh <span class="string">&#x27;&#x27;&#x27;cat &gt; deployment.yaml&lt;&lt;EOF</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: apps/v1</span></span><br><span class="line"><span class="string">kind: Deployment</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: tomcat-dp</span></span><br><span class="line"><span class="string">  namespace: default</span></span><br><span class="line"><span class="string">  labels:</span></span><br><span class="line"><span class="string">    app: tomcat</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  replicas: 1</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">    matchLabels:</span></span><br><span class="line"><span class="string">      app: test</span></span><br><span class="line"><span class="string">  template:</span></span><br><span class="line"><span class="string">    metadata:</span></span><br><span class="line"><span class="string">      name: tomcat-test</span></span><br><span class="line"><span class="string">      labels:</span></span><br><span class="line"><span class="string">        app: test</span></span><br><span class="line"><span class="string">    spec:</span></span><br><span class="line"><span class="string">			nodeName: ws-k8s-node1</span></span><br><span class="line"><span class="string">      containers:</span></span><br><span class="line"><span class="string">        - name: tomcat-dp1</span></span><br><span class="line"><span class="string">          image: 192.168.10.130/jenkins-demo/tomcat8-demo:latest</span></span><br><span class="line"><span class="string">          imagePullPolicy: IfNotPresent</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Service</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: tomcat-service</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  type: NodePort</span></span><br><span class="line"><span class="string">  ports:</span></span><br><span class="line"><span class="string">   - port: 80</span></span><br><span class="line"><span class="string">     protocol: TCP</span></span><br><span class="line"><span class="string">     targetPort: 8080</span></span><br><span class="line"><span class="string">     nodePort: 30080</span></span><br><span class="line"><span class="string">  selector:</span></span><br><span class="line"><span class="string">     app: test</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line">sh <span class="string">&#x27;&#x27;&#x27;kubectl delete deployments.apps tomcat-dp| true&#x27;&#x27;&#x27;</span> <span class="comment">//删除原有dp</span></span><br><span class="line">sh <span class="string">&#x27;&#x27;&#x27;kubectl apply -f deployment.yaml &amp;&amp; echo &quot;deploy sucessful&quot; &#x27;&#x27;&#x27;</span> <span class="comment">//部署新dp</span></span><br><span class="line">	&#125;</span><br><span class="line">	stage(<span class="string">&#x27;页面测试&#x27;</span>) &#123; <span class="comment">//通过curl返回的http状态码判断网页状态</span></span><br><span class="line">sh <span class="string">&#x27;&#x27;&#x27;HTTP_CODE=$(curl -o /dev/null -s -w &quot;%&#123;http_code&#125;\n&quot; 192.168.10.131:30080/hello-world)</span></span><br><span class="line"><span class="string">if [[ $HTTP_CODE =~ ^(200|301|302)$ ]];then</span></span><br><span class="line"><span class="string">echo &quot;operational testing sucessfully&quot;</span></span><br><span class="line"><span class="string">else echo &quot;operational testing failed&quot;</span></span><br><span class="line"><span class="string">fi &#x27;&#x27;&#x27;</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/10/22977d15402dbbed0af102150e10113f.png"></p>
 
     </article>
@@ -6668,18 +6586,6 @@ fi '''</span>
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6763,13 +6669,13 @@ fi '''</span>
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7144,13 +7050,13 @@ fi '''</span>
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7390,13 +7296,13 @@ fi '''</span>
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8095,13 +8001,13 @@ fi '''</span>
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8645,9 +8551,9 @@ fi '''</span>
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8655,9 +8561,9 @@ fi '''</span>
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

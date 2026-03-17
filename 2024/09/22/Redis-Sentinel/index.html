@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -496,167 +497,23 @@
 <p><strong>哨兵模式工作过程</strong><br>sentinel节点判断master下线后，询问其他sentinel节点<br>其他节点检测master，如果已下线就会回复sentinel节点<br>如果一半以上的sentinel回复其下线，就会对master进行故障转移（转移条件）<br>在slave节点选取一个节点执行<code>SLAVEOF NO ONE</code>，断开主从关系，并提升为主库<br>向其他slave节点发送新master信息</p>
 <p><strong>哨兵模式从多个从节点中选举主节点的规则</strong></p>
 <h3 id="哨兵模式搭建"><a href="#哨兵模式搭建" class="headerlink" title="哨兵模式搭建"></a>哨兵模式搭建</h3><p><strong>配置文件</strong></p>
-<pre class="line-numbers language-none"><code class="language-none">环境：
-centos7.9
-redis5.0.5
-192.168.10.116 redis1
-192.168.10.117 redis2
-192.168.10.118 redis3
-
-# 配置redis本体redis.conf
-redis1主节点:
-port 8000
-daemonize yes
-bind 0.0.0.0
-pidfile &#x2F;var&#x2F;run&#x2F;redis-8000.pid
-logfile &#x2F;var&#x2F;log&#x2F;redis&#x2F;redis-8000.log
-
-redis2和redis3从节点:
-port 8000
-daemonize yes
-bind 0.0.0.0
-pidfile &#x2F;var&#x2F;run&#x2F;redis-8000.pid
-logfile &#x2F;var&#x2F;log&#x2F;redis&#x2F;redis-8000.log
-slaveof 192.168.10.116 8000
-
-# 启动
-redis-server &#x2F;etc&#x2F;redis.conf
-
-# 每一台配置redis哨兵sentinel.conf
-daemonize yes
-port 7000
-logfile &#x2F;var&#x2F;log&#x2F;redis&#x2F;sentinel.log
-pidfile &#x2F;var&#x2F;run&#x2F;sentinel.pid
-sentinel monitor redismaster(哨兵集群的名称) 192.168.10.117 8000 2(多少个slave认为离线，进行切换，一般大于半数)
-sentinel down-after-milliseconds redismaster 5000 哨兵节点认为节点离线的间隔时间(ms)
-sentinel failover-timeout redismaster 15000 故障切换的超时时间
-
-scp &#x2F;etc&#x2F;sentinel.conf redis2:&#x2F;etc&#x2F;sentinel.conf
-scp &#x2F;etc&#x2F;sentinel.conf redis3:&#x2F;etc&#x2F;sentinel.conf
-# 启动哨兵进程
-redis-sentinel &#x2F;etc&#x2F;sentinel.conf
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">环境：</span><br><span class="line">centos7.9</span><br><span class="line">redis5.0.5</span><br><span class="line">192.168.10.116 redis1</span><br><span class="line">192.168.10.117 redis2</span><br><span class="line">192.168.10.118 redis3</span><br><span class="line"></span><br><span class="line"># 配置redis本体redis.conf</span><br><span class="line">redis1主节点:</span><br><span class="line">port 8000</span><br><span class="line">daemonize yes</span><br><span class="line">bind 0.0.0.0</span><br><span class="line">pidfile /var/run/redis-8000.pid</span><br><span class="line">logfile /var/log/redis/redis-8000.log</span><br><span class="line"></span><br><span class="line">redis2和redis3从节点:</span><br><span class="line">port 8000</span><br><span class="line">daemonize yes</span><br><span class="line">bind 0.0.0.0</span><br><span class="line">pidfile /var/run/redis-8000.pid</span><br><span class="line">logfile /var/log/redis/redis-8000.log</span><br><span class="line">slaveof 192.168.10.116 8000</span><br><span class="line"></span><br><span class="line"># 启动</span><br><span class="line">redis-server /etc/redis.conf</span><br><span class="line"></span><br><span class="line"># 每一台配置redis哨兵sentinel.conf</span><br><span class="line">daemonize yes</span><br><span class="line">port 7000</span><br><span class="line">logfile /var/log/redis/sentinel.log</span><br><span class="line">pidfile /var/run/sentinel.pid</span><br><span class="line">sentinel monitor redismaster(哨兵集群的名称) 192.168.10.117 8000 2(多少个slave认为离线，进行切换，一般大于半数)</span><br><span class="line">sentinel down-after-milliseconds redismaster 5000 哨兵节点认为节点离线的间隔时间(ms)</span><br><span class="line">sentinel failover-timeout redismaster 15000 故障切换的超时时间</span><br><span class="line"></span><br><span class="line">scp /etc/sentinel.conf redis2:/etc/sentinel.conf</span><br><span class="line">scp /etc/sentinel.conf redis3:/etc/sentinel.conf</span><br><span class="line"># 启动哨兵进程</span><br><span class="line">redis-sentinel /etc/sentinel.conf</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><strong>查看当前状态</strong></p>
-<pre class="line-numbers language-none"><code class="language-none">连接redis查看info
-redis-cli -p 8000
-info
-# Replication
-role:master
-connected_slaves:2
-slave0:ip&#x3D;192.168.10.117,port&#x3D;8000,state&#x3D;online,offset&#x3D;85291,lag&#x3D;0
-slave1:ip&#x3D;192.168.10.118,port&#x3D;8000,state&#x3D;online,offset&#x3D;85291,lag&#x3D;1
-master_replid:82dc702b0395f4ac908f58b5ce93ac2803efdbaa
-master_replid2:0000000000000000000000000000000000000000
-master_repl_offset:85450
-second_repl_offset:-1
-repl_backlog_active:1
-repl_backlog_size:1048576
-repl_backlog_first_byte_offset:1
-repl_backlog_histlen:85450
-
-连接sentinel
-redis-cli -p 7000
-info
-# Sentinel
-sentinel_masters:1
-sentinel_tilt:0
-sentinel_running_scripts:0
-sentinel_scripts_queue_length:0
-sentinel_simulate_failure_flags:0
-master0:name&#x3D;redismaster,status&#x3D;ok,address&#x3D;192.168.10.116:8000,slaves&#x3D;2,sentinels&#x3D;3 组名master节点、从节点数、哨兵数
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">连接redis查看info</span><br><span class="line">redis-cli -p 8000</span><br><span class="line">info</span><br><span class="line"># Replication</span><br><span class="line">role:master</span><br><span class="line">connected_slaves:2</span><br><span class="line">slave0:ip=192.168.10.117,port=8000,state=online,offset=85291,lag=0</span><br><span class="line">slave1:ip=192.168.10.118,port=8000,state=online,offset=85291,lag=1</span><br><span class="line">master_replid:82dc702b0395f4ac908f58b5ce93ac2803efdbaa</span><br><span class="line">master_replid2:0000000000000000000000000000000000000000</span><br><span class="line">master_repl_offset:85450</span><br><span class="line">second_repl_offset:-1</span><br><span class="line">repl_backlog_active:1</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:1</span><br><span class="line">repl_backlog_histlen:85450</span><br><span class="line"></span><br><span class="line">连接sentinel</span><br><span class="line">redis-cli -p 7000</span><br><span class="line">info</span><br><span class="line"># Sentinel</span><br><span class="line">sentinel_masters:1</span><br><span class="line">sentinel_tilt:0</span><br><span class="line">sentinel_running_scripts:0</span><br><span class="line">sentinel_scripts_queue_length:0</span><br><span class="line">sentinel_simulate_failure_flags:0</span><br><span class="line">master0:name=redismaster,status=ok,address=192.168.10.116:8000,slaves=2,sentinels=3 组名master节点、从节点数、哨兵数</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><strong>哨兵模式功能测试</strong></p>
-<pre class="line-numbers language-none"><code class="language-none">关闭主节点redis
-ps -ef | grep redis-server
-kill 31136
-tail -f &#x2F;var&#x2F;log&#x2F;redis&#x2F;sentinel.log
-
-14547:X 06 Jul 2024 14:48:00.723 # +sdown master redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:00.789 # +odown master redismaster 192.168.10.116 8000 #quorum 2&#x2F;2
-14547:X 06 Jul 2024 14:48:00.789 # +new-epoch 1
-14547:X 06 Jul 2024 14:48:00.789 # +try-failover master redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:00.796 # +vote-for-leader 2077fac7fce192eee3d48b30f49918bbf707f745 1
-14547:X 06 Jul 2024 14:48:00.802 # 726a08fc6822ab80eb68f69ebe64ea146e8ceaa7 voted for 2077fac7fce192eee3d48b30f49918bbf707f745 1
-14547:X 06 Jul 2024 14:48:00.859 # +elected-leader master redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:00.859 # +failover-state-select-slave master redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:00.959 # +selected-slave slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:00.960 * +failover-state-send-slaveof-noone slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:01.043 * +failover-state-wait-promotion slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:01.811 # +promoted-slave slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:01.812 # +failover-state-reconf-slaves master redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:01.860 * +slave-reconf-sent slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:01.860 # +failover-end master redismaster 192.168.10.116 8000
-14547:X 06 Jul 2024 14:48:01.860 # +switch-master redismaster 192.168.10.116 8000 192.168.10.117 8000
-14547:X 06 Jul 2024 14:48:01.860 * +slave slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaster 192.168.10.117 8000
-14547:X 06 Jul 2024 14:48:01.861 * +slave slave 192.168.10.116:8000 192.168.10.116 8000 @ redismaster 192.168.10.117 8000
-14547:X 06 Jul 2024 14:48:06.904 # +sdown slave 192.168.10.116:8000 192.168.10.116 8000 @ redismaster 192.168.10.117 8000
-14547:X 06 Jul 2024 14:48:06.904 # +sdown slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaste
-
-可以看到switch-master redismaster 192.168.10.116 8000 192.168.10.117 8000
-主节点已经变成了117节点
-可以看到sdown slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaste
-将118加入这个组
-
-重新登录116
-redis-cli -h 192.168.10.116 -p 8000
-info
-# Replication
-role:slave 这个时候已经变成从节点了
-master_host:192.168.10.117
-master_port:8000
-master_link_status:down
-master_last_io_seconds_ago:-1
-master_sync_in_progress:0
-slave_repl_offset:1328
-master_link_down_since_seconds:1720249310
-slave_priority:100
-slave_read_only:1
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">关闭主节点redis</span><br><span class="line">ps -ef | grep redis-server</span><br><span class="line">kill 31136</span><br><span class="line">tail -f /var/log/redis/sentinel.log</span><br><span class="line"></span><br><span class="line">14547:X 06 Jul 2024 14:48:00.723 # +sdown master redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.789 # +odown master redismaster 192.168.10.116 8000 #quorum 2/2</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.789 # +new-epoch 1</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.789 # +try-failover master redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.796 # +vote-for-leader 2077fac7fce192eee3d48b30f49918bbf707f745 1</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.802 # 726a08fc6822ab80eb68f69ebe64ea146e8ceaa7 voted for 2077fac7fce192eee3d48b30f49918bbf707f745 1</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.859 # +elected-leader master redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.859 # +failover-state-select-slave master redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.959 # +selected-slave slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:00.960 * +failover-state-send-slaveof-noone slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.043 * +failover-state-wait-promotion slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.811 # +promoted-slave slave 192.168.10.117:8000 192.168.10.117 8000 @ redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.812 # +failover-state-reconf-slaves master redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.860 * +slave-reconf-sent slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.860 # +failover-end master redismaster 192.168.10.116 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.860 # +switch-master redismaster 192.168.10.116 8000 192.168.10.117 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.860 * +slave slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaster 192.168.10.117 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:01.861 * +slave slave 192.168.10.116:8000 192.168.10.116 8000 @ redismaster 192.168.10.117 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:06.904 # +sdown slave 192.168.10.116:8000 192.168.10.116 8000 @ redismaster 192.168.10.117 8000</span><br><span class="line">14547:X 06 Jul 2024 14:48:06.904 # +sdown slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaste</span><br><span class="line"></span><br><span class="line">可以看到switch-master redismaster 192.168.10.116 8000 192.168.10.117 8000</span><br><span class="line">主节点已经变成了117节点</span><br><span class="line">可以看到sdown slave 192.168.10.118:8000 192.168.10.118 8000 @ redismaste</span><br><span class="line">将118加入这个组</span><br><span class="line"></span><br><span class="line">重新登录116</span><br><span class="line">redis-cli -h 192.168.10.116 -p 8000</span><br><span class="line">info</span><br><span class="line"># Replication</span><br><span class="line">role:slave 这个时候已经变成从节点了</span><br><span class="line">master_host:192.168.10.117</span><br><span class="line">master_port:8000</span><br><span class="line">master_link_status:down</span><br><span class="line">master_last_io_seconds_ago:-1</span><br><span class="line">master_sync_in_progress:0</span><br><span class="line">slave_repl_offset:1328</span><br><span class="line">master_link_down_since_seconds:1720249310</span><br><span class="line">slave_priority:100</span><br><span class="line">slave_read_only:1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h3 id="哨兵模式使用VIP机制"><a href="#哨兵模式使用VIP机制" class="headerlink" title="哨兵模式使用VIP机制"></a>哨兵模式使用VIP机制</h3><p>当客户端连接redis进行读写时，哨兵模式切换回导致连接的主redis的IP地址变化<br>redis集群可以使用VIP机制，只使用固定的VIP地址向客户端提供服务。在故障转移时将VIP漂移到新的主redis上<br><strong>使用VIP地址</strong><br>1.每台sentinel.conf中添加配置<br><code>sentinel client-reconfig-script redismaster /root/redis-5.0.5/notifyvip.sh</code></p>
 <p>使用redis sentinel的参数client-reconfig-script来传递参数<br>使其在做failover(切换)时执行脚本<br>在脚本中传递以下6个参数master-name、 role、 state、 from-ip、 from-port、 <strong>to-ip</strong> 、to-port</p>
-<pre class="line-numbers language-none"><code class="language-none">&#x2F;root&#x2F;redis-5.0.5&#x2F;notifyvip.sh
-#!&#x2F;bin&#x2F;bash
-MASTER_IP&#x3D;$6              #新主redis的ip地址
-LOCAL_IP&#x3D;&#39;192.168.10.116&#39; #当前主机的ip
-VIP&#x3D;&#39;192.168.10.99&#39;       #设置VIP地址
-NETMASK&#x3D;&#39;24&#39;
-INTERFACE&#x3D;&#39;ens18&#39;         #VIP绑定的网卡名称
-if [[ &quot;$&#123;MASTER_IP&#125;&quot; &#x3D;&#x3D; &quot;$&#123;LOCAL_IP&#125;&quot; ]]; then #如果本机是主redis，就将VIP绑定到自己的网卡上
-	ip addr add $&#123;VIP&#125;&#x2F;$&#123;NETMASK&#125; dev $&#123;INTERFACE&#125;
-	arping -q -c 3 -A $&#123;VIP&#125; -l $&#123;INTERFACE&#125;
-	exit 0
-else # 如果本机不是主redis，就将VIP地址从网卡上删除
-	ip addr del $&#123;VIP&#125;&#x2F;$&#123;NETMASK&#125; dev $&#123;INTERFACE&#125;
-	exit 0
-fi
-exit 1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">/root/redis-5.0.5/notifyvip.sh</span><br><span class="line">#!/bin/bash</span><br><span class="line">MASTER_IP=$6              #新主redis的ip地址</span><br><span class="line">LOCAL_IP=&#x27;192.168.10.116&#x27; #当前主机的ip</span><br><span class="line">VIP=&#x27;192.168.10.99&#x27;       #设置VIP地址</span><br><span class="line">NETMASK=&#x27;24&#x27;</span><br><span class="line">INTERFACE=&#x27;ens18&#x27;         #VIP绑定的网卡名称</span><br><span class="line">if [[ &quot;$&#123;MASTER_IP&#125;&quot; == &quot;$&#123;LOCAL_IP&#125;&quot; ]]; then #如果本机是主redis，就将VIP绑定到自己的网卡上</span><br><span class="line">	ip addr add $&#123;VIP&#125;/$&#123;NETMASK&#125; dev $&#123;INTERFACE&#125;</span><br><span class="line">	arping -q -c 3 -A $&#123;VIP&#125; -l $&#123;INTERFACE&#125;</span><br><span class="line">	exit 0</span><br><span class="line">else # 如果本机不是主redis，就将VIP地址从网卡上删除</span><br><span class="line">	ip addr del $&#123;VIP&#125;/$&#123;NETMASK&#125; dev $&#123;INTERFACE&#125;</span><br><span class="line">	exit 0</span><br><span class="line">fi</span><br><span class="line">exit 1</span><br></pre></td></tr></table></figure>
 
 <p>2.对sentinel哨兵进行重启<br><code>pkill -9 redis-sentinelredis-sentinel /etc/sentinel.conf</code><br>3.在当前master手动绑定VIP地址</p>
-<pre class="line-numbers language-none"><code class="language-none">ip addr add 192.168.10.99&#x2F;24  dev ens18
-ens18: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link&#x2F;ether bc:24:11:6d:0e:53 brd ff:ff:ff:ff:ff:ff
-    inet 192.168.10.117&#x2F;24 brd 192.168.10.255 scope global noprefixroute ens18
-       valid_lft forever preferred_lft forever
-    inet 192.168.10.99&#x2F;24 scope global secondary ens18
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ip addr add 192.168.10.99/24  dev ens18</span><br><span class="line">ens18: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span><br><span class="line">    link/ether bc:24:11:6d:0e:53 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 192.168.10.117/24 brd 192.168.10.255 scope global noprefixroute ens18</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet 192.168.10.99/24 scope global secondary ens18</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p>4.测试<br><code>pkill -9 redis-server</code>主节点关闭redis</p>
-<pre class="line-numbers language-none"><code class="language-none">2: ens18: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link&#x2F;ether bc:24:11:6d:0e:53 brd ff:ff:ff:ff:ff:ff
-    inet 192.168.10.117&#x2F;24 brd 192.168.10.255 scope global noprefixroute ens18
-主节点VIP已经没了
-
-15669:X 06 Jul 2024 20:18:19.673 # +switch-master redismaster 192.168.10.117 8000 192.168.10.116 8000
-根据日志看到master被选择为了116
-
-ip | grep -w inet
-		inet 192.168.10.116&#x2F;24 brd 192.168.10.255 scope global noprefixroute ens18      
-    inet 192.168.10.99&#x2F;24 scope global secondary ens18
-在116查看ip能看到99已经变到了116上
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">2: ens18: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span><br><span class="line">    link/ether bc:24:11:6d:0e:53 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 192.168.10.117/24 brd 192.168.10.255 scope global noprefixroute ens18</span><br><span class="line">主节点VIP已经没了</span><br><span class="line"></span><br><span class="line">15669:X 06 Jul 2024 20:18:19.673 # +switch-master redismaster 192.168.10.117 8000 192.168.10.116 8000</span><br><span class="line">根据日志看到master被选择为了116</span><br><span class="line"></span><br><span class="line">ip | grep -w inet</span><br><span class="line">		inet 192.168.10.116/24 brd 192.168.10.255 scope global noprefixroute ens18      </span><br><span class="line">    inet 192.168.10.99/24 scope global secondary ens18</span><br><span class="line">在116查看ip能看到99已经变到了116上</span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6735,18 +6592,6 @@ ip | grep -w inet
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6830,13 +6675,13 @@ ip | grep -w inet
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7211,13 +7056,13 @@ ip | grep -w inet
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7457,13 +7302,13 @@ ip | grep -w inet
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8162,13 +8007,13 @@ ip | grep -w inet
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8712,9 +8557,9 @@ ip | grep -w inet
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8722,9 +8567,9 @@ ip | grep -w inet
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

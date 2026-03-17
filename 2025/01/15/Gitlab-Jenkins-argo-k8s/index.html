@@ -203,12 +203,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -216,7 +218,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -518,175 +519,11 @@
 <p>需要通过argoCLI进行连接</p>
 <p>或者如果你是helm部署的argo，也可以通过HelmChart资源将kubeconfig传入helm</p>
 <h2 id="helm工程"><a href="#helm工程" class="headerlink" title="helm工程"></a>helm工程</h2><p>即一个变量文件+一个模板文件</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">变量文件
-<span class="token key atrule">global</span><span class="token punctuation">:</span>
-  <span class="token key atrule">common</span><span class="token punctuation">:</span>
-    <span class="token key atrule">imagePullSecrets</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> harbor<span class="token punctuation">-</span>token
-<span class="token key atrule">checkerbackend</span><span class="token punctuation">:</span>
-  <span class="token key atrule">enabled</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> checker<span class="token punctuation">-</span>backend
-  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span>
-  <span class="token key atrule">image</span><span class="token punctuation">:</span>
-    <span class="token key atrule">repository</span><span class="token punctuation">:</span> xxx
-    <span class="token key atrule">tag</span><span class="token punctuation">:</span> <span class="token string">"xxx"</span>
-    <span class="token key atrule">pullPolicy</span><span class="token punctuation">:</span> IfNotPresent
-  <span class="token key atrule">env</span><span class="token punctuation">:</span>
-    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> OSSUTIL
-      <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
-  <span class="token key atrule">service</span><span class="token punctuation">:</span>
-    <span class="token key atrule">type</span><span class="token punctuation">:</span> NodePort
-    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8080</span>
-    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">80</span>
-    <span class="token key atrule">nodePort</span><span class="token punctuation">:</span> <span class="token number">32007</span>
-  <span class="token key atrule">hostAliases</span><span class="token punctuation">:</span>
-    <span class="token punctuation">-</span> <span class="token key atrule">ip</span><span class="token punctuation">:</span>
-      hostnames：
-  <span class="token key atrule">affinity</span><span class="token punctuation">:</span>
-    <span class="token key atrule">nodeAffinityKey</span><span class="token punctuation">:</span> <span class="token string">"node-role.kubernetes.io/controlplane"</span>
-    
-template文件
-<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> if and .Values.checkerbackend .Values.checkerbackend.enabled <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.replicas <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
-      <span class="token key atrule">app</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-  <span class="token key atrule">template</span><span class="token punctuation">:</span>
-    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-        <span class="token key atrule">app</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
-      <span class="token key atrule">imagePullSecrets</span><span class="token punctuation">:</span>
-      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> range .Values.global.common.imagePullSecrets <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-        <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">"&#123;&#123; .Values.checkerbackend.image.repository &#125;&#125;:&#123;&#123; .Values.checkerbackend.image.tag &#125;&#125;"</span>
-        <span class="token key atrule">imagePullPolicy</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.image.pullPolicy <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-        <span class="token key atrule">env</span><span class="token punctuation">:</span>
-        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> range .Values.checkerbackend.env <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-          <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .value <span class="token punctuation">|</span> quote <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span>
-      <span class="token key atrule">hostAliases</span><span class="token punctuation">:</span>
-      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> if .Values.checkerbackend.hostAliases <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> toYaml .Values.checkerbackend.hostAliases <span class="token punctuation">|</span> nindent 10 <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-      <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-      <span class="token key atrule">affinity</span><span class="token punctuation">:</span>
-        <span class="token key atrule">nodeAffinity</span><span class="token punctuation">:</span>
-          <span class="token key atrule">requiredDuringSchedulingIgnoredDuringExecution</span><span class="token punctuation">:</span>
-            <span class="token key atrule">nodeSelectorTerms</span><span class="token punctuation">:</span>
-            <span class="token punctuation">-</span> <span class="token key atrule">matchExpressions</span><span class="token punctuation">:</span>
-              <span class="token punctuation">-</span> <span class="token key atrule">key</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.affinity.nodeAffinityKey <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-                <span class="token key atrule">operator</span><span class="token punctuation">:</span> In
-                <span class="token key atrule">values</span><span class="token punctuation">:</span>
-                <span class="token punctuation">-</span> <span class="token string">"true"</span>
-<span class="token punctuation">---</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">type</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.service.type <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.service.targetPort <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-    <span class="token key atrule">nodePort</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.service.nodePort <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">app</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> .Values.checkerbackend.name <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">-</span> end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">变量文件</span></span><br><span class="line"><span class="attr">global:</span></span><br><span class="line">  <span class="attr">common:</span></span><br><span class="line">    <span class="attr">imagePullSecrets:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">harbor-token</span></span><br><span class="line"><span class="attr">checkerbackend:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">checker-backend</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">image:</span></span><br><span class="line">    <span class="attr">repository:</span> <span class="string">xxx</span></span><br><span class="line">    <span class="attr">tag:</span> <span class="string">&quot;xxx&quot;</span></span><br><span class="line">    <span class="attr">pullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">  <span class="attr">env:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">OSSUTIL</span></span><br><span class="line">      <span class="attr">value:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">service:</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line">    <span class="attr">port:</span> <span class="number">8080</span></span><br><span class="line">    <span class="attr">targetPort:</span> <span class="number">80</span></span><br><span class="line">    <span class="attr">nodePort:</span> <span class="number">32007</span></span><br><span class="line">  <span class="attr">hostAliases:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">ip:</span></span><br><span class="line">      <span class="string">hostnames：</span></span><br><span class="line">  <span class="attr">affinity:</span></span><br><span class="line">    <span class="attr">nodeAffinityKey:</span> <span class="string">&quot;node-role.kubernetes.io/controlplane&quot;</span></span><br><span class="line">    </span><br><span class="line"><span class="string">template文件</span></span><br><span class="line">&#123;&#123;<span class="bullet">-</span> <span class="string">if</span> <span class="string">and</span> <span class="string">.Values.checkerbackend</span> <span class="string">.Values.checkerbackend.enabled</span> &#125;&#125;</span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> &#123;&#123; <span class="string">.Values.checkerbackend.name</span> &#125;&#125;</span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> &#123;&#123; <span class="string">.Values.checkerbackend.replicas</span> &#125;&#125;</span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> &#123;&#123; <span class="string">.Values.checkerbackend.name</span> &#125;&#125;</span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> &#123;&#123; <span class="string">.Values.checkerbackend.name</span> &#125;&#125;</span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">imagePullSecrets:</span></span><br><span class="line">      &#123;&#123;<span class="bullet">-</span> <span class="string">range</span> <span class="string">.Values.global.common.imagePullSecrets</span> &#125;&#125;</span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> &#123;&#123; <span class="string">.name</span> &#125;&#125;</span><br><span class="line">      &#123;&#123;<span class="bullet">-</span> <span class="string">end</span> &#125;&#125;</span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> &#123;&#123; <span class="string">.Values.checkerbackend.name</span> &#125;&#125;</span><br><span class="line">        <span class="attr">image:</span> <span class="string">&quot;<span class="template-variable">&#123;&#123; .Values.checkerbackend.image.repository &#125;&#125;</span>:<span class="template-variable">&#123;&#123; .Values.checkerbackend.image.tag &#125;&#125;</span>&quot;</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> &#123;&#123; <span class="string">.Values.checkerbackend.image.pullPolicy</span> &#125;&#125;</span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">        &#123;&#123;<span class="bullet">-</span> <span class="string">range</span> <span class="string">.Values.checkerbackend.env</span> &#125;&#125;</span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> &#123;&#123; <span class="string">.name</span> &#125;&#125;</span><br><span class="line">          <span class="attr">value:</span> &#123;&#123; <span class="string">.value</span> <span class="string">|</span> <span class="string">quote</span> &#125;&#125;</span><br><span class="line">        &#123;&#123;<span class="bullet">-</span> <span class="string">end</span> &#125;&#125;</span><br><span class="line">        <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br><span class="line">      <span class="attr">hostAliases:</span></span><br><span class="line">      &#123;&#123;<span class="bullet">-</span> <span class="string">if</span> <span class="string">.Values.checkerbackend.hostAliases</span> &#125;&#125;</span><br><span class="line">      &#123;&#123;<span class="bullet">-</span> <span class="string">toYaml</span> <span class="string">.Values.checkerbackend.hostAliases</span> <span class="string">|</span> <span class="string">nindent</span> <span class="number">10</span> &#125;&#125;</span><br><span class="line">      &#123;&#123;<span class="bullet">-</span> <span class="string">end</span> &#125;&#125;</span><br><span class="line">      <span class="attr">affinity:</span></span><br><span class="line">        <span class="attr">nodeAffinity:</span></span><br><span class="line">          <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">            <span class="attr">nodeSelectorTerms:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="attr">matchExpressions:</span></span><br><span class="line">              <span class="bullet">-</span> <span class="attr">key:</span> &#123;&#123; <span class="string">.Values.checkerbackend.affinity.nodeAffinityKey</span> &#125;&#125;</span><br><span class="line">                <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">                <span class="attr">values:</span></span><br><span class="line">                <span class="bullet">-</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> &#123;&#123; <span class="string">.Values.checkerbackend.name</span> &#125;&#125;</span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> &#123;&#123; <span class="string">.Values.checkerbackend.service.type</span> &#125;&#125;</span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="attr">targetPort:</span> &#123;&#123; <span class="string">.Values.checkerbackend.service.targetPort</span> &#125;&#125;</span><br><span class="line">    <span class="attr">nodePort:</span> &#123;&#123; <span class="string">.Values.checkerbackend.service.nodePort</span> &#125;&#125;</span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> &#123;&#123; <span class="string">.Values.checkerbackend.name</span> &#125;&#125;</span><br><span class="line">&#123;&#123;<span class="bullet">-</span> <span class="string">end</span> &#125;&#125;</span><br></pre></td></tr></table></figure>
 
 <h2 id="Jenkinsfile声明式"><a href="#Jenkinsfile声明式" class="headerlink" title="Jenkinsfile声明式"></a>Jenkinsfile声明式</h2><p>几个注意点</p>
 <p>1.定义超时时间<br>2.将时间戳写入临时文件<br>3.使用withCredentials时，会将账密复制到变量<br>4.提前安装好yq工具来修改yaml格式文件</p>
-<pre class="line-numbers language-groovy" data-language="groovy"><code class="language-groovy">pipeline <span class="token punctuation">&#123;</span>
-    agent <span class="token punctuation">&#123;</span>
-        node <span class="token punctuation">&#123;</span>
-            label <span class="token string">'xxxx'</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-    options <span class="token punctuation">&#123;</span>
-        <span class="token function">timeout</span><span class="token punctuation">(</span>time<span class="token punctuation">:</span> <span class="token number">10</span><span class="token punctuation">,</span> unit<span class="token punctuation">:</span> <span class="token string">'MINUTES'</span><span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-    stages <span class="token punctuation">&#123;</span>
-        <span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'Define Timestamp Tag'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            steps <span class="token punctuation">&#123;</span>
-                script <span class="token punctuation">&#123;</span>
-                    <span class="token keyword">def</span> image_version <span class="token operator">=</span> <span class="token function">sh</span><span class="token punctuation">(</span>script<span class="token punctuation">:</span> <span class="token string">'date +"%Y%m%d%H%M"'</span><span class="token punctuation">,</span> returnStdout<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-                    writeFile file<span class="token punctuation">:</span> <span class="token string">'/tmp/image_version.txt'</span><span class="token punctuation">,</span> text<span class="token punctuation">:</span> image_version
-                <span class="token punctuation">&#125;</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-        <span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'Git Clone checker-backend and build docker images'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            steps <span class="token punctuation">&#123;</span>
-                <span class="token function">checkout</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
-                    <span class="token punctuation">$</span><span class="token keyword">class</span><span class="token punctuation">:</span> <span class="token string">'GitSCM'</span><span class="token punctuation">,</span>
-                    branches<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>name<span class="token punctuation">:</span> <span class="token string">'*/master'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    extensions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    submoduleCfg<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    userRemoteConfigs<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>
-                        url<span class="token punctuation">:</span> <span class="token string">'xxxx'</span><span class="token punctuation">,</span>
-                        credentialsId<span class="token punctuation">:</span> <span class="token string">'xxx-alg-key'</span>
-                    <span class="token punctuation">]</span><span class="token punctuation">]</span>
-                <span class="token punctuation">]</span><span class="token punctuation">)</span>
-                sh <span class="token string">'''
-                    image_version=$(cat /tmp/image_version.txt)
-                    echo "[jenkins log]: docker build start."
-                    docker build -f Dockerfile -t xxxx:$&#123;image_version&#125; .
-                    echo "[jenkins log]: docker build end. pushing this image to the remote repo."
-                    docker push xxxx:$&#123;image_version&#125;
-                    echo "[jenkins log]: docker push end."
-                '''</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-
-        <span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'git clone helm'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            steps <span class="token punctuation">&#123;</span>
-                <span class="token function">checkout</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
-                    <span class="token punctuation">$</span><span class="token keyword">class</span><span class="token punctuation">:</span> <span class="token string">'GitSCM'</span><span class="token punctuation">,</span>
-                    branches<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>name<span class="token punctuation">:</span> <span class="token string">'xxxx'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    extensions<span class="token punctuation">:</span> <span class="token punctuation">[</span>
-                        <span class="token punctuation">[</span><span class="token punctuation">$</span><span class="token keyword">class</span><span class="token punctuation">:</span> <span class="token string">'CleanBeforeCheckout'</span><span class="token punctuation">]</span>
-                    <span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    submoduleCfg<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    userRemoteConfigs<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>
-                        url<span class="token punctuation">:</span> <span class="token string">'xxx.git'</span><span class="token punctuation">,</span>
-                        credentialsId<span class="token punctuation">:</span> <span class="token string">'xxx-public-key'</span>
-                    <span class="token punctuation">]</span><span class="token punctuation">]</span>
-                <span class="token punctuation">]</span><span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-        <span class="token function">stage</span><span class="token punctuation">(</span><span class="token string">'make changes and commit'</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            steps <span class="token punctuation">&#123;</span>
-                script <span class="token punctuation">&#123;</span>
-                    <span class="token function">withCredentials</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token function">usernamePassword</span><span class="token punctuation">(</span>credentialsId<span class="token punctuation">:</span> <span class="token string">'xxx-public-key'</span><span class="token punctuation">,</span> passwordVariable<span class="token punctuation">:</span> <span class="token string">'GIT_PASSWORD'</span><span class="token punctuation">,</span> usernameVariable<span class="token punctuation">:</span> <span class="token string">'GIT_USERNAME'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-                        sh <span class="token string">'''
-                            git remote set-url origin https://$&#123;GIT_USERNAME&#125;:$&#123;GIT_PASSWORD&#125;@xxxx.git
-                            git checkout xxxx
-                            git pull
-
-                            version=$(cat /tmp/image_version.txt)
-                            formatted_version=$(printf '"%s"\n' "$version")
-                            echo ".checkerbackend.image.tag = $formatted_version" > /tmp/yq_script.yaml
-                            yq eval -i "$(cat /tmp/yq_script.yaml)" helm-checker-backend/values.yaml
-                            rm /tmp/yq_script.yaml
-
-                            git add .
-                            git commit -m "checker-backend update $(cat /tmp/image_version.txt)" || true
-                            git push origin xxxx
-                        '''</span>
-                    <span class="token punctuation">&#125;</span>
-                <span class="token punctuation">&#125;</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">pipeline &#123;</span><br><span class="line">    agent &#123;</span><br><span class="line">        node &#123;</span><br><span class="line">            label <span class="string">&#x27;xxxx&#x27;</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    options &#123;</span><br><span class="line">        timeout(<span class="attr">time:</span> <span class="number">10</span>, <span class="attr">unit:</span> <span class="string">&#x27;MINUTES&#x27;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    stages &#123;</span><br><span class="line">        stage(<span class="string">&#x27;Define Timestamp Tag&#x27;</span>) &#123;</span><br><span class="line">            steps &#123;</span><br><span class="line">                script &#123;</span><br><span class="line">                    <span class="keyword">def</span> image_version = sh(<span class="attr">script:</span> <span class="string">&#x27;date +&quot;%Y%m%d%H%M&quot;&#x27;</span>, <span class="attr">returnStdout:</span> <span class="literal">true</span>).trim()</span><br><span class="line">                    writeFile <span class="attr">file:</span> <span class="string">&#x27;/tmp/image_version.txt&#x27;</span>, <span class="attr">text:</span> image_version</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        stage(<span class="string">&#x27;Git Clone checker-backend and build docker images&#x27;</span>) &#123;</span><br><span class="line">            steps &#123;</span><br><span class="line">                checkout([</span><br><span class="line">                    <span class="symbol">$class:</span> <span class="string">&#x27;GitSCM&#x27;</span>,</span><br><span class="line">                    <span class="symbol">branches:</span> [[<span class="attr">name:</span> <span class="string">&#x27;*/master&#x27;</span>]],</span><br><span class="line">                    <span class="symbol">extensions:</span> [],</span><br><span class="line">                    <span class="symbol">submoduleCfg:</span> [],</span><br><span class="line">                    <span class="symbol">userRemoteConfigs:</span> [[</span><br><span class="line">                        <span class="symbol">url:</span> <span class="string">&#x27;xxxx&#x27;</span>,</span><br><span class="line">                        <span class="symbol">credentialsId:</span> <span class="string">&#x27;xxx-alg-key&#x27;</span></span><br><span class="line">                    ]]</span><br><span class="line">                ])</span><br><span class="line">                sh <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">                    image_version=$(cat /tmp/image_version.txt)</span></span><br><span class="line"><span class="string">                    echo &quot;[jenkins log]: docker build start.&quot;</span></span><br><span class="line"><span class="string">                    docker build -f Dockerfile -t xxxx:$&#123;image_version&#125; .</span></span><br><span class="line"><span class="string">                    echo &quot;[jenkins log]: docker build end. pushing this image to the remote repo.&quot;</span></span><br><span class="line"><span class="string">                    docker push xxxx:$&#123;image_version&#125;</span></span><br><span class="line"><span class="string">                    echo &quot;[jenkins log]: docker push end.&quot;</span></span><br><span class="line"><span class="string">                &#x27;&#x27;&#x27;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        stage(<span class="string">&#x27;git clone helm&#x27;</span>) &#123;</span><br><span class="line">            steps &#123;</span><br><span class="line">                checkout([</span><br><span class="line">                    <span class="symbol">$class:</span> <span class="string">&#x27;GitSCM&#x27;</span>,</span><br><span class="line">                    <span class="symbol">branches:</span> [[<span class="attr">name:</span> <span class="string">&#x27;xxxx&#x27;</span>]],</span><br><span class="line">                    <span class="symbol">extensions:</span> [</span><br><span class="line">                        [<span class="attr">$class:</span> <span class="string">&#x27;CleanBeforeCheckout&#x27;</span>]</span><br><span class="line">                    ],</span><br><span class="line">                    <span class="symbol">submoduleCfg:</span> [],</span><br><span class="line">                    <span class="symbol">userRemoteConfigs:</span> [[</span><br><span class="line">                        <span class="symbol">url:</span> <span class="string">&#x27;xxx.git&#x27;</span>,</span><br><span class="line">                        <span class="symbol">credentialsId:</span> <span class="string">&#x27;xxx-public-key&#x27;</span></span><br><span class="line">                    ]]</span><br><span class="line">                ])</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        stage(<span class="string">&#x27;make changes and commit&#x27;</span>) &#123;</span><br><span class="line">            steps &#123;</span><br><span class="line">                script &#123;</span><br><span class="line">                    withCredentials([usernamePassword(<span class="attr">credentialsId:</span> <span class="string">&#x27;xxx-public-key&#x27;</span>, <span class="attr">passwordVariable:</span> <span class="string">&#x27;GIT_PASSWORD&#x27;</span>, <span class="attr">usernameVariable:</span> <span class="string">&#x27;GIT_USERNAME&#x27;</span>)]) &#123;</span><br><span class="line">                        sh <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">                            git remote set-url origin https://$&#123;GIT_USERNAME&#125;:$&#123;GIT_PASSWORD&#125;@xxxx.git</span></span><br><span class="line"><span class="string">                            git checkout xxxx</span></span><br><span class="line"><span class="string">                            git pull</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">                            version=$(cat /tmp/image_version.txt)</span></span><br><span class="line"><span class="string">                            formatted_version=$(printf &#x27;&quot;%s&quot;\n&#x27; &quot;$version&quot;)</span></span><br><span class="line"><span class="string">                            echo &quot;.checkerbackend.image.tag = $formatted_version&quot; &gt; /tmp/yq_script.yaml</span></span><br><span class="line"><span class="string">                            yq eval -i &quot;$(cat /tmp/yq_script.yaml)&quot; helm-checker-backend/values.yaml</span></span><br><span class="line"><span class="string">                            rm /tmp/yq_script.yaml</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">                            git add .</span></span><br><span class="line"><span class="string">                            git commit -m &quot;checker-backend update $(cat /tmp/image_version.txt)&quot; || true</span></span><br><span class="line"><span class="string">                            git push origin xxxx</span></span><br><span class="line"><span class="string">                        &#x27;&#x27;&#x27;</span></span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6765,18 +6602,6 @@ template文件
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6860,13 +6685,13 @@ template文件
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7241,13 +7066,13 @@ template文件
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7487,13 +7312,13 @@ template文件
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8192,13 +8017,13 @@ template文件
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8742,9 +8567,9 @@ template文件
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8752,9 +8577,9 @@ template文件
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

@@ -202,12 +202,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -215,7 +217,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -529,32 +530,10 @@
 <p>包含存储元数据的pool，MDS列表和时间戳</p>
 <p>使用ceph fs dump查看MDS map</p>
 <h2 id="ceph访问方式"><a href="#ceph访问方式" class="headerlink" title="ceph访问方式"></a>ceph访问方式</h2><p>ceph本质上是对象存储，但是它做底层做了开发，使其可以提供多种存储</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ceph提供了多种方式访问ceph集群：
-<span class="token number">1</span>.Ceph Native API<span class="token punctuation">(</span>librados<span class="token punctuation">)</span>
-一般都是做了二次开发，直接访问librados的方式来提供存储
-librados是一个原生C库，允许应用程序直接使用RADOS访问Ceph集群存储的对象
-
-<span class="token number">2</span>.Ceph Block Device<span class="token punctuation">(</span>RBD<span class="token punctuation">)</span>
-块存储
-支持linux挂载，QEMU、KVM等虚拟技术支持
-
-<span class="token number">3</span>.Ceph Object Gateway<span class="token punctuation">(</span>librgw<span class="token punctuation">)</span>
-ceph对象存储网关
-主要用于镜像存储、备份服务、文件存储和共享
-
-<span class="token number">4</span>.Ceph File System<span class="token punctuation">(</span>CephFS<span class="token punctuation">)</span>
-提供可伸缩的的共享磁盘
-需要MDS来管理和存储cephfs中相关的元数据<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">ceph提供了多种方式访问ceph集群：</span><br><span class="line">1.Ceph Native API(librados)</span><br><span class="line">一般都是做了二次开发，直接访问librados的方式来提供存储</span><br><span class="line">librados是一个原生C库，允许应用程序直接使用RADOS访问Ceph集群存储的对象</span><br><span class="line"></span><br><span class="line">2.Ceph Block Device(RBD)</span><br><span class="line">块存储</span><br><span class="line">支持linux挂载，QEMU、KVM等虚拟技术支持</span><br><span class="line"></span><br><span class="line">3.Ceph Object Gateway(librgw)</span><br><span class="line">ceph对象存储网关</span><br><span class="line">主要用于镜像存储、备份服务、文件存储和共享</span><br><span class="line"></span><br><span class="line">4.Ceph File System(CephFS)</span><br><span class="line">提供可伸缩的的共享磁盘</span><br><span class="line">需要MDS来管理和存储cephfs中相关的元数据</span><br></pre></td></tr></table></figure>
 
 <h2 id="ceph数据分发组件"><a href="#ceph数据分发组件" class="headerlink" title="ceph数据分发组件"></a>ceph数据分发组件</h2><h3 id="Pool存储池"><a href="#Pool存储池" class="headerlink" title="Pool存储池"></a>Pool存储池</h3><p>osd是用来存放数据的，pool是Ceph存储集群中用于存储对象的逻辑分区</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">属性：
-<span class="token number">1</span>.唯一且无法更改的ID
-<span class="token number">2</span>.名字
-<span class="token number">3</span>.分发对象到OSD的PG数量
-<span class="token number">4</span>.确定pool的PG的CRUSH规则
-<span class="token number">5</span>.保护类型<span class="token punctuation">(</span>replicated副本/erasure coding纠错码<span class="token punctuation">)</span>
-<span class="token number">6</span>.保护类型相关参数
-<span class="token number">7</span>.其他集群参数<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">属性：</span><br><span class="line">1.唯一且无法更改的ID</span><br><span class="line">2.名字</span><br><span class="line">3.分发对象到OSD的PG数量</span><br><span class="line">4.确定pool的PG的CRUSH规则</span><br><span class="line">5.保护类型(replicated副本/erasure coding纠错码)</span><br><span class="line">6.保护类型相关参数</span><br><span class="line">7.其他集群参数</span><br></pre></td></tr></table></figure>
 
 <h3 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h3><p>数据在逻辑上存放的位置，PG记录了数据实际上存放在OSD上的映射<br>略</p>
 <h3 id="集群映射Cluster-Map"><a href="#集群映射Cluster-Map" class="headerlink" title="集群映射Cluster Map"></a>集群映射Cluster Map</h3><p>ceph客户端从MON获取最新的Cluster Map副本，Cluster Map为客户端提供了所有集群中MON OSD和MDS的信息，但不提供访问对象的位置<br>Ceph客户端使用CRUSH算法确定哪些osd负责PG</p>
@@ -6638,18 +6617,6 @@ ceph对象存储网关
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6733,13 +6700,13 @@ ceph对象存储网关
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7114,13 +7081,13 @@ ceph对象存储网关
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7360,13 +7327,13 @@ ceph对象存储网关
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8065,13 +8032,13 @@ ceph对象存储网关
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8615,9 +8582,9 @@ ceph对象存储网关
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8625,9 +8592,9 @@ ceph对象存储网关
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

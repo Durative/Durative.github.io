@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -504,34 +505,12 @@
 <p>也是因为这个问题所以上个人不敢轻易动它</p>
 <h1 id="接入deployment"><a href="#接入deployment" class="headerlink" title="接入deployment"></a>接入deployment</h1><h2 id="数据备份"><a href="#数据备份" class="headerlink" title="数据备份"></a>数据备份</h2><h3 id="方法1：使用kubectl-exec到pod内进行备份"><a href="#方法1：使用kubectl-exec到pod内进行备份" class="headerlink" title="方法1：使用kubectl exec到pod内进行备份"></a><strong>方法1：使用kubectl exec到pod内进行备份</strong></h3><p>这里也分两种</p>
 <p>一种是<strong>物理备份</strong>，就像这样，但是需要停机更新</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl <span class="token parameter variable">--kubeconfig</span> config <span class="token parameter variable">-n</span> <span class="token operator">&lt;</span>ns-name<span class="token operator">></span><span class="token punctuation">\</span>
-<span class="token function">cp</span> <span class="token operator">&lt;</span>pod-name<span class="token operator">></span>:<span class="token operator">&lt;</span>pvc-path<span class="token operator">></span> /data/mongodb-backup<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl --kubeconfig config -n &lt;ns-name&gt;\</span><br><span class="line"><span class="built_in">cp</span> &lt;pod-name&gt;:&lt;pvc-path&gt; /data/mongodb-backup</span><br></pre></td></tr></table></figure>
 
 <p>一种是<strong>逻辑备份</strong>，也就是使用mongodump<br>这种方法有个缺点就是直接先备份到pod内，然后通过cp进行复制<br>也就是对于权限有比较高的要求<br>如果是和我一样使用的是bitnami的镜像，那么对于权限的控制会非常严格</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> kubectl <span class="token parameter variable">--kubeconfig</span> config <span class="token parameter variable">-n</span> <span class="token operator">&lt;</span>ns-name<span class="token operator">></span> <span class="token punctuation">\</span>
-<span class="token builtin class-name">exec</span> <span class="token operator">&lt;</span>pod-name<span class="token operator">></span> -- <span class="token punctuation">\</span>
-mongodump <span class="token parameter variable">-u</span> <span class="token operator">&lt;</span>username<span class="token operator">></span> <span class="token parameter variable">-p</span> <span class="token operator">&lt;</span>password<span class="token operator">></span> <span class="token parameter variable">--out</span><span class="token operator">=</span><span class="token operator">&lt;</span>path-inpod<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo kubectl --kubeconfig config -n &lt;ns-name&gt; \</span><br><span class="line"><span class="built_in">exec</span> &lt;pod-name&gt; -- \</span><br><span class="line">mongodump -u &lt;username&gt; -p &lt;password&gt; --out=&lt;path-inpod&gt;</span><br></pre></td></tr></table></figure>
 
-<h3 id="方法2：使用外部访问端口进行备份（推荐）"><a href="#方法2：使用外部访问端口进行备份（推荐）" class="headerlink" title="方法2：使用外部访问端口进行备份（推荐）"></a>方法2：使用外部访问端口进行备份（推荐）</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#ubuntu 20.04</span>
-<span class="token comment">#安装mongo工具</span>
-<span class="token function">wget</span> <span class="token parameter variable">-qO</span> - https://www.mongodb.org/static/pgp/server-6.0.asc <span class="token operator">|</span> <span class="token function">sudo</span> apt-key <span class="token function">add</span> -
-<span class="token builtin class-name">echo</span> <span class="token string">"deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse"</span> <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">tee</span> /etc/apt/sources.list.d/mongodb-org-6.0.list
-
-<span class="token function">sudo</span> <span class="token function">apt</span> update
-<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> mongodb-database-tools
-
-<span class="token comment">#备份</span>
-<span class="token function">sudo</span> mongodump <span class="token parameter variable">-h</span> <span class="token operator">&lt;</span>host<span class="token operator">></span> <span class="token punctuation">\</span>
-<span class="token parameter variable">--port</span><span class="token operator">=</span><span class="token operator">&lt;</span>port<span class="token operator">></span> <span class="token parameter variable">-u</span> <span class="token operator">&lt;</span>username<span class="token operator">></span> <span class="token punctuation">\</span>
-<span class="token parameter variable">--password</span><span class="token operator">=</span><span class="token operator">&lt;</span>password<span class="token operator">></span> <span class="token punctuation">\</span>
-<span class="token parameter variable">--out</span><span class="token operator">=</span>/data/mongo-backup
-
-<span class="token comment">#可能用到的数据恢复命令</span>
-<span class="token function">sudo</span> mongorestore <span class="token parameter variable">-h</span> <span class="token operator">&lt;</span>host<span class="token operator">></span> <span class="token punctuation">\</span>
-<span class="token parameter variable">--port</span><span class="token operator">=</span><span class="token operator">&lt;</span>port<span class="token operator">></span> <span class="token parameter variable">-u</span> <span class="token operator">&lt;</span>username<span class="token operator">></span> <span class="token punctuation">\</span>
-<span class="token parameter variable">--password</span><span class="token operator">=</span><span class="token operator">&lt;</span>password<span class="token operator">></span> <span class="token punctuation">\</span>
-/data/mongo-backup
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="方法2：使用外部访问端口进行备份（推荐）"><a href="#方法2：使用外部访问端口进行备份（推荐）" class="headerlink" title="方法2：使用外部访问端口进行备份（推荐）"></a>方法2：使用外部访问端口进行备份（推荐）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#ubuntu 20.04</span></span><br><span class="line"><span class="comment">#安装mongo工具</span></span><br><span class="line">wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse&quot;</span> | sudo <span class="built_in">tee</span> /etc/apt/sources.list.d/mongodb-org-6.0.list</span><br><span class="line"></span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install -y mongodb-database-tools</span><br><span class="line"></span><br><span class="line"><span class="comment">#备份</span></span><br><span class="line">sudo mongodump -h &lt;host&gt; \</span><br><span class="line">--port=&lt;port&gt; -u &lt;username&gt; \</span><br><span class="line">--password=&lt;password&gt; \</span><br><span class="line">--out=/data/mongo-backup</span><br><span class="line"></span><br><span class="line"><span class="comment">#可能用到的数据恢复命令</span></span><br><span class="line">sudo mongorestore -h &lt;host&gt; \</span><br><span class="line">--port=&lt;port&gt; -u &lt;username&gt; \</span><br><span class="line">--password=&lt;password&gt; \</span><br><span class="line">/data/mongo-backup</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h2 id="网络与存储替换"><a href="#网络与存储替换" class="headerlink" title="网络与存储替换"></a>网络与存储替换</h2><p>本来想改pvc的读写方式的，从单路可读可写改成多路可读可写，然后让新pod去挂载，这样显然更加稳，</p>
 <p>当然不出意外的报错了，</p>
@@ -6622,18 +6601,6 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6717,13 +6684,13 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7098,13 +7065,13 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7344,13 +7311,13 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8049,13 +8016,13 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8599,9 +8566,9 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8609,9 +8576,9 @@ mongodump <span class="token parameter variable">-u</span> <span class="token op
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

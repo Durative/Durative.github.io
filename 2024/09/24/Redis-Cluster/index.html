@@ -204,12 +204,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -217,7 +219,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -506,34 +507,7 @@
 <h3 id="slots-槽位-机制"><a href="#slots-槽位-机制" class="headerlink" title="slots(槽位)机制"></a><strong>slots(槽位)机制</strong></h3><p>Redis Cluster将所有数据划分为16384个slots(槽位)，每个节点负责其中一部分槽位。槽位的信息存储于每个节点中。只有master节点会被分配槽位，slave节点不会分配槽位。</p>
 <p>第一步：<br>客户端连接到集群时，会给客户端返回一个槽位对应表，并且将其缓存到客户端本地</p>
 <p>第二步：<br>Cluster 默认会对 key 值使用 crc16 算法进行 hash 得到一个整数值，然后用这个整数值对 <strong>16384</strong> 进行取模来得到具体槽位。<br>（根据k1计算出的槽值进行切换节点，并存入数据。不在一个slot下的键值，是不能使用mget、mset等多建操作） </p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">redis-cluster的安装详见下面部分
-
-<span class="token number">192.168</span>.10.116:800<span class="token operator"><span class="token file-descriptor important">1</span>></span> <span class="token builtin class-name">set</span> k1 v1
--<span class="token operator">></span> Redirected to slot <span class="token punctuation">[</span><span class="token number">12706</span><span class="token punctuation">]</span> located at <span class="token number">192.168</span>.10.118:8001
-OK
-<span class="token number">192.168</span>.10.118:800<span class="token operator"><span class="token file-descriptor important">1</span>></span>
-在这里我set了一个key之后
-redis自动将key进行了hash运算，并且计算出这个槽位是分配给192.168.10.118的
-就自动给我切换过去了
-
-同时也只能在192.168.10.118进行get k1的操作
-在另外节点就无法get到
-<span class="token number">192.168</span>.10.116:800<span class="token operator"><span class="token file-descriptor important">1</span>></span> get k1
--<span class="token operator">></span> Redirected to slot <span class="token punctuation">[</span><span class="token number">12706</span><span class="token punctuation">]</span> located at <span class="token number">192.168</span>.10.118:8001
-<span class="token string">"v1"</span>
-
-通过<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>来定义组，相同组中的键值对放到同个slot中
-<span class="token number">192.168</span>.10.117:800<span class="token operator"><span class="token file-descriptor important">1</span>></span> mset k1<span class="token punctuation">&#123;</span>wang<span class="token punctuation">&#125;</span> <span class="token number">10</span> k2<span class="token punctuation">&#123;</span>wang<span class="token punctuation">&#125;</span> <span class="token number">20</span> k3<span class="token punctuation">&#123;</span>wang<span class="token punctuation">&#125;</span> <span class="token number">30</span>
--<span class="token operator">></span> Redirected to slot <span class="token punctuation">[</span><span class="token number">2919</span><span class="token punctuation">]</span> located at <span class="token number">192.168</span>.10.116:8001
-OK
-<span class="token comment">#在不同节点上，通过&#123;&#125;获取可以获取</span>
-<span class="token number">192.168</span>.10.117:800<span class="token operator"><span class="token file-descriptor important">1</span>></span> get k2<span class="token punctuation">&#123;</span>wang<span class="token punctuation">&#125;</span>
--<span class="token operator">></span> Redirected to slot <span class="token punctuation">[</span><span class="token number">2919</span><span class="token punctuation">]</span> located at <span class="token number">192.168</span>.10.116:8001
-<span class="token string">"20"</span>
-<span class="token comment">#在不同节点上，直接获取无法获取</span>
-<span class="token number">192.168</span>.10.117:800<span class="token operator"><span class="token file-descriptor important">1</span>></span> get k2
--<span class="token operator">></span> Redirected to slot <span class="token punctuation">[</span><span class="token number">449</span><span class="token punctuation">]</span> located at <span class="token number">192.168</span>.10.116:8001
-<span class="token punctuation">(</span>nil<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">redis-cluster的安装详见下面部分</span><br><span class="line"></span><br><span class="line">192.168.10.116:8001&gt; <span class="built_in">set</span> k1 v1</span><br><span class="line">-&gt; Redirected to slot [12706] located at 192.168.10.118:8001</span><br><span class="line">OK</span><br><span class="line">192.168.10.118:8001&gt;</span><br><span class="line">在这里我<span class="built_in">set</span>了一个key之后</span><br><span class="line">redis自动将key进行了<span class="built_in">hash</span>运算，并且计算出这个槽位是分配给192.168.10.118的</span><br><span class="line">就自动给我切换过去了</span><br><span class="line"></span><br><span class="line">同时也只能在192.168.10.118进行get k1的操作</span><br><span class="line">在另外节点就无法get到</span><br><span class="line">192.168.10.116:8001&gt; get k1</span><br><span class="line">-&gt; Redirected to slot [12706] located at 192.168.10.118:8001</span><br><span class="line"><span class="string">&quot;v1&quot;</span></span><br><span class="line"></span><br><span class="line">通过&#123;&#125;来定义组，相同组中的键值对放到同个slot中</span><br><span class="line">192.168.10.117:8001&gt; mset k1&#123;wang&#125; 10 k2&#123;wang&#125; 20 k3&#123;wang&#125; 30</span><br><span class="line">-&gt; Redirected to slot [2919] located at 192.168.10.116:8001</span><br><span class="line">OK</span><br><span class="line"><span class="comment">#在不同节点上，通过&#123;&#125;获取可以获取</span></span><br><span class="line">192.168.10.117:8001&gt; get k2&#123;wang&#125;</span><br><span class="line">-&gt; Redirected to slot [2919] located at 192.168.10.116:8001</span><br><span class="line"><span class="string">&quot;20&quot;</span></span><br><span class="line"><span class="comment">#在不同节点上，直接获取无法获取</span></span><br><span class="line">192.168.10.117:8001&gt; get k2</span><br><span class="line">-&gt; Redirected to slot [449] located at 192.168.10.116:8001</span><br><span class="line">(nil)</span><br></pre></td></tr></table></figure>
 
 <h3 id="Redis-Cluster通讯"><a href="#Redis-Cluster通讯" class="headerlink" title="Redis-Cluster通讯"></a><strong>Redis-Cluster通讯</strong></h3><p>在分布式存储中提供维护节点元数据信息的机制，使用gossip协议。</p>
 <p>每个节点都会单独开辟一个tcp通道用于特殊通信，通信端口的在基础上加10000，如8001端口，开辟的就是18001端口。（发送ping消息，用pong消息作为相应）</p>
@@ -541,234 +515,24 @@ OK
 <p><strong>meeting消息</strong></p>
 <p>消息发送者发送给meeting，消息通信正常完成后，接受节点开始收发ping和pong消息</p>
 <h2 id="Redis-Cluster搭建"><a href="#Redis-Cluster搭建" class="headerlink" title="Redis-Cluster搭建"></a>Redis-Cluster搭建</h2><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/5f3447406b94e1af0533f8bd3016a52b.png"></p>
-<h3 id="环境与配置文件"><a href="#环境与配置文件" class="headerlink" title="环境与配置文件"></a>环境与配置文件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">环境：
-centos7.9
-redis版本5.0.5
-<span class="token number">192.168</span>.10.116 redis1
-<span class="token number">192.168</span>.10.117 redis2
-<span class="token number">192.168</span>.10.118 redis3
-使用8001端口作为master端口
-使用8002端口作为slave端口
-
-部署redis的过程略过
-
-<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /usr/local/redis-cluster/8001
-<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /usr/local/redis-cluster/8002
-<span class="token builtin class-name">cd</span> /usr/local/redis-cluster
-
-<span class="token comment">#清一下环境</span>
-<span class="token function">pkill</span> redis
-<span class="token function">rm</span> <span class="token parameter variable">-rf</span> /usr/local/redis-cluster/8001/*
-<span class="token function">rm</span> <span class="token parameter variable">-rf</span> /usr/local/redis-cluster/8002/*
-
-<span class="token comment"># 写一个redis-cluster的配置文件，使用8001端口</span>
-<span class="token function">cat</span> <span class="token operator">></span>redis-cluster.conf<span class="token operator">&lt;&lt;</span><span class="token string">EOF
-port 8001
-daemonize yes
-pidfile "/var/run/redis_8001.pid"
-dir /usr/local/redis-cluster/8001
-cluster-enabled yes #设置以集群模式启动
-cluster-config-file nodes-8001.conf #集群节点信息文件
-cluster-node-timeout 5000  #离线超时时间
-bind 0.0.0.0
-protected-mode no
-appendonly yes #使用aof
-EOF</span>
-
-<span class="token comment">#写8002从节点的配置文件redis-slave.conf</span>
-<span class="token function">cat</span> <span class="token operator">></span>redis-slave.conf<span class="token operator">&lt;&lt;</span><span class="token string">EOF
-port 8002
-daemonize yes
-pidfile "/var/run/redis_8002.pid"
-dir /usr/local/redis-cluster/8002
-cluster-enabled yes
-cluster-config-file nodes-8002.conf
-cluster-node-timeout 5000
-bind 0.0.0.0
-protected-mode no 
-appendonly yes
-EOF</span>
-
-<span class="token comment">#将本机这个目录复制到另外两台redis主机上</span>
-<span class="token function">scp</span> <span class="token parameter variable">-r</span> /usr/local/redis-cluster redis2:/usr/local/redis-cluster
-<span class="token function">scp</span> <span class="token parameter variable">-r</span> /usr/local/redis-cluster redis3:/usr/local/redis-cluster<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="环境与配置文件"><a href="#环境与配置文件" class="headerlink" title="环境与配置文件"></a>环境与配置文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">环境：</span><br><span class="line">centos7.9</span><br><span class="line">redis版本5.0.5</span><br><span class="line">192.168.10.116 redis1</span><br><span class="line">192.168.10.117 redis2</span><br><span class="line">192.168.10.118 redis3</span><br><span class="line">使用8001端口作为master端口</span><br><span class="line">使用8002端口作为slave端口</span><br><span class="line"></span><br><span class="line">部署redis的过程略过</span><br><span class="line"></span><br><span class="line"><span class="built_in">mkdir</span> -p /usr/local/redis-cluster/8001</span><br><span class="line"><span class="built_in">mkdir</span> -p /usr/local/redis-cluster/8002</span><br><span class="line"><span class="built_in">cd</span> /usr/local/redis-cluster</span><br><span class="line"></span><br><span class="line"><span class="comment">#清一下环境</span></span><br><span class="line">pkill redis</span><br><span class="line"><span class="built_in">rm</span> -rf /usr/local/redis-cluster/8001/*</span><br><span class="line"><span class="built_in">rm</span> -rf /usr/local/redis-cluster/8002/*</span><br><span class="line"></span><br><span class="line"><span class="comment"># 写一个redis-cluster的配置文件，使用8001端口</span></span><br><span class="line"><span class="built_in">cat</span> &gt;redis-cluster.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">port 8001</span></span><br><span class="line"><span class="string">daemonize yes</span></span><br><span class="line"><span class="string">pidfile &quot;/var/run/redis_8001.pid&quot;</span></span><br><span class="line"><span class="string">dir /usr/local/redis-cluster/8001</span></span><br><span class="line"><span class="string">cluster-enabled yes #设置以集群模式启动</span></span><br><span class="line"><span class="string">cluster-config-file nodes-8001.conf #集群节点信息文件</span></span><br><span class="line"><span class="string">cluster-node-timeout 5000  #离线超时时间</span></span><br><span class="line"><span class="string">bind 0.0.0.0</span></span><br><span class="line"><span class="string">protected-mode no</span></span><br><span class="line"><span class="string">appendonly yes #使用aof</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#写8002从节点的配置文件redis-slave.conf</span></span><br><span class="line"><span class="built_in">cat</span> &gt;redis-slave.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">port 8002</span></span><br><span class="line"><span class="string">daemonize yes</span></span><br><span class="line"><span class="string">pidfile &quot;/var/run/redis_8002.pid&quot;</span></span><br><span class="line"><span class="string">dir /usr/local/redis-cluster/8002</span></span><br><span class="line"><span class="string">cluster-enabled yes</span></span><br><span class="line"><span class="string">cluster-config-file nodes-8002.conf</span></span><br><span class="line"><span class="string">cluster-node-timeout 5000</span></span><br><span class="line"><span class="string">bind 0.0.0.0</span></span><br><span class="line"><span class="string">protected-mode no </span></span><br><span class="line"><span class="string">appendonly yes</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#将本机这个目录复制到另外两台redis主机上</span></span><br><span class="line">scp -r /usr/local/redis-cluster redis2:/usr/local/redis-cluster</span><br><span class="line">scp -r /usr/local/redis-cluster redis3:/usr/local/redis-cluster</span><br></pre></td></tr></table></figure>
 
 <h3 id="redis启动与初始化（手动）"><a href="#redis启动与初始化（手动）" class="headerlink" title="redis启动与初始化（手动）"></a>redis启动与初始化（手动）</h3><p><strong>手动发现节点</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#每台节点上都启动redis</span>
-redis-server /usr/local/redis-cluster/redis-cluster.conf
-redis-server /usr/local/redis-cluster/redis-slave.conf
-
-redis-cli <span class="token parameter variable">-h</span> <span class="token number">192.168</span>.10.116 <span class="token parameter variable">-p</span> <span class="token number">8001</span>
-cluster nodes
-<span class="token comment">#9a81edf239c532b6736a8910b2caddfae77ee93c 192.168.10.116:8002@18002 master - 0 1727091025966 0 connected</span>
-<span class="token comment"># 手动发现</span>
-CLUSTER MEET <span class="token number">192.168</span>.10.116 <span class="token number">8002</span>
-<span class="token comment">#OK</span>
-cluster nodes
-9a81edf239c532b6736a8910b2caddfae77ee93c <span class="token number">192.168</span>.10.116:8002@18002 master - <span class="token number">0</span> <span class="token number">1727091025966</span> <span class="token number">0</span> connected
-38a18490e78a35ef22f35ef80cd00c07389a2baa <span class="token number">192.168</span>.10.116:8001@18001 myself,master - <span class="token number">0</span> <span class="token number">0</span> <span class="token number">1</span> connected
-
-<span class="token function">cat</span> <span class="token number">8001</span>/nodes-8001.conf
-9a81edf239c532b6736a8910b2caddfae77ee93c <span class="token number">192.168</span>.10.116:8002@18002 master - <span class="token number">0</span> <span class="token number">1727091005009</span> <span class="token number">0</span> connected
-38a18490e78a35ef22f35ef80cd00c07389a2baa <span class="token number">192.168</span>.10.116:8001@18001 myself,master - <span class="token number">0</span> <span class="token number">0</span> <span class="token number">1</span> connected
-vars currentEpoch <span class="token number">1</span> lastVoteEpoch <span class="token number">0</span>
-
-cluster info
-cluster_state:fail <span class="token comment">#集群状态失败</span>
-<span class="token punctuation">..</span>.
-cluster_known_nodes:2 <span class="token comment">#发现两个节点</span>
-<span class="token punctuation">..</span>.
-
-<span class="token comment">#继续添加节点</span>
-CLUSTER MEET <span class="token number">192.168</span>.10.117 <span class="token number">8001</span>
-CLUSTER MEET <span class="token number">192.168</span>.10.117 <span class="token number">8002</span>
-CLUSTER MEET <span class="token number">192.168</span>.10.118 <span class="token number">8001</span>
-CLUSTER MEET <span class="token number">192.168</span>.10.118 <span class="token number">8002</span>
-
-cluster nodes
-9a81edf239c532b6736a8910b2caddfae77ee93c <span class="token number">192.168</span>.10.116:8002@18002 master - <span class="token number">0</span> <span class="token number">1727092265579</span> <span class="token number">0</span> connected
-f5b3f524b1b024df2e74f749e8023dec2f6c2da6 <span class="token number">192.168</span>.10.118:8002@18002 slave 1b93b48276aece5b94de1ed9e060b65aa6c376a0 <span class="token number">0</span> <span class="token number">1727092265000</span> <span class="token number">3</span> connected
-06aada2ea17a85743fb7e02ae1cfcfb12c3acef1 <span class="token number">192.168</span>.10.118:8001@18001 master - <span class="token number">0</span> <span class="token number">1727092266000</span> <span class="token number">5</span> connected <span class="token number">10923</span>-16383
-1b93b48276aece5b94de1ed9e060b65aa6c376a0 <span class="token number">192.168</span>.10.117:8001@18001 master - <span class="token number">0</span> <span class="token number">1727092266582</span> <span class="token number">3</span> connected <span class="token number">5461</span>-10922
-38a18490e78a35ef22f35ef80cd00c07389a2baa <span class="token number">192.168</span>.10.116:8001@18001 myself,master - <span class="token number">0</span> <span class="token number">1727092265000</span> <span class="token number">1</span> connected
-736d0f4ccd33b00c0c128db6f9fd37da9e10d484 <span class="token number">192.168</span>.10.117:8002@18002 slave - <span class="token number">0</span> <span class="token number">1727092267083</span> <span class="token number">1</span> connected
-
-cluster info
-cluster_state:fail
-集群状态依然失败，因为没有分配slots<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#每台节点上都启动redis</span></span><br><span class="line">redis-server /usr/local/redis-cluster/redis-cluster.conf</span><br><span class="line">redis-server /usr/local/redis-cluster/redis-slave.conf</span><br><span class="line"></span><br><span class="line">redis-cli -h 192.168.10.116 -p 8001</span><br><span class="line">cluster nodes</span><br><span class="line"><span class="comment">#9a81edf239c532b6736a8910b2caddfae77ee93c 192.168.10.116:8002@18002 master - 0 1727091025966 0 connected</span></span><br><span class="line"><span class="comment"># 手动发现</span></span><br><span class="line">CLUSTER MEET 192.168.10.116 8002</span><br><span class="line"><span class="comment">#OK</span></span><br><span class="line">cluster nodes</span><br><span class="line">9a81edf239c532b6736a8910b2caddfae77ee93c 192.168.10.116:8002@18002 master - 0 1727091025966 0 connected</span><br><span class="line">38a18490e78a35ef22f35ef80cd00c07389a2baa 192.168.10.116:8001@18001 myself,master - 0 0 1 connected</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> 8001/nodes-8001.conf</span><br><span class="line">9a81edf239c532b6736a8910b2caddfae77ee93c 192.168.10.116:8002@18002 master - 0 1727091005009 0 connected</span><br><span class="line">38a18490e78a35ef22f35ef80cd00c07389a2baa 192.168.10.116:8001@18001 myself,master - 0 0 1 connected</span><br><span class="line">vars currentEpoch 1 lastVoteEpoch 0</span><br><span class="line"></span><br><span class="line">cluster info</span><br><span class="line">cluster_state:fail <span class="comment">#集群状态失败</span></span><br><span class="line">...</span><br><span class="line">cluster_known_nodes:2 <span class="comment">#发现两个节点</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">#继续添加节点</span></span><br><span class="line">CLUSTER MEET 192.168.10.117 8001</span><br><span class="line">CLUSTER MEET 192.168.10.117 8002</span><br><span class="line">CLUSTER MEET 192.168.10.118 8001</span><br><span class="line">CLUSTER MEET 192.168.10.118 8002</span><br><span class="line"></span><br><span class="line">cluster nodes</span><br><span class="line">9a81edf239c532b6736a8910b2caddfae77ee93c 192.168.10.116:8002@18002 master - 0 1727092265579 0 connected</span><br><span class="line">f5b3f524b1b024df2e74f749e8023dec2f6c2da6 192.168.10.118:8002@18002 slave 1b93b48276aece5b94de1ed9e060b65aa6c376a0 0 1727092265000 3 connected</span><br><span class="line">06aada2ea17a85743fb7e02ae1cfcfb12c3acef1 192.168.10.118:8001@18001 master - 0 1727092266000 5 connected 10923-16383</span><br><span class="line">1b93b48276aece5b94de1ed9e060b65aa6c376a0 192.168.10.117:8001@18001 master - 0 1727092266582 3 connected 5461-10922</span><br><span class="line">38a18490e78a35ef22f35ef80cd00c07389a2baa 192.168.10.116:8001@18001 myself,master - 0 1727092265000 1 connected</span><br><span class="line">736d0f4ccd33b00c0c128db6f9fd37da9e10d484 192.168.10.117:8002@18002 slave - 0 1727092267083 1 connected</span><br><span class="line"></span><br><span class="line">cluster info</span><br><span class="line">cluster_state:fail</span><br><span class="line">集群状态依然失败，因为没有分配slots</span><br></pre></td></tr></table></figure>
 
 <p><strong>手动分配槽位</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cluster addslots <span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">..</span>槽位数<span class="token punctuation">&#125;</span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">cluster addslots &#123;0..槽位数&#125;</span><br><span class="line"></span><br><span class="line">给上面三个的主节点添加：</span><br><span class="line">redis-cli -c -h 192.168.10.116 -p 8001 CLUSTER ADDSLOTS &#123;0..5460&#125;</span><br><span class="line">redis-cli -c -h 192.168.10.117 -p 8001 CLUSTER ADDSLOTS &#123;5461..10922&#125;</span><br><span class="line">redis-cli -c -h 192.168.10.118 -p 8001 CLUSTER ADDSLOTS &#123;10923..16383&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">#此时cluster已经ok状态，规模也已经正常</span></span><br><span class="line">cluster info</span><br><span class="line">cluster_state:ok</span><br><span class="line">cluster_slots_assigned:16384</span><br><span class="line">cluster_slots_ok:16384</span><br><span class="line">cluster_slots_pfail:0</span><br><span class="line">cluster_slots_fail:0</span><br><span class="line">cluster_known_nodes:6</span><br><span class="line">cluster_size:3</span><br><span class="line">cluster_current_epoch:6</span><br><span class="line">cluster_my_epoch:1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-给上面三个的主节点添加：
-redis-cli <span class="token parameter variable">-c</span> <span class="token parameter variable">-h</span> <span class="token number">192.168</span>.10.116 <span class="token parameter variable">-p</span> <span class="token number">8001</span> CLUSTER ADDSLOTS <span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">..</span><span class="token number">5460</span><span class="token punctuation">&#125;</span>
-redis-cli <span class="token parameter variable">-c</span> <span class="token parameter variable">-h</span> <span class="token number">192.168</span>.10.117 <span class="token parameter variable">-p</span> <span class="token number">8001</span> CLUSTER ADDSLOTS <span class="token punctuation">&#123;</span><span class="token number">5461</span><span class="token punctuation">..</span><span class="token number">10922</span><span class="token punctuation">&#125;</span>
-redis-cli <span class="token parameter variable">-c</span> <span class="token parameter variable">-h</span> <span class="token number">192.168</span>.10.118 <span class="token parameter variable">-p</span> <span class="token number">8001</span> CLUSTER ADDSLOTS <span class="token punctuation">&#123;</span><span class="token number">10923</span><span class="token punctuation">..</span><span class="token number">16383</span><span class="token punctuation">&#125;</span>
-
-<span class="token comment">#此时cluster已经ok状态，规模也已经正常</span>
-cluster info
-cluster_state:ok
-cluster_slots_assigned:16384
-cluster_slots_ok:16384
-cluster_slots_pfail:0
-cluster_slots_fail:0
-cluster_known_nodes:6
-cluster_size:3
-cluster_current_epoch:6
-cluster_my_epoch:1
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="redis启动与初始化（使用工具、自动）"><a href="#redis启动与初始化（使用工具、自动）" class="headerlink" title="redis启动与初始化（使用工具、自动）"></a>redis启动与初始化（使用工具、自动）</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#每台节点上都启动redis</span>
-redis-server /usr/local/redis-cluster/redis-cluster.conf
-redis-server /usr/local/redis-cluster/redis-slave.conf
-
-<span class="token function">ps</span> <span class="token parameter variable">-ef</span> <span class="token operator">|</span> <span class="token function">grep</span> redis
-root     <span class="token number">10389</span>     <span class="token number">1</span>  <span class="token number">0</span> <span class="token number">22</span>:46 ?        00:00:00 redis-server <span class="token number">0.0</span>.0.0:8001 <span class="token punctuation">[</span>cluster<span class="token punctuation">]</span>
-root     <span class="token number">10395</span>     <span class="token number">1</span>  <span class="token number">0</span> <span class="token number">22</span>:46 ?        00:00:00 redis-server <span class="token number">0.0</span>.0.0:8002 <span class="token punctuation">[</span>cluster<span class="token punctuation">]</span>
-root     <span class="token number">10414</span>  <span class="token number">8863</span>  <span class="token number">0</span> <span class="token number">22</span>:46 pts/1    00:00:00 <span class="token function">grep</span> <span class="token parameter variable">--color</span><span class="token operator">=</span>auto redis
-
-ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">800</span>
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">128</span>       *:8001                  *:*                   users:<span class="token punctuation">((</span><span class="token string">"redis-server"</span>,pid<span class="token operator">=</span><span class="token number">2</span>
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">128</span>       *:8002                  *:*                   users:<span class="token punctuation">((</span><span class="token string">"redis-server"</span>,pid<span class="token operator">=</span><span class="token number">2</span>
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">128</span>       *:18001                 *:*                   users:<span class="token punctuation">((</span><span class="token string">"redis-server"</span>,pid<span class="token operator">=</span><span class="token number">2</span>
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">128</span>       *:18002                 *:*                   users:<span class="token punctuation">((</span><span class="token string">"redis-server"</span>,pid<span class="token operator">=</span><span class="token number">2</span>
-↑元数据通信端口
-
-在初始化之前需要先清空数据库中的数据
-redis-cli <span class="token parameter variable">-h</span> redis1 <span class="token parameter variable">-p</span> <span class="token number">8001</span> flushdb
-redis-cli <span class="token parameter variable">-h</span> red is2 <span class="token parameter variable">-p</span> <span class="token number">8001</span> flushdb
-redis-cli <span class="token parameter variable">-h</span> redis3 <span class="token parameter variable">-p</span> <span class="token number">8001</span> flushdb
-
-<span class="token comment"># 每个redis进程都会有一个对应的节点id</span>
-<span class="token function">cat</span> <span class="token number">8001</span>/nodes-8001.conf
-d7866353d9e708a59525c9783ff312459cd8f14d :0@0 myself,master - <span class="token number">0</span> <span class="token number">0</span> <span class="token number">0</span> connected
-或者
-<span class="token number">127.0</span>.0.1:800<span class="token operator"><span class="token file-descriptor important">1</span>></span> CLUSTER NODES
-d7866353d9e708a59525c9783ff312459cd8f14d :8001@18001 myself,master - <span class="token number">0</span> <span class="token number">0</span> <span class="token number">0</span> connected
-查看
-
-<span class="token comment"># 初始化集群</span>
-redis-cli <span class="token parameter variable">--cluster</span> create --cluster-replicas <span class="token number">1</span> <span class="token punctuation">\</span>
-<span class="token number">192.168</span>.10.116:8001 <span class="token number">192.168</span>.10.116:8002 <span class="token number">192.168</span>.10.117:8001 <span class="token punctuation">\</span>
-<span class="token number">192.168</span>.10.117:8002 <span class="token number">192.168</span>.10.118:8001 <span class="token number">192.168</span>.10.118:8002
-
-参数说明：
-<span class="token parameter variable">-a</span> 密码
-<span class="token parameter variable">--cluster</span> create 表示新创建状态
---cluster-replicas <span class="token number">1</span> 表示每个主节点的从节点数为1
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="redis启动与初始化（使用工具、自动）"><a href="#redis启动与初始化（使用工具、自动）" class="headerlink" title="redis启动与初始化（使用工具、自动）"></a>redis启动与初始化（使用工具、自动）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#每台节点上都启动redis</span></span><br><span class="line">redis-server /usr/local/redis-cluster/redis-cluster.conf</span><br><span class="line">redis-server /usr/local/redis-cluster/redis-slave.conf</span><br><span class="line"></span><br><span class="line">ps -ef | grep redis</span><br><span class="line">root     10389     1  0 22:46 ?        00:00:00 redis-server 0.0.0.0:8001 [cluster]</span><br><span class="line">root     10395     1  0 22:46 ?        00:00:00 redis-server 0.0.0.0:8002 [cluster]</span><br><span class="line">root     10414  8863  0 22:46 pts/1    00:00:00 grep --color=auto redis</span><br><span class="line"></span><br><span class="line">ss -tunlp | grep 800</span><br><span class="line">tcp    LISTEN     0      128       *:8001                  *:*                   <span class="built_in">users</span>:((&quot;redis-server&quot;,pid=<span class="number">2</span></span><br><span class="line">tcp    LISTEN     <span class="number">0</span>      <span class="number">128</span>       *:<span class="number">8002</span>                  *:*                   users:((&quot;redis-server&quot;,pid=<span class="number">2</span></span><br><span class="line">tcp    LISTEN     <span class="number">0</span>      <span class="number">128</span>       *:<span class="number">18001</span>                 *:*                   users:((&quot;redis-server&quot;,pid=<span class="number">2</span></span><br><span class="line">tcp    LISTEN     <span class="number">0</span>      <span class="number">128</span>       *:<span class="number">18002</span>                 *:*                   users:((&quot;redis-server&quot;,pid=<span class="number">2</span></span><br><span class="line">↑元数据通信端口</span><br><span class="line"></span><br><span class="line">在初始化之前需要先清空数据库中的数据</span><br><span class="line">redis-cli -h redis1 -p <span class="number">8001</span> flushdb</span><br><span class="line">redis-cli -h red is2 -p <span class="number">8001</span> flushdb</span><br><span class="line">redis-cli -h redis3 -p <span class="number">8001</span> flushdb</span><br><span class="line"></span><br><span class="line"># 每个redis进程都会有一个对应的节点id</span><br><span class="line">cat <span class="number">8001</span>/nodes-<span class="number">8001</span>.conf</span><br><span class="line">d7866353d9e708a59525c9783ff312459cd8f14d :<span class="number">0</span>@<span class="number">0</span> myself,master - <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> connected</span><br><span class="line">或者</span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">8001</span>&gt; CLUSTER NODES</span><br><span class="line">d7866353d9e708a59525c9783ff312459cd8f14d :<span class="number">8001</span>@<span class="number">18001</span> myself,master - <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> connected</span><br><span class="line">查看</span><br><span class="line"></span><br><span class="line"># 初始化集群</span><br><span class="line">redis-cli --cluster create --cluster-replicas <span class="number">1</span> \</span><br><span class="line"><span class="number">192.168</span>.<span class="number">10.116</span>:<span class="number">8001</span> <span class="number">192.168</span>.<span class="number">10.116</span>:<span class="number">8002</span> <span class="number">192.168</span>.<span class="number">10.117</span>:<span class="number">8001</span> \</span><br><span class="line"><span class="number">192.168</span>.<span class="number">10.117</span>:<span class="number">8002</span> <span class="number">192.168</span>.<span class="number">10.118</span>:<span class="number">8001</span> <span class="number">192.168</span>.<span class="number">10.118</span>:<span class="number">8002</span></span><br><span class="line"></span><br><span class="line">参数说明：</span><br><span class="line">-a 密码</span><br><span class="line">--cluster create 表示新创建状态</span><br><span class="line">--cluster-replicas <span class="number">1</span> 表示每个主节点的从节点数为<span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/23294511463a35b3580c506387b4e9ec.png"></p>
 <h3 id="Redis-Cluster信息"><a href="#Redis-Cluster信息" class="headerlink" title="Redis-Cluster信息"></a>Redis-Cluster信息</h3><p><strong>再次查看集群节点</strong></p>
 <p>这些节点都是各个节点中查看到的node-id信息</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">redis-cli <span class="token parameter variable">-h</span> redis1 <span class="token parameter variable">-p</span> <span class="token number">8001</span> cluster nodes
-f5b3f524b1b024df2e74f749e8023dec2f6c2da6 <span class="token number">192.168</span>.10.118:8002@18002 slave 1b93b48276aece5b94de1ed9e060b65aa6c376a0 <span class="token number">0</span> <span class="token number">1727089606773</span> <span class="token number">6</span> connected
-d7866353d9e708a59525c9783ff312459cd8f14d <span class="token number">192.168</span>.10.116:8001@18001 myself,master - <span class="token number">0</span> <span class="token number">1727089607000</span> <span class="token number">1</span> connected <span class="token number">0</span>-5460
-736d0f4ccd33b00c0c128db6f9fd37da9e10d484 <span class="token number">192.168</span>.10.117:8002@18002 slave d7866353d9e708a59525c9783ff312459cd8f14d <span class="token number">0</span> <span class="token number">1727089608276</span> <span class="token number">4</span> connected
-1b93b48276aece5b94de1ed9e060b65aa6c376a0 <span class="token number">192.168</span>.10.117:8001@18001 master - <span class="token number">0</span> <span class="token number">1727089606272</span> <span class="token number">3</span> connected <span class="token number">5461</span>-10922
-06aada2ea17a85743fb7e02ae1cfcfb12c3acef1 <span class="token number">192.168</span>.10.118:8001@18001 master - <span class="token number">0</span> <span class="token number">1727089607074</span> <span class="token number">5</span> connected <span class="token number">10923</span>-16383
-c93652ccdcb6a640b66ffbfff913ba923d3995d7 <span class="token number">192.168</span>.10.116:8002@18002 slave 06aada2ea17a85743fb7e02ae1cfcfb12c3acef1 <span class="token number">0</span> <span class="token number">1727089607273</span> <span class="token number">5</span> connected<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h redis1 -p 8001 cluster nodes</span><br><span class="line">f5b3f524b1b024df2e74f749e8023dec2f6c2da6 192.168.10.118:8002@18002 slave 1b93b48276aece5b94de1ed9e060b65aa6c376a0 0 1727089606773 6 connected</span><br><span class="line">d7866353d9e708a59525c9783ff312459cd8f14d 192.168.10.116:8001@18001 myself,master - 0 1727089607000 1 connected 0-5460</span><br><span class="line">736d0f4ccd33b00c0c128db6f9fd37da9e10d484 192.168.10.117:8002@18002 slave d7866353d9e708a59525c9783ff312459cd8f14d 0 1727089608276 4 connected</span><br><span class="line">1b93b48276aece5b94de1ed9e060b65aa6c376a0 192.168.10.117:8001@18001 master - 0 1727089606272 3 connected 5461-10922</span><br><span class="line">06aada2ea17a85743fb7e02ae1cfcfb12c3acef1 192.168.10.118:8001@18001 master - 0 1727089607074 5 connected 10923-16383</span><br><span class="line">c93652ccdcb6a640b66ffbfff913ba923d3995d7 192.168.10.116:8002@18002 slave 06aada2ea17a85743fb7e02ae1cfcfb12c3acef1 0 1727089607273 5 connected</span><br></pre></td></tr></table></figure>
 
 <p><strong>查看集群状态</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># Redis 集群信息  </span>
-<span class="token comment"># 集群状态：正常  </span>
-cluster_state:ok  
-<span class="token comment"># 已分配的槽位数量：16384（Redis 集群总共 16384 个槽位）  </span>
-cluster_slots_assigned:16384  
-<span class="token comment"># 槽位状态良好的数量：16384  </span>
-cluster_slots_ok:16384  
-<span class="token comment"># 槽位处于可能失败状态的节点数量：0  </span>
-cluster_slots_pfail:0  
-<span class="token comment"># 槽位处于失败状态的节点数量：0  </span>
-cluster_slots_fail:0  
-<span class="token comment"># 集群中已知节点的数量：6（表示集群中有6个节点）  </span>
-cluster_known_nodes:6  
-<span class="token comment"># 集群的实际大小（即主节点的数量）：3  </span>
-cluster_size:3    
-<span class="token comment"># 集群的当前纪元：6（纪元是集群状态版本号，用于节点间的配置同步）  </span>
-cluster_current_epoch:6    
-<span class="token comment"># 当前节点的纪元：1（表示这是节点自己的纪元版本）  </span>
-cluster_my_epoch:1    
-<span class="token comment"># 发送的 PING 消息数量：809  </span>
-cluster_stats_messages_ping_sent:809    
-<span class="token comment"># 发送的 PONG 消息数量：847  </span>
-cluster_stats_messages_pong_sent:847    
-<span class="token comment"># 发送的总消息数量（PING + PONG）：1656  </span>
-cluster_stats_messages_sent:1656    
-<span class="token comment"># 接收的 PING 消息数量：842  </span>
-cluster_stats_messages_ping_received:842    
-<span class="token comment"># 接收的 PONG 消息数量：809  </span>
-cluster_stats_messages_pong_received:809    
-<span class="token comment"># 接收的 MEET 消息数量（用于节点发现）：5  </span>
-cluster_stats_messages_meet_received:5    
-<span class="token comment"># 接收的总消息数量（PING + PONG + MEET）：1656  </span>
-cluster_stats_messages_received:1656<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Redis 集群信息  </span></span><br><span class="line"><span class="comment"># 集群状态：正常  </span></span><br><span class="line">cluster_state:ok  </span><br><span class="line"><span class="comment"># 已分配的槽位数量：16384（Redis 集群总共 16384 个槽位）  </span></span><br><span class="line">cluster_slots_assigned:16384  </span><br><span class="line"><span class="comment"># 槽位状态良好的数量：16384  </span></span><br><span class="line">cluster_slots_ok:16384  </span><br><span class="line"><span class="comment"># 槽位处于可能失败状态的节点数量：0  </span></span><br><span class="line">cluster_slots_pfail:0  </span><br><span class="line"><span class="comment"># 槽位处于失败状态的节点数量：0  </span></span><br><span class="line">cluster_slots_fail:0  </span><br><span class="line"><span class="comment"># 集群中已知节点的数量：6（表示集群中有6个节点）  </span></span><br><span class="line">cluster_known_nodes:6  </span><br><span class="line"><span class="comment"># 集群的实际大小（即主节点的数量）：3  </span></span><br><span class="line">cluster_size:3    </span><br><span class="line"><span class="comment"># 集群的当前纪元：6（纪元是集群状态版本号，用于节点间的配置同步）  </span></span><br><span class="line">cluster_current_epoch:6    </span><br><span class="line"><span class="comment"># 当前节点的纪元：1（表示这是节点自己的纪元版本）  </span></span><br><span class="line">cluster_my_epoch:1    </span><br><span class="line"><span class="comment"># 发送的 PING 消息数量：809  </span></span><br><span class="line">cluster_stats_messages_ping_sent:809    </span><br><span class="line"><span class="comment"># 发送的 PONG 消息数量：847  </span></span><br><span class="line">cluster_stats_messages_pong_sent:847    </span><br><span class="line"><span class="comment"># 发送的总消息数量（PING + PONG）：1656  </span></span><br><span class="line">cluster_stats_messages_sent:1656    </span><br><span class="line"><span class="comment"># 接收的 PING 消息数量：842  </span></span><br><span class="line">cluster_stats_messages_ping_received:842    </span><br><span class="line"><span class="comment"># 接收的 PONG 消息数量：809  </span></span><br><span class="line">cluster_stats_messages_pong_received:809    </span><br><span class="line"><span class="comment"># 接收的 MEET 消息数量（用于节点发现）：5  </span></span><br><span class="line">cluster_stats_messages_meet_received:5    </span><br><span class="line"><span class="comment"># 接收的总消息数量（PING + PONG + MEET）：1656  </span></span><br><span class="line">cluster_stats_messages_received:1656</span><br></pre></td></tr></table></figure>
 
-<h2 id="Redis-Cluster简单故障恢复测试"><a href="#Redis-Cluster简单故障恢复测试" class="headerlink" title="Redis-Cluster简单故障恢复测试"></a>Redis-Cluster简单故障恢复测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">CLUSTER NODES
-1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c <span class="token number">192.168</span>.10.118:8001@18001 master - <span class="token number">0</span> <span class="token number">1721143350546</span> <span class="token number">5</span> connected <span class="token number">10923</span>-16383
-d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</span>.10.117:8001@18001 master - <span class="token number">0</span> <span class="token number">1721143351548</span> <span class="token number">3</span> connected <span class="token number">5461</span>-10922
-2c767536a9cbe2a0afafe154fd2a7c925cff5afc <span class="token number">192.168</span>.10.116:8002@18002 slave 1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c <span class="token number">0</span> <span class="token number">1721143351548</span> <span class="token number">5</span> connected
-bd04e3bd7b58e60732fd243d002497633790c85e <span class="token number">192.168</span>.10.118:8002@18002 slave d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">0</span> <span class="token number">1721143350000</span> <span class="token number">6</span> connected
-2bf33697731457bcfcbe11cffbec0ed70dde9330 <span class="token number">192.168</span>.10.117:8002@18002 slave 2031e58e9a74a6fb3e4a71d29e1f0aea3758902f <span class="token number">0</span> <span class="token number">1721143350546</span> <span class="token number">4</span> connected
-2031e58e9a74a6fb3e4a71d29e1f0aea3758902f <span class="token number">192.168</span>.10.116:8001@18001 myself,master - <span class="token number">0</span> <span class="token number">1721143350000</span> <span class="token number">1</span> connected <span class="token number">0</span>-5460
-
-<span class="token comment"># 在192.168.10.118的redis进程关闭</span>
-<span class="token function">ps</span> <span class="token parameter variable">-ef</span> <span class="token operator">|</span> <span class="token function">grep</span> redis
-root     <span class="token number">10389</span>     <span class="token number">1</span>  <span class="token number">0</span> <span class="token number">22</span>:46 ?        00:00:02 redis-server <span class="token number">0.0</span>.0.0:8001 <span class="token punctuation">[</span>cluster<span class="token punctuation">]</span>
-root     <span class="token number">10395</span>     <span class="token number">1</span>  <span class="token number">0</span> <span class="token number">22</span>:46 ?        00:00:02 redis-server <span class="token number">0.0</span>.0.0:8002 <span class="token punctuation">[</span>cluster<span class="token punctuation">]</span>
-
-<span class="token function">kill</span> <span class="token number">10389</span>
-
-<span class="token comment">#通过另外一台机器打开redis-cli进行查看</span>
-CLUSTER NODES
-2c767536a9cbe2a0afafe154fd2a7c925cff5afc <span class="token number">192.168</span>.10.116:8002@18002 slave 1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c <span class="token number">0</span> <span class="token number">1721143556539</span> <span class="token number">5</span> connected
-1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c <span class="token number">192.168</span>.10.118:8001@18001 master - <span class="token number">0</span> <span class="token number">1721143556038</span> <span class="token number">5</span> connected <span class="token number">10923</span>-16383
-bd04e3bd7b58e60732fd243d002497633790c85e <span class="token number">192.168</span>.10.118:8002@18002 slave d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">0</span> <span class="token number">1721143557000</span> <span class="token number">6</span> connected
-2bf33697731457bcfcbe11cffbec0ed70dde9330 <span class="token number">192.168</span>.10.117:8002@18002 master - <span class="token number">0</span> <span class="token number">1721143555035</span> <span class="token number">8</span> connected <span class="token number">0</span>-5460
-d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</span>.10.117:8001@18001 myself,master - <span class="token number">0</span> <span class="token number">1721143555000</span> <span class="token number">3</span> connected <span class="token number">5461</span>-10922
-2031e58e9a74a6fb3e4a71d29e1f0aea3758902f <span class="token number">192.168</span>.10.116:8001@18001 master,fail - <span class="token number">1721143509189</span> <span class="token number">1721143508000</span> <span class="token number">1</span> disconnected
-
-可以看到刚刚那台192.168.10.116:8001现在是fail状态
-原本的备机192.168.10.117:8002变成了master<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="Redis-Cluster简单故障恢复测试"><a href="#Redis-Cluster简单故障恢复测试" class="headerlink" title="Redis-Cluster简单故障恢复测试"></a>Redis-Cluster简单故障恢复测试</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">CLUSTER NODES</span><br><span class="line">1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c 192.168.10.118:8001@18001 master - 0 1721143350546 5 connected 10923-16383</span><br><span class="line">d5a3fe999c0375bf625d7e7038b22f27616d5d71 192.168.10.117:8001@18001 master - 0 1721143351548 3 connected 5461-10922</span><br><span class="line">2c767536a9cbe2a0afafe154fd2a7c925cff5afc 192.168.10.116:8002@18002 slave 1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c 0 1721143351548 5 connected</span><br><span class="line">bd04e3bd7b58e60732fd243d002497633790c85e 192.168.10.118:8002@18002 slave d5a3fe999c0375bf625d7e7038b22f27616d5d71 0 1721143350000 6 connected</span><br><span class="line">2bf33697731457bcfcbe11cffbec0ed70dde9330 192.168.10.117:8002@18002 slave 2031e58e9a74a6fb3e4a71d29e1f0aea3758902f 0 1721143350546 4 connected</span><br><span class="line">2031e58e9a74a6fb3e4a71d29e1f0aea3758902f 192.168.10.116:8001@18001 myself,master - 0 1721143350000 1 connected 0-5460</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在192.168.10.118的redis进程关闭</span></span><br><span class="line">ps -ef | grep redis</span><br><span class="line">root     10389     1  0 22:46 ?        00:00:02 redis-server 0.0.0.0:8001 [cluster]</span><br><span class="line">root     10395     1  0 22:46 ?        00:00:02 redis-server 0.0.0.0:8002 [cluster]</span><br><span class="line"></span><br><span class="line"><span class="built_in">kill</span> 10389</span><br><span class="line"></span><br><span class="line"><span class="comment">#通过另外一台机器打开redis-cli进行查看</span></span><br><span class="line">CLUSTER NODES</span><br><span class="line">2c767536a9cbe2a0afafe154fd2a7c925cff5afc 192.168.10.116:8002@18002 slave 1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c 0 1721143556539 5 connected</span><br><span class="line">1da6c02ff0dbbfbb13a36e2763b9ec9cec5e712c 192.168.10.118:8001@18001 master - 0 1721143556038 5 connected 10923-16383</span><br><span class="line">bd04e3bd7b58e60732fd243d002497633790c85e 192.168.10.118:8002@18002 slave d5a3fe999c0375bf625d7e7038b22f27616d5d71 0 1721143557000 6 connected</span><br><span class="line">2bf33697731457bcfcbe11cffbec0ed70dde9330 192.168.10.117:8002@18002 master - 0 1721143555035 8 connected 0-5460</span><br><span class="line">d5a3fe999c0375bf625d7e7038b22f27616d5d71 192.168.10.117:8001@18001 myself,master - 0 1721143555000 3 connected 5461-10922</span><br><span class="line">2031e58e9a74a6fb3e4a71d29e1f0aea3758902f 192.168.10.116:8001@18001 master,fail - 1721143509189 1721143508000 1 disconnected</span><br><span class="line"></span><br><span class="line">可以看到刚刚那台192.168.10.116:8001现在是fail状态</span><br><span class="line">原本的备机192.168.10.117:8002变成了master</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6847,18 +6611,6 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6942,13 +6694,13 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7323,13 +7075,13 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7569,13 +7321,13 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8274,13 +8026,13 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8824,9 +8576,9 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8834,9 +8586,9 @@ d5a3fe999c0375bf625d7e7038b22f27616d5d71 <span class="token number">192.168</spa
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

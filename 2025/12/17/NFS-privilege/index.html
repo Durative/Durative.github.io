@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -498,41 +499,10 @@
 <li>nfs server共享时指定挂载选项no_root_squash</li>
 </ul>
 <p>因为我们使用的是高可用nfs，&#x2F;mnt&#x2F;nfs目录不一定在哪个主机上，所以使用第二种方法，直接改pcs配置即可</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token comment"># 修改前</span>
-<span class="token punctuation">[</span>root@nfs<span class="token operator">-</span>client <span class="token operator">~</span><span class="token punctuation">]</span><span class="token comment"># mount -t nfs4 10.163.2.150:/mnt/nfs /mnt/hgfs/</span>
-<span class="token punctuation">[</span>root@nfs<span class="token operator">-</span>client <span class="token operator">~</span><span class="token punctuation">]</span><span class="token comment"># ls /mnt/hgfs/</span>
-test<span class="token operator">-</span><span class="token builtin">file</span><span class="token punctuation">.</span>img
-<span class="token punctuation">[</span>root@nfs<span class="token operator">-</span>client <span class="token operator">~</span><span class="token punctuation">]</span><span class="token comment"># touch /mnt/hgfs/test</span>
-touch<span class="token punctuation">:</span> cannot touch <span class="token string">'/mnt/hgfs/test'</span><span class="token punctuation">:</span> Permission denied
-<span class="token punctuation">[</span>root@nfs<span class="token operator">-</span>client <span class="token operator">~</span><span class="token punctuation">]</span><span class="token comment"># chmod +x /mnt/hgfs</span>
-chmod<span class="token punctuation">:</span> changing permissions of <span class="token string">'/mnt/hgfs'</span><span class="token punctuation">:</span> Operation <span class="token keyword">not</span> permitted
-<span class="token punctuation">[</span>root@nfs<span class="token operator">-</span>client <span class="token operator">~</span><span class="token punctuation">]</span><span class="token comment"># chmod 777 -R  /mnt/hgfs</span>
-chmod<span class="token punctuation">:</span> changing permissions of <span class="token string">'/mnt/hgfs'</span><span class="token punctuation">:</span> Operation <span class="token keyword">not</span> permitted
-chmod<span class="token punctuation">:</span> changing permissions of <span class="token string">'/mnt/hgfs/test-file.img'</span><span class="token punctuation">:</span> Operation <span class="token keyword">not</span> permitted
-chmod<span class="token punctuation">:</span> changing permissions of <span class="token string">'/mnt/hgfs/.rmtab'</span><span class="token punctuation">:</span> Operation <span class="token keyword">not</span> permitted
-
-pcs resource update exportsdir \
-   clientspec<span class="token operator">=</span><span class="token string">"10.163.2.0/24"</span> \
-   directory<span class="token operator">=</span><span class="token string">"/mnt/nfs"</span> \
-   fsid<span class="token operator">=</span><span class="token string">"1"</span> \
-   options<span class="token operator">=</span><span class="token string">"rw,sync,no_root_squash,no_subtree_check,fsid=1"</span> \
-   unlock_on_stop<span class="token operator">=</span><span class="token string">"1"</span>
-
-<span class="token comment"># 修改后</span>
-mount <span class="token operator">-</span>t nfs4 <span class="token number">10.163</span><span class="token number">.2</span><span class="token number">.150</span><span class="token punctuation">:</span><span class="token operator">/</span>mnt<span class="token operator">/</span>nfs <span class="token operator">/</span>mnt<span class="token operator">/</span>nfs<span class="token operator">/</span>
-touch <span class="token operator">/</span>mnt<span class="token operator">/</span>nfs<span class="token operator">/</span>test
-ls <span class="token operator">/</span>mnt<span class="token operator">/</span>nfs<span class="token operator">/</span>
-test  test<span class="token operator">-</span><span class="token builtin">file</span><span class="token punctuation">.</span>img
-
-<span class="token comment"># /etc/fstab开机启动</span>
-<span class="token number">10.163</span><span class="token number">.2</span><span class="token number">.150</span><span class="token punctuation">:</span><span class="token operator">/</span>mnt<span class="token operator">/</span>nfs <span class="token operator">/</span>mnt<span class="token operator">/</span>nfs nfs4 _netdev<span class="token punctuation">,</span>rw<span class="token punctuation">,</span>hard <span class="token number">0</span> <span class="token number">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 修改前</span></span><br><span class="line">[root@nfs-client ~]<span class="comment"># mount -t nfs4 10.163.2.150:/mnt/nfs /mnt/hgfs/</span></span><br><span class="line">[root@nfs-client ~]<span class="comment"># ls /mnt/hgfs/</span></span><br><span class="line">test-file.img</span><br><span class="line">[root@nfs-client ~]<span class="comment"># touch /mnt/hgfs/test</span></span><br><span class="line">touch: cannot touch <span class="string">&#x27;/mnt/hgfs/test&#x27;</span>: Permission denied</span><br><span class="line">[root@nfs-client ~]<span class="comment"># chmod +x /mnt/hgfs</span></span><br><span class="line">chmod: changing permissions of <span class="string">&#x27;/mnt/hgfs&#x27;</span>: Operation <span class="keyword">not</span> permitted</span><br><span class="line">[root@nfs-client ~]<span class="comment"># chmod 777 -R  /mnt/hgfs</span></span><br><span class="line">chmod: changing permissions of <span class="string">&#x27;/mnt/hgfs&#x27;</span>: Operation <span class="keyword">not</span> permitted</span><br><span class="line">chmod: changing permissions of <span class="string">&#x27;/mnt/hgfs/test-file.img&#x27;</span>: Operation <span class="keyword">not</span> permitted</span><br><span class="line">chmod: changing permissions of <span class="string">&#x27;/mnt/hgfs/.rmtab&#x27;</span>: Operation <span class="keyword">not</span> permitted</span><br><span class="line"></span><br><span class="line">pcs resource update exportsdir \</span><br><span class="line">   clientspec=<span class="string">&quot;10.163.2.0/24&quot;</span> \</span><br><span class="line">   directory=<span class="string">&quot;/mnt/nfs&quot;</span> \</span><br><span class="line">   fsid=<span class="string">&quot;1&quot;</span> \</span><br><span class="line">   options=<span class="string">&quot;rw,sync,no_root_squash,no_subtree_check,fsid=1&quot;</span> \</span><br><span class="line">   unlock_on_stop=<span class="string">&quot;1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改后</span></span><br><span class="line">mount -t nfs4 <span class="number">10.163</span><span class="number">.2</span><span class="number">.150</span>:/mnt/nfs /mnt/nfs/</span><br><span class="line">touch /mnt/nfs/test</span><br><span class="line">ls /mnt/nfs/</span><br><span class="line">test  test-file.img</span><br><span class="line"></span><br><span class="line"><span class="comment"># /etc/fstab开机启动</span></span><br><span class="line"><span class="number">10.163</span><span class="number">.2</span><span class="number">.150</span>:/mnt/nfs /mnt/nfs nfs4 _netdev,rw,hard <span class="number">0</span> <span class="number">0</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="绑定挂载"><a href="#绑定挂载" class="headerlink" title="绑定挂载"></a>绑定挂载</h2><p>绑定挂载的好处：<br>路径灵活性：多个路径访问同一数据<br>无缝迁移：应用可以从旧路径逐步迁移到新路径<br>兼容性：不破坏现有应用<br>多视图：同一数据在不同路径可以有不同权限（通过mount -o bind,ro）</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python">mkdir <span class="token operator">/</span>opt<span class="token operator">/</span>nfs
-
-mount <span class="token operator">-</span><span class="token operator">-</span>bind <span class="token operator">/</span>mnt<span class="token operator">/</span>nfs <span class="token operator">/</span>opt<span class="token operator">/</span>nfs
-ls <span class="token operator">/</span>opt<span class="token operator">/</span>nfs<span class="token operator">/</span>
-test  test<span class="token operator">-</span><span class="token builtin">file</span><span class="token punctuation">.</span>img<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mkdir /opt/nfs</span><br><span class="line"></span><br><span class="line">mount --bind /mnt/nfs /opt/nfs</span><br><span class="line">ls /opt/nfs/</span><br><span class="line">test  test-file.img</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6611,18 +6581,6 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6706,13 +6664,13 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7087,13 +7045,13 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7333,13 +7291,13 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8038,13 +7996,13 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8588,9 +8546,9 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8598,9 +8556,9 @@ test  test<span class="token operator">-</span><span class="token builtin">file<
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

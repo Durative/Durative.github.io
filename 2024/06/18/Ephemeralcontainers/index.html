@@ -202,12 +202,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -215,7 +217,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -504,52 +505,10 @@
 <p>当由于容器崩溃或容器镜像不包含调试工具而导致 <code>kubectl exec</code> 无用时， 临时容器对于交互式故障排查很有用。</p>
 <p>尤其是，<a target="_blank" rel="noopener" href="https://github.com/GoogleContainerTools/distroless">Distroless 镜像</a> 允许用户部署最小的容器镜像，从而减少攻击面并减少故障和漏洞的暴露。 由于 distroless 镜像不包含 Shell 或任何的调试工具，因此很难单独使用 <code>kubectl exec</code> 命令进行故障排查。</p>
 <p>使用临时容器时， 启用<a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/tasks/configure-pod-container/share-process-namespace/">进程名字空间共享</a>很有帮助， 可以查看其他容器中的进程。</p>
-<h3 id="使用临时容器"><a href="#使用临时容器" class="headerlink" title="使用临时容器"></a>使用临时容器</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.修改api-server的参数，开启支持
- --feature-gates<span class="token operator">=</span>EphemeralContainers<span class="token operator">=</span>true
-根据k8s官网特性门控的文档，这个特性在k8s1.26版本已经移除，并且默认为true
-我的版本是1.28，所以就不需要进行修改了
-
-否则需要在kube-apiserver.yaml、kube-scheduler.yaml、kubelet添加字段<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="使用临时容器"><a href="#使用临时容器" class="headerlink" title="使用临时容器"></a>使用临时容器</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1.修改api-server的参数，开启支持</span><br><span class="line"> --feature-gates=EphemeralContainers=<span class="literal">true</span></span><br><span class="line">根据k8s官网特性门控的文档，这个特性在k8s1.26版本已经移除，并且默认为<span class="literal">true</span></span><br><span class="line">我的版本是1.28，所以就不需要进行修改了</span><br><span class="line"></span><br><span class="line">否则需要在kube-apiserver.yaml、kube-scheduler.yaml、kubelet添加字段</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240618220912.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">2</span>.创建一个有问题的pod，我直接用官网的例子了
-这镜像是拉取之后传到harbor里的
-kubectl run ephemeral-demo <span class="token parameter variable">--image</span><span class="token operator">=</span><span class="token number">192.168</span>.10.130/library/pause:3.1 <span class="token parameter variable">--restart</span><span class="token operator">=</span>Never
-kubectl get pods
-NAME                              READY   STATUS      RESTARTS       AGE
-ephemeral-demo                    <span class="token number">1</span>/1     Running     <span class="token number">0</span>              17s
-
-此时容器内部是有报错的，无法使用exec进行调试
-kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> ephemeral-demo -- <span class="token function">sh</span>
-error: Internal error occurred: error executing <span class="token builtin class-name">command</span> <span class="token keyword">in</span> container: 
-failed to <span class="token builtin class-name">exec</span> <span class="token keyword">in</span> container: failed to start <span class="token builtin class-name">exec</span> <span class="token string">"385c28c52c6c46981cc48c67757e2a6441fb14dd739757a12001247e0162edff"</span><span class="token builtin class-name">:</span> OCI runtime <span class="token builtin class-name">exec</span> failed: <span class="token builtin class-name">exec</span> failed: unable to start container process: exec: <span class="token string">"sh"</span><span class="token builtin class-name">:</span> executable <span class="token function">file</span> not found <span class="token keyword">in</span> <span class="token environment constant">$PATH</span><span class="token builtin class-name">:</span> unknown
-
-<span class="token number">3</span>.通过debug创建临时容器
-<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-kubectl debug <span class="token parameter variable">-it</span> ephemeral-demo <span class="token parameter variable">--image</span><span class="token operator">=</span><span class="token number">192.168</span>.10.130/library/busybox:1.28 <span class="token parameter variable">--target</span><span class="token operator">=</span>ephemeral-demo
-添加一个新的 busybox 容器并将其挂接到该容器
-Ephemeral Containers:
-  debugger-dgfwj:
-    Container ID:   containerd://e4adae36f30c196abb5f589b5412493ce752940ce2b794269a3915112abea685
-    Image:          <span class="token number">192.168</span>.10.130/library/busybox:1.28
-    Image ID:       <span class="token number">192.168</span>.10.130/library/busybox@sha256:74f634b1bc1bd74535d5209589734efbd44a25f4e2
-Normal  Pulled     2m26s  kubelet            Container image <span class="token string">"192.168.10.130/library/busybox:1.28"</span> already present on machine
-Normal  Created    2m26s  kubelet            Created container debugger-dgfwj
-Normal  Started    2m26s  kubelet            Started container debugger-dgfwj
-
-/ <span class="token comment"># ps aux</span>
-PID   <span class="token environment constant">USER</span>     TIME  COMMAND
-    <span class="token number">1</span> root      <span class="token number">0</span>:00 /pause
-    <span class="token number">7</span> root      <span class="token number">0</span>:00 <span class="token function">sh</span>
-   <span class="token number">13</span> root      <span class="token number">0</span>:00 <span class="token function">ps</span> aux
-
-<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>创建一个pod的副本
-kubectl debug <span class="token parameter variable">-it</span> myapp <span class="token parameter variable">--image</span><span class="token operator">=</span>ubuntu --share-processes --copy-to<span class="token operator">=</span>myapp-debug
-
-<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>在这个pod存在的节点上通过shell进行调试
-kubectl debug node/mynode <span class="token parameter variable">-it</span> <span class="token parameter variable">--image</span><span class="token operator">=</span>ubuntu
-
-还有另一种方法通过载入json格式的资源，不过不细研究了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">2.创建一个有问题的pod，我直接用官网的例子了</span><br><span class="line">这镜像是拉取之后传到harbor里的</span><br><span class="line">kubectl run ephemeral-demo --image=192.168.10.130/library/pause:3.1 --restart=Never</span><br><span class="line">kubectl get pods</span><br><span class="line">NAME                              READY   STATUS      RESTARTS       AGE</span><br><span class="line">ephemeral-demo                    1/1     Running     0              17s</span><br><span class="line"></span><br><span class="line">此时容器内部是有报错的，无法使用<span class="built_in">exec</span>进行调试</span><br><span class="line">kubectl <span class="built_in">exec</span> -it ephemeral-demo -- sh</span><br><span class="line">error: Internal error occurred: error executing <span class="built_in">command</span> <span class="keyword">in</span> container: </span><br><span class="line">failed to <span class="built_in">exec</span> <span class="keyword">in</span> container: failed to start <span class="built_in">exec</span> <span class="string">&quot;385c28c52c6c46981cc48c67757e2a6441fb14dd739757a12001247e0162edff&quot;</span>: OCI runtime <span class="built_in">exec</span> failed: <span class="built_in">exec</span> failed: unable to start container process: <span class="built_in">exec</span>: <span class="string">&quot;sh&quot;</span>: executable file not found <span class="keyword">in</span> <span class="variable">$PATH</span>: unknown</span><br><span class="line"></span><br><span class="line">3.通过debug创建临时容器</span><br><span class="line">(1)</span><br><span class="line">kubectl debug -it ephemeral-demo --image=192.168.10.130/library/busybox:1.28 --target=ephemeral-demo</span><br><span class="line">添加一个新的 busybox 容器并将其挂接到该容器</span><br><span class="line">Ephemeral Containers:</span><br><span class="line">  debugger-dgfwj:</span><br><span class="line">    Container ID:   containerd://e4adae36f30c196abb5f589b5412493ce752940ce2b794269a3915112abea685</span><br><span class="line">    Image:          192.168.10.130/library/busybox:1.28</span><br><span class="line">    Image ID:       192.168.10.130/library/busybox@sha256:74f634b1bc1bd74535d5209589734efbd44a25f4e2</span><br><span class="line">Normal  Pulled     2m26s  kubelet            Container image <span class="string">&quot;192.168.10.130/library/busybox:1.28&quot;</span> already present on machine</span><br><span class="line">Normal  Created    2m26s  kubelet            Created container debugger-dgfwj</span><br><span class="line">Normal  Started    2m26s  kubelet            Started container debugger-dgfwj</span><br><span class="line"></span><br><span class="line">/ <span class="comment"># ps aux</span></span><br><span class="line">PID   USER     TIME  COMMAND</span><br><span class="line">    1 root      0:00 /pause</span><br><span class="line">    7 root      0:00 sh</span><br><span class="line">   13 root      0:00 ps aux</span><br><span class="line"></span><br><span class="line">(2)创建一个pod的副本</span><br><span class="line">kubectl debug -it myapp --image=ubuntu --share-processes --copy-to=myapp-debug</span><br><span class="line"></span><br><span class="line">(3)在这个pod存在的节点上通过shell进行调试</span><br><span class="line">kubectl debug node/mynode -it --image=ubuntu</span><br><span class="line"></span><br><span class="line">还有另一种方法通过载入json格式的资源，不过不细研究了</span><br></pre></td></tr></table></figure>
 
     </article>
     <!-- license -->
@@ -6629,18 +6588,6 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6724,13 +6671,13 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7105,13 +7052,13 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7351,13 +7298,13 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8056,13 +8003,13 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8606,9 +8553,9 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8616,9 +8563,9 @@ kubectl debug node/mynode <span class="token parameter variable">-it</span> <spa
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

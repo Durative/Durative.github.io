@@ -214,12 +214,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -227,7 +229,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -517,57 +518,32 @@
 <h1 id="1-准备一块新磁盘，或增加原磁盘的空间"><a href="#1-准备一块新磁盘，或增加原磁盘的空间" class="headerlink" title="1.准备一块新磁盘，或增加原磁盘的空间"></a>1.准备一块新磁盘，或增加原磁盘的空间</h1><p>我这里选择将其原本的sda扩容到了500G，但如图根分区&#x2F;容量没有变大</p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501153137.png"></p>
 <h1 id="2-fdisk分区"><a href="#2-fdisk分区" class="headerlink" title="2.fdisk分区"></a>2.fdisk分区</h1><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501153625.png"></p>
-<pre class="line-numbers language-Bash" data-language="Bash"><code class="language-Bash">fdisk
-fdisk &#x2F;dev&#x2F;sda
-p查看当前状态
-n添加分区—→一路回车，把剩下空间全分进去
-t调整类型，写8e调整为LVM
-w写入保存
-分一块新的block区出来<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">fdisk</span><br><span class="line">fdisk /dev/sda</span><br><span class="line">p查看当前状态</span><br><span class="line">n添加分区—→一路回车，把剩下空间全分进去</span><br><span class="line">t调整类型，写8e调整为LVM</span><br><span class="line">w写入保存</span><br><span class="line">分一块新的block区出来</span><br></pre></td></tr></table></figure>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501153756.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">刷新
-partprobe /dev/sda<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">刷新</span><br><span class="line">partprobe /dev/sda</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501153945.png"></p>
 <h1 id="3-格式化成相应的文件系统格式"><a href="#3-格式化成相应的文件系统格式" class="headerlink" title="3.格式化成相应的文件系统格式"></a>3.格式化成相应的文件系统格式</h1><p>此时已经有sda3了，格式化sda3，将其格式化为与原文件系统相同的格式即xfs</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mkfs.xfs /dev/sda3 <span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkfs.xfs /dev/sda3 </span><br></pre></td></tr></table></figure>
 
 <h1 id="4-创建新的物理卷"><a href="#4-创建新的物理卷" class="headerlink" title="4.创建新的物理卷"></a>4.创建新的物理卷</h1><p>众所周知linux的LVM在block设备下分为三个层级，PV物理卷，VG卷组和LV逻辑卷<br>从格式化完成的&#x2F;dev&#x2F;sda3中创建新物理卷</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pvcreate /dev/sda3<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pvcreate /dev/sda3</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501160416.png"></p>
-<h1 id="5-查看卷组，卷组扩容"><a href="#5-查看卷组，卷组扩容" class="headerlink" title="5.查看卷组，卷组扩容"></a>5.查看卷组，卷组扩容</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vgs
-vgextend centos /dev/sda3<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h1 id="5-查看卷组，卷组扩容"><a href="#5-查看卷组，卷组扩容" class="headerlink" title="5.查看卷组，卷组扩容"></a>5.查看卷组，卷组扩容</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vgs</span><br><span class="line">vgextend centos /dev/sda3</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501160556.png"></p>
-<h1 id="6-查看逻辑卷，逻辑卷扩容"><a href="#6-查看逻辑卷，逻辑卷扩容" class="headerlink" title="6.查看逻辑卷，逻辑卷扩容"></a>6.查看逻辑卷，逻辑卷扩容</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">lvs
-lvdispaly
-lvextend <span class="token parameter variable">-l</span> +100%FREE /dev/almalinux_192/root<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h1 id="6-查看逻辑卷，逻辑卷扩容"><a href="#6-查看逻辑卷，逻辑卷扩容" class="headerlink" title="6.查看逻辑卷，逻辑卷扩容"></a>6.查看逻辑卷，逻辑卷扩容</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lvs</span><br><span class="line">lvdispaly</span><br><span class="line">lvextend -l +100%FREE /dev/almalinux_192/root</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501160647.png"></p>
-<h1 id="7-调整分区大小"><a href="#7-调整分区大小" class="headerlink" title="7.调整分区大小"></a>7.调整分区大小</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">xfs_growfs /dev/almalinux_192/root<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h1 id="7-调整分区大小"><a href="#7-调整分区大小" class="headerlink" title="7.调整分区大小"></a>7.调整分区大小</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xfs_growfs /dev/almalinux_192/root</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501160752.png"></p>
 <h1 id="8-调整完成，查看状态"><a href="#8-调整完成，查看状态" class="headerlink" title="8.调整完成，查看状态"></a>8.调整完成，查看状态</h1><p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501160900.png"></p>
 <h1 id="9-重启"><a href="#9-重启" class="headerlink" title="9.重启"></a>9.重启</h1><p>df -Th<br>正常重启没有报错即扩容成功</p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240501161027.png"></p>
 <h1 id="centos7环境下的操作"><a href="#centos7环境下的操作" class="headerlink" title="centos7环境下的操作"></a>centos7环境下的操作</h1><p>适用于Centos7环境，磁盘默认分区，并且在&#x2F;dev&#x2F;sda这块磁盘下扩容的情况下使用</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">fdisk</span> /dev/sda
-n添加分区 一路回车
-t调整类型，写8e然后回车
-w写入保存
-
-partprobe /dev/sda
-
-mkfs.xfs /dev/sda3 
-
-pvcreate /dev/sda3
-
-vgextend centos /dev/sda3
-
-lvextend <span class="token parameter variable">-l</span> +100%FREE /dev/centos/root 
-
-xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">fdisk /dev/sda</span><br><span class="line">n添加分区 一路回车</span><br><span class="line">t调整类型，写8e然后回车</span><br><span class="line">w写入保存</span><br><span class="line"></span><br><span class="line">partprobe /dev/sda</span><br><span class="line"></span><br><span class="line">mkfs.xfs /dev/sda3 </span><br><span class="line"></span><br><span class="line">pvcreate /dev/sda3</span><br><span class="line"></span><br><span class="line">vgextend centos /dev/sda3</span><br><span class="line"></span><br><span class="line">lvextend -l +100%FREE /dev/centos/root </span><br><span class="line"></span><br><span class="line">xfs_growfs /dev/centos/root</span><br></pre></td></tr></table></figure>
 
     </article>
     <!-- license -->
@@ -6647,18 +6623,6 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6742,13 +6706,13 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7123,13 +7087,13 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7369,13 +7333,13 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8074,13 +8038,13 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8624,9 +8588,9 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8634,9 +8598,9 @@ xfs_growfs /dev/centos/root<span aria-hidden="true" class="line-numbers-rows"><s
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

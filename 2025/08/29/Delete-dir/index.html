@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有archived开头的目录 这是一个超大nfs挂载，使用的是阿里云的NAS，其中有500T数据被占用，有多大呢，连输入ls都会卡住 df -Th | grep mnt xxx[.cn-hangzhou.nas.aliyuncs.com:&#x2F; nfs        10P  502T  9.6P">
+    <meta name="description" content="正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有archived开头的目录 这是一个超大nfs挂载，使用的是阿里云的NAS，其中有500T数据被占用，有多大呢，连输入ls都会卡住 12df -Th | grep mntxxx[.cn-hangzhou.nas.aliyuncs.com:&#x2F; nfs        10P  502T  9.6P">
 <meta property="og:type" content="article">
 <meta property="og:title" content="百T目录并行删除">
 <meta property="og:url" content="https://akemi.zj.cn/2025/08/29/Delete-dir/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有archived开头的目录 这是一个超大nfs挂载，使用的是阿里云的NAS，其中有500T数据被占用，有多大呢，连输入ls都会卡住 df -Th | grep mnt xxx[.cn-hangzhou.nas.aliyuncs.com:&#x2F; nfs        10P  502T  9.6P">
+<meta property="og:description" content="正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有archived开头的目录 这是一个超大nfs挂载，使用的是阿里云的NAS，其中有500T数据被占用，有多大呢，连输入ls都会卡住 12df -Th | grep mntxxx[.cn-hangzhou.nas.aliyuncs.com:&#x2F; nfs        10P  502T  9.6P">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-08-29T09:22:49.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.782Z">
@@ -201,12 +201,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -214,7 +216,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -495,134 +496,45 @@
     <article class="article-entry">
         <p>正在美美摸鱼呢，领导来消息了，让我帮他删一下一台云主机上的文件，要求删除所有&#x2F;mnt下所有<strong>archived开头的目录</strong></p>
 <p>这是一个超大nfs挂载，使用的是<strong>阿里云的NAS</strong>，其中有500T数据被占用，有多大呢，连输入ls都会卡住</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python">df <span class="token operator">-</span>Th <span class="token operator">|</span> grep mnt
-xxx<span class="token punctuation">[</span><span class="token punctuation">.</span>cn<span class="token operator">-</span>hangzhou<span class="token punctuation">.</span>nas<span class="token punctuation">.</span>aliyuncs<span class="token punctuation">.</span>com<span class="token punctuation">:</span><span class="token operator">/</span> nfs        10P  502T  <span class="token number">9</span><span class="token punctuation">.</span>6P    <span class="token number">5</span><span class="token operator">%</span> <span class="token operator">/</span>mnt2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">df -Th | grep mnt</span><br><span class="line">xxx[.cn-hangzhou.nas.aliyuncs.com:/ nfs        10P  502T  <span class="number">9.6</span>P    <span class="number">5</span>% /mnt2</span><br></pre></td></tr></table></figure>
 
 <h3 id="解决思路"><a href="#解决思路" class="headerlink" title="解决思路"></a>解决思路</h3><p><strong>find与xargs</strong></p>
 <p>首先肯定是find，因为我们要的是<strong>archived开头的目录</strong>，它可以很快帮我们找出哪些目录需要删除</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python">find <span class="token operator">/</span>mnt2 <span class="token operator">-</span>maxdepth <span class="token number">1</span> <span class="token operator">-</span><span class="token builtin">type</span> d <span class="token operator">-</span>name <span class="token string">"archived*"</span>
-这样就可以列出所有我们需要删除的目录
-
-然后配合xargs
-就可以使用这样的命令：
-find <span class="token punctuation">.</span><span class="token operator">/</span> <span class="token operator">-</span>maxdepth <span class="token number">1</span> <span class="token operator">-</span><span class="token builtin">type</span> d <span class="token operator">-</span>name <span class="token string">"archived*"</span> <span class="token operator">-</span>print0 <span class="token operator">|</span> xargs <span class="token operator">-</span><span class="token number">0</span> <span class="token operator">-</span>n5 sh <span class="token operator">-</span>c '
-  echo <span class="token string">"已删除以下目录："</span><span class="token punctuation">;</span>
-  printf <span class="token string">"%s\n"</span> <span class="token string">"$@"</span><span class="token punctuation">;</span>
-  rm <span class="token operator">-</span>rf <span class="token string">"$@"</span>' <span class="token operator">-</span><span class="token operator">-</span>
-这条命令会<span class="token number">5</span>个<span class="token number">5</span>个删除目录，并且将已经删除的目录打印在控制台，非常好，非常安全
-
-在普通环境中大大的好，但是在这里行不通
-因为这条命令甚至会直接卡住，都没有下文了
-
-更重要的是，这条命令是单线程运行的，也就是每五个一批，先输出要删除目录了，然后等待删除完之后
-才会进行下五个目录的删除，这显然是不行不够快的<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">find /mnt2 -maxdepth <span class="number">1</span> -<span class="built_in">type</span> d -name <span class="string">&quot;archived*&quot;</span></span><br><span class="line">这样就可以列出所有我们需要删除的目录</span><br><span class="line"></span><br><span class="line">然后配合xargs</span><br><span class="line">就可以使用这样的命令：</span><br><span class="line">find ./ -maxdepth <span class="number">1</span> -<span class="built_in">type</span> d -name <span class="string">&quot;archived*&quot;</span> -print0 | xargs -<span class="number">0</span> -n5 sh -c <span class="string">&#x27;</span></span><br><span class="line"><span class="string">  echo &quot;已删除以下目录：&quot;;</span></span><br><span class="line"><span class="string">  printf &quot;%s\n&quot; &quot;$@&quot;;</span></span><br><span class="line"><span class="string">  rm -rf &quot;$@&quot;&#x27;</span> --</span><br><span class="line">这条命令会<span class="number">5</span>个<span class="number">5</span>个删除目录，并且将已经删除的目录打印在控制台，非常好，非常安全</span><br><span class="line"></span><br><span class="line">在普通环境中大大的好，但是在这里行不通</span><br><span class="line">因为这条命令甚至会直接卡住，都没有下文了</span><br><span class="line"></span><br><span class="line">更重要的是，这条命令是单线程运行的，也就是每五个一批，先输出要删除目录了，然后等待删除完之后</span><br><span class="line">才会进行下五个目录的删除，这显然是不行不够快的</span><br></pre></td></tr></table></figure>
 
 <p><strong>;与+</strong></p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> \<span class="token punctuation">;</span>
-<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token operator">+</span>
-这两种管道符与xargs的使用方式有什么区别呢
-第一种是发现一个就删一个
-第二种是全部列出后，通过rm全部删除
-
-这两种哪个好呢？都不行
-
-通过grep <span class="token operator">-</span>c可以查看到到底有多少个目录
-ls <span class="token operator">|</span> grep archived <span class="token operator">-</span>c
-<span class="token number">62320</span>
-
-无论是<span class="token number">5</span>个一次，还是一次删6w个，都不合适<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#125; \;</span><br><span class="line">&#123;&#125; +</span><br><span class="line">这两种管道符与xargs的使用方式有什么区别呢</span><br><span class="line">第一种是发现一个就删一个</span><br><span class="line">第二种是全部列出后，通过rm全部删除</span><br><span class="line"></span><br><span class="line">这两种哪个好呢？都不行</span><br><span class="line"></span><br><span class="line">通过grep -c可以查看到到底有多少个目录</span><br><span class="line">ls | grep archived -c</span><br><span class="line"><span class="number">62320</span></span><br><span class="line"></span><br><span class="line">无论是<span class="number">5</span>个一次，还是一次删6w个，都不合适</span><br></pre></td></tr></table></figure>
 
 <p><strong>rsync</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">rsync是一种清空单个大目录的好方法
-将空目录中的数据强制同步到目标目录
-<span class="token function">rsync</span> <span class="token parameter variable">-a</span> <span class="token parameter variable">--delete</span> ~/empty_dir/ /mnt2/tmp/
-
-但很遗憾，它不支持将一个目录同步到多个目录，依然需要使用find，会阻塞
-而且会产生大量系统调用来分析目录结构，真不如rm<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">rsync是一种清空单个大目录的好方法</span><br><span class="line">将空目录中的数据强制同步到目标目录</span><br><span class="line">rsync -a --delete ~/empty_dir/ /mnt2/tmp/</span><br><span class="line"></span><br><span class="line">但很遗憾，它不支持将一个目录同步到多个目录，依然需要使用find，会阻塞</span><br><span class="line">而且会产生大量系统调用来分析目录结构，真不如<span class="built_in">rm</span></span><br></pre></td></tr></table></figure>
 
 <p><strong>parallel多线程</strong></p>
 <p>这个时候就需要使用多线程工具了，</p>
 <p>使用parallel，find会首先找到所有符合条件的目录，将其交给parallel，parallel再根据参数发起对应数量的任务，完美的规避了单线程阻塞的问题</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">find</span> ./ <span class="token parameter variable">-maxdepth</span> <span class="token number">1</span> <span class="token parameter variable">-type</span> d <span class="token parameter variable">-name</span> <span class="token string">"archived*"</span> <span class="token parameter variable">-print0</span> <span class="token operator">|</span> <span class="token punctuation">\</span>
-parallel <span class="token parameter variable">-j</span> <span class="token number">12</span> <span class="token parameter variable">-0</span> <span class="token function">rm</span> <span class="token parameter variable">-rf</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
-
-<span class="token parameter variable">-j</span> 并发线程数<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">find ./ -maxdepth 1 -<span class="built_in">type</span> d -name <span class="string">&quot;archived*&quot;</span> -print0 | \</span><br><span class="line">parallel -j 12 -0 <span class="built_in">rm</span> -rf &#123;&#125;</span><br><span class="line"></span><br><span class="line">-j 并发线程数</span><br></pre></td></tr></table></figure>
 
 <h3 id="性能瓶颈"><a href="#性能瓶颈" class="headerlink" title="性能瓶颈"></a>性能瓶颈</h3><p><strong>CPU瓶颈</strong></p>
 <p>那么问题又来了，这个-j到底填多少合适呢？</p>
 <p>常识告诉我们并发数应该和CPU线程数一致，也就是填一个12</p>
 <p>填完之后越想越觉出不对劲来，点开top看看CPU状态吧</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">top</span>
-- <span class="token number">11</span>:30:57 up <span class="token number">7</span> days, <span class="token number">21</span>:36,  <span class="token number">3</span> users,  load average: <span class="token number">12.11</span>, <span class="token number">8.98</span>, <span class="token number">3.33</span>
-Tasks: <span class="token number">235</span> total,   <span class="token number">2</span> running, <span class="token number">233</span> sleeping,   <span class="token number">0</span> stopped,   <span class="token number">0</span> zombie
-%Cpu0  <span class="token builtin class-name">:</span>  <span class="token number">1.3</span> us,  <span class="token number">1.0</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">97.7</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu1  <span class="token builtin class-name">:</span>  <span class="token number">0.3</span> us,  <span class="token number">0.3</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">99.3</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu2  <span class="token builtin class-name">:</span>  <span class="token number">0.7</span> us,  <span class="token number">1.3</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">98.0</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu3  <span class="token builtin class-name">:</span>  <span class="token number">0.3</span> us,  <span class="token number">0.3</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">99.3</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu4  <span class="token builtin class-name">:</span>  <span class="token number">1.0</span> us,  <span class="token number">1.0</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">98.0</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu5  <span class="token builtin class-name">:</span>  <span class="token number">0.3</span> us,  <span class="token number">0.0</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">99.7</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu6  <span class="token builtin class-name">:</span>  <span class="token number">1.7</span> us,  <span class="token number">1.0</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">97.3</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu7  <span class="token builtin class-name">:</span>  <span class="token number">0.7</span> us,  <span class="token number">0.3</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">99.0</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu8  <span class="token builtin class-name">:</span>  <span class="token number">1.0</span> us,  <span class="token number">1.0</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">98.0</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu9  <span class="token builtin class-name">:</span>  <span class="token number">0.7</span> us,  <span class="token number">1.3</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">98.0</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu10 <span class="token builtin class-name">:</span>  <span class="token number">0.7</span> us,  <span class="token number">0.7</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">98.7</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st
-%Cpu11 <span class="token builtin class-name">:</span>  <span class="token number">0.7</span> us,  <span class="token number">0.7</span> sy,  <span class="token number">0.0</span> ni, <span class="token number">98.7</span> id,  <span class="token number">0.0</span> wa,  <span class="token number">0.0</span> hi,  <span class="token number">0.0</span> si,  <span class="token number">0.0</span> st<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">top</span><br><span class="line">- 11:30:57 up 7 days, 21:36,  3 <span class="built_in">users</span>,  load average: 12.11, 8.98, 3.33</span><br><span class="line">Tasks: 235 total,   2 running, 233 sleeping,   0 stopped,   0 zombie</span><br><span class="line">%Cpu0  :  1.3 us,  1.0 sy,  0.0 ni, 97.7 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu1  :  0.3 us,  0.3 sy,  0.0 ni, 99.3 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu2  :  0.7 us,  1.3 sy,  0.0 ni, 98.0 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu3  :  0.3 us,  0.3 sy,  0.0 ni, 99.3 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu4  :  1.0 us,  1.0 sy,  0.0 ni, 98.0 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu5  :  0.3 us,  0.0 sy,  0.0 ni, 99.7 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu6  :  1.7 us,  1.0 sy,  0.0 ni, 97.3 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu7  :  0.7 us,  0.3 sy,  0.0 ni, 99.0 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu8  :  1.0 us,  1.0 sy,  0.0 ni, 98.0 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu9  :  0.7 us,  1.3 sy,  0.0 ni, 98.0 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu10 :  0.7 us,  0.7 sy,  0.0 ni, 98.7 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">%Cpu11 :  0.7 us,  0.7 sy,  0.0 ni, 98.7 <span class="built_in">id</span>,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br></pre></td></tr></table></figure>
 
 <p>可以看到，虽然load average挺高的<br>但是所有CPU核心的空闲时间id都在97%以上<br>用户态使用率us和系统态使用率sy都很低</p>
 <p>不是哥们，哥几个表面上很忙，实际上搁这儿摸鱼呢？</p>
 <p><em>这是因为我们执行的删除文件任务并非CPU密集型任务<br>rm任务只是在队列中等待而已，实际上并不占用CPU<br>卡住它的另有其人</em></p>
 <p><strong>带宽瓶颈</strong></p>
 <p>那我这个存储是NFS挂载的NAS，是不是因为网络带宽或者其他什么的？<br>（也许在这种场景下没有必要，因为公有云有自己的VPC，云主机和NAS肯定连得贼快，但其实有更普遍的意义）</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> iftop bind-utils
-
-<span class="token function">host</span> xxxx<span class="token punctuation">(</span>nfs挂载名称<span class="token punctuation">)</span>
-解析出对端IP
-
-然后使用iftop
-localhost       <span class="token operator">=</span><span class="token operator">></span> <span class="token number">172.28</span>.4.39           <span class="token number">4</span>.53Mb  <span class="token number">4</span>.65Mb  <span class="token number">5</span>.02Mb
-                <span class="token operator">&lt;=</span>                       <span class="token number">9</span>.49Mb  <span class="token number">8</span>.49Mb  <span class="token number">8</span>.16Mb
-
-这还是Mb，换成MB得除以8
-现在家用的宽带跑的都比这玩意快
-
-可见网络带宽远远没有达到瓶
-问题不是出在带宽不足上，而是出在网络延迟或NFS服务器处理单个请求的延迟上<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">yum -y install iftop bind-utils</span><br><span class="line"></span><br><span class="line">host xxxx(nfs挂载名称)</span><br><span class="line">解析出对端IP</span><br><span class="line"></span><br><span class="line">然后使用iftop</span><br><span class="line">localhost       =&gt; 172.28.4.39           4.53Mb  4.65Mb  5.02Mb</span><br><span class="line">                &lt;=                       9.49Mb  8.49Mb  8.16Mb</span><br><span class="line"></span><br><span class="line">这还是Mb，换成MB得除以8</span><br><span class="line">现在家用的宽带跑的都比这玩意快</span><br><span class="line"></span><br><span class="line">可见网络带宽远远没有达到瓶</span><br><span class="line">问题不是出在带宽不足上，而是出在网络延迟或NFS服务器处理单个请求的延迟上</span><br></pre></td></tr></table></figure>
 
 <p><strong>nfs读写延迟</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nfsiostat <span class="token number">1</span>
-op/s		rpc bklog
-<span class="token number">5427.50</span>	   <span class="token number">0.00</span>
-read:   ops/s		   kB/s		  kB/op		retrans		avg RTT <span class="token punctuation">(</span>ms<span class="token punctuation">)</span>	avg exe <span class="token punctuation">(</span>ms<span class="token punctuation">)</span>
-<span class="token number">0.000</span>	  <span class="token number">0.000</span>	  <span class="token number">0.000</span>       <span class="token number">0</span> <span class="token punctuation">(</span><span class="token number">0.0</span>%<span class="token punctuation">)</span>	  <span class="token number">0.000</span>	  <span class="token number">0.000</span>
-write:  ops/s		   kB/s		  kB/op		retrans		avg RTT <span class="token punctuation">(</span>ms<span class="token punctuation">)</span>	avg exe <span class="token punctuation">(</span>ms<span class="token punctuation">)</span>
-<span class="token number">0.000</span>	  <span class="token number">0.000</span>	  <span class="token number">0.000</span>       <span class="token number">0</span> <span class="token punctuation">(</span><span class="token number">0.0</span>%<span class="token punctuation">)</span>	  <span class="token number">0.000</span>	  <span class="token number">0.000</span>
-
-可见
-op/s为5000
-retrans为0%  丢包率
-rpc bklog为0 客户端积压的RPC请求
-avg RTT <span class="token number">0</span>    每个操作的平均延迟
-
-下面这三项可能因为内核版本过低，所以没有出来，但实际上avg RTT肯定为非0
-那么接下来要做什么呢<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">nfsiostat 1</span><br><span class="line">op/s		rpc bklog</span><br><span class="line">5427.50	   0.00</span><br><span class="line"><span class="built_in">read</span>:   ops/s		   kB/s		  kB/op		retrans		avg RTT (ms)	avg exe (ms)</span><br><span class="line">0.000	  0.000	  0.000       0 (0.0%)	  0.000	  0.000</span><br><span class="line">write:  ops/s		   kB/s		  kB/op		retrans		avg RTT (ms)	avg exe (ms)</span><br><span class="line">0.000	  0.000	  0.000       0 (0.0%)	  0.000	  0.000</span><br><span class="line"></span><br><span class="line">可见</span><br><span class="line">op/s为5000</span><br><span class="line">retrans为0%  丢包率</span><br><span class="line">rpc bklog为0 客户端积压的RPC请求</span><br><span class="line">avg RTT 0    每个操作的平均延迟</span><br><span class="line"></span><br><span class="line">下面这三项可能因为内核版本过低，所以没有出来，但实际上avg RTT肯定为非0</span><br><span class="line">那么接下来要做什么呢</span><br></pre></td></tr></table></figure>
 
 <p><strong>根据nfs ops调优并发线程数</strong></p>
 <p>调呗，硬调，要通过调整并发线程数，找出一个ops最高的点</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token parameter variable">-j</span>   avg ops
-<span class="token number">12</span>    <span class="token number">300</span>
-<span class="token number">100</span>   <span class="token number">6600</span>
-<span class="token number">150</span>   <span class="token number">7500</span>
-<span class="token number">160</span>   <span class="token number">8000</span>
-<span class="token number">180</span>   <span class="token number">8000</span>
-<span class="token number">200</span>   <span class="token number">7500</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">-j   avg ops</span><br><span class="line">12    300</span><br><span class="line">100   6600</span><br><span class="line">150   7500</span><br><span class="line">160   8000</span><br><span class="line">180   8000</span><br><span class="line">200   7500</span><br></pre></td></tr></table></figure>
 
 <p><strong>命令执行</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> tmux
-tmux new <span class="token parameter variable">-s</span> cleanup
-<span class="token function">find</span> ./ <span class="token parameter variable">-maxdepth</span> <span class="token number">1</span> <span class="token parameter variable">-type</span> d <span class="token parameter variable">-name</span> <span class="token string">"archived*"</span> <span class="token parameter variable">-print0</span> <span class="token operator">|</span> parallel <span class="token parameter variable">-j</span> <span class="token number">160</span> <span class="token parameter variable">-0</span> <span class="token function">rm</span> <span class="token parameter variable">-rf</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
-
-快捷键
-Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">yum -y install tmux</span><br><span class="line">tmux new -s cleanup</span><br><span class="line">find ./ -maxdepth 1 -<span class="built_in">type</span> d -name <span class="string">&quot;archived*&quot;</span> -print0 | parallel -j 160 -0 <span class="built_in">rm</span> -rf &#123;&#125;</span><br><span class="line"></span><br><span class="line">快捷键</span><br><span class="line">Ctrl+b 松手d</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6701,18 +6613,6 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6796,13 +6696,13 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7177,13 +7077,13 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7423,13 +7323,13 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8128,13 +8028,13 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8678,9 +8578,9 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8688,9 +8588,9 @@ Ctrl+b 松手d<span aria-hidden="true" class="line-numbers-rows"><span></span><s
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

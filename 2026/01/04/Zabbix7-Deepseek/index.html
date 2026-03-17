@@ -213,12 +213,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -226,7 +228,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -506,90 +507,29 @@
         <p>本文基于上一篇《Zabbix7使用docker-compose部署》</p>
 <h1 id="集成deepseek"><a href="#集成deepseek" class="headerlink" title="集成deepseek"></a>集成deepseek</h1><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20251231105408870.png"></p>
 <h2 id="准备zabbix"><a href="#准备zabbix" class="headerlink" title="准备zabbix"></a>准备zabbix</h2><p>如果需要执行一个脚本，而我们的zabbix-server使用的是docker-compose的方式部署的，所以就需要在容器中&#x2F;usr&#x2F;lib&#x2F;zabbix&#x2F;alertscripts&#x2F;目录中存放脚本文件。所以我们可以在docker-compose文件中修改，让本地某一目录挂载到脚本目录中</p>
-<h3 id="那么先在本地创建一个目录用以存放脚本文件的"><a href="#那么先在本地创建一个目录用以存放脚本文件的" class="headerlink" title="那么先在本地创建一个目录用以存放脚本文件的"></a>那么先在本地创建一个目录用以存放脚本文件的</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /root/zabbix-docker-compose/zabbix-scripts
-<span class="token function">cat</span> <span class="token operator">></span> /root/zabbix-docker-compose/zabbix-scripts/test.sh <span class="token operator">&lt;&lt;</span> <span class="token string">'EOF'
-#!/bin/bash
-echo "[$(date "+%Y-%m-%d %H:%M:%S")] test ok" >> ./test.log
-EOF</span>
-<span class="token function">chmod</span> +x /root/zabbix-docker-compose/zabbix-scripts/test.sh<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="那么先在本地创建一个目录用以存放脚本文件的"><a href="#那么先在本地创建一个目录用以存放脚本文件的" class="headerlink" title="那么先在本地创建一个目录用以存放脚本文件的"></a>那么先在本地创建一个目录用以存放脚本文件的</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p /root/zabbix-docker-compose/zabbix-scripts</span><br><span class="line"><span class="built_in">cat</span> &gt; /root/zabbix-docker-compose/zabbix-scripts/test.sh &lt;&lt; <span class="string">&#x27;EOF&#x27;</span></span><br><span class="line"><span class="comment">#!/bin/bash</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;[<span class="subst">$(date <span class="string">&quot;+%Y-%m-%d %H:%M:%S&quot;</span>)</span>] test ok&quot;</span> &gt;&gt; ./test.log</span><br><span class="line">EOF</span><br><span class="line"><span class="built_in">chmod</span> +x /root/zabbix-docker-compose/zabbix-scripts/test.sh</span><br></pre></td></tr></table></figure>
 
-<h3 id="修改docker-compose文件"><a href="#修改docker-compose文件" class="headerlink" title="修改docker-compose文件"></a>修改docker-compose文件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vim</span> docker-compose.yaml
-找到
-services.zabbix-server.volumes
-添加
-- /root/zabbix-docker-compose/zabbix-scripts:/usr/lib/zabbix/alertscripts/
-
-<span class="token comment"># 重启docker-compose，更新zabbix-server</span>
-<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> docker-compose.yaml down
-<span class="token function">docker-compose</span> <span class="token parameter variable">-f</span> docker-compose.yaml up <span class="token parameter variable">-d</span>
-
-<span class="token comment"># 验证容器中有没有这个脚本</span>
-<span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> zabbix-docker-zabbix-server-1 <span class="token function">sh</span> /var/lib/zabbix/alertscripts/test.sh
-<span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> zabbix-docker-zabbix-server-1 <span class="token function">cat</span> /var/lib/zabbix/test.log
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:23:08<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="修改docker-compose文件"><a href="#修改docker-compose文件" class="headerlink" title="修改docker-compose文件"></a>修改docker-compose文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">vim docker-compose.yaml</span><br><span class="line">找到</span><br><span class="line">services.zabbix-server.volumes</span><br><span class="line">添加</span><br><span class="line">- /root/zabbix-docker-compose/zabbix-scripts:/usr/lib/zabbix/alertscripts/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启docker-compose，更新zabbix-server</span></span><br><span class="line">docker compose -f docker-compose.yaml down</span><br><span class="line">docker-compose -f docker-compose.yaml up -d</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证容器中有没有这个脚本</span></span><br><span class="line">docker <span class="built_in">exec</span> -it zabbix-docker-zabbix-server-1 sh /var/lib/zabbix/alertscripts/test.sh</span><br><span class="line">docker <span class="built_in">exec</span> -it zabbix-docker-zabbix-server-1 <span class="built_in">cat</span> /var/lib/zabbix/test.log</span><br><span class="line">[2025-12-31 19:23:08] <span class="built_in">test</span> ok</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20251231170710563.png"></p>
 <h3 id="创建媒介"><a href="#创建媒介" class="headerlink" title="创建媒介"></a>创建媒介</h3><p>脚本名称需要与存放在&#x2F;usr&#x2F;lib&#x2F;zabbix&#x2F;alertscripts&#x2F;中的脚本名称一模一样</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20251231191250418.png"></p>
 <p>添加完媒介之后需要对其进行测试：</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20251231191542137.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> zabbix-docker-zabbix-server-1 <span class="token function">cat</span> /var/lib/zabbix/test.log
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:33:23<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:33:38<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:36:04<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:36:36<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:36:38<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:38:24<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok
-<span class="token punctuation">[</span><span class="token number">2025</span>-12-31 <span class="token number">19</span>:43:12<span class="token punctuation">]</span> <span class="token builtin class-name">test</span> ok<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker <span class="built_in">exec</span> -it zabbix-docker-zabbix-server-1 <span class="built_in">cat</span> /var/lib/zabbix/test.log</span><br><span class="line">[2025-12-31 19:33:23] <span class="built_in">test</span> ok</span><br><span class="line">[2025-12-31 19:33:38] <span class="built_in">test</span> ok</span><br><span class="line">[2025-12-31 19:36:04] <span class="built_in">test</span> ok</span><br><span class="line">[2025-12-31 19:36:36] <span class="built_in">test</span> ok</span><br><span class="line">[2025-12-31 19:36:38] <span class="built_in">test</span> ok</span><br><span class="line">[2025-12-31 19:38:24] <span class="built_in">test</span> ok</span><br><span class="line">[2025-12-31 19:43:12] <span class="built_in">test</span> ok</span><br></pre></td></tr></table></figure>
 
-<h3 id="创建媒介告警信息"><a href="#创建媒介告警信息" class="headerlink" title="创建媒介告警信息"></a>创建媒介告警信息</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">略了，用我之前用过的模板：
-问题：
-告警主机：<span class="token punctuation">&#123;</span>HOSTNAME1<span class="token punctuation">&#125;</span>
-告警时间：<span class="token punctuation">&#123;</span>EVENT.DATE<span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span>EVENT.TIME<span class="token punctuation">&#125;</span>
-告警等级: <span class="token punctuation">&#123;</span>TRIGGER.SEVERITY<span class="token punctuation">&#125;</span>
-告警信息: <span class="token punctuation">&#123;</span>TRIGGER.NAME<span class="token punctuation">&#125;</span>
-告警项目: <span class="token punctuation">&#123;</span>TRIGGER.KEY1<span class="token punctuation">&#125;</span>
-问题详情: <span class="token punctuation">&#123;</span>ITEM.NAME<span class="token punctuation">&#125;</span>: <span class="token punctuation">&#123;</span>ITEM.VALUE<span class="token punctuation">&#125;</span>
-当前状态: <span class="token punctuation">&#123;</span>TRIGGER.STATUS<span class="token punctuation">&#125;</span>: <span class="token punctuation">&#123;</span>ITEM.VALUE1<span class="token punctuation">&#125;</span>
-事件ID: <span class="token punctuation">&#123;</span>EVENT.ID<span class="token punctuation">&#125;</span>
-<span class="token punctuation">[</span>系统告警邮件<span class="token punctuation">]</span>
-
-恢复：
-服务器：【<span class="token punctuation">&#123;</span>HOSTNAME1<span class="token punctuation">&#125;</span>】故障已恢复
-故障原因：<span class="token punctuation">&#123;</span>TRIGGER.NAME<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="创建媒介告警信息"><a href="#创建媒介告警信息" class="headerlink" title="创建媒介告警信息"></a>创建媒介告警信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">略了，用我之前用过的模板：</span><br><span class="line">问题：</span><br><span class="line">告警主机：&#123;HOSTNAME1&#125;</span><br><span class="line">告警时间：&#123;EVENT.DATE&#125;&#123;EVENT.TIME&#125;</span><br><span class="line">告警等级: &#123;TRIGGER.SEVERITY&#125;</span><br><span class="line">告警信息: &#123;TRIGGER.NAME&#125;</span><br><span class="line">告警项目: &#123;TRIGGER.KEY1&#125;</span><br><span class="line">问题详情: &#123;ITEM.NAME&#125;: &#123;ITEM.VALUE&#125;</span><br><span class="line">当前状态: &#123;TRIGGER.STATUS&#125;: &#123;ITEM.VALUE1&#125;</span><br><span class="line">事件ID: &#123;EVENT.ID&#125;</span><br><span class="line">[系统告警邮件]</span><br><span class="line"></span><br><span class="line">恢复：</span><br><span class="line">服务器：【&#123;HOSTNAME1&#125;】故障已恢复</span><br><span class="line">故障原因：&#123;TRIGGER.NAME&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="创建用户并关联报警媒介"><a href="#创建用户并关联报警媒介" class="headerlink" title="创建用户并关联报警媒介"></a>创建用户并关联报警媒介</h3><p>为了方便我直接使用admin了，如果要使用另外的用户，则调试时需要登录该用户来查看，太麻烦了<br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104124540949.png"></p>
 <h3 id="创建触发器"><a href="#创建触发器" class="headerlink" title="创建触发器"></a>创建触发器</h3><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104120146496.png"></p>
 <h3 id="创建触发器动作"><a href="#创建触发器动作" class="headerlink" title="创建触发器动作"></a>创建触发器动作</h3><p>并且操作也发送给admin<br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104122744616.png"></p>
-<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 使用压测命令模拟内存使用超标</span>
-stress <span class="token parameter variable">--vm</span> <span class="token number">1</span> --vm-bytes 20G --vm-hang <span class="token number">60</span> <span class="token parameter variable">--timeout</span> 60s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用压测命令模拟内存使用超标</span></span><br><span class="line">stress --vm 1 --vm-bytes 20G --vm-hang 60 --<span class="built_in">timeout</span> 60s</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104124559094.png"></p>
 <p>此时查看脚本执行的log<br><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104124645517.png"></p>
 <h2 id="准备python环境"><a href="#准备python环境" class="headerlink" title="准备python环境"></a>准备python环境</h2><p>可以直接在zabbix-server的docker中进行安装，也可以直接重新做server的镜像，然后再改镜像tag<br>因为后者比较难，所以我用后者</p>
 <p>如果是直接安装的话就是把我这几步直接在容器中执行就可以</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 构建镜像</span>
-<span class="token function">docker</span> build <span class="token builtin class-name">.</span> <span class="token parameter variable">-t</span> zabbix/zabbix-server-mysql:alpine-7.4-latest_custom
-<span class="token function">cat</span> dockerfile
-FROM zabbix/zabbix-server-mysql:alpine-7.4-latest
-<span class="token environment constant">USER</span> root
-RUN <span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g'</span> /etc/apk/repositories
-RUN apk update <span class="token operator">&amp;&amp;</span> apk <span class="token function">add</span> python3 py3-pip
-RUN python3 <span class="token parameter variable">-m</span> venv /usr/lib/zabbix/venv <span class="token operator">&amp;&amp;</span> <span class="token builtin class-name">source</span> /usr/lib/zabbix/venv/bin/activate <span class="token operator">&amp;&amp;</span> pip <span class="token function">install</span> openai python-dotenv
-ENV <span class="token assign-left variable"><span class="token environment constant">PATH</span></span><span class="token operator">=</span><span class="token string">"/var/lib/zabbix/venv/bin:<span class="token environment constant">$PATH</span>"</span>
-<span class="token environment constant">USER</span> zabbix
-
-<span class="token comment"># 改tag</span>
-<span class="token function">docker</span> tag zabbix/zabbix-server-mysql:alpine-7.4-latest_custom zabbix/zabbix-server-mysql:alpine-7.4-latest
-  
-<span class="token comment"># 重启zabbix-server</span>
-<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> docker-compose.yaml down
-<span class="token function">docker-compose</span> <span class="token parameter variable">-f</span> docker-compose.yaml up <span class="token parameter variable">-d</span>
-<span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> zabbix-docker-zabbix-server-1 python <span class="token parameter variable">--version</span>
-Python <span class="token number">3.12</span>.12
-
-<span class="token comment"># 准备.env文件</span>
-<span class="token function">cp</span> ~/langchain_project/.env ./zabbix-scripts/<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 构建镜像</span></span><br><span class="line">docker build . -t zabbix/zabbix-server-mysql:alpine-7.4-latest_custom</span><br><span class="line"><span class="built_in">cat</span> dockerfile</span><br><span class="line">FROM zabbix/zabbix-server-mysql:alpine-7.4-latest</span><br><span class="line">USER root</span><br><span class="line">RUN sed -i <span class="string">&#x27;s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g&#x27;</span> /etc/apk/repositories</span><br><span class="line">RUN apk update &amp;&amp; apk add python3 py3-pip</span><br><span class="line">RUN python3 -m venv /usr/lib/zabbix/venv &amp;&amp; <span class="built_in">source</span> /usr/lib/zabbix/venv/bin/activate &amp;&amp; pip install openai python-dotenv</span><br><span class="line">ENV PATH=<span class="string">&quot;/var/lib/zabbix/venv/bin:<span class="variable">$PATH</span>&quot;</span></span><br><span class="line">USER zabbix</span><br><span class="line"></span><br><span class="line"><span class="comment"># 改tag</span></span><br><span class="line">docker tag zabbix/zabbix-server-mysql:alpine-7.4-latest_custom zabbix/zabbix-server-mysql:alpine-7.4-latest</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 重启zabbix-server</span></span><br><span class="line">docker compose -f docker-compose.yaml down</span><br><span class="line">docker-compose -f docker-compose.yaml up -d</span><br><span class="line">docker <span class="built_in">exec</span> -it zabbix-docker-zabbix-server-1 python --version</span><br><span class="line">Python 3.12.12</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备.env文件</span></span><br><span class="line"><span class="built_in">cp</span> ~/langchain_project/.env ./zabbix-scripts/</span><br></pre></td></tr></table></figure>
 
 <h3 id="调试脚本"><a href="#调试脚本" class="headerlink" title="调试脚本"></a>调试脚本</h3><h3 id="在告警媒介中给脚本添加参数"><a href="#在告警媒介中给脚本添加参数" class="headerlink" title="在告警媒介中给脚本添加参数"></a>在告警媒介中给脚本添加参数</h3><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104155520380.png"></p>
 <table>
@@ -646,101 +586,9 @@ Python <span class="token number">3.12</span>.12
 <td>消息主题</td>
 </tr>
 </tbody></table>
-<h3 id="让sh脚本可以接受参数，并转给py脚本"><a href="#让sh脚本可以接受参数，并转给py脚本" class="headerlink" title="让sh脚本可以接受参数，并转给py脚本"></a>让sh脚本可以接受参数，并转给py脚本</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token shebang important">#!/bin/bash</span>
-<span class="token assign-left variable">LOGFILE</span><span class="token operator">=</span><span class="token string">"/usr/lib/zabbix/alertscripts/deepseek.log"</span>
-<span class="token assign-left variable">PYTHON_SCRIPT</span><span class="token operator">=</span><span class="token string">"/usr/lib/zabbix/alertscripts/deepseek.py"</span>
+<h3 id="让sh脚本可以接受参数，并转给py脚本"><a href="#让sh脚本可以接受参数，并转给py脚本" class="headerlink" title="让sh脚本可以接受参数，并转给py脚本"></a>让sh脚本可以接受参数，并转给py脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">LOGFILE=<span class="string">&quot;/usr/lib/zabbix/alertscripts/deepseek.log&quot;</span></span><br><span class="line">PYTHON_SCRIPT=<span class="string">&quot;/usr/lib/zabbix/alertscripts/deepseek.py&quot;</span></span><br><span class="line"></span><br><span class="line">host_name=<span class="string">&quot;<span class="variable">$1</span>&quot;</span></span><br><span class="line">host_ip=<span class="string">&quot;<span class="variable">$2</span>&quot;</span></span><br><span class="line">mem_name=<span class="string">&quot;<span class="variable">$3</span>&quot;</span></span><br><span class="line">mem_percent=<span class="string">&quot;<span class="variable">$4</span>&quot;</span></span><br><span class="line">event_time=<span class="string">&quot;<span class="variable">$5</span>&quot;</span></span><br><span class="line">trigger_name=<span class="string">&quot;<span class="variable">$6</span>&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 记录参数到日志</span></span><br><span class="line">&#123;   </span><br><span class="line">    <span class="built_in">echo</span> $(<span class="built_in">date</span> <span class="string">&#x27;+%Y-%m-%d %H:%M:%S&#x27;</span>)</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Host Name: <span class="variable">$&#123;host_name&#125;</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Host IP: <span class="variable">$&#123;host_ip&#125;</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Memory Name: <span class="variable">$&#123;mem_name&#125;</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Memory Percent: <span class="variable">$&#123;mem_percent&#125;</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Event Time: <span class="variable">$&#123;event_time&#125;</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Trigger Name: <span class="variable">$&#123;trigger_name&#125;</span>&quot;</span></span><br><span class="line">&#125; &gt;&gt; <span class="string">&quot;<span class="variable">$LOGFILE</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活虚拟环境并运行Python脚本</span></span><br><span class="line">python_result=$(</span><br><span class="line">    <span class="built_in">source</span> /usr/lib/zabbix/venv/bin/activate</span><br><span class="line">    python3 <span class="string">&quot;<span class="variable">$PYTHON_SCRIPT</span>&quot;</span> <span class="string">&quot;<span class="variable">$host_name</span>&quot;</span> <span class="string">&quot;<span class="variable">$host_ip</span>&quot;</span> <span class="string">&quot;<span class="variable">$mem_name</span>&quot;</span> <span class="string">&quot;<span class="variable">$mem_percent</span>&quot;</span> <span class="string">&quot;<span class="variable">$event_time</span>&quot;</span> <span class="string">&quot;<span class="variable">$trigger_name</span>&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 记录Python脚本的输出到日志</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$python_result</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;----------------------------------------&quot;</span></span><br><span class="line">&#125; &gt;&gt; <span class="string">&quot;<span class="variable">$LOGFILE</span>&quot;</span></span><br></pre></td></tr></table></figure>
 
-<span class="token assign-left variable">host_name</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$1</span>"</span>
-<span class="token assign-left variable">host_ip</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$2</span>"</span>
-<span class="token assign-left variable">mem_name</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$3</span>"</span>
-<span class="token assign-left variable">mem_percent</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$4</span>"</span>
-<span class="token assign-left variable">event_time</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$5</span>"</span>
-<span class="token assign-left variable">trigger_name</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$6</span>"</span>
-
-
-<span class="token comment"># 记录参数到日志</span>
-<span class="token punctuation">&#123;</span>   
-    <span class="token builtin class-name">echo</span> <span class="token variable"><span class="token variable">$(</span><span class="token function">date</span> <span class="token string">'+%Y-%m-%d %H:%M:%S'</span><span class="token variable">)</span></span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"Host Name: <span class="token variable">$&#123;host_name&#125;</span>"</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"Host IP: <span class="token variable">$&#123;host_ip&#125;</span>"</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"Memory Name: <span class="token variable">$&#123;mem_name&#125;</span>"</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"Memory Percent: <span class="token variable">$&#123;mem_percent&#125;</span>"</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"Event Time: <span class="token variable">$&#123;event_time&#125;</span>"</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"Trigger Name: <span class="token variable">$&#123;trigger_name&#125;</span>"</span>
-<span class="token punctuation">&#125;</span> <span class="token operator">>></span> <span class="token string">"<span class="token variable">$LOGFILE</span>"</span>
-
-<span class="token comment"># 激活虚拟环境并运行Python脚本</span>
-<span class="token assign-left variable">python_result</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>
-    <span class="token builtin class-name">source</span> /usr/lib/zabbix/venv/bin/activate
-    python3 <span class="token string">"<span class="token variable">$PYTHON_SCRIPT</span>"</span> <span class="token string">"<span class="token variable">$host_name</span>"</span> <span class="token string">"<span class="token variable">$host_ip</span>"</span> <span class="token string">"<span class="token variable">$mem_name</span>"</span> <span class="token string">"<span class="token variable">$mem_percent</span>"</span> <span class="token string">"<span class="token variable">$event_time</span>"</span> <span class="token string">"<span class="token variable">$trigger_name</span>"</span>
-<span class="token variable">)</span></span>
-
-<span class="token comment"># 记录Python脚本的输出到日志</span>
-<span class="token punctuation">&#123;</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"<span class="token variable">$python_result</span>"</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"----------------------------------------"</span>
-<span class="token punctuation">&#125;</span> <span class="token operator">>></span> <span class="token string">"<span class="token variable">$LOGFILE</span>"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="py脚本接受参数，然后发送给deepseek，返回报表"><a href="#py脚本接受参数，然后发送给deepseek，返回报表" class="headerlink" title="py脚本接受参数，然后发送给deepseek，返回报表"></a>py脚本接受参数，然后发送给deepseek，返回报表</h3><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> os
-<span class="token keyword">import</span> sys
-<span class="token keyword">import</span> datetime
-<span class="token keyword">from</span> openai <span class="token keyword">import</span> OpenAI
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token keyword">def</span> <span class="token function">generate_analysis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">if</span> <span class="token builtin">len</span><span class="token punctuation">(</span>sys<span class="token punctuation">.</span>argv<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">7</span><span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"脚本参数数量不正确"</span><span class="token punctuation">)</span>
-        sys<span class="token punctuation">.</span>exit<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-    host_name <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
-    host_ip <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
-    mem_name <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span>
-    mem_percent <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span>
-    event_time <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">]</span>
-    trigger_name <span class="token operator">=</span> sys<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">6</span><span class="token punctuation">]</span>
-
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        <span class="token keyword">if</span> <span class="token keyword">not</span> os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"DEEPSEEK_API_KEY"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-            <span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"DEEPSEEK_API_KEY未设置"</span><span class="token punctuation">)</span>
-        client <span class="token operator">=</span> OpenAI<span class="token punctuation">(</span>
-            api_key<span class="token operator">=</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'DEEPSEEK_API_KEY'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-            base_url<span class="token operator">=</span><span class="token string">"https://api.deepseek.com"</span><span class="token punctuation">)</span>
-        
-        system_prompt <span class="token operator">=</span> <span class="token string">"你是一个资深的Zabbix运维专家,擅长分析各种监控告警信息,能够快速定位问题根源并提供有效的解决方案。"</span>
-        
-        user_prompt <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"请分析以下Zabbix监控告警信息，生成告警分析报告\n"</span></span>
-                  <span class="token string-interpolation"><span class="token string">f"主机名称: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>host_name<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span>
-                  <span class="token string-interpolation"><span class="token string">f"主机IP: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>host_ip<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span>
-                  <span class="token string-interpolation"><span class="token string">f"内存名称: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>mem_name<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span>
-                  <span class="token string-interpolation"><span class="token string">f"内存使用率: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>mem_percent<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span>
-                  <span class="token string-interpolation"><span class="token string">f"事件时间: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>event_time<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span>
-                  <span class="token string-interpolation"><span class="token string">f"触发器名称: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>trigger_name<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span><span class="token punctuation">)</span>
-        response <span class="token operator">=</span> client<span class="token punctuation">.</span>chat<span class="token punctuation">.</span>completions<span class="token punctuation">.</span>create<span class="token punctuation">(</span>
-            model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">,</span>
-            messages<span class="token operator">=</span><span class="token punctuation">[</span>
-                <span class="token punctuation">&#123;</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"system"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> system_prompt<span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-                <span class="token punctuation">&#123;</span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> user_prompt<span class="token punctuation">&#125;</span>
-            <span class="token punctuation">]</span><span class="token punctuation">,</span>
-            max_tokens<span class="token operator">=</span><span class="token number">1000</span><span class="token punctuation">,</span>
-            temperature<span class="token operator">=</span><span class="token number">0.7</span>
-        <span class="token punctuation">)</span>
-        <span class="token comment"># 生成报表</span>
-        timestamp <span class="token operator">=</span> datetime<span class="token punctuation">.</span>datetime<span class="token punctuation">.</span>now<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>strftime<span class="token punctuation">(</span><span class="token string">"%Y%m%d_%H%M%S"</span><span class="token punctuation">)</span>
-        clean_host_name <span class="token operator">=</span> host_name<span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">" "</span><span class="token punctuation">,</span> <span class="token string">"_"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">,</span> <span class="token string">"_"</span><span class="token punctuation">)</span>
-        <span class="token comment"># 报告名称</span>
-        report_filename <span class="token operator">=</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token string">"/usr/lib/zabbix/alertscripts"</span><span class="token punctuation">,</span> <span class="token string-interpolation"><span class="token string">f"deepseek_report_</span><span class="token interpolation"><span class="token punctuation">&#123;</span>clean_host_name<span class="token punctuation">&#125;</span></span><span class="token string">_</span><span class="token interpolation"><span class="token punctuation">&#123;</span>timestamp<span class="token punctuation">&#125;</span></span><span class="token string">.txt"</span></span><span class="token punctuation">)</span>
-        <span class="token comment"># 写入</span>
-        <span class="token keyword">with</span> <span class="token builtin">open</span><span class="token punctuation">(</span>report_filename<span class="token punctuation">,</span> <span class="token string">"w"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
-            f<span class="token punctuation">.</span>write<span class="token punctuation">(</span><span class="token string">"Zabbix告警分析报告\n"</span><span class="token punctuation">)</span>
-            f<span class="token punctuation">.</span>write<span class="token punctuation">(</span><span class="token string">"====================\n\n"</span><span class="token punctuation">)</span>
-            f<span class="token punctuation">.</span>write<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"生成时间: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>timestamp<span class="token punctuation">&#125;</span></span><span class="token string">\n"</span></span><span class="token punctuation">)</span>
-            f<span class="token punctuation">.</span>write<span class="token punctuation">(</span>response<span class="token punctuation">.</span>choices<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>message<span class="token punctuation">.</span>content<span class="token punctuation">)</span>
-        <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"报表生成成功: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>report_filename<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
-        <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"生成报表时出错: </span><span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token builtin">str</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string">"</span></span>
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
-    result <span class="token operator">=</span> generate_analysis<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="py脚本接受参数，然后发送给deepseek，返回报表"><a href="#py脚本接受参数，然后发送给deepseek，返回报表" class="headerlink" title="py脚本接受参数，然后发送给deepseek，返回报表"></a>py脚本接受参数，然后发送给deepseek，返回报表</h3><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">generate_analysis</span>():</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(sys.argv) != <span class="number">7</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;脚本参数数量不正确&quot;</span>)</span><br><span class="line">        sys.exit(<span class="number">1</span>)</span><br><span class="line">    host_name = sys.argv[<span class="number">1</span>]</span><br><span class="line">    host_ip = sys.argv[<span class="number">2</span>]</span><br><span class="line">    mem_name = sys.argv[<span class="number">3</span>]</span><br><span class="line">    mem_percent = sys.argv[<span class="number">4</span>]</span><br><span class="line">    event_time = sys.argv[<span class="number">5</span>]</span><br><span class="line">    trigger_name = sys.argv[<span class="number">6</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> os.environ.get(<span class="string">&quot;DEEPSEEK_API_KEY&quot;</span>):</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">&quot;DEEPSEEK_API_KEY未设置&quot;</span>)</span><br><span class="line">        client = OpenAI(</span><br><span class="line">            api_key=os.environ.get(<span class="string">&#x27;DEEPSEEK_API_KEY&#x27;</span>),</span><br><span class="line">            base_url=<span class="string">&quot;https://api.deepseek.com&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        system_prompt = <span class="string">&quot;你是一个资深的Zabbix运维专家,擅长分析各种监控告警信息,能够快速定位问题根源并提供有效的解决方案。&quot;</span></span><br><span class="line">        </span><br><span class="line">        user_prompt = (<span class="string">f&quot;请分析以下Zabbix监控告警信息，生成告警分析报告\n&quot;</span></span><br><span class="line">                  <span class="string">f&quot;主机名称: <span class="subst">&#123;host_name&#125;</span>\n&quot;</span></span><br><span class="line">                  <span class="string">f&quot;主机IP: <span class="subst">&#123;host_ip&#125;</span>\n&quot;</span></span><br><span class="line">                  <span class="string">f&quot;内存名称: <span class="subst">&#123;mem_name&#125;</span>\n&quot;</span></span><br><span class="line">                  <span class="string">f&quot;内存使用率: <span class="subst">&#123;mem_percent&#125;</span>\n&quot;</span></span><br><span class="line">                  <span class="string">f&quot;事件时间: <span class="subst">&#123;event_time&#125;</span>\n&quot;</span></span><br><span class="line">                  <span class="string">f&quot;触发器名称: <span class="subst">&#123;trigger_name&#125;</span>\n&quot;</span>)</span><br><span class="line">        response = client.chat.completions.create(</span><br><span class="line">            model=<span class="string">&quot;deepseek-chat&quot;</span>,</span><br><span class="line">            messages=[</span><br><span class="line">                &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;system&quot;</span>, <span class="string">&quot;content&quot;</span>: system_prompt&#125;,</span><br><span class="line">                &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: user_prompt&#125;</span><br><span class="line">            ],</span><br><span class="line">            max_tokens=<span class="number">1000</span>,</span><br><span class="line">            temperature=<span class="number">0.7</span></span><br><span class="line">        )</span><br><span class="line">        <span class="comment"># 生成报表</span></span><br><span class="line">        timestamp = datetime.datetime.now().strftime(<span class="string">&quot;%Y%m%d_%H%M%S&quot;</span>)</span><br><span class="line">        clean_host_name = host_name.replace(<span class="string">&quot; &quot;</span>, <span class="string">&quot;_&quot;</span>).replace(<span class="string">&quot;/&quot;</span>, <span class="string">&quot;_&quot;</span>)</span><br><span class="line">        <span class="comment"># 报告名称</span></span><br><span class="line">        report_filename = os.path.join(<span class="string">&quot;/usr/lib/zabbix/alertscripts&quot;</span>, <span class="string">f&quot;deepseek_report_<span class="subst">&#123;clean_host_name&#125;</span>_<span class="subst">&#123;timestamp&#125;</span>.txt&quot;</span>)</span><br><span class="line">        <span class="comment"># 写入</span></span><br><span class="line">        <span class="keyword">with</span> <span class="built_in">open</span>(report_filename, <span class="string">&quot;w&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            f.write(<span class="string">&quot;Zabbix告警分析报告\n&quot;</span>)</span><br><span class="line">            f.write(<span class="string">&quot;====================\n\n&quot;</span>)</span><br><span class="line">            f.write(<span class="string">f&quot;生成时间: <span class="subst">&#123;timestamp&#125;</span>\n&quot;</span>)</span><br><span class="line">            f.write(response.choices[<span class="number">0</span>].message.content)</span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;报表生成成功: <span class="subst">&#123;report_filename&#125;</span>&quot;</span></span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;生成报表时出错: <span class="subst">&#123;<span class="built_in">str</span>(e)&#125;</span>&quot;</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    result = generate_analysis()</span><br><span class="line">    <span class="built_in">print</span>(result)</span><br></pre></td></tr></table></figure>
 
 <h2 id="最终测试"><a href="#最终测试" class="headerlink" title="最终测试"></a>最终测试</h2><p><code>stress --vm 1 --vm-bytes 20G --vm-hang 60</code></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260104171558122.png"></p>
@@ -6824,18 +6672,6 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6919,13 +6755,13 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7300,13 +7136,13 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7546,13 +7382,13 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8251,13 +8087,13 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8801,9 +8637,9 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8811,9 +8647,9 @@ load_dotenv<span class="token punctuation">(</span><span class="token punctuatio
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

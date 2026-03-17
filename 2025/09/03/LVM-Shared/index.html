@@ -202,12 +202,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -215,7 +217,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -500,205 +501,23 @@
 <li><strong>资源管理调度层</strong>：Pacemaker 负责管理所有资源（DLM、LVM、Filesystem、HTTPD）的启动、停止、监控和故障转移，并定义它们之间的依赖和顺序约束。</li>
 </ul>
 <p><strong>环境说明</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">CentOS Linux release <span class="token number">8.5</span>.2111
-<span class="token number">10.163</span>.2.100 <span class="token number">10.163</span>.3.114 pcs1
-<span class="token number">10.163</span>.2.102 <span class="token number">10.163</span>.3.108 pcs2
-<span class="token number">10.163</span>.2.101 <span class="token number">10.163</span>.3.116 pcs3
-<span class="token number">10.163</span>.2.125 <span class="token number">10.163</span>.3.113 iscsi-target
-<span class="token number">10.163</span>.2.150 webvip 
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CentOS Linux release 8.5.2111</span><br><span class="line">10.163.2.100 10.163.3.114 pcs1</span><br><span class="line">10.163.2.102 10.163.3.108 pcs2</span><br><span class="line">10.163.2.101 10.163.3.116 pcs3</span><br><span class="line">10.163.2.125 10.163.3.113 iscsi-target</span><br><span class="line">10.163.2.150 webvip </span><br><span class="line"></span><br><span class="line">提前做好互信</span><br></pre></td></tr></table></figure>
 
-提前做好互信<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="部署pcs集群"><a href="#部署pcs集群" class="headerlink" title="部署pcs集群"></a>部署pcs集群</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 快速略过</span></span><br><span class="line">yum -y install pcs pacemaker corosync fence-agents-all</span><br><span class="line">systemctl <span class="built_in">enable</span> pcsd --now</span><br><span class="line"></span><br><span class="line">firewall-cmd --permanent --add-service=high-availability</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> 123456 | passwd --stdin hacluster</span><br><span class="line"></span><br><span class="line">pcs host auth pcs1 pcs2 pcs3 -u hacluster -p 123456</span><br><span class="line"></span><br><span class="line">pcs cluster setup cluster1 pcs1 pcs2 pcs3</span><br><span class="line"></span><br><span class="line">pcs cluster start --all</span><br><span class="line">pcs cluster <span class="built_in">enable</span> --all</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个假的fencing设备</span></span><br><span class="line">pcs stonith create my-fence fence_apc \</span><br><span class="line">ipaddr=127.0.0.1 login=invalid password=invalid \</span><br><span class="line">pcmk_host_list=<span class="string">&quot;pcs1 pcs2 pcs3&quot;</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="部署pcs集群"><a href="#部署pcs集群" class="headerlink" title="部署pcs集群"></a>部署pcs集群</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 快速略过</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> pcs pacemaker corosync fence-agents-all
-systemctl <span class="token builtin class-name">enable</span> pcsd <span class="token parameter variable">--now</span>
+<h2 id="准备后端ISCSI"><a href="#准备后端ISCSI" class="headerlink" title="准备后端ISCSI"></a>准备后端ISCSI</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 快速略过</span></span><br><span class="line">yum -y install targetcli</span><br><span class="line">firewall-cmd --permanent --add-port=3260/tcp</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line">targetcli</span><br><span class="line">backstores/block create multipath-iscsi dev=/dev/sdb</span><br><span class="line">iscsi/ create iqn.2024-08.com.example:block.target</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/luns/ create /backstores/block/multipath-iscsi</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/acls/ create iqn.2024-08.com.example:client.pcs1</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/acls/ create iqn.2024-08.com.example:client.pcs2</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/acls/ create iqn.2024-08.com.example:client.pcs3</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/portals/ delete 0.0.0.0 ip_port=3260</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/portals/ create 10.163.2.125</span><br><span class="line">iscsi/iqn.2024-08.com.example:block.target/tpg1/portals/ create 10.163.3.113</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> target --now</span><br><span class="line"></span><br><span class="line">ss -tunlp | grep 3260</span><br><span class="line">tcp    LISTEN     0      256    10.163.2.125:3260                  *:*</span><br><span class="line">tcp    LISTEN     0      256    10.163.3.113:3260                  *:*</span><br></pre></td></tr></table></figure>
 
-firewall-cmd <span class="token parameter variable">--permanent</span> --add-service<span class="token operator">=</span>high-availability
-firewall-cmd <span class="token parameter variable">--reload</span>
+<h2 id="配置后端存储与dm-multipath"><a href="#配置后端存储与dm-multipath" class="headerlink" title="配置后端存储与dm-multipath"></a>配置后端存储与dm-multipath</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 快速略过</span></span><br><span class="line">yum -y install iscsi-initiator-utils device-mapper-multipath</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;InitiatorName=iqn.2024-08.com.example:client.<span class="subst">$(hostname)</span>&quot;</span> &gt; /etc/iscsi/initiatorname.iscsi</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> iscsid --now</span><br><span class="line">systemctl restart iscsid</span><br><span class="line"></span><br><span class="line">iscsiadm -m discovery -t st -p 10.163.2.125</span><br><span class="line">iscsiadm -m node -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># multipath就不配了，直接用默认配置文件</span></span><br><span class="line">mpathconf --<span class="built_in">enable</span></span><br><span class="line">systemctl <span class="built_in">enable</span> multipathd --now</span><br><span class="line"></span><br><span class="line">multipath -ll</span><br></pre></td></tr></table></figure>
 
-<span class="token builtin class-name">echo</span> <span class="token number">123456</span> <span class="token operator">|</span> <span class="token function">passwd</span> <span class="token parameter variable">--stdin</span> hacluster
+<h2 id="添加锁资源"><a href="#添加锁资源" class="headerlink" title="添加锁资源"></a>添加锁资源</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">多路径设备为/dev/mapper/mpatha</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备dlm需要的软件仓库</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/yum.repos.d/resilientstorage.repo &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">[resilientstorage]</span></span><br><span class="line"><span class="string">name=CentOS Stream 8 - ResilientStorage</span></span><br><span class="line"><span class="string">baseurl=https://mirrors.aliyun.com/centos/8-stream/ResilientStorage/x86_64/os/</span></span><br><span class="line"><span class="string">gpgcheck=1</span></span><br><span class="line"><span class="string">enabled=1</span></span><br><span class="line"><span class="string">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">yum -y install lvm2-lockd dlm</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建dlm和lvmlockd的集群资源，归到lock组</span></span><br><span class="line">pcs resource create dlm controld --group=lock</span><br><span class="line">pcs resource create lvmlockd ocf:heartbeat:lvmlockd --group=lock</span><br><span class="line"></span><br><span class="line">pcs resource <span class="built_in">clone</span> lock interleave=<span class="literal">true</span></span><br><span class="line"></span><br><span class="line">pcs status --full</span><br><span class="line">Full List of Resources:</span><br><span class="line">  * Clone Set: lock-clone [lock]:</span><br><span class="line">    * Resource Group: lock:0:</span><br><span class="line">      * dlm     (ocf::pacemaker:controld):       Started pcs2</span><br><span class="line">      * lvmlockd        (ocf::heartbeat:lvmlockd):       Started pcs2</span><br><span class="line">    * Resource Group: lock:1:</span><br><span class="line">      * dlm     (ocf::pacemaker:controld):       Started pcs3</span><br><span class="line">      * lvmlockd        (ocf::heartbeat:lvmlockd):       Started pcs3</span><br><span class="line">    * Resource Group: lock:2:</span><br><span class="line">      * dlm     (ocf::pacemaker:controld):       Started pcs1</span><br><span class="line">      * lvmlockd        (ocf::heartbeat:lvmlockd):       Started pcs1</span><br><span class="line">  * my-fence    (stonith:fence_apc):     Starting pcs3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-pcs <span class="token function">host</span> auth pcs1 pcs2 pcs3 <span class="token parameter variable">-u</span> hacluster <span class="token parameter variable">-p</span> <span class="token number">123456</span>
+<h2 id="创建共享卷组"><a href="#创建共享卷组" class="headerlink" title="创建共享卷组"></a>创建共享卷组</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># pcs1节点 创建pv vg</span></span><br><span class="line">pvcreate -ff /dev/mapper/mpatha</span><br><span class="line">vgcreate --shared clustervg /dev/mapper/mpatha</span><br><span class="line"></span><br><span class="line"><span class="comment"># 其他节点 开器dlm锁</span></span><br><span class="line">vgchange --lock-start clustervg</span><br><span class="line"></span><br><span class="line"><span class="comment"># pcs1节点</span></span><br><span class="line">lvcreate --activate sy -n clusterlv -L 10G clustervg</span><br><span class="line"></span><br><span class="line"><span class="comment"># 接管资源，资源组为LVMshared</span></span><br><span class="line">pcs resource create sharelvm lvm-activate \</span><br><span class="line">vgname=clustervg lvname=clusterlv \</span><br><span class="line">vg_access_mode=lvmlockd activation_mode=shared \</span><br><span class="line">--group=LVMshared</span><br><span class="line"><span class="comment"># 克隆一下</span></span><br><span class="line">pcs resource <span class="built_in">clone</span> LVMshared interleave=<span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 资源编排</span></span><br><span class="line">pcs constraint order start lock-clone <span class="keyword">then</span> LVMshared-<span class="built_in">clone</span></span><br><span class="line">pcs constraint colocation add lock-clone with LVMshared-<span class="built_in">clone</span></span><br></pre></td></tr></table></figure>
 
-pcs cluster setup cluster1 pcs1 pcs2 pcs3
+<h2 id="创建与挂载gfs2文件系统"><a href="#创建与挂载gfs2文件系统" class="headerlink" title="创建与挂载gfs2文件系统"></a>创建与挂载gfs2文件系统</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">yum -y install gfs2-utils</span><br><span class="line"></span><br><span class="line"><span class="comment"># pcs1格式化lv</span></span><br><span class="line">mkfs.gfs2 -j 4 -t cluster1:gfs /dev/clustervg/clusterlv</span><br><span class="line">cluster1是集群名称</span><br><span class="line"></span><br><span class="line"><span class="comment"># 接管资源并挂载，这里因为准备使用http，所以直接挂在了/var/www</span></span><br><span class="line">pcs resource create clusterfs filesystem \</span><br><span class="line">device=/dev/clustervg/clusterlv \</span><br><span class="line">directory=/var/www fstype=gfs2 \</span><br><span class="line">--group=LVMshared</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试文件系统</span></span><br><span class="line">在其中一台节点上<span class="built_in">touch</span> /var/www/test</span><br><span class="line">其他节点也可以看到这个文件<span class="built_in">ls</span> /var/www/</span><br></pre></td></tr></table></figure>
 
-pcs cluster start <span class="token parameter variable">--all</span>
-pcs cluster <span class="token builtin class-name">enable</span> <span class="token parameter variable">--all</span>
+<h2 id="接管httpd服务与vip资源"><a href="#接管httpd服务与vip资源" class="headerlink" title="接管httpd服务与vip资源"></a>接管httpd服务与vip资源</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">yum -y install httpd</span><br><span class="line">firewall-cmd --permanent --add-service=http</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">pcs resource create webipip ipaddr2 \</span><br><span class="line">ip=10.163.2.150 cidr_netmask=24 \</span><br><span class="line">--group=web</span><br><span class="line"><span class="comment"># </span></span><br><span class="line">pcs resource create webserver apache --group=web</span><br><span class="line"></span><br><span class="line"><span class="comment"># 资源编排</span></span><br><span class="line">pcs constraint order start LVMshared-<span class="built_in">clone</span> <span class="keyword">then</span> web</span><br><span class="line"></span><br><span class="line"><span class="comment"># 搞个网页</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;hello world&#x27;</span> &gt; /var/www/html/index.html</span><br><span class="line"></span><br><span class="line">pcs resource</span><br><span class="line">* Clone Set: lock-clone [lock]:</span><br><span class="line">* Started: [ pcs1 pcs2 pcs3 ]</span><br><span class="line">* Clone Set: LVMshared-<span class="built_in">clone</span> [LVMshared]:</span><br><span class="line">* Started: [ pcs1 pcs2 pcs3 ]</span><br><span class="line">* Resource Group: web:</span><br><span class="line">* webipip   (ocf::heartbeat:IPaddr2):        Started pcs1</span><br><span class="line">* webserver (ocf::heartbeat:apache):         Started pcs1</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 创建一个假的fencing设备</span>
-pcs stonith create my-fence fence_apc <span class="token punctuation">\</span>
-<span class="token assign-left variable">ipaddr</span><span class="token operator">=</span><span class="token number">127.0</span>.0.1 <span class="token assign-left variable">login</span><span class="token operator">=</span>invalid <span class="token assign-left variable">password</span><span class="token operator">=</span>invalid <span class="token punctuation">\</span>
-<span class="token assign-left variable">pcmk_host_list</span><span class="token operator">=</span><span class="token string">"pcs1 pcs2 pcs3"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="准备后端ISCSI"><a href="#准备后端ISCSI" class="headerlink" title="准备后端ISCSI"></a>准备后端ISCSI</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 快速略过</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> targetcli
-firewall-cmd <span class="token parameter variable">--permanent</span> --add-port<span class="token operator">=</span><span class="token number">3260</span>/tcp
-firewall-cmd <span class="token parameter variable">--reload</span>
-
-targetcli
-backstores/block create multipath-iscsi <span class="token assign-left variable">dev</span><span class="token operator">=</span>/dev/sdb
-iscsi/ create iqn.2024-08.com.example:block.target
-iscsi/iqn.2024-08.com.example:block.target/tpg1/luns/ create /backstores/block/multipath-iscsi
-iscsi/iqn.2024-08.com.example:block.target/tpg1/acls/ create iqn.2024-08.com.example:client.pcs1
-iscsi/iqn.2024-08.com.example:block.target/tpg1/acls/ create iqn.2024-08.com.example:client.pcs2
-iscsi/iqn.2024-08.com.example:block.target/tpg1/acls/ create iqn.2024-08.com.example:client.pcs3
-iscsi/iqn.2024-08.com.example:block.target/tpg1/portals/ delete <span class="token number">0.0</span>.0.0 <span class="token assign-left variable">ip_port</span><span class="token operator">=</span><span class="token number">3260</span>
-iscsi/iqn.2024-08.com.example:block.target/tpg1/portals/ create <span class="token number">10.163</span>.2.125
-iscsi/iqn.2024-08.com.example:block.target/tpg1/portals/ create <span class="token number">10.163</span>.3.113
-
-systemctl <span class="token builtin class-name">enable</span> target <span class="token parameter variable">--now</span>
-
-ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">3260</span>
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">256</span>    <span class="token number">10.163</span>.2.125:3260                  *:*
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">256</span>    <span class="token number">10.163</span>.3.113:3260                  *:*<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="配置后端存储与dm-multipath"><a href="#配置后端存储与dm-multipath" class="headerlink" title="配置后端存储与dm-multipath"></a>配置后端存储与dm-multipath</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 快速略过</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> iscsi-initiator-utils device-mapper-multipath
-
-<span class="token builtin class-name">echo</span> <span class="token string">"InitiatorName=iqn.2024-08.com.example:client.<span class="token variable"><span class="token variable">$(</span><span class="token function">hostname</span><span class="token variable">)</span></span>"</span> <span class="token operator">></span> /etc/iscsi/initiatorname.iscsi
-
-systemctl <span class="token builtin class-name">enable</span> iscsid <span class="token parameter variable">--now</span>
-systemctl restart iscsid
-
-iscsiadm <span class="token parameter variable">-m</span> discovery <span class="token parameter variable">-t</span> st <span class="token parameter variable">-p</span> <span class="token number">10.163</span>.2.125
-iscsiadm <span class="token parameter variable">-m</span> <span class="token function">node</span> <span class="token parameter variable">-l</span>
-
-<span class="token comment"># multipath就不配了，直接用默认配置文件</span>
-mpathconf <span class="token parameter variable">--enable</span>
-systemctl <span class="token builtin class-name">enable</span> multipathd <span class="token parameter variable">--now</span>
-
-multipath <span class="token parameter variable">-ll</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="添加锁资源"><a href="#添加锁资源" class="headerlink" title="添加锁资源"></a>添加锁资源</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">多路径设备为/dev/mapper/mpatha
-
-<span class="token comment"># 准备dlm需要的软件仓库</span>
-<span class="token function">cat</span> <span class="token operator">></span> /etc/yum.repos.d/resilientstorage.repo <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
-[resilientstorage]
-name=CentOS Stream 8 - ResilientStorage
-baseurl=https://mirrors.aliyun.com/centos/8-stream/ResilientStorage/x86_64/os/
-gpgcheck=1
-enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
-EOF</span>
-
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> lvm2-lockd dlm
-
-<span class="token comment"># 创建dlm和lvmlockd的集群资源，归到lock组</span>
-pcs resource create dlm controld <span class="token parameter variable">--group</span><span class="token operator">=</span>lock
-pcs resource create lvmlockd ocf:heartbeat:lvmlockd <span class="token parameter variable">--group</span><span class="token operator">=</span>lock
-
-pcs resource clone lock <span class="token assign-left variable">interleave</span><span class="token operator">=</span>true
-
-pcs status <span class="token parameter variable">--full</span>
-Full List of Resources:
-  * Clone Set: lock-clone <span class="token punctuation">[</span>lock<span class="token punctuation">]</span>:
-    * Resource Group: lock:0:
-      * dlm     <span class="token punctuation">(</span>ocf::pacemaker:controld<span class="token punctuation">)</span>:       Started pcs2
-      * lvmlockd        <span class="token punctuation">(</span>ocf::heartbeat:lvmlockd<span class="token punctuation">)</span>:       Started pcs2
-    * Resource Group: lock:1:
-      * dlm     <span class="token punctuation">(</span>ocf::pacemaker:controld<span class="token punctuation">)</span>:       Started pcs3
-      * lvmlockd        <span class="token punctuation">(</span>ocf::heartbeat:lvmlockd<span class="token punctuation">)</span>:       Started pcs3
-    * Resource Group: lock:2:
-      * dlm     <span class="token punctuation">(</span>ocf::pacemaker:controld<span class="token punctuation">)</span>:       Started pcs1
-      * lvmlockd        <span class="token punctuation">(</span>ocf::heartbeat:lvmlockd<span class="token punctuation">)</span>:       Started pcs1
-  * my-fence    <span class="token punctuation">(</span>stonith:fence_apc<span class="token punctuation">)</span>:     Starting pcs3
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="创建共享卷组"><a href="#创建共享卷组" class="headerlink" title="创建共享卷组"></a>创建共享卷组</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># pcs1节点 创建pv vg</span>
-pvcreate <span class="token parameter variable">-ff</span> /dev/mapper/mpatha
-vgcreate <span class="token parameter variable">--shared</span> clustervg /dev/mapper/mpatha
-
-<span class="token comment"># 其他节点 开器dlm锁</span>
-vgchange --lock-start clustervg
-
-<span class="token comment"># pcs1节点</span>
-lvcreate <span class="token parameter variable">--activate</span> sy <span class="token parameter variable">-n</span> clusterlv <span class="token parameter variable">-L</span> 10G clustervg
-
-<span class="token comment"># 接管资源，资源组为LVMshared</span>
-pcs resource create sharelvm lvm-activate <span class="token punctuation">\</span>
-<span class="token assign-left variable">vgname</span><span class="token operator">=</span>clustervg <span class="token assign-left variable">lvname</span><span class="token operator">=</span>clusterlv <span class="token punctuation">\</span>
-<span class="token assign-left variable">vg_access_mode</span><span class="token operator">=</span>lvmlockd <span class="token assign-left variable">activation_mode</span><span class="token operator">=</span>shared <span class="token punctuation">\</span>
-<span class="token parameter variable">--group</span><span class="token operator">=</span>LVMshared
-<span class="token comment"># 克隆一下</span>
-pcs resource clone LVMshared <span class="token assign-left variable">interleave</span><span class="token operator">=</span>true
-
-<span class="token comment"># 资源编排</span>
-pcs constraint order start lock-clone <span class="token keyword">then</span> LVMshared-clone
-pcs constraint colocation <span class="token function">add</span> lock-clone with LVMshared-clone<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="创建与挂载gfs2文件系统"><a href="#创建与挂载gfs2文件系统" class="headerlink" title="创建与挂载gfs2文件系统"></a>创建与挂载gfs2文件系统</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> gfs2-utils
-
-<span class="token comment"># pcs1格式化lv</span>
-mkfs.gfs2 <span class="token parameter variable">-j</span> <span class="token number">4</span> <span class="token parameter variable">-t</span> cluster1:gfs /dev/clustervg/clusterlv
-cluster1是集群名称
-
-<span class="token comment"># 接管资源并挂载，这里因为准备使用http，所以直接挂在了/var/www</span>
-pcs resource create clusterfs filesystem <span class="token punctuation">\</span>
-<span class="token assign-left variable">device</span><span class="token operator">=</span>/dev/clustervg/clusterlv <span class="token punctuation">\</span>
-<span class="token assign-left variable">directory</span><span class="token operator">=</span>/var/www <span class="token assign-left variable">fstype</span><span class="token operator">=</span>gfs2 <span class="token punctuation">\</span>
-<span class="token parameter variable">--group</span><span class="token operator">=</span>LVMshared
-
-<span class="token comment"># 测试文件系统</span>
-在其中一台节点上touch /var/www/test
-其他节点也可以看到这个文件ls /var/www/<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="接管httpd服务与vip资源"><a href="#接管httpd服务与vip资源" class="headerlink" title="接管httpd服务与vip资源"></a>接管httpd服务与vip资源</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> httpd
-firewall-cmd <span class="token parameter variable">--permanent</span> --add-service<span class="token operator">=</span>http
-firewall-cmd <span class="token parameter variable">--reload</span>
-
-<span class="token comment"># </span>
-pcs resource create webipip ipaddr2 <span class="token punctuation">\</span>
-<span class="token assign-left variable">ip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.150 <span class="token assign-left variable">cidr_netmask</span><span class="token operator">=</span><span class="token number">24</span> <span class="token punctuation">\</span>
-<span class="token parameter variable">--group</span><span class="token operator">=</span>web
-<span class="token comment"># </span>
-pcs resource create webserver apache <span class="token parameter variable">--group</span><span class="token operator">=</span>web
-
-<span class="token comment"># 资源编排</span>
-pcs constraint order start LVMshared-clone <span class="token keyword">then</span> web
-
-<span class="token comment"># 搞个网页</span>
-<span class="token builtin class-name">echo</span> <span class="token string">'hello world'</span> <span class="token operator">></span> /var/www/html/index.html
-
-pcs resource
-* Clone Set: lock-clone <span class="token punctuation">[</span>lock<span class="token punctuation">]</span>:
-* Started: <span class="token punctuation">[</span> pcs1 pcs2 pcs3 <span class="token punctuation">]</span>
-* Clone Set: LVMshared-clone <span class="token punctuation">[</span>LVMshared<span class="token punctuation">]</span>:
-* Started: <span class="token punctuation">[</span> pcs1 pcs2 pcs3 <span class="token punctuation">]</span>
-* Resource Group: web:
-* webipip   <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Started pcs1
-* webserver <span class="token punctuation">(</span>ocf::heartbeat:apache<span class="token punctuation">)</span>:         Started pcs1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="httpd资源测试"><a href="#httpd资源测试" class="headerlink" title="httpd资源测试"></a>httpd资源测试</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 先打一个分，把它放到pcs2上去</span>
-pcs constraint location web prefers pcs2
-
-pcs resource status
-* Clone Set: lock-clone <span class="token punctuation">[</span>lock<span class="token punctuation">]</span>:
-  * Started: <span class="token punctuation">[</span> pcs1 pcs2 pcs3 <span class="token punctuation">]</span>
-* Clone Set: LVMshared-clone <span class="token punctuation">[</span>LVMshared<span class="token punctuation">]</span>:
-  * Started: <span class="token punctuation">[</span> pcs1 pcs2 pcs3 <span class="token punctuation">]</span>
-* Resource Group: web:
-  * webipip   <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Started pcs2
-  * webserver <span class="token punctuation">(</span>ocf::heartbeat:apache<span class="token punctuation">)</span>:         Started pcs2
-
-<span class="token comment"># 直接关闭pcs2</span>
-systemctl poweroff
-
-<span class="token comment"># </span>
-pcs resource status
-  * Clone Set: lock-clone <span class="token punctuation">[</span>lock<span class="token punctuation">]</span>:
-    * Started: <span class="token punctuation">[</span> pcs1 pcs3 <span class="token punctuation">]</span>
-    * Stopped: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-  * Clone Set: LVMshared-clone <span class="token punctuation">[</span>LVMshared<span class="token punctuation">]</span>:
-    * Started: <span class="token punctuation">[</span> pcs1 pcs3 <span class="token punctuation">]</span>
-    * Stopped: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-  * Resource Group: web:
-    * webipip   <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Started pcs1
-    * webserver <span class="token punctuation">(</span>ocf::heartbeat:apache<span class="token punctuation">)</span>:         Started pcs1
-可以看到vip到pcs1上去了
-
-<span class="token function">curl</span> <span class="token number">10.163</span>.2.150
-hello world
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="httpd资源测试"><a href="#httpd资源测试" class="headerlink" title="httpd资源测试"></a>httpd资源测试</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 先打一个分，把它放到pcs2上去</span></span><br><span class="line">pcs constraint location web prefers pcs2</span><br><span class="line"></span><br><span class="line">pcs resource status</span><br><span class="line">* Clone Set: lock-clone [lock]:</span><br><span class="line">  * Started: [ pcs1 pcs2 pcs3 ]</span><br><span class="line">* Clone Set: LVMshared-<span class="built_in">clone</span> [LVMshared]:</span><br><span class="line">  * Started: [ pcs1 pcs2 pcs3 ]</span><br><span class="line">* Resource Group: web:</span><br><span class="line">  * webipip   (ocf::heartbeat:IPaddr2):        Started pcs2</span><br><span class="line">  * webserver (ocf::heartbeat:apache):         Started pcs2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接关闭pcs2</span></span><br><span class="line">systemctl poweroff</span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: lock-clone [lock]:</span><br><span class="line">    * Started: [ pcs1 pcs3 ]</span><br><span class="line">    * Stopped: [ pcs2 ]</span><br><span class="line">  * Clone Set: LVMshared-<span class="built_in">clone</span> [LVMshared]:</span><br><span class="line">    * Started: [ pcs1 pcs3 ]</span><br><span class="line">    * Stopped: [ pcs2 ]</span><br><span class="line">  * Resource Group: web:</span><br><span class="line">    * webipip   (ocf::heartbeat:IPaddr2):        Started pcs1</span><br><span class="line">    * webserver (ocf::heartbeat:apache):         Started pcs1</span><br><span class="line">可以看到vip到pcs1上去了</span><br><span class="line"></span><br><span class="line">curl 10.163.2.150</span><br><span class="line">hello world</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
     </article>
     <!-- license -->
@@ -6778,18 +6597,6 @@ hello world
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6873,13 +6680,13 @@ hello world
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7254,13 +7061,13 @@ hello world
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7500,13 +7307,13 @@ hello world
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8205,13 +8012,13 @@ hello world
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8755,9 +8562,9 @@ hello world
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8765,9 +8572,9 @@ hello world
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

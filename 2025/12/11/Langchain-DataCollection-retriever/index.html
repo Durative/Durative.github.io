@@ -201,12 +201,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -214,7 +216,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -501,228 +502,21 @@
 <li>时间加权向量存储检索器：加上时间因素</li>
 </ul>
 <h3 id="请求拆分多索引MultiQueryRetriever"><a href="#请求拆分多索引MultiQueryRetriever" class="headerlink" title="请求拆分多索引MultiQueryRetriever"></a>请求拆分多索引MultiQueryRetriever</h3><p>通过请求拆分多索，生成多维度的查询输入，其本身是一种增强了的检索器，可以被RetrievalQAWithSourcesChain所引用</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token comment"># MultiQueryRetriever请求拆分多索引</span>
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>vectorstores <span class="token keyword">import</span> Chroma
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>document_loaders <span class="token keyword">import</span> WebBaseLoader
-<span class="token keyword">from</span> langchain_huggingface <span class="token keyword">import</span> HuggingFaceEmbeddings
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>text_splitter <span class="token keyword">import</span> RecursiveCharacterTextSplitter
-
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-loader <span class="token operator">=</span> WebBaseLoader<span class="token punctuation">(</span><span class="token string">"https://chatgptzhanghao.com/"</span><span class="token punctuation">)</span>
-data <span class="token operator">=</span> loader<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 切割文档</span>
-text_splitter <span class="token operator">=</span> RecursiveCharacterTextSplitter<span class="token punctuation">(</span>
-    chunk_size <span class="token operator">=</span> <span class="token number">500</span><span class="token punctuation">,</span>
-    chunk_overlap <span class="token operator">=</span> <span class="token number">20</span>
-<span class="token punctuation">)</span>
-splits <span class="token operator">=</span> text_splitter<span class="token punctuation">.</span>split_documents<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
-
-<span class="token comment"># 又使用HuggingFaceEmbeddings了，之前报错访问不上，是因为网站被墙了，需要梯子才能上去</span>
-embeddings <span class="token operator">=</span> HuggingFaceEmbeddings<span class="token punctuation">(</span>
-    model_name<span class="token operator">=</span><span class="token string">"sentence-transformers/all-mpnet-base-v2"</span><span class="token punctuation">,</span>
-    <span class="token comment"># sentence-transformers/all-mpnet-base-v2 或 sentence-transformers/all-MiniLM-L6-v2</span>
-    model_kwargs<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">'device'</span><span class="token punctuation">:</span> <span class="token string">'cpu'</span><span class="token punctuation">&#125;</span>
-<span class="token punctuation">)</span>
-<span class="token comment"># 初始化向量数据库</span>
-db <span class="token operator">=</span> Chroma<span class="token punctuation">.</span>from_documents<span class="token punctuation">(</span>splits<span class="token punctuation">,</span>embeddings<span class="token punctuation">)</span>
-
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>retrievers<span class="token punctuation">.</span>multi_query <span class="token keyword">import</span> MultiQueryRetriever
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 创建多维度提问查询</span>
-retriever <span class="token operator">=</span> MultiQueryRetriever<span class="token punctuation">.</span>from_llm<span class="token punctuation">(</span>
-    retriever<span class="token operator">=</span>db<span class="token punctuation">.</span>as_retriever<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    llm <span class="token operator">=</span> llm
-<span class="token punctuation">)</span>
-
-question <span class="token operator">=</span> <span class="token string">"什么是GPT?"</span>
-
-<span class="token keyword">import</span> logging
-logging<span class="token punctuation">.</span>basicConfig<span class="token punctuation">(</span><span class="token punctuation">)</span>
-logging<span class="token punctuation">.</span>getLogger<span class="token punctuation">(</span><span class="token string">"langchain.retrievers.multi_query"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setLevel<span class="token punctuation">(</span>logging<span class="token punctuation">.</span>INFO<span class="token punctuation">)</span>
-
-response <span class="token operator">=</span> retriever<span class="token punctuation">.</span>get_relevant_documents<span class="token punctuation">(</span>query<span class="token operator">=</span>question<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token builtin">len</span><span class="token punctuation">(</span>response<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token comment"># print(response)</span>
-
-<span class="token comment"># INFO:langchain.retrievers.multi_query:Generated queries: ['1. 请解释GPT的基本概念和工作原理。', '2. GPT模型的定义及其主要应用领域有哪些？', '3. 人工智能中的GPT指的是什么，它有哪些技术特点？']</span>
-<span class="token comment"># 5</span>
-
-<span class="token comment"># 可以从日志看出来，这里将我的问题已经拆分出了三个问题</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># MultiQueryRetriever请求拆分多索引</span></span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Chroma</span><br><span class="line"><span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> WebBaseLoader</span><br><span class="line"><span class="keyword">from</span> langchain_huggingface <span class="keyword">import</span> HuggingFaceEmbeddings</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter</span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line">loader = WebBaseLoader(<span class="string">&quot;https://chatgptzhanghao.com/&quot;</span>)</span><br><span class="line">data = loader.load()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 切割文档</span></span><br><span class="line">text_splitter = RecursiveCharacterTextSplitter(</span><br><span class="line">    chunk_size = <span class="number">500</span>,</span><br><span class="line">    chunk_overlap = <span class="number">20</span></span><br><span class="line">)</span><br><span class="line">splits = text_splitter.split_documents(data)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 又使用HuggingFaceEmbeddings了，之前报错访问不上，是因为网站被墙了，需要梯子才能上去</span></span><br><span class="line">embeddings = HuggingFaceEmbeddings(</span><br><span class="line">    model_name=<span class="string">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span>,</span><br><span class="line">    <span class="comment"># sentence-transformers/all-mpnet-base-v2 或 sentence-transformers/all-MiniLM-L6-v2</span></span><br><span class="line">    model_kwargs=&#123;<span class="string">&#x27;device&#x27;</span>: <span class="string">&#x27;cpu&#x27;</span>&#125;</span><br><span class="line">)</span><br><span class="line"><span class="comment"># 初始化向量数据库</span></span><br><span class="line">db = Chroma.from_documents(splits,embeddings)</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> langchain.retrievers.multi_query <span class="keyword">import</span> MultiQueryRetriever</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建多维度提问查询</span></span><br><span class="line">retriever = MultiQueryRetriever.from_llm(</span><br><span class="line">    retriever=db.as_retriever(),</span><br><span class="line">    llm = llm</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">question = <span class="string">&quot;什么是GPT?&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> logging</span><br><span class="line">logging.basicConfig()</span><br><span class="line">logging.getLogger(<span class="string">&quot;langchain.retrievers.multi_query&quot;</span>).setLevel(logging.INFO)</span><br><span class="line"></span><br><span class="line">response = retriever.get_relevant_documents(query=question)</span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">len</span>(response))</span><br><span class="line"><span class="comment"># print(response)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># INFO:langchain.retrievers.multi_query:Generated queries: [&#x27;1. 请解释GPT的基本概念和工作原理。&#x27;, &#x27;2. GPT模型的定义及其主要应用领域有哪些？&#x27;, &#x27;3. 人工智能中的GPT指的是什么，它有哪些技术特点？&#x27;]</span></span><br><span class="line"><span class="comment"># 5</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 可以从日志看出来，这里将我的问题已经拆分出了三个问题</span></span><br></pre></td></tr></table></figure>
 
 <h3 id="上下文压缩compress"><a href="#上下文压缩compress" class="headerlink" title="上下文压缩compress"></a>上下文压缩compress</h3><p>传统的retriever查询时，会将相关块全部返回，但是一个文件块往往有几百的chunk_size大小，内容非常多，导致查询不精准</p>
 <p>上下文压缩索引器本身也是利用LLM，给每个文件块生成摘要</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> langchain<span class="token punctuation">.</span>text_splitter <span class="token keyword">import</span> CharacterTextSplitter
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>embeddings <span class="token keyword">import</span> HuggingFaceEmbeddings
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>vectorstores <span class="token keyword">import</span> FAISS
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>document_loaders <span class="token keyword">import</span> TextLoader
-
-<span class="token comment"># 文档加载和分割</span>
-documents <span class="token operator">=</span> TextLoader<span class="token punctuation">(</span><span class="token string">'story.txt'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token punctuation">)</span>
-text_splitter <span class="token operator">=</span> CharacterTextSplitter<span class="token punctuation">(</span>chunk_size<span class="token operator">=</span><span class="token number">500</span><span class="token punctuation">,</span>chunk_overlap<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
-texts <span class="token operator">=</span> text_splitter<span class="token punctuation">.</span>split_documents<span class="token punctuation">(</span>documents<span class="token punctuation">)</span>
-
-<span class="token comment"># 创建db与检索器</span>
-embeddings <span class="token operator">=</span> HuggingFaceEmbeddings<span class="token punctuation">(</span>model_name<span class="token operator">=</span><span class="token string">"sentence-transformers/all-mpnet-base-v2"</span><span class="token punctuation">,</span>model_kwargs<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">'device'</span><span class="token punctuation">:</span> <span class="token string">'cpu'</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-retriever <span class="token operator">=</span> FAISS<span class="token punctuation">.</span>from_documents<span class="token punctuation">(</span>texts<span class="token punctuation">,</span>embeddings<span class="token punctuation">)</span><span class="token punctuation">.</span>as_retriever<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 此时的检索器会返回大段文字</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>retriever<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"火星地下城怎么样了"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token comment"># page_content='在遥远的未来，人类已突破星际航行的限制，却因资源争夺陷入新的危机。年轻的天文学家艾琳在废弃的月球观测站发现了一份古老的星图，记载着传说中能平衡宇宙能量的"星核"坐标。然而，这份星图被加密成三段，分别藏在三个不同文明的遗迹中：</span>
-<span class="token comment"># 艾琳与机器人伙伴K-7潜入火星废弃的地下城，这里曾是机械文明的科研中心。他们破解了由齿轮和激光组成的谜题，获得第一段星图碎片，但触发警报后被迫逃离，碎片被神秘组织"黑曜石"抢走。</span>
-<span class="token comment"># 为追回碎片，艾琳前往木卫二的液态海洋基地。这里曾是生物文明培育共生生命的实验室，她通过与发光水母般的生物建立精神链接，解读出第二段星图，却因能量波动导致基地崩塌，碎片再次遗失。</span>
-<span class="token comment"># 最终，艾琳来到漂浮在土星环中的古老空间站。这里曾是能量文明操控宇宙能量的核心，她必须同时平衡三股相反的能量流才能获取最后一段星图。成功瞬间，空间站开始解体，而"黑曜石"已布下陷阱……</span>
-<span class="token comment"># 当艾琳集齐所有碎片时，发现星图指向的并非星核，而是人类自身——过度依赖外部能量导致文明失衡。真正的解决方案是关闭所有星际引擎，让宇宙自然修复。最终，艾琳选择销毁星图，与K-7驾驶飞船驶向未知，留下悬念：人类能否学会与宇宙共存？' metadata=&#123;'source': 'story.txt'&#125;</span>
-
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>retrievers <span class="token keyword">import</span> ContextualCompressionRetriever
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>retrievers<span class="token punctuation">.</span>document_compressors <span class="token keyword">import</span> LLMChainExtractor
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 压缩器</span>
-compressor <span class="token operator">=</span> LLMChainExtractor<span class="token punctuation">.</span>from_llm<span class="token punctuation">(</span>llm<span class="token punctuation">)</span>
-<span class="token comment"># 创建压缩索引器</span>
-compression_retriever <span class="token operator">=</span> ContextualCompressionRetriever<span class="token punctuation">(</span>
-    base_compressor<span class="token operator">=</span>compressor<span class="token punctuation">,</span>
-    base_retriever<span class="token operator">=</span>retriever
-<span class="token punctuation">)</span>
-
-compressd_docs <span class="token operator">=</span> compression_retriever<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"火星地下城怎么样了"</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>compressd_docs<span class="token punctuation">)</span>
-
-<span class="token comment"># [Document(metadata=&#123;'source': 'story.txt'&#125;, page_content='艾琳与机器人伙伴K-7潜入火星废弃的地下城，这里曾是机械文明的科研中心。他们破解了由齿轮和激光组成的谜题，获得第一段星图碎片，但触发警报后被迫逃离，碎片被神秘组织"黑曜石"抢走。')]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> CharacterTextSplitter</span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> FAISS</span><br><span class="line"><span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"></span><br><span class="line"><span class="comment"># 文档加载和分割</span></span><br><span class="line">documents = TextLoader(<span class="string">&#x27;story.txt&#x27;</span>).load()</span><br><span class="line">text_splitter = CharacterTextSplitter(chunk_size=<span class="number">500</span>,chunk_overlap=<span class="number">0</span>)</span><br><span class="line">texts = text_splitter.split_documents(documents)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建db与检索器</span></span><br><span class="line">embeddings = HuggingFaceEmbeddings(model_name=<span class="string">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span>,model_kwargs=&#123;<span class="string">&#x27;device&#x27;</span>: <span class="string">&#x27;cpu&#x27;</span>&#125;)</span><br><span class="line">retriever = FAISS.from_documents(texts,embeddings).as_retriever()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 此时的检索器会返回大段文字</span></span><br><span class="line"><span class="built_in">print</span>(retriever.invoke(<span class="string">&quot;火星地下城怎么样了&quot;</span>)[<span class="number">0</span>])</span><br><span class="line"><span class="comment"># page_content=&#x27;在遥远的未来，人类已突破星际航行的限制，却因资源争夺陷入新的危机。年轻的天文学家艾琳在废弃的月球观测站发现了一份古老的星图，记载着传说中能平衡宇宙能量的&quot;星核&quot;坐标。然而，这份星图被加密成三段，分别藏在三个不同文明的遗迹中：</span></span><br><span class="line"><span class="comment"># 艾琳与机器人伙伴K-7潜入火星废弃的地下城，这里曾是机械文明的科研中心。他们破解了由齿轮和激光组成的谜题，获得第一段星图碎片，但触发警报后被迫逃离，碎片被神秘组织&quot;黑曜石&quot;抢走。</span></span><br><span class="line"><span class="comment"># 为追回碎片，艾琳前往木卫二的液态海洋基地。这里曾是生物文明培育共生生命的实验室，她通过与发光水母般的生物建立精神链接，解读出第二段星图，却因能量波动导致基地崩塌，碎片再次遗失。</span></span><br><span class="line"><span class="comment"># 最终，艾琳来到漂浮在土星环中的古老空间站。这里曾是能量文明操控宇宙能量的核心，她必须同时平衡三股相反的能量流才能获取最后一段星图。成功瞬间，空间站开始解体，而&quot;黑曜石&quot;已布下陷阱……</span></span><br><span class="line"><span class="comment"># 当艾琳集齐所有碎片时，发现星图指向的并非星核，而是人类自身——过度依赖外部能量导致文明失衡。真正的解决方案是关闭所有星际引擎，让宇宙自然修复。最终，艾琳选择销毁星图，与K-7驾驶飞船驶向未知，留下悬念：人类能否学会与宇宙共存？&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;story.txt&#x27;&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ContextualCompressionRetriever</span><br><span class="line"><span class="keyword">from</span> langchain.retrievers.document_compressors <span class="keyword">import</span> LLMChainExtractor</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 压缩器</span></span><br><span class="line">compressor = LLMChainExtractor.from_llm(llm)</span><br><span class="line"><span class="comment"># 创建压缩索引器</span></span><br><span class="line">compression_retriever = ContextualCompressionRetriever(</span><br><span class="line">    base_compressor=compressor,</span><br><span class="line">    base_retriever=retriever</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">compressd_docs = compression_retriever.invoke(<span class="string">&quot;火星地下城怎么样了&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(compressd_docs)</span><br><span class="line"></span><br><span class="line"><span class="comment"># [Document(metadata=&#123;&#x27;source&#x27;: &#x27;story.txt&#x27;&#125;, page_content=&#x27;艾琳与机器人伙伴K-7潜入火星废弃的地下城，这里曾是机械文明的科研中心。他们破解了由齿轮和激光组成的谜题，获得第一段星图碎片，但触发警报后被迫逃离，碎片被神秘组织&quot;黑曜石&quot;抢走。&#x27;)]</span></span><br></pre></td></tr></table></figure>
 
 <h3 id="元数据过滤器self-querying（需要openai"><a href="#元数据过滤器self-querying（需要openai" class="headerlink" title="元数据过滤器self-querying（需要openai"></a>元数据过滤器self-querying（需要openai</h3><p>自查询检索器是一种利用llm链编写自我查询的检索器，比如”我想看一部昆汀导演的电影”，检索器会将我的问题分解为一个查询和一个过滤器，查询”电影”，过滤”导演是昆汀”</p>
 <p>需要使用<strong>langchain.retrievers.self_query.base.SelfQueryRetriever</strong>类，这个类支持openai+chroma，但是我因为使用的是HuggingFace免费的嵌入式模型，需要使用Weaviate+HuggingFace</p>
 <p><strong>官方文档：<a target="_blank" rel="noopener" href="https://docs.weaviate.io/weaviate/quickstart?import=vectorization#create-a-collection">https://docs.weaviate.io/weaviate/quickstart?import=vectorization#create-a-collection</a></strong></p>
 <p>本例是失败了，因为weaviate最新的4.x的用法与langchain的Weaviate不兼容，运行到后面就报错了</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python">pip install weaviate<span class="token operator">-</span>client<span class="token punctuation">[</span>agent<span class="token punctuation">]</span>
-docker run <span class="token operator">-</span>itd <span class="token operator">-</span>p <span class="token number">8080</span><span class="token punctuation">:</span><span class="token number">8080</span> <span class="token operator">-</span>p <span class="token number">50051</span><span class="token punctuation">:</span><span class="token number">50051</span> cr<span class="token punctuation">.</span>weaviate<span class="token punctuation">.</span>io<span class="token operator">/</span>semitechnologies<span class="token operator">/</span>weaviate<span class="token punctuation">:</span><span class="token number">1.34</span><span class="token number">.4</span>
-
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>schema <span class="token keyword">import</span> Document  
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>embeddings <span class="token keyword">import</span> HuggingFaceEmbeddings  
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>document_loaders <span class="token keyword">import</span> TextLoader
-<span class="token keyword">import</span> weaviate
-
-<span class="token comment"># 准备向量数据库</span>
-<span class="token comment"># 初始化Weaviate客户端</span>
-client <span class="token operator">=</span> weaviate<span class="token punctuation">.</span>connect_to_local<span class="token punctuation">(</span>
-    host<span class="token operator">=</span><span class="token string">"localhost"</span><span class="token punctuation">,</span>
-    port<span class="token operator">=</span><span class="token number">8080</span><span class="token punctuation">,</span>
-    grpc_port<span class="token operator">=</span><span class="token number">50051</span><span class="token punctuation">,</span>
-    skip_init_checks<span class="token operator">=</span><span class="token boolean">True</span>
-<span class="token punctuation">)</span>
-collection_name <span class="token operator">=</span> <span class="token string">"Movie"</span> <span class="token comment"># 创建集合</span>
-
-embeddings <span class="token operator">=</span> HuggingFaceEmbeddings<span class="token punctuation">(</span>model_name<span class="token operator">=</span><span class="token string">"sentence-transformers/all-mpnet-base-v2"</span><span class="token punctuation">,</span>model_kwargs<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">'device'</span><span class="token punctuation">:</span> <span class="token string">'cpu'</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-docs <span class="token operator">=</span> TextLoader<span class="token punctuation">(</span><span class="token string">"movie_document.txt"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token keyword">import</span> lark
-<span class="token keyword">from</span> langchain_deepseek <span class="token keyword">import</span> ChatDeepSeek
-<span class="token keyword">from</span> dotenv <span class="token keyword">import</span> load_dotenv
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>retrievers<span class="token punctuation">.</span>self_query<span class="token punctuation">.</span>base <span class="token keyword">import</span> SelfQueryRetriever
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains<span class="token punctuation">.</span>query_constructor<span class="token punctuation">.</span>base <span class="token keyword">import</span> AttributeInfo
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>vectorstores <span class="token keyword">import</span> Weaviate
-
-<span class="token comment"># 使用AttributeInfo定义元数据结构,告诉自查询检索器你的元数据中有哪些字段</span>
-metadata_field_info <span class="token operator">=</span> <span class="token punctuation">[</span>
-    AttributeInfo<span class="token punctuation">(</span>
-        name<span class="token operator">=</span><span class="token string">"title"</span><span class="token punctuation">,</span>
-        description<span class="token operator">=</span><span class="token string">"电影的名称"</span><span class="token punctuation">,</span>
-        <span class="token builtin">type</span><span class="token operator">=</span><span class="token string">"string"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">)</span><span class="token punctuation">,</span>
-    AttributeInfo<span class="token punctuation">(</span>
-        name<span class="token operator">=</span><span class="token string">"year"</span><span class="token punctuation">,</span>
-        description<span class="token operator">=</span><span class="token string">"电影的上映年份"</span><span class="token punctuation">,</span>
-        <span class="token builtin">type</span><span class="token operator">=</span><span class="token string">"integer"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">)</span><span class="token punctuation">,</span>
-    AttributeInfo<span class="token punctuation">(</span>
-        name<span class="token operator">=</span><span class="token string">"rating"</span><span class="token punctuation">,</span>
-        description<span class="token operator">=</span><span class="token string">"电影的评分，从0到10"</span><span class="token punctuation">,</span>
-        <span class="token builtin">type</span><span class="token operator">=</span><span class="token string">"float"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">)</span><span class="token punctuation">,</span>
-    AttributeInfo<span class="token punctuation">(</span>
-        name<span class="token operator">=</span><span class="token string">"director"</span><span class="token punctuation">,</span>
-        description<span class="token operator">=</span><span class="token string">"电影的导演"</span><span class="token punctuation">,</span>
-        <span class="token builtin">type</span><span class="token operator">=</span><span class="token string">"string"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">)</span><span class="token punctuation">,</span>
-    AttributeInfo<span class="token punctuation">(</span>
-        name<span class="token operator">=</span><span class="token string">"genre"</span><span class="token punctuation">,</span>
-        description<span class="token operator">=</span><span class="token string">"电影的类型，如：动作、犯罪、西部等"</span><span class="token punctuation">,</span>
-        <span class="token builtin">type</span><span class="token operator">=</span><span class="token string">"string"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token punctuation">]</span>
-document_content_description <span class="token operator">=</span> <span class="token string">"电影摘要"</span>
-index_name <span class="token operator">=</span> <span class="token string">"Movie"</span>  <span class="token comment"># 索引名称</span>
-text_key <span class="token operator">=</span> <span class="token string">"content"</span>  <span class="token comment"># 存储文档文本的字段名</span>
-attributes <span class="token operator">=</span> <span class="token punctuation">[</span>info<span class="token punctuation">.</span>name <span class="token keyword">for</span> info <span class="token keyword">in</span> metadata_field_info<span class="token punctuation">]</span>
-
-<span class="token comment"># 初始化Weaviate向量存储</span>
-db <span class="token operator">=</span> Weaviate<span class="token punctuation">(</span>
-    client<span class="token operator">=</span>client<span class="token punctuation">,</span>
-    index_name<span class="token operator">=</span>index_name<span class="token punctuation">,</span>
-    text_key<span class="token operator">=</span>text_key<span class="token punctuation">,</span>
-    embedding<span class="token operator">=</span>embeddings<span class="token punctuation">,</span>
-    attributes<span class="token operator">=</span>attributes  <span class="token comment"># 指定要查询的属性</span>
-<span class="token punctuation">)</span>
-
-db<span class="token punctuation">.</span>add_documents<span class="token punctuation">(</span>docs<span class="token punctuation">)</span> <span class="token comment"># 添加文档</span>
-
-load_dotenv<span class="token punctuation">(</span><span class="token punctuation">)</span>
-llm <span class="token operator">=</span> ChatDeepSeek<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"deepseek-chat"</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 创建查询器，将请求进行拆分并筛选</span>
-retriever <span class="token operator">=</span> SelfQueryRetriever<span class="token punctuation">.</span>from_llm<span class="token punctuation">(</span>
-    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
-    vectorstore<span class="token operator">=</span>db<span class="token punctuation">,</span>
-    document_contents<span class="token operator">=</span>document_content_description<span class="token punctuation">,</span>
-    metadata_field_info<span class="token operator">=</span>metadata_field_info<span class="token punctuation">,</span>
-    verbose<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>retriever<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"哪些电影和犯罪有关？"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line">pip install weaviate-client[agent]</span><br><span class="line">docker run -itd -p <span class="number">8080</span>:<span class="number">8080</span> -p <span class="number">50051</span>:<span class="number">50051</span> cr.weaviate.io/semitechnologies/weaviate:<span class="number">1.34</span><span class="number">.4</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document  </span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings  </span><br><span class="line"><span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"><span class="keyword">import</span> weaviate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备向量数据库</span></span><br><span class="line"><span class="comment"># 初始化Weaviate客户端</span></span><br><span class="line">client = weaviate.connect_to_local(</span><br><span class="line">    host=<span class="string">&quot;localhost&quot;</span>,</span><br><span class="line">    port=<span class="number">8080</span>,</span><br><span class="line">    grpc_port=<span class="number">50051</span>,</span><br><span class="line">    skip_init_checks=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line">collection_name = <span class="string">&quot;Movie&quot;</span> <span class="comment"># 创建集合</span></span><br><span class="line"></span><br><span class="line">embeddings = HuggingFaceEmbeddings(model_name=<span class="string">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span>,model_kwargs=&#123;<span class="string">&#x27;device&#x27;</span>: <span class="string">&#x27;cpu&#x27;</span>&#125;)</span><br><span class="line">docs = TextLoader(<span class="string">&quot;movie_document.txt&quot;</span>).load()</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> lark</span><br><span class="line"><span class="keyword">from</span> langchain_deepseek <span class="keyword">import</span> ChatDeepSeek</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line"><span class="keyword">from</span> langchain.retrievers.self_query.base <span class="keyword">import</span> SelfQueryRetriever</span><br><span class="line"><span class="keyword">from</span> langchain.chains.query_constructor.base <span class="keyword">import</span> AttributeInfo</span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Weaviate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用AttributeInfo定义元数据结构,告诉自查询检索器你的元数据中有哪些字段</span></span><br><span class="line">metadata_field_info = [</span><br><span class="line">    AttributeInfo(</span><br><span class="line">        name=<span class="string">&quot;title&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;电影的名称&quot;</span>,</span><br><span class="line">        <span class="built_in">type</span>=<span class="string">&quot;string&quot;</span>,</span><br><span class="line">    ),</span><br><span class="line">    AttributeInfo(</span><br><span class="line">        name=<span class="string">&quot;year&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;电影的上映年份&quot;</span>,</span><br><span class="line">        <span class="built_in">type</span>=<span class="string">&quot;integer&quot;</span>,</span><br><span class="line">    ),</span><br><span class="line">    AttributeInfo(</span><br><span class="line">        name=<span class="string">&quot;rating&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;电影的评分，从0到10&quot;</span>,</span><br><span class="line">        <span class="built_in">type</span>=<span class="string">&quot;float&quot;</span>,</span><br><span class="line">    ),</span><br><span class="line">    AttributeInfo(</span><br><span class="line">        name=<span class="string">&quot;director&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;电影的导演&quot;</span>,</span><br><span class="line">        <span class="built_in">type</span>=<span class="string">&quot;string&quot;</span>,</span><br><span class="line">    ),</span><br><span class="line">    AttributeInfo(</span><br><span class="line">        name=<span class="string">&quot;genre&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;电影的类型，如：动作、犯罪、西部等&quot;</span>,</span><br><span class="line">        <span class="built_in">type</span>=<span class="string">&quot;string&quot;</span>,</span><br><span class="line">    ),</span><br><span class="line">]</span><br><span class="line">document_content_description = <span class="string">&quot;电影摘要&quot;</span></span><br><span class="line">index_name = <span class="string">&quot;Movie&quot;</span>  <span class="comment"># 索引名称</span></span><br><span class="line">text_key = <span class="string">&quot;content&quot;</span>  <span class="comment"># 存储文档文本的字段名</span></span><br><span class="line">attributes = [info.name <span class="keyword">for</span> info <span class="keyword">in</span> metadata_field_info]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化Weaviate向量存储</span></span><br><span class="line">db = Weaviate(</span><br><span class="line">    client=client,</span><br><span class="line">    index_name=index_name,</span><br><span class="line">    text_key=text_key,</span><br><span class="line">    embedding=embeddings,</span><br><span class="line">    attributes=attributes  <span class="comment"># 指定要查询的属性</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">db.add_documents(docs) <span class="comment"># 添加文档</span></span><br><span class="line"></span><br><span class="line">load_dotenv()</span><br><span class="line">llm = ChatDeepSeek(model=<span class="string">&quot;deepseek-chat&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建查询器，将请求进行拆分并筛选</span></span><br><span class="line">retriever = SelfQueryRetriever.from_llm(</span><br><span class="line">    llm=llm,</span><br><span class="line">    vectorstore=db,</span><br><span class="line">    document_contents=document_content_description,</span><br><span class="line">    metadata_field_info=metadata_field_info,</span><br><span class="line">    verbose=<span class="literal">True</span>,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(retriever.invoke(<span class="string">&quot;哪些电影和犯罪有关？&quot;</span>))</span><br></pre></td></tr></table></figure>
 
 <h3 id="时间加权向量存储检索器"><a href="#时间加权向量存储检索器" class="headerlink" title="时间加权向量存储检索器"></a>时间加权向量存储检索器</h3><p>TimeWeightedVectorStoreRetriever不仅考虑语义相似度，还考虑时间因素。最近访问过的文档会被优先返回。</p>
 <p>语义越接近，衰减率越低，过去的小时数越小，越先检索到</p>
-<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> faiss
-<span class="token keyword">from</span> datetime <span class="token keyword">import</span> datetime<span class="token punctuation">,</span>timedelta
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>docstore <span class="token keyword">import</span> InMemoryDocstore
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>embeddings <span class="token keyword">import</span> HuggingFaceEmbeddings
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>retrievers <span class="token keyword">import</span> TimeWeightedVectorStoreRetriever
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>schema <span class="token keyword">import</span> Document
-<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>vectorstores <span class="token keyword">import</span> FAISS
-
-<span class="token comment"># 初始化HuggingFace嵌入模型</span>
-embeddings <span class="token operator">=</span> HuggingFaceEmbeddings<span class="token punctuation">(</span>model_name<span class="token operator">=</span><span class="token string">"sentence-transformers/all-mpnet-base-v2"</span><span class="token punctuation">,</span>model_kwargs<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">'device'</span><span class="token punctuation">:</span> <span class="token string">'cpu'</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-embedding_size <span class="token operator">=</span> <span class="token number">768</span>
-
-<span class="token comment"># IndexFlatL2是简单的暴力搜索索引，适合小规模数据</span>
-index <span class="token operator">=</span> faiss<span class="token punctuation">.</span>IndexFlatL2<span class="token punctuation">(</span>embedding_size<span class="token punctuation">)</span>
-
-<span class="token comment"># 创建FAISS向量存储</span>
-vectorstore <span class="token operator">=</span> FAISS<span class="token punctuation">(</span>embeddings<span class="token punctuation">.</span>embed_query<span class="token punctuation">,</span>index<span class="token punctuation">,</span>InMemoryDocstore<span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 创建时间加权的向量检索器，时间衰减率</span>
-retriever <span class="token operator">=</span> TimeWeightedVectorStoreRetriever<span class="token punctuation">(</span>vectorstore<span class="token operator">=</span>vectorstore<span class="token punctuation">,</span>decay_rate<span class="token operator">=</span><span class="token number">.00000001</span><span class="token punctuation">,</span>k<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 计算昨天的日期时间</span>
-yesterday <span class="token operator">=</span> datetime<span class="token punctuation">.</span>now<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> timedelta<span class="token punctuation">(</span>days<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
-<span class="token comment"># 向检索器添加文档</span>
-retriever<span class="token punctuation">.</span>add_documents<span class="token punctuation">(</span><span class="token punctuation">[</span>Document<span class="token punctuation">(</span>page_content<span class="token operator">=</span><span class="token string">"hello,world"</span><span class="token punctuation">,</span>metadata<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">"last_accessed_at"</span><span class="token punctuation">:</span> yesterday<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-retriever<span class="token punctuation">.</span>add_documents<span class="token punctuation">(</span><span class="token punctuation">[</span>Document<span class="token punctuation">(</span>page_content<span class="token operator">=</span><span class="token string">"hello,food"</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>retriever<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 如果衰减率很小，就会搜索出hello,world</span>
-<span class="token comment"># [Document(metadata=&#123;'last_accessed_at': datetime.datetime(2025, 12, 11, 11, 27, 34, 763851), 'created_at': datetime.datetime(2025, 12, 11, 11, 27, 34, 390809), 'buffer_idx': 0&#125;, page_content='hello,world')]</span>
-
-<span class="token comment"># 如果衰减率比较大，就会搜索出hello,food，因为hello,world是昨天的数据</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> faiss</span><br><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime,timedelta</span><br><span class="line"><span class="keyword">from</span> langchain.docstore <span class="keyword">import</span> InMemoryDocstore</span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> TimeWeightedVectorStoreRetriever</span><br><span class="line"><span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document</span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> FAISS</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化HuggingFace嵌入模型</span></span><br><span class="line">embeddings = HuggingFaceEmbeddings(model_name=<span class="string">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span>,model_kwargs=&#123;<span class="string">&#x27;device&#x27;</span>: <span class="string">&#x27;cpu&#x27;</span>&#125;)</span><br><span class="line">embedding_size = <span class="number">768</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># IndexFlatL2是简单的暴力搜索索引，适合小规模数据</span></span><br><span class="line">index = faiss.IndexFlatL2(embedding_size)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建FAISS向量存储</span></span><br><span class="line">vectorstore = FAISS(embeddings.embed_query,index,InMemoryDocstore(&#123;&#125;),&#123;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建时间加权的向量检索器，时间衰减率</span></span><br><span class="line">retriever = TimeWeightedVectorStoreRetriever(vectorstore=vectorstore,decay_rate=<span class="number">.00000001</span>,k=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 计算昨天的日期时间</span></span><br><span class="line">yesterday = datetime.now() - timedelta(days=<span class="number">1</span>)</span><br><span class="line"><span class="comment"># 向检索器添加文档</span></span><br><span class="line">retriever.add_documents([Document(page_content=<span class="string">&quot;hello,world&quot;</span>,metadata=&#123;<span class="string">&quot;last_accessed_at&quot;</span>: yesterday&#125;)])</span><br><span class="line">retriever.add_documents([Document(page_content=<span class="string">&quot;hello,food&quot;</span>)])</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(retriever.invoke(<span class="string">&quot;hello&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果衰减率很小，就会搜索出hello,world</span></span><br><span class="line"><span class="comment"># [Document(metadata=&#123;&#x27;last_accessed_at&#x27;: datetime.datetime(2025, 12, 11, 11, 27, 34, 763851), &#x27;created_at&#x27;: datetime.datetime(2025, 12, 11, 11, 27, 34, 390809), &#x27;buffer_idx&#x27;: 0&#125;, page_content=&#x27;hello,world&#x27;)]</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果衰减率比较大，就会搜索出hello,food，因为hello,world是昨天的数据</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6801,18 +6595,6 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6896,13 +6678,13 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7277,13 +7059,13 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7523,13 +7305,13 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8228,13 +8010,13 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8778,9 +8560,9 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8788,9 +8570,9 @@ retriever<span class="token punctuation">.</span>add_documents<span class="token
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

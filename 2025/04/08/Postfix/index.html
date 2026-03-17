@@ -205,12 +205,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -218,7 +220,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -554,197 +555,20 @@
 <p><strong>邮件发送与接收流程</strong></p>
 <p>同邮件服务器注册的两个账号的邮件传输：<br>1.用户客户端MUA发送邮件到邮件服务器25端口，DNS查询qq.com的MX记录，如mail.qq.com<br>2.mail.qq.com查找163.com的MX DNS记录，通过MDA将邮件relay到mail.163.com<br>3.目标客户端从mail.163.com将邮件下载下来</p>
 <h2 id="使用postfix搭建MTA"><a href="#使用postfix搭建MTA" class="headerlink" title="使用postfix搭建MTA"></a>使用postfix搭建MTA</h2><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250407132329098.png"></p>
-<h3 id="搭建dns服务器"><a href="#搭建dns服务器" class="headerlink" title="搭建dns服务器"></a>搭建dns服务器</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> unbound
-<span class="token function">vim</span> /etc/unbound/unbound.conf
-interface: <span class="token number">0.0</span>.0.0
-access-control: <span class="token number">0.0</span>.0.0/0 allow
+<h3 id="搭建dns服务器"><a href="#搭建dns服务器" class="headerlink" title="搭建dns服务器"></a>搭建dns服务器</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">yum -y install unbound</span><br><span class="line">vim /etc/unbound/unbound.conf</span><br><span class="line">interface: 0.0.0.0</span><br><span class="line">access-control: 0.0.0.0/0 allow</span><br><span class="line"></span><br><span class="line"><span class="comment"># 本地域配置</span></span><br><span class="line"><span class="built_in">cat</span> /etc/unbound/local.d/wangsheng.com.conf</span><br><span class="line">local-zone: <span class="string">&quot;wangsheng.com.&quot;</span> static</span><br><span class="line">local-data: <span class="string">&quot;wangsheng.com. IN SOA ns.wangsheng.com. root.wangsheng.com. 1 1h 1h 1h 1h&quot;</span></span><br><span class="line">local-data: <span class="string">&quot;wangsheng.com. IN NS ns.wangsheng.com.&quot;</span></span><br><span class="line">local-data: <span class="string">&quot;ns.wangsheng.com. IN A 10.163.2.100&quot;</span></span><br><span class="line"></span><br><span class="line">local-data: <span class="string">&quot;wangsheng.com. IN MX 0 mail.wangsheng.com.&quot;</span></span><br><span class="line">local-data: <span class="string">&quot;mail.wangsheng.com. IN A 10.163.2.106&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 转发域配置，忽略DNSSEC</span></span><br><span class="line"><span class="built_in">cat</span> /etc/unbound/conf.d/forward.com.conf</span><br><span class="line">server:</span><br><span class="line">domain-insecure: <span class="string">&quot;com.&quot;</span></span><br><span class="line">domain-insecure: <span class="string">&quot;net.&quot;</span></span><br><span class="line">domain-insecure: <span class="string">&quot;org.&quot;</span></span><br><span class="line">forward-zone:</span><br><span class="line">name: <span class="string">&quot;.&quot;</span></span><br><span class="line">forward-addr: 114.114.114.114</span><br><span class="line"></span><br><span class="line">unbound-checkconf</span><br><span class="line">unbound-control-setup</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> unbound --now</span><br><span class="line"></span><br><span class="line">host mail.wangsheng.com.</span><br><span class="line">mail.wangsheng.com has address 10.163.1.106</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 本地域配置</span>
-<span class="token function">cat</span> /etc/unbound/local.d/wangsheng.com.conf
-local-zone: <span class="token string">"wangsheng.com."</span> static
-local-data: <span class="token string">"wangsheng.com. IN SOA ns.wangsheng.com. root.wangsheng.com. 1 1h 1h 1h 1h"</span>
-local-data: <span class="token string">"wangsheng.com. IN NS ns.wangsheng.com."</span>
-local-data: <span class="token string">"ns.wangsheng.com. IN A 10.163.2.100"</span>
+<h3 id="postfix搭建SMTP邮件服务器"><a href="#postfix搭建SMTP邮件服务器" class="headerlink" title="postfix搭建SMTP邮件服务器"></a>postfix搭建SMTP邮件服务器</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">yum -y install postfix</span><br><span class="line"></span><br><span class="line"><span class="built_in">ls</span> /etc/postfix/</span><br><span class="line">access            dynamicmaps.cf.d/ main.cf           master.cf.proto   relocated</span><br><span class="line">canonical         generic           main.cf.proto     postfix-files     transport</span><br><span class="line">dynamicmaps.cf    header_checks     master.cf         postfix-files.d/  virtual</span><br><span class="line"><span class="comment"># 主要修改main.cf</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 Postfix 所有默认配置参数</span></span><br><span class="line">postconf -d</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置邮件服务器主机名（FQDN格式）</span></span><br><span class="line">postconf -e <span class="string">&quot;myhostname=mail.wangsheng.com&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义邮件服务器的域名（主域名部分）</span></span><br><span class="line">postconf -e <span class="string">&quot;mydomain=wangsheng.com&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置外发邮件的域名来源标识</span></span><br><span class="line">postconf -e <span class="string">&quot;myorigin=wangsheng.com&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 允许在所有网络接口上监听邮件请求</span></span><br><span class="line">postconf -e <span class="string">&quot;inet_interfaces=all&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定本机接收邮件的目标域名列表（逗号分隔）</span></span><br><span class="line">postconf -e <span class="string">&quot;mydestination=mail.wangsheng.com,localhost.wangsheng.com,localhost,wangsheng.com&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 允许所有IP地址通过本服务器转发邮件（生产环境需限制）</span></span><br><span class="line">postconf -e  <span class="string">&quot;mynetworks=0.0.0.0/0&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义允许邮件中转的域名/主机列表</span></span><br><span class="line">postconf -e <span class="string">&quot;relay_domains=mail.wangsheng.com,localhost.wangsheng.com,localhost,wangsheng.com&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置邮件存储格式为 Maildir</span></span><br><span class="line">postconf -e <span class="string">&quot;home_mailbox=Maildir/&quot;</span></span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld --now</span><br><span class="line">setenforce 0</span><br><span class="line">systemctl <span class="built_in">enable</span> postfix --now</span><br></pre></td></tr></table></figure>
 
-local-data: <span class="token string">"wangsheng.com. IN MX 0 mail.wangsheng.com."</span>
-local-data: <span class="token string">"mail.wangsheng.com. IN A 10.163.2.106"</span>
-
-<span class="token comment"># 转发域配置，忽略DNSSEC</span>
-<span class="token function">cat</span> /etc/unbound/conf.d/forward.com.conf
-server:
-domain-insecure: <span class="token string">"com."</span>
-domain-insecure: <span class="token string">"net."</span>
-domain-insecure: <span class="token string">"org."</span>
-forward-zone:
-name: <span class="token string">"."</span>
-forward-addr: <span class="token number">114.114</span>.114.114
-
-unbound-checkconf
-unbound-control-setup
-
-systemctl <span class="token builtin class-name">enable</span> unbound <span class="token parameter variable">--now</span>
-
-<span class="token function">host</span> mail.wangsheng.com.
-mail.wangsheng.com has address <span class="token number">10.163</span>.1.106<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="postfix搭建SMTP邮件服务器"><a href="#postfix搭建SMTP邮件服务器" class="headerlink" title="postfix搭建SMTP邮件服务器"></a>postfix搭建SMTP邮件服务器</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> postfix
-
-<span class="token function">ls</span> /etc/postfix/
-access            dynamicmaps.cf.d/ main.cf           master.cf.proto   relocated
-canonical         generic           main.cf.proto     postfix-files     transport
-dynamicmaps.cf    header_checks     master.cf         postfix-files.d/  virtual
-<span class="token comment"># 主要修改main.cf</span>
-
-<span class="token comment"># 查看 Postfix 所有默认配置参数</span>
-postconf <span class="token parameter variable">-d</span>
-
-<span class="token comment"># 设置邮件服务器主机名（FQDN格式）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"myhostname=mail.wangsheng.com"</span>
-
-<span class="token comment"># 定义邮件服务器的域名（主域名部分）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"mydomain=wangsheng.com"</span>
-
-<span class="token comment"># 设置外发邮件的域名来源标识</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"myorigin=wangsheng.com"</span>
-
-<span class="token comment"># 允许在所有网络接口上监听邮件请求</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"inet_interfaces=all"</span>
-
-<span class="token comment"># 指定本机接收邮件的目标域名列表（逗号分隔）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"mydestination=mail.wangsheng.com,localhost.wangsheng.com,localhost,wangsheng.com"</span>
-
-<span class="token comment"># 允许所有IP地址通过本服务器转发邮件（生产环境需限制）</span>
-postconf <span class="token parameter variable">-e</span>  <span class="token string">"mynetworks=0.0.0.0/0"</span>
-
-<span class="token comment"># 定义允许邮件中转的域名/主机列表</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"relay_domains=mail.wangsheng.com,localhost.wangsheng.com,localhost,wangsheng.com"</span>
-
-<span class="token comment"># 设置邮件存储格式为 Maildir</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"home_mailbox=Maildir/"</span>
-
-systemctl disable firewalld <span class="token parameter variable">--now</span>
-setenforce <span class="token number">0</span>
-systemctl <span class="token builtin class-name">enable</span> postfix <span class="token parameter variable">--now</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="测试发送邮件"><a href="#测试发送邮件" class="headerlink" title="测试发送邮件"></a>测试发送邮件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> mailx <span class="token comment"># centos7</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> s-nail <span class="token comment"># centos8及新版本</span>
-<span class="token builtin class-name">echo</span> <span class="token string">"this is a test message from local"</span>  <span class="token operator">|</span> s-nail <span class="token parameter variable">-s</span> <span class="token string">"Test Mail"</span> root@wangsheng.com
-<span class="token builtin class-name">echo</span> <span class="token string">"this is a test message from local"</span>  <span class="token operator">|</span> mail <span class="token parameter variable">-s</span> <span class="token string">"Test Mail"</span> root@wangsheng.com
-
-看一眼日志：
-<span class="token function">tail</span> <span class="token parameter variable">-f</span> /var/log/maillog
-Apr  <span class="token number">7</span> <span class="token number">18</span>:20:28 mail-client postfix/smtp<span class="token punctuation">[</span><span class="token number">16362</span><span class="token punctuation">]</span>: 82B045C17: <span class="token assign-left variable">to</span><span class="token operator">=</span><span class="token operator">&lt;</span>root@wangsheng.com<span class="token operator">></span>, <span class="token assign-left variable">relay</span><span class="token operator">=</span>mail.wangsheng.com<span class="token punctuation">[</span><span class="token number">10.163</span>.2.106<span class="token punctuation">]</span>:25, <span class="token assign-left variable">delay</span><span class="token operator">=</span><span class="token number">0.05</span>, <span class="token assign-left variable">delays</span><span class="token operator">=</span><span class="token number">0.02</span>/0.01/0/0.02, <span class="token assign-left variable">dsn</span><span class="token operator">=</span><span class="token number">2.0</span>.0, <span class="token assign-left variable">status</span><span class="token operator">=</span>sent <span class="token punctuation">(</span><span class="token number">250</span> <span class="token number">2.0</span>.0 Ok: queued as 80FA74052B1<span class="token punctuation">)</span>
-
-<span class="token comment"># 使用mutt查看邮件</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">mutt</span>
-<span class="token function">mutt</span> <span class="token parameter variable">-f</span> /root/Maildir
-q:Quit  d:Del  u:Undel  s:Save  m:Mail  r:Reply  g:Group  ?:Help
-   <span class="token number">1</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail
-   <span class="token number">2</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail
-   <span class="token number">3</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail
-   <span class="token number">4</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail
-   <span class="token number">5</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-   <span class="token number">6</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-   <span class="token number">7</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-   <span class="token number">8</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-   <span class="token number">9</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">10</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">11</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">12</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">13</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">14</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">15</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">16</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">17</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">18</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">19</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">20</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">21</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">22</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">23</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-  <span class="token number">24</span> N   Apr 07 root            <span class="token punctuation">(</span><span class="token number">0</span>.1K<span class="token punctuation">)</span> Test Mail from <span class="token builtin class-name">local</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="测试发送邮件"><a href="#测试发送邮件" class="headerlink" title="测试发送邮件"></a>测试发送邮件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">yum -y install mailx <span class="comment"># centos7</span></span><br><span class="line">yum -y install s-nail <span class="comment"># centos8及新版本</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;this is a test message from local&quot;</span>  | s-nail -s <span class="string">&quot;Test Mail&quot;</span> root@wangsheng.com</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;this is a test message from local&quot;</span>  | mail -s <span class="string">&quot;Test Mail&quot;</span> root@wangsheng.com</span><br><span class="line"></span><br><span class="line">看一眼日志：</span><br><span class="line"><span class="built_in">tail</span> -f /var/log/maillog</span><br><span class="line">Apr  7 18:20:28 mail-client postfix/smtp[16362]: 82B045C17: to=&lt;root@wangsheng.com&gt;, relay=mail.wangsheng.com[10.163.2.106]:25, delay=0.05, delays=0.02/0.01/0/0.02, dsn=2.0.0, status=sent (250 2.0.0 Ok: queued as 80FA74052B1)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用mutt查看邮件</span></span><br><span class="line">yum -y install mutt</span><br><span class="line">mutt -f /root/Maildir</span><br><span class="line">q:Quit  d:Del  u:Undel  s:Save  m:Mail  r:Reply  g:Group  ?:Help</span><br><span class="line">   1 N   Apr 07 root            (0.1K) Test Mail</span><br><span class="line">   2 N   Apr 07 root            (0.1K) Test Mail</span><br><span class="line">   3 N   Apr 07 root            (0.1K) Test Mail</span><br><span class="line">   4 N   Apr 07 root            (0.1K) Test Mail</span><br><span class="line">   5 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">   6 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">   7 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">   8 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">   9 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  10 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  11 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  12 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  13 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  14 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  15 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  16 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  17 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  18 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  19 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  20 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  21 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  22 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  23 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line">  24 N   Apr 07 root            (0.1K) Test Mail from <span class="built_in">local</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h2 id="使用dovecot搭建MRA"><a href="#使用dovecot搭建MRA" class="headerlink" title="使用dovecot搭建MRA"></a>使用dovecot搭建MRA</h2><p>使MUA可以通过MRA接受邮件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> dovecot
-
-<span class="token comment"># === Postfix 配置部分 ===</span>
-<span class="token comment"># 设置 Postfix 使用 Dovecot 作为 SASL 认证</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_type=dovecot"</span>
-<span class="token comment"># 指定 SASL 认证的 socket 路径（Dovecot 的认证服务路径）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_path=private/auth"</span>
-<span class="token comment"># 启用 SMTP 身份验证（允许客户端登录）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_auth_enable=yes"</span>
-<span class="token comment"># 设置本地 SASL 认证的域名（邮件服务器域名）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_local_domain=mail.wangsheng.com"</span>
-<span class="token comment"># 禁止匿名登录（强制要求有效凭证）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_security_options=noanonymous"</span>
-<span class="token comment"># 设置收件人过滤规则：允许本地网络、已认证用户，拒绝未经认证的目标</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_recipient_restrictions=permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination"</span>
-<span class="token comment"># 设置安全限制规则（与收件人规则类似，增强安全性）</span>
-postconf <span class="token parameter variable">-e</span> <span class="token string">"smtpd_sasl_security_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination"</span>
-
-<span class="token comment"># === Dovecot 配置部分 ===</span>
-<span class="token comment"># 启用 IMAP、POP3、LMTP 协议</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^#protocols =.*/protocols = imap pop3 lmtp/'</span> /etc/dovecot/dovecot.conf
-<span class="token comment"># 允许 Dovecot 监听所有 IPv4 和 IPv6 地址</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^#listen =.*/listen = *, ::/'</span> /etc/dovecot/dovecot.conf
-<span class="token comment"># 允许纯文本密码认证</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^#disable_plaintext_auth =.*/disable_plaintext_auth = no/'</span> /etc/dovecot/conf.d/10-auth.conf
-<span class="token comment"># 指定认证机制为明文（PLAIN）和登录（LOGIN）</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^auth_mechanisms =.*/auth_mechanisms = plain login/'</span> /etc/dovecot/conf.d/10-auth.conf
-<span class="token comment"># 设置邮件存储格式为 Maildir（邮件目录结构）</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s|^#mail_location =.*|mail_location = maildir:~/Maildir|"</span> /etc/dovecot/conf.d/10-mail.conf
-<span class="token comment"># 关闭 SSL/TLS 加密</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s/^ssl =.*/ssl = no/"</span> /etc/dovecot/conf.d/10-ssl.conf
-<span class="token comment"># 定义 POP3 UIDL 格式</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s/^#pop3_uidl_format =.*/pop3_uidl_format = %08Xu%08Xv/"</span> /etc/dovecot/conf.d/20-pop3.conf
-<span class="token comment"># 添加 POP3 客户端兼容性选项（解决 Outlook 等客户端兼容问题）</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">"s/^#pop3_client_workarounds =.*/pop3_client_workarounds = outlook-no-nuls oe-ns-eoh/"</span> /etc/dovecot/conf.d/20-pop3.conf
-
-systemctl restart postfix
-systemctl <span class="token builtin class-name">enable</span> dovecot <span class="token parameter variable">--now</span>
-
-ss <span class="token parameter variable">-tunlp</span> <span class="token operator">|</span> <span class="token function">grep</span> dove
-tcp   LISTEN <span class="token number">0</span>      <span class="token number">100</span>          <span class="token number">0.0</span>.0.0:110       <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"dovecot"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">18901</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">21</span><span class="token punctuation">))</span></span>
-tcp   LISTEN <span class="token number">0</span>      <span class="token number">100</span>          <span class="token number">0.0</span>.0.0:143       <span class="token number">0.0</span>.0.0:*    users:<span class="token variable"><span class="token punctuation">((</span>"dovecot"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">18901</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">37</span><span class="token punctuation">))</span></span>
-tcp   LISTEN <span class="token number">0</span>      <span class="token number">100</span>             <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:110          <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:*    users:<span class="token variable"><span class="token punctuation">((</span>"dovecot"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">18901</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">22</span><span class="token punctuation">))</span></span>
-tcp   LISTEN <span class="token number">0</span>      <span class="token number">100</span>             <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:143          <span class="token punctuation">[</span>::<span class="token punctuation">]</span>:*    users:<span class="token variable"><span class="token punctuation">((</span>"dovecot"<span class="token punctuation">,</span>pid<span class="token operator">=</span><span class="token number">18901</span><span class="token punctuation">,</span>fd<span class="token operator">=</span><span class="token number">38</span><span class="token punctuation">))</span></span>
-
-<span class="token comment">#添加多用户</span>
-<span class="token function">groupadd</span> mailusers
-<span class="token function">useradd</span> <span class="token parameter variable">-g</span> mailusers <span class="token parameter variable">-s</span> /sbin/nologin wangsheng
-<span class="token function">useradd</span> <span class="token parameter variable">-g</span> mailusers <span class="token parameter variable">-s</span> /sbin/nologin xhyhuiying
-<span class="token builtin class-name">echo</span> <span class="token number">1</span> <span class="token operator">|</span> <span class="token function">passwd</span> <span class="token parameter variable">--stdin</span> wangsheng
-<span class="token builtin class-name">echo</span> <span class="token number">1</span> <span class="token operator">|</span> <span class="token function">passwd</span> <span class="token parameter variable">--stdin</span> xhyhuiying<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">yum -y install dovecot</span><br><span class="line"></span><br><span class="line"><span class="comment"># === Postfix 配置部分 ===</span></span><br><span class="line"><span class="comment"># 设置 Postfix 使用 Dovecot 作为 SASL 认证</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_type=dovecot&quot;</span></span><br><span class="line"><span class="comment"># 指定 SASL 认证的 socket 路径（Dovecot 的认证服务路径）</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_path=private/auth&quot;</span></span><br><span class="line"><span class="comment"># 启用 SMTP 身份验证（允许客户端登录）</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_auth_enable=yes&quot;</span></span><br><span class="line"><span class="comment"># 设置本地 SASL 认证的域名（邮件服务器域名）</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_local_domain=mail.wangsheng.com&quot;</span></span><br><span class="line"><span class="comment"># 禁止匿名登录（强制要求有效凭证）</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_security_options=noanonymous&quot;</span></span><br><span class="line"><span class="comment"># 设置收件人过滤规则：允许本地网络、已认证用户，拒绝未经认证的目标</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_recipient_restrictions=permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination&quot;</span></span><br><span class="line"><span class="comment"># 设置安全限制规则（与收件人规则类似，增强安全性）</span></span><br><span class="line">postconf -e <span class="string">&quot;smtpd_sasl_security_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># === Dovecot 配置部分 ===</span></span><br><span class="line"><span class="comment"># 启用 IMAP、POP3、LMTP 协议</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^#protocols =.*/protocols = imap pop3 lmtp/&#x27;</span> /etc/dovecot/dovecot.conf</span><br><span class="line"><span class="comment"># 允许 Dovecot 监听所有 IPv4 和 IPv6 地址</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^#listen =.*/listen = *, ::/&#x27;</span> /etc/dovecot/dovecot.conf</span><br><span class="line"><span class="comment"># 允许纯文本密码认证</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^#disable_plaintext_auth =.*/disable_plaintext_auth = no/&#x27;</span> /etc/dovecot/conf.d/10-auth.conf</span><br><span class="line"><span class="comment"># 指定认证机制为明文（PLAIN）和登录（LOGIN）</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^auth_mechanisms =.*/auth_mechanisms = plain login/&#x27;</span> /etc/dovecot/conf.d/10-auth.conf</span><br><span class="line"><span class="comment"># 设置邮件存储格式为 Maildir（邮件目录结构）</span></span><br><span class="line">sed -i <span class="string">&quot;s|^#mail_location =.*|mail_location = maildir:~/Maildir|&quot;</span> /etc/dovecot/conf.d/10-mail.conf</span><br><span class="line"><span class="comment"># 关闭 SSL/TLS 加密</span></span><br><span class="line">sed -i <span class="string">&quot;s/^ssl =.*/ssl = no/&quot;</span> /etc/dovecot/conf.d/10-ssl.conf</span><br><span class="line"><span class="comment"># 定义 POP3 UIDL 格式</span></span><br><span class="line">sed -i <span class="string">&quot;s/^#pop3_uidl_format =.*/pop3_uidl_format = %08Xu%08Xv/&quot;</span> /etc/dovecot/conf.d/20-pop3.conf</span><br><span class="line"><span class="comment"># 添加 POP3 客户端兼容性选项（解决 Outlook 等客户端兼容问题）</span></span><br><span class="line">sed -i <span class="string">&quot;s/^#pop3_client_workarounds =.*/pop3_client_workarounds = outlook-no-nuls oe-ns-eoh/&quot;</span> /etc/dovecot/conf.d/20-pop3.conf</span><br><span class="line"></span><br><span class="line">systemctl restart postfix</span><br><span class="line">systemctl <span class="built_in">enable</span> dovecot --now</span><br><span class="line"></span><br><span class="line">ss -tunlp | grep dove</span><br><span class="line">tcp   LISTEN 0      100          0.0.0.0:110       0.0.0.0:*    <span class="built_in">users</span>:((&quot;dovecot&quot;,pid=<span class="number">18901</span>,fd=<span class="number">21</span>))</span><br><span class="line">tcp   LISTEN 0      100          0.0.0.0:143       0.0.0.0:*    <span class="built_in">users</span>:((&quot;dovecot&quot;,pid=<span class="number">18901</span>,fd=<span class="number">37</span>))</span><br><span class="line">tcp   LISTEN 0      100             [::]:110          [::]:*    <span class="built_in">users</span>:((&quot;dovecot&quot;,pid=<span class="number">18901</span>,fd=<span class="number">22</span>))</span><br><span class="line">tcp   LISTEN 0      100             [::]:143          [::]:*    <span class="built_in">users</span>:((&quot;dovecot&quot;,pid=<span class="number">18901</span>,fd=<span class="number">38</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment">#添加多用户</span></span><br><span class="line">groupadd mailusers</span><br><span class="line">useradd -g mailusers -s /sbin/nologin wangsheng</span><br><span class="line">useradd -g mailusers -s /sbin/nologin xhyhuiying</span><br><span class="line"><span class="built_in">echo</span> 1 | passwd --stdin wangsheng</span><br><span class="line"><span class="built_in">echo</span> 1 | passwd --stdin xhyhuiying</span><br></pre></td></tr></table></figure>
 
 <h2 id="通过foxmail登录与测试"><a href="#通过foxmail登录与测试" class="headerlink" title="通过foxmail登录与测试"></a>通过foxmail登录与测试</h2><p>使用一台windows10桥接到10.163.2.0&#x2F;24网段上，并且设置网卡dns服务器为10.163.2.100</p>
 <p>因为上面dovecot只定义了pop3的方式登录，所以imap和exchange方式都无法登录，使用pop3登录</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250408105505591.png"></p>
 <h3 id="发送邮件报错分析"><a href="#发送邮件报错分析" class="headerlink" title="发送邮件报错分析"></a>发送邮件报错分析</h3><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250408115146260.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">tail</span> <span class="token parameter variable">-f</span> /var/log/maillog
-<span class="token punctuation">..</span>.
-Apr  <span class="token number">7</span> <span class="token number">23</span>:45:02 localhost postfix/smtpd<span class="token punctuation">[</span><span class="token number">19861</span><span class="token punctuation">]</span>: warning: SASL: Connect to private/auth failed: No such <span class="token function">file</span> or directory
-Apr  <span class="token number">7</span> <span class="token number">23</span>:45:02 localhost postfix/smtpd<span class="token punctuation">[</span><span class="token number">19861</span><span class="token punctuation">]</span>: fatal: no SASL authentication mechanisms
-Apr  <span class="token number">7</span> <span class="token number">23</span>:42:30 localhost dovecot<span class="token punctuation">[</span><span class="token number">19840</span><span class="token punctuation">]</span>: pop3-login: Login: <span class="token assign-left variable">user</span><span class="token operator">=</span><span class="token operator">&lt;</span>wangsheng<span class="token operator">></span>, <span class="token assign-left variable">method</span><span class="token operator">=</span>PLAIN, <span class="token assign-left variable">rip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.109, <span class="token assign-left variable">lip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.106, <span class="token assign-left variable">mpid</span><span class="token operator">=</span><span class="token number">19851</span>, <span class="token assign-left variable">session</span><span class="token operator">=</span><span class="token operator">&lt;</span>NOZmJDwya8IKowJt<span class="token operator">></span>
-Apr  <span class="token number">7</span> <span class="token number">23</span>:42:30 localhost dovecot<span class="token punctuation">[</span><span class="token number">19840</span><span class="token punctuation">]</span>: pop3<span class="token punctuation">(</span>wangsheng<span class="token punctuation">)</span><span class="token operator">&lt;</span><span class="token number">1985</span><span class="token operator"><span class="token file-descriptor important">1</span>></span><span class="token operator">&lt;</span>NOZmJDwya8IKowJt<span class="token operator">></span>: Disconnected: Logged out <span class="token assign-left variable">top</span><span class="token operator">=</span><span class="token number">0</span>/0, <span class="token assign-left variable">retr</span><span class="token operator">=</span><span class="token number">0</span>/0, <span class="token assign-left variable">del</span><span class="token operator">=</span><span class="token number">0</span>/0, <span class="token assign-left variable">size</span><span class="token operator">=</span><span class="token number">0</span>
-Apr  <span class="token number">7</span> <span class="token number">23</span>:42:30 localhost dovecot<span class="token punctuation">[</span><span class="token number">19840</span><span class="token punctuation">]</span>: pop3-login: Login: <span class="token assign-left variable">user</span><span class="token operator">=</span><span class="token operator">&lt;</span>xhyhuiying<span class="token operator">></span>, <span class="token assign-left variable">method</span><span class="token operator">=</span>PLAIN, <span class="token assign-left variable">rip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.109, <span class="token assign-left variable">lip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.106, <span class="token assign-left variable">mpid</span><span class="token operator">=</span><span class="token number">19856</span>, <span class="token assign-left variable">session</span><span class="token operator">=</span><span class="token operator">&lt;</span>w4xnJDwybMIKowJt<span class="token operator">></span>
-Apr  <span class="token number">7</span> <span class="token number">23</span>:42:30 localhost dovecot<span class="token punctuation">[</span><span class="token number">19840</span><span class="token punctuation">]</span>: pop3<span class="token punctuation">(</span>xhyhuiying<span class="token punctuation">)</span><span class="token operator">&lt;</span><span class="token number">1985</span><span class="token operator"><span class="token file-descriptor important">6</span>></span><span class="token operator">&lt;</span>w4xnJDwybMIKowJt<span class="token operator">></span>: Disconnected: Logged out <span class="token assign-left variable">top</span><span class="token operator">=</span><span class="token number">0</span>/0, <span class="token assign-left variable">retr</span><span class="token operator">=</span><span class="token number">0</span>/0, <span class="token assign-left variable">del</span><span class="token operator">=</span><span class="token number">0</span>/0, <span class="token assign-left variable">size</span><span class="token operator">=</span><span class="token number">0</span>
-Apr  <span class="token number">7</span> <span class="token number">23</span>:45:02 localhost dovecot<span class="token punctuation">[</span><span class="token number">19840</span><span class="token punctuation">]</span>: imap-login: Disconnected: Connection closed <span class="token punctuation">(</span>disconnected before auth was ready, waited <span class="token number">0</span> secs<span class="token punctuation">)</span>: <span class="token assign-left variable">user</span><span class="token operator">=</span><span class="token operator">&lt;></span>, <span class="token assign-left variable">rip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.109, <span class="token assign-left variable">lip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.106, <span class="token assign-left variable">session</span><span class="token operator">=</span><span class="token operator">&lt;</span>vkZ9LTwydcIKowJt<span class="token operator">></span>
-
-可见pop3认证成功，但SMTP认证失败
-原因是postfix去找Dovecot提供的认证套接字文件private/auth，结果发现没有
-
-修复：
-<span class="token function">vim</span> /etc/dovecot/conf.d/10-master.conf
-<span class="token function">service</span> auth <span class="token punctuation">&#123;</span>
-    unix_listener /var/spool/postfix/private/auth <span class="token punctuation">&#123;</span>
-    mode <span class="token operator">=</span> 0666     <span class="token comment"># 允许 Postfix 读写</span>
-    user <span class="token operator">=</span> postfix  <span class="token comment"># 指定用户为 postfix</span>
-    group <span class="token operator">=</span> postfix <span class="token comment"># 指定组为 postfix</span>
-  <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">tail</span> -f /var/log/maillog</span><br><span class="line">...</span><br><span class="line">Apr  7 23:45:02 localhost postfix/smtpd[19861]: warning: SASL: Connect to private/auth failed: No such file or directory</span><br><span class="line">Apr  7 23:45:02 localhost postfix/smtpd[19861]: fatal: no SASL authentication mechanisms</span><br><span class="line">Apr  7 23:42:30 localhost dovecot[19840]: pop3-login: Login: user=&lt;wangsheng&gt;, method=PLAIN, rip=10.163.2.109, lip=10.163.2.106, mpid=19851, session=&lt;NOZmJDwya8IKowJt&gt;</span><br><span class="line">Apr  7 23:42:30 localhost dovecot[19840]: pop3(wangsheng)&lt;19851&gt;&lt;NOZmJDwya8IKowJt&gt;: Disconnected: Logged out top=0/0, retr=0/0, del=0/0, size=0</span><br><span class="line">Apr  7 23:42:30 localhost dovecot[19840]: pop3-login: Login: user=&lt;xhyhuiying&gt;, method=PLAIN, rip=10.163.2.109, lip=10.163.2.106, mpid=19856, session=&lt;w4xnJDwybMIKowJt&gt;</span><br><span class="line">Apr  7 23:42:30 localhost dovecot[19840]: pop3(xhyhuiying)&lt;19856&gt;&lt;w4xnJDwybMIKowJt&gt;: Disconnected: Logged out top=0/0, retr=0/0, del=0/0, size=0</span><br><span class="line">Apr  7 23:45:02 localhost dovecot[19840]: imap-login: Disconnected: Connection closed (disconnected before auth was ready, waited 0 secs): user=&lt;&gt;, rip=10.163.2.109, lip=10.163.2.106, session=&lt;vkZ9LTwydcIKowJt&gt;</span><br><span class="line"></span><br><span class="line">可见pop3认证成功，但SMTP认证失败</span><br><span class="line">原因是postfix去找Dovecot提供的认证套接字文件private/auth，结果发现没有</span><br><span class="line"></span><br><span class="line">修复：</span><br><span class="line">vim /etc/dovecot/conf.d/10-master.conf</span><br><span class="line">service auth &#123;</span><br><span class="line">    unix_listener /var/spool/postfix/private/auth &#123;</span><br><span class="line">    mode = 0666     <span class="comment"># 允许 Postfix 读写</span></span><br><span class="line">    user = postfix  <span class="comment"># 指定用户为 postfix</span></span><br><span class="line">    group = postfix <span class="comment"># 指定组为 postfix</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250408125123700.png"></p>
 
@@ -6826,18 +6650,6 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6921,13 +6733,13 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7302,13 +7114,13 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7548,13 +7360,13 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8253,13 +8065,13 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8803,9 +8615,9 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8813,9 +8625,9 @@ Apr  <span class="token number">7</span> <span class="token number">23</span>:45
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

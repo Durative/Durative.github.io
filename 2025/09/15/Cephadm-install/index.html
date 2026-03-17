@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="这是对上一版部署的优化 上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住 这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式  10.163.2.100 ansible (Rocky 8.10) 10.163.2.130 10.163.3.119 ceph">
+    <meta name="description" content="这是对上一版部署的优化 上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住 这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式  1234567891011121314151617181920212223242526272829303132333435363">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cephadm快速部署ceph">
 <meta property="og:url" content="https://akemi.zj.cn/2025/09/15/Cephadm-install/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="这是对上一版部署的优化 上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住 这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式  10.163.2.100 ansible (Rocky 8.10) 10.163.2.130 10.163.3.119 ceph">
+<meta property="og:description" content="这是对上一版部署的优化 上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住 这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式  1234567891011121314151617181920212223242526272829303132333435363">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250911113607438.png">
 <meta property="article:published_time" content="2025-09-15T05:25:22.000Z">
@@ -202,12 +202,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -215,7 +217,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -496,146 +497,7 @@
 <p>上次使用的是docker，但cephadm其实默认使用的是podman，只配docker没用，podman就很容易在拉取镜像时卡住</p>
 <p>这次尝试了docker&#x2F;podman+镜像加速&#x2F;代理，还是使用了podman+镜像加速的方式</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250911113607438.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">10.163</span>.2.100 ansible <span class="token punctuation">(</span>Rocky <span class="token number">8.10</span><span class="token punctuation">)</span>
-<span class="token number">10.163</span>.2.130 <span class="token number">10.163</span>.3.119 ceph1 <span class="token punctuation">(</span>Rocky <span class="token number">8.10</span><span class="token punctuation">)</span>
-<span class="token number">10.163</span>.2.110 <span class="token number">10.163</span>.3.118 ceph2
-<span class="token number">10.163</span>.2.136 <span class="token number">10.163</span>.3.117 ceph3
-ceph v17.2.7 quincy
-
-<span class="token function">cat</span> <span class="token operator">></span> /etc/hosts <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-10.163.2.100 ansible
-10.163.2.130 ceph1
-10.163.2.110 ceph2
-10.163.2.136 ceph3
-EOF</span>
-
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> epel-release
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> python3 ansible
-
-<span class="token comment"># 克隆cephadm-ansible</span>
-<span class="token function">git</span> clone https://github.com/ceph/cephadm-ansible.git
-<span class="token builtin class-name">cd</span> cephadm-ansible
-
-<span class="token comment"># 准备podman配置文件</span>
-<span class="token function">cat</span> <span class="token operator">></span> registries.conf <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-unqualified-search-registries = ["docker.io","quay.io"]
-[[registry]]
-prefix = "docker.io"
-location = "a88uijg4.mirror.aliyuncs.com"
-insecure = true
-[[registry.mirror]]
-location = "docker.lmirror.top"
-[[registry.mirror]]
-location = "docker.m.daocloud.io"
-[[registry.mirror]]
-location = "hub.uuuadc.top"
-[[registry.mirror]]
-location = "docker.anyhub.us.kg"
-[[registry.mirror]]
-location = "dockerhub.jobcher.com"
-[[registry.mirror]]
-location = "dockerhub.icu"
-
-[[registry]]
-prefix = "quay.io"
-location = "quay.lmirror.top"
-[[registry.mirror]]
-location = "quay.m.daocloud.io"
-EOF</span>
-
-<span class="token comment"># 清单文件</span>
-<span class="token function">cat</span> <span class="token operator">></span> inventory <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-[admin]
-ansible ansible_host=10.163.2.100
-[storage]
-ceph1 ansible_host=10.163.2.130
-ceph2 ansible_host=10.163.2.110
-ceph3 ansible_host=10.163.2.136
-[all:vars]
-ansible_password=1
-ansible_user=root
-EOF</span>
-
-<span class="token comment"># 调整cephadm-ansible变量，yum源配置</span>
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s/^ceph_release.*/ceph_release: 17.2.7/g'</span> ceph_defaults/defaults/main.yml
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#^ceph_mirror.*#ceph_mirror: https://mirrors.aliyun.com/ceph#g'</span>  ceph_defaults/defaults/main.yml
-<span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">'s#^ceph_stable_key.*#ceph_stable_key: https://mirrors.aliyun.com/ceph/keys/release.asc#g'</span>  ceph_defaults/defaults/main.yml
-
-<span class="token comment"># 初始化集群节点</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> shell <span class="token parameter variable">-a</span> <span class="token string">"hostnamectl set-hostname &#123;&#123; inventory_hostname &#125;&#125;"</span> <span class="token parameter variable">-b</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> yum <span class="token parameter variable">-a</span> <span class="token string">'name=bash-completion,epel-release state=present'</span>
-
-<span class="token comment"># 预安装</span>
-ansible-playbook <span class="token parameter variable">-i</span> inventory cephadm-preflight.yml
-
-<span class="token comment"># podman配置镜像加速</span>
-ansible <span class="token parameter variable">-i</span> inventory all <span class="token parameter variable">-m</span> copy <span class="token parameter variable">-a</span> <span class="token string">'src=./registries.conf dest=/etc/containers/registries.conf'</span>
-
-<span class="token comment"># cephadm命令行下载方式(正常流程不需要进行这一步)</span>
-<span class="token function">curl</span> <span class="token parameter variable">--silent</span> --remote-name <span class="token parameter variable">--location</span> https://github.com/ceph/ceph/raw/quincy/src/cephadm/cephadm
-<span class="token function">chmod</span> +x cephadm
-<span class="token function">mv</span> cephadm /usr/local/bin/
-
-<span class="token comment"># 使用代理(可选)</span>
-<span class="token builtin class-name">export</span> <span class="token assign-left variable">http_proxy</span><span class="token operator">=</span>http://192.168.10.238:7897
-<span class="token builtin class-name">export</span> <span class="token assign-left variable">https_proxy</span><span class="token operator">=</span>http://192.168.10.238:7897
-
-<span class="token comment"># 引导初始化集群</span>
-cephadm bootstrap --mon-ip<span class="token operator">=</span><span class="token number">10.163</span>.2.100 <span class="token punctuation">\</span>
---cluster-network <span class="token number">10.163</span>.3.0/24 <span class="token punctuation">\</span>
---initial-dashboard-user<span class="token operator">=</span>admin <span class="token punctuation">\</span>
---initial-dashboard-password<span class="token operator">=</span>wangsheng <span class="token punctuation">\</span>
---dashboard-password-noupdate --allow-fqdn-hostname <span class="token punctuation">\</span>
---allow-overwrite
- 
-<span class="token comment"># 选择手动添加的方式</span>
-<span class="token comment"># 添加各服务</span>
-ssh-copy-id <span class="token parameter variable">-f</span> <span class="token parameter variable">-i</span> /etc/ceph/ceph.pub root@ceph1
-ssh-copy-id <span class="token parameter variable">-f</span> <span class="token parameter variable">-i</span> /etc/ceph/ceph.pub root@ceph2
-ssh-copy-id <span class="token parameter variable">-f</span> <span class="token parameter variable">-i</span> /etc/ceph/ceph.pub root@ceph3
-
-ceph orch <span class="token function">host</span> <span class="token function">add</span> ceph1 <span class="token number">10.163</span>.2.130
-ceph orch <span class="token function">host</span> <span class="token function">add</span> ceph2 <span class="token number">10.163</span>.2.110
-ceph orch <span class="token function">host</span> <span class="token function">add</span> ceph3 <span class="token number">10.163</span>.2.136
-
-ceph orch apply mon ceph1,ceph2,ceph3
-ceph orch apply mgr <span class="token parameter variable">--placement</span> <span class="token string">"ceph1 ceph2 ceph3"</span>
-
-<span class="token comment"># 使用服务配置文件添加OSD</span>
-<span class="token comment"># 添加所有空闲设备(可选)ceph orch apply osd --all-available-devices</span>
-<span class="token function">cat</span> <span class="token operator">></span> /etc/ceph/osd.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-service_type: osd
-service_id: default_group
-placement:
-  hosts:
-    - ceph1
-    - ceph2
-    - ceph3
-data_devices:
-  paths:
-    - /dev/sdb
-    - /dev/sdc
-    - /dev/sdd
-EOF</span>
-ceph orch apply <span class="token parameter variable">-i</span> /etc/ceph/osd.yaml
-
-<span class="token comment"># 等待5~20分钟左右，视网络情况不同</span>
-ceph orch <span class="token function">ls</span>
-NAME               PORTS        RUNNING  REFRESHED  AGE  PLACEMENT
-alertmanager       ?:9093,9094      <span class="token number">1</span>/1  39s ago    19m  count:1
-crash                               <span class="token number">4</span>/4  4m ago     19m  *
-grafana            ?:3000           <span class="token number">0</span>/1  -          19m  count:1
-mgr                                 <span class="token number">3</span>/3  4m ago     6m   ceph1<span class="token punctuation">;</span>ceph2<span class="token punctuation">;</span>ceph3
-mon                                 <span class="token number">3</span>/3  4m ago     15m  ceph1<span class="token punctuation">;</span>ceph2<span class="token punctuation">;</span>ceph3
-node-exporter      ?:9100           <span class="token number">4</span>/4  4m ago     19m  *
-osd.default_group                     <span class="token number">9</span>  4m ago     6m   ceph1<span class="token punctuation">;</span>ceph2<span class="token punctuation">;</span>ceph3
-prometheus         ?:9095           <span class="token number">1</span>/1  39s ago    19m  count:1
-
-<span class="token comment"># 手动加入集群网络的方法（如果前面没有指定cluster_network</span>
-ceph config <span class="token builtin class-name">set</span> global cluster_network <span class="token string">"10.163.3.0/24"</span>
-<span class="token comment"># 逐个重启osd</span>
-<span class="token punctuation">..</span>.
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br></pre></td><td class="code"><pre><span class="line">10.163.2.100 ansible (Rocky 8.10)</span><br><span class="line">10.163.2.130 10.163.3.119 ceph1 (Rocky 8.10)</span><br><span class="line">10.163.2.110 10.163.3.118 ceph2</span><br><span class="line">10.163.2.136 10.163.3.117 ceph3</span><br><span class="line">ceph v17.2.7 quincy</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/hosts &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">10.163.2.100 ansible</span></span><br><span class="line"><span class="string">10.163.2.130 ceph1</span></span><br><span class="line"><span class="string">10.163.2.110 ceph2</span></span><br><span class="line"><span class="string">10.163.2.136 ceph3</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">yum -y install epel-release</span><br><span class="line">yum -y install python3 ansible</span><br><span class="line"></span><br><span class="line"><span class="comment"># 克隆cephadm-ansible</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/ceph/cephadm-ansible.git</span><br><span class="line"><span class="built_in">cd</span> cephadm-ansible</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备podman配置文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; registries.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">unqualified-search-registries = [&quot;docker.io&quot;,&quot;quay.io&quot;]</span></span><br><span class="line"><span class="string">[[registry]]</span></span><br><span class="line"><span class="string">prefix = &quot;docker.io&quot;</span></span><br><span class="line"><span class="string">location = &quot;a88uijg4.mirror.aliyuncs.com&quot;</span></span><br><span class="line"><span class="string">insecure = true</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;docker.lmirror.top&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;docker.m.daocloud.io&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;hub.uuuadc.top&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;docker.anyhub.us.kg&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;dockerhub.jobcher.com&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;dockerhub.icu&quot;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[[registry]]</span></span><br><span class="line"><span class="string">prefix = &quot;quay.io&quot;</span></span><br><span class="line"><span class="string">location = &quot;quay.lmirror.top&quot;</span></span><br><span class="line"><span class="string">[[registry.mirror]]</span></span><br><span class="line"><span class="string">location = &quot;quay.m.daocloud.io&quot;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 清单文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; inventory &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[admin]</span></span><br><span class="line"><span class="string">ansible ansible_host=10.163.2.100</span></span><br><span class="line"><span class="string">[storage]</span></span><br><span class="line"><span class="string">ceph1 ansible_host=10.163.2.130</span></span><br><span class="line"><span class="string">ceph2 ansible_host=10.163.2.110</span></span><br><span class="line"><span class="string">ceph3 ansible_host=10.163.2.136</span></span><br><span class="line"><span class="string">[all:vars]</span></span><br><span class="line"><span class="string">ansible_password=1</span></span><br><span class="line"><span class="string">ansible_user=root</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整cephadm-ansible变量，yum源配置</span></span><br><span class="line">sed -i <span class="string">&#x27;s/^ceph_release.*/ceph_release: 17.2.7/g&#x27;</span> ceph_defaults/defaults/main.yml</span><br><span class="line">sed -i <span class="string">&#x27;s#^ceph_mirror.*#ceph_mirror: https://mirrors.aliyun.com/ceph#g&#x27;</span>  ceph_defaults/defaults/main.yml</span><br><span class="line">sed -i <span class="string">&#x27;s#^ceph_stable_key.*#ceph_stable_key: https://mirrors.aliyun.com/ceph/keys/release.asc#g&#x27;</span>  ceph_defaults/defaults/main.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化集群节点</span></span><br><span class="line">ansible -i inventory all -m shell -a <span class="string">&quot;hostnamectl set-hostname &#123;&#123; inventory_hostname &#125;&#125;&quot;</span> -b</span><br><span class="line">ansible -i inventory all -m yum -a <span class="string">&#x27;name=bash-completion,epel-release state=present&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 预安装</span></span><br><span class="line">ansible-playbook -i inventory cephadm-preflight.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># podman配置镜像加速</span></span><br><span class="line">ansible -i inventory all -m copy -a <span class="string">&#x27;src=./registries.conf dest=/etc/containers/registries.conf&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># cephadm命令行下载方式(正常流程不需要进行这一步)</span></span><br><span class="line">curl --silent --remote-name --location https://github.com/ceph/ceph/raw/quincy/src/cephadm/cephadm</span><br><span class="line"><span class="built_in">chmod</span> +x cephadm</span><br><span class="line"><span class="built_in">mv</span> cephadm /usr/local/bin/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用代理(可选)</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=http://192.168.10.238:7897</span><br><span class="line"><span class="built_in">export</span> https_proxy=http://192.168.10.238:7897</span><br><span class="line"></span><br><span class="line"><span class="comment"># 引导初始化集群</span></span><br><span class="line">cephadm bootstrap --mon-ip=10.163.2.100 \</span><br><span class="line">--cluster-network 10.163.3.0/24 \</span><br><span class="line">--initial-dashboard-user=admin \</span><br><span class="line">--initial-dashboard-password=wangsheng \</span><br><span class="line">--dashboard-password-noupdate --allow-fqdn-hostname \</span><br><span class="line">--allow-overwrite</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 选择手动添加的方式</span></span><br><span class="line"><span class="comment"># 添加各服务</span></span><br><span class="line">ssh-copy-id -f -i /etc/ceph/ceph.pub root@ceph1</span><br><span class="line">ssh-copy-id -f -i /etc/ceph/ceph.pub root@ceph2</span><br><span class="line">ssh-copy-id -f -i /etc/ceph/ceph.pub root@ceph3</span><br><span class="line"></span><br><span class="line">ceph orch host add ceph1 10.163.2.130</span><br><span class="line">ceph orch host add ceph2 10.163.2.110</span><br><span class="line">ceph orch host add ceph3 10.163.2.136</span><br><span class="line"></span><br><span class="line">ceph orch apply mon ceph1,ceph2,ceph3</span><br><span class="line">ceph orch apply mgr --placement <span class="string">&quot;ceph1 ceph2 ceph3&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用服务配置文件添加OSD</span></span><br><span class="line"><span class="comment"># 添加所有空闲设备(可选)ceph orch apply osd --all-available-devices</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/ceph/osd.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">service_type: osd</span></span><br><span class="line"><span class="string">service_id: default_group</span></span><br><span class="line"><span class="string">placement:</span></span><br><span class="line"><span class="string">  hosts:</span></span><br><span class="line"><span class="string">    - ceph1</span></span><br><span class="line"><span class="string">    - ceph2</span></span><br><span class="line"><span class="string">    - ceph3</span></span><br><span class="line"><span class="string">data_devices:</span></span><br><span class="line"><span class="string">  paths:</span></span><br><span class="line"><span class="string">    - /dev/sdb</span></span><br><span class="line"><span class="string">    - /dev/sdc</span></span><br><span class="line"><span class="string">    - /dev/sdd</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">ceph orch apply -i /etc/ceph/osd.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等待5~20分钟左右，视网络情况不同</span></span><br><span class="line">ceph orch <span class="built_in">ls</span></span><br><span class="line">NAME               PORTS        RUNNING  REFRESHED  AGE  PLACEMENT</span><br><span class="line">alertmanager       ?:9093,9094      1/1  39s ago    19m  count:1</span><br><span class="line">crash                               4/4  4m ago     19m  *</span><br><span class="line">grafana            ?:3000           0/1  -          19m  count:1</span><br><span class="line">mgr                                 3/3  4m ago     6m   ceph1;ceph2;ceph3</span><br><span class="line">mon                                 3/3  4m ago     15m  ceph1;ceph2;ceph3</span><br><span class="line">node-exporter      ?:9100           4/4  4m ago     19m  *</span><br><span class="line">osd.default_group                     9  4m ago     6m   ceph1;ceph2;ceph3</span><br><span class="line">prometheus         ?:9095           1/1  39s ago    19m  count:1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 手动加入集群网络的方法（如果前面没有指定cluster_network</span></span><br><span class="line">ceph config <span class="built_in">set</span> global cluster_network <span class="string">&quot;10.163.3.0/24&quot;</span></span><br><span class="line"><span class="comment"># 逐个重启osd</span></span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6714,18 +6576,6 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6809,13 +6659,13 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7190,13 +7040,13 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7436,13 +7286,13 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8141,13 +7991,13 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8691,9 +8541,9 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8701,9 +8551,9 @@ ceph config <span class="token builtin class-name">set</span> global cluster_net
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

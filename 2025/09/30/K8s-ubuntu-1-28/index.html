@@ -19,18 +19,18 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="这是有网络的情况下，如果离线环境下则需要准备对应版本的deb包手动安装 ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4 环境初始化与集群部署 # 环境初始化 sudo swapoff -a 注释&#x2F;etc&#x2F;fstab中的swap分区  sudo modprobe br_netfilter sudo tee &gt; &#x2F;etc">
+    <meta name="description" content="这是有网络的情况下，如果离线环境下则需要准备对应版本的deb包手动安装 ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4 环境初始化与集群部署 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ubuntu部署k8s v1.28">
 <meta property="og:url" content="https://akemi.zj.cn/2025/09/30/K8s-ubuntu-1-28/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="这是有网络的情况下，如果离线环境下则需要准备对应版本的deb包手动安装 ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4 环境初始化与集群部署 # 环境初始化 sudo swapoff -a 注释&#x2F;etc&#x2F;fstab中的swap分区  sudo modprobe br_netfilter sudo tee &gt; &#x2F;etc">
+<meta property="og:description" content="这是有网络的情况下，如果离线环境下则需要准备对应版本的deb包手动安装 ubuntu 20.04 LTSdocker 1.28containerd 1.17k8s v1.28calico 3.28.4 环境初始化与集群部署 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-09-30T13:19:01.000Z">
 <meta property="article:modified_time" content="2026-03-17T13:11:50.115Z">
 <meta property="article:author" content="王盛">
-<meta property="article:tag" content="k8s">
 <meta property="article:tag" content="Linux服务">
+<meta property="article:tag" content="k8s">
 <meta name="twitter:card" content="summary">
     <meta http-equiv="Cache-control" content="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -201,12 +201,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -214,7 +216,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -326,9 +327,9 @@
                     <div class= post-intro-tags >
     
     
-        <a class="post-tag" href="javascript:void(0);" data-tags="k8s">k8s</a>
-    
         <a class="post-tag" href="javascript:void(0);" data-tags="Linux服务">Linux服务</a>
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="k8s">k8s</a>
     
 </div>
 
@@ -496,150 +497,12 @@
         <p>这是有网络的情况下，如果离线环境下则需要准备对应版本的deb包手动安装</p>
 <p>ubuntu 20.04 LTS<br>docker 1.28<br>containerd 1.17<br>k8s v1.28<br>calico 3.28.4</p>
 <p><strong>环境初始化与集群部署</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 环境初始化</span>
-<span class="token function">sudo</span> swapoff <span class="token parameter variable">-a</span>
-注释/etc/fstab中的swap分区
-
-<span class="token function">sudo</span> modprobe br_netfilter
-<span class="token function">sudo</span> <span class="token function">tee</span> <span class="token operator">></span> /etc/sysctl.d/k8s.conf <span class="token operator">&lt;&lt;-</span><span class="token string">'EOF'
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-net.ipv4.ip_forward = 1
-EOF</span>
-<span class="token function">sudo</span> <span class="token function">sysctl</span> <span class="token parameter variable">-p</span> /etc/sysctl.d/k8s.conf
-
-<span class="token comment"># 加载模块</span>
-<span class="token function">cat</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF<span class="token bash punctuation"> <span class="token operator">></span> /etc/modules-load.d/k8s.conf</span>
-overlay
-br_netfilter
-ip_vs
-ip_vs_rr
-ip_vs_wrr
-ip_vs_sh
-EOF</span>
-<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token parameter variable">-y</span> <span class="token function">install</span> ipvsadm
-
-<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token parameter variable">-y</span> <span class="token function">install</span> chrony
-<span class="token function">sudo</span> systemctl restart chrony
-<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> chrony
-
-<span class="token comment"># 安装docker与containerd.io</span>
-<span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> apt-transport-https ca-certificates <span class="token function">curl</span> gnupg-agent software-properties-common
-<span class="token function">curl</span> <span class="token parameter variable">-fsSL</span> https://download.docker.com/linux/ubuntu/gpg <span class="token operator">|</span> <span class="token function">sudo</span> apt-key <span class="token function">add</span> -
-<span class="token comment"># 添加docker稳定源</span>
-<span class="token function">sudo</span> add-apt-repository <span class="token string">"deb [arch=amd64] https://download.docker.com/linux/ubuntu <span class="token variable"><span class="token variable">$(</span>lsb_release <span class="token parameter variable">-cs</span><span class="token variable">)</span></span> stable"</span>
-<span class="token function">sudo</span> <span class="token function">apt</span> update
-<span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io
-
-<span class="token comment"># 配置docker与containerd镜像加速，略过</span>
-详见https://akemi.zj.cn/2024/12/08/Image-Repository/
-
-<span class="token comment"># 安装nivida驱动，略过</span>
-详见https://akemi.zj.cn/2025/06/30/Nvidia-driver/
-
-<span class="token comment"># 使用nivida驱动，略过</span>
-详见https://akemi.zj.cn/2025/06/30/Helm-nvidia-pulgin/
-
-<span class="token comment"># 安装命令行工具</span>
-<span class="token function">sudo</span> <span class="token function">tee</span> /etc/apt/sources.list.d/kubernetes.list <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
-EOF</span>
-<span class="token function">curl</span> <span class="token parameter variable">-s</span> https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg <span class="token operator">|</span> <span class="token function">sudo</span> apt-key <span class="token function">add</span> -
-<span class="token function">sudo</span> <span class="token function">apt</span> update
-<span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token assign-left variable">kubelet</span><span class="token operator">=</span><span class="token number">1.28</span>.1-00 <span class="token assign-left variable">kubeadm</span><span class="token operator">=</span><span class="token number">1.28</span>.1-00 <span class="token assign-left variable">kubectl</span><span class="token operator">=</span><span class="token number">1.28</span>.1-00
-<span class="token function">sudo</span> apt-mark hold kubelet kubeadm kubectl
-
-<span class="token comment"># 配置containerd</span>
-<span class="token function">sudo</span> containerd config default <span class="token operator">></span> /etc/containerd/config.toml
-修改
-<span class="token function">vim</span> /etc/containerd/config.toml
-SystemdCgroup <span class="token operator">=</span> <span class="token boolean">true</span>
-sandbox_image <span class="token operator">=</span> <span class="token string">"registry.aliyuncs.com/google_containers/pause:3.7"</span>
-config_path <span class="token operator">=</span> <span class="token string">"/etc/containerd/certs.d"</span>
-<span class="token function">sudo</span> systemctl restart containerd.service
-<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> containerd.service
-
-<span class="token comment"># 创建crictl.yaml，指定创建pod与调用容器的时候使用containerd</span>
-<span class="token function">sudo</span> <span class="token function">tee</span> /etc/crictl.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-runtime-endpoint: unix:///run/containerd/containerd.sock
-image-endpoint: unix:///run/containerd/containerd.sock
-timeout: 10
-debug: false
-EOF</span>
-
-<span class="token function">sudo</span> crictl config runtime-endpoint unix:///run/containerd/containerd.sock
-<span class="token function">sudo</span> systemctl restart containerd
-
-<span class="token comment"># 生成kubeadm配置文件</span>
-kubeadm config print init-defaults <span class="token operator">></span> kubeadm.yaml
-
-修改字段:
-advertiseAddress: <span class="token number">172.25</span>.224.96
-name: master
-imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
-kubernetesVersion: <span class="token number">1.28</span>.0
-networking:
-  podSubnet: <span class="token number">10.10</span>.0.0/16
-添加配置:
----
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-mode: ipvs
----
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-cgroupDriver: systemd
-
-<span class="token comment"># 部署</span>
-<span class="token function">sudo</span> kubeadm init <span class="token parameter variable">--config</span><span class="token operator">=</span>kubeadm.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 环境初始化</span></span><br><span class="line">sudo swapoff -a</span><br><span class="line">注释/etc/fstab中的swap分区</span><br><span class="line"></span><br><span class="line">sudo modprobe br_netfilter</span><br><span class="line">sudo <span class="built_in">tee</span> &gt; /etc/sysctl.d/k8s.conf &lt;&lt;-<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">net.bridge.bridge-nf-call-ip6tables = 1</span><br><span class="line">net.bridge.bridge-nf-call-iptables = 1</span><br><span class="line">net.ipv4.ip_forward = 1</span><br><span class="line">EOF</span><br><span class="line">sudo sysctl -p /etc/sysctl.d/k8s.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载模块</span></span><br><span class="line"><span class="built_in">cat</span> &lt;&lt; <span class="string">EOF &gt; /etc/modules-load.d/k8s.conf</span></span><br><span class="line"><span class="string">overlay</span></span><br><span class="line"><span class="string">br_netfilter</span></span><br><span class="line"><span class="string">ip_vs</span></span><br><span class="line"><span class="string">ip_vs_rr</span></span><br><span class="line"><span class="string">ip_vs_wrr</span></span><br><span class="line"><span class="string">ip_vs_sh</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">sudo apt -y install ipvsadm</span><br><span class="line"></span><br><span class="line">sudo apt -y install chrony</span><br><span class="line">sudo systemctl restart chrony</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> chrony</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装docker与containerd.io</span></span><br><span class="line">sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common</span><br><span class="line">curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -</span><br><span class="line"><span class="comment"># 添加docker稳定源</span></span><br><span class="line">sudo add-apt-repository <span class="string">&quot;deb [arch=amd64] https://download.docker.com/linux/ubuntu <span class="subst">$(lsb_release -cs)</span> stable&quot;</span></span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt-get install -y docker-ce docker-ce-cli containerd.io</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置docker与containerd镜像加速，略过</span></span><br><span class="line">详见https://akemi.zj.cn/2024/12/08/Image-Repository/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装nivida驱动，略过</span></span><br><span class="line">详见https://akemi.zj.cn/2025/06/30/Nvidia-driver/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用nivida驱动，略过</span></span><br><span class="line">详见https://akemi.zj.cn/2025/06/30/Helm-nvidia-pulgin/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装命令行工具</span></span><br><span class="line">sudo <span class="built_in">tee</span> /etc/apt/sources.list.d/kubernetes.list &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">curl -s https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add -</span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt-get install -y kubelet=1.28.1-00 kubeadm=1.28.1-00 kubectl=1.28.1-00</span><br><span class="line">sudo apt-mark hold kubelet kubeadm kubectl</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置containerd</span></span><br><span class="line">sudo containerd config default &gt; /etc/containerd/config.toml</span><br><span class="line">修改</span><br><span class="line">vim /etc/containerd/config.toml</span><br><span class="line">SystemdCgroup = <span class="literal">true</span></span><br><span class="line">sandbox_image = <span class="string">&quot;registry.aliyuncs.com/google_containers/pause:3.7&quot;</span></span><br><span class="line">config_path = <span class="string">&quot;/etc/containerd/certs.d&quot;</span></span><br><span class="line">sudo systemctl restart containerd.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> containerd.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建crictl.yaml，指定创建pod与调用容器的时候使用containerd</span></span><br><span class="line">sudo <span class="built_in">tee</span> /etc/crictl.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">runtime-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">image-endpoint: unix:///run/containerd/containerd.sock</span></span><br><span class="line"><span class="string">timeout: 10</span></span><br><span class="line"><span class="string">debug: false</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">sudo crictl config runtime-endpoint unix:///run/containerd/containerd.sock</span><br><span class="line">sudo systemctl restart containerd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成kubeadm配置文件</span></span><br><span class="line">kubeadm config <span class="built_in">print</span> init-defaults &gt; kubeadm.yaml</span><br><span class="line"></span><br><span class="line">修改字段:</span><br><span class="line">advertiseAddress: 172.25.224.96</span><br><span class="line">name: master</span><br><span class="line">imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers</span><br><span class="line">kubernetesVersion: 1.28.0</span><br><span class="line">networking:</span><br><span class="line">  podSubnet: 10.10.0.0/16</span><br><span class="line">添加配置:</span><br><span class="line">---</span><br><span class="line">apiVersion: kubeproxy.config.k8s.io/v1alpha1</span><br><span class="line">kind: KubeProxyConfiguration</span><br><span class="line">mode: ipvs</span><br><span class="line">---</span><br><span class="line">apiVersion: kubelet.config.k8s.io/v1beta1</span><br><span class="line">kind: KubeletConfiguration</span><br><span class="line">cgroupDriver: systemd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 部署</span></span><br><span class="line">sudo kubeadm init --config=kubeadm.yaml</span><br></pre></td></tr></table></figure>
 
 <p><strong>安装calico</strong></p>
 <p>根据官方文档，支持k8s 1.28的最高calico版本为3.28.4</p>
 <p><a target="_blank" rel="noopener" href="https://docs.tigera.io/calico/3.28/getting-started/kubernetes/requirements">https://docs.tigera.io/calico/3.28/getting-started/kubernetes/requirements</a></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 安装operator</span>
-kubectl create <span class="token parameter variable">-f</span> https://raw.githubusercontent.com/projectcalico/calico/v3.28.4/manifests/tigera-operator.yaml
-
-<span class="token comment"># 下载自定义清单</span>
-<span class="token function">wget</span> https://raw.githubusercontent.com/projectcalico/calico/v3.28.4/manifests/custom-resources.yaml
-
-修改清单，改成CrossSubnet模式
-<span class="token punctuation">..</span>.
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  calicoNetwork:
-    ipPools:
-    - name: default-ipv4-ippool
-      blockSize: <span class="token number">26</span>
-      cidr: <span class="token number">10.10</span>.0.0/16 <span class="token comment"># 与pod同网段</span>
-      encapsulation: IPIPCrossSubnet <span class="token comment"># 使用效率最高的CrossSubnet</span>
-      natOutgoing: Enabled
-      nodeSelector: all<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-kubectl apply <span class="token parameter variable">-f</span> custom-resources.yaml
-
-calico各模式的区别可见: 
-https://akemi.zj.cn/2025/09/10/Kubespray-install/<span class="token comment">#/ansible%E5%8F%98%E9%87%8F-calico%E7%9B%B8%E5%85%B3</span>
-
-kubectl get pods <span class="token parameter variable">-A</span>
-NAMESPACE          NAME                                      READY   STATUS    RESTARTS   AGE
-calico-apiserver   calico-apiserver-6f9d56cf8f-66k5b         <span class="token number">1</span>/1     Running   <span class="token number">0</span>          20m
-calico-apiserver   calico-apiserver-6f9d56cf8f-7v7nq         <span class="token number">1</span>/1     Running   <span class="token number">0</span>          20m
-calico-system      calico-kube-controllers-87b94b69f-ktz29   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          20m
-calico-system      calico-node-pp87j                         <span class="token number">1</span>/1     Running   <span class="token number">0</span>          20m
-calico-system      calico-typha-596f45fd95-m5bb8             <span class="token number">1</span>/1     Running   <span class="token number">0</span>          20m
-calico-system      csi-node-driver-bm68h                     <span class="token number">2</span>/2     Running   <span class="token number">0</span>          20m
-kube-system        coredns-6554b8b87f-kn2mw                  <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-kube-system        coredns-6554b8b87f-s8lxt                  <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-kube-system        etcd-master                               <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-kube-system        kube-apiserver-master                     <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-kube-system        kube-controller-manager-master            <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-kube-system        kube-proxy-t7g4n                          <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-kube-system        kube-scheduler-master                     <span class="token number">1</span>/1     Running   <span class="token number">0</span>          73m
-tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token number">1</span>/1     Running   <span class="token number">0</span>          39m
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装operator</span></span><br><span class="line">kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.4/manifests/tigera-operator.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载自定义清单</span></span><br><span class="line">wget https://raw.githubusercontent.com/projectcalico/calico/v3.28.4/manifests/custom-resources.yaml</span><br><span class="line"></span><br><span class="line">修改清单，改成CrossSubnet模式</span><br><span class="line">...</span><br><span class="line">apiVersion: operator.tigera.io/v1</span><br><span class="line">kind: Installation</span><br><span class="line">metadata:</span><br><span class="line">  name: default</span><br><span class="line">spec:</span><br><span class="line">  calicoNetwork:</span><br><span class="line">    ipPools:</span><br><span class="line">    - name: default-ipv4-ippool</span><br><span class="line">      blockSize: 26</span><br><span class="line">      cidr: 10.10.0.0/16 <span class="comment"># 与pod同网段</span></span><br><span class="line">      encapsulation: IPIPCrossSubnet <span class="comment"># 使用效率最高的CrossSubnet</span></span><br><span class="line">      natOutgoing: Enabled</span><br><span class="line">      nodeSelector: all()</span><br><span class="line"></span><br><span class="line">kubectl apply -f custom-resources.yaml</span><br><span class="line"></span><br><span class="line">calico各模式的区别可见: </span><br><span class="line">https://akemi.zj.cn/2025/09/10/Kubespray-install/<span class="comment">#/ansible%E5%8F%98%E9%87%8F-calico%E7%9B%B8%E5%85%B3</span></span><br><span class="line"></span><br><span class="line">kubectl get pods -A</span><br><span class="line">NAMESPACE          NAME                                      READY   STATUS    RESTARTS   AGE</span><br><span class="line">calico-apiserver   calico-apiserver-6f9d56cf8f-66k5b         1/1     Running   0          20m</span><br><span class="line">calico-apiserver   calico-apiserver-6f9d56cf8f-7v7nq         1/1     Running   0          20m</span><br><span class="line">calico-system      calico-kube-controllers-87b94b69f-ktz29   1/1     Running   0          20m</span><br><span class="line">calico-system      calico-node-pp87j                         1/1     Running   0          20m</span><br><span class="line">calico-system      calico-typha-596f45fd95-m5bb8             1/1     Running   0          20m</span><br><span class="line">calico-system      csi-node-driver-bm68h                     2/2     Running   0          20m</span><br><span class="line">kube-system        coredns-6554b8b87f-kn2mw                  1/1     Running   0          73m</span><br><span class="line">kube-system        coredns-6554b8b87f-s8lxt                  1/1     Running   0          73m</span><br><span class="line">kube-system        etcd-master                               1/1     Running   0          73m</span><br><span class="line">kube-system        kube-apiserver-master                     1/1     Running   0          73m</span><br><span class="line">kube-system        kube-controller-manager-master            1/1     Running   0          73m</span><br><span class="line">kube-system        kube-proxy-t7g4n                          1/1     Running   0          73m</span><br><span class="line">kube-system        kube-scheduler-master                     1/1     Running   0          73m</span><br><span class="line">tigera-operator    tigera-operator-55f4b64fd7-6bbjz          1/1     Running   0          39m</span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6718,18 +6581,6 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6813,13 +6664,13 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7194,13 +7045,13 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7440,13 +7291,13 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8145,13 +7996,13 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8695,9 +8546,9 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8705,9 +8556,9 @@ tigera-operator    tigera-operator-55f4b64fd7-6bbjz          <span class="token 
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

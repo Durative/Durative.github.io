@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="zabbix自动发现，是自动添加主机并关联模板，启动主机的一种手段 使用简单，但性能较低，对zabbix服务端有压力 部署zabbix-agent 1.给要添加的主机部署zabbix-agent，并且修改配置文件 192.168.10.125 mysql-1 192.168.10.164 nginx1  cp -a &#x2F;etc&#x2F;yum.repos.d &#x2F;etc&#x2F;yum.repos.d.backup">
+    <meta name="description" content="zabbix自动发现，是自动添加主机并关联模板，启动主机的一种手段 使用简单，但性能较低，对zabbix服务端有压力 部署zabbix-agent 1234567891011121314151617181920212223242526271.给要添加的主机部署zabbix-agent，并且修改配置文件192.168.10.125 mysql-1192.168.10.164 nginx1cp -a">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Zabbix自动发现">
 <meta property="og:url" content="https://akemi.zj.cn/2024/09/16/Zabbix-Auto-Discovery/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="zabbix自动发现，是自动添加主机并关联模板，启动主机的一种手段 使用简单，但性能较低，对zabbix服务端有压力 部署zabbix-agent 1.给要添加的主机部署zabbix-agent，并且修改配置文件 192.168.10.125 mysql-1 192.168.10.164 nginx1  cp -a &#x2F;etc&#x2F;yum.repos.d &#x2F;etc&#x2F;yum.repos.d.backup">
+<meta property="og:description" content="zabbix自动发现，是自动添加主机并关联模板，启动主机的一种手段 使用简单，但性能较低，对zabbix服务端有压力 部署zabbix-agent 1234567891011121314151617181920212223242526271.给要添加的主机部署zabbix-agent，并且修改配置文件192.168.10.125 mysql-1192.168.10.164 nginx1cp -a">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/32df72f89e05d207f7c8539d7563497a.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/09/3b5ce3f40e671d0a87f5dc3d6509ed19.png">
@@ -206,12 +206,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -219,7 +221,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -499,33 +500,7 @@
         <p>zabbix自动发现，是自动添加主机并关联模板，启动主机的一种手段</p>
 <p>使用简单，但性能较低，对zabbix服务端有压力</p>
 <p><strong>部署zabbix-agent</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.给要添加的主机部署zabbix-agent，并且修改配置文件
-<span class="token number">192.168</span>.10.125 mysql-1
-<span class="token number">192.168</span>.10.164 nginx1
-
-<span class="token function">cp</span> <span class="token parameter variable">-a</span> /etc/yum.repos.d /etc/yum.repos.d.backup
-<span class="token function">rm</span> <span class="token parameter variable">-f</span> /etc/yum.repos.d/*
-<span class="token function">curl</span> <span class="token parameter variable">-o</span> /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-<span class="token function">wget</span> https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm
-<span class="token function">rpm</span> <span class="token parameter variable">-Uvh</span> zabbix-release-5.0-1.el7.noarch.rpm
-
-yum clean all
-yum makecache
-
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> zabbix-agent2
-systemctl <span class="token builtin class-name">enable</span> zabbix-agent2 <span class="token parameter variable">--now</span>
-
-<span class="token comment">#配置文件修改</span>
-<span class="token function">cat</span> <span class="token operator">></span>/etc/zabbix/zabbix_agent2.conf<span class="token operator">&lt;&lt;</span><span class="token string">EOF
-PidFile=/var/run/zabbix/zabbix_agent2.pid
-LogFile=/var/log/zabbix/zabbix_agent2.log
-LogFileSize=0
-Server=192.168.10.171
-ServerActive=192.168.10.171
-Include=/etc/zabbix/zabbix_agent2.d/*.conf
-ControlSocket=/tmp/agent.sock
-EOF</span>
-systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">1.给要添加的主机部署zabbix-agent，并且修改配置文件</span><br><span class="line">192.168.10.125 mysql-1</span><br><span class="line">192.168.10.164 nginx1</span><br><span class="line"></span><br><span class="line"><span class="built_in">cp</span> -a /etc/yum.repos.d /etc/yum.repos.d.backup</span><br><span class="line"><span class="built_in">rm</span> -f /etc/yum.repos.d/*</span><br><span class="line">curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line">wget https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line">rpm -Uvh zabbix-release-5.0-1.el7.noarch.rpm</span><br><span class="line"></span><br><span class="line">yum clean all</span><br><span class="line">yum makecache</span><br><span class="line"></span><br><span class="line">yum -y install zabbix-agent2</span><br><span class="line">systemctl <span class="built_in">enable</span> zabbix-agent2 --now</span><br><span class="line"></span><br><span class="line"><span class="comment">#配置文件修改</span></span><br><span class="line"><span class="built_in">cat</span> &gt;/etc/zabbix/zabbix_agent2.conf&lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">PidFile=/var/run/zabbix/zabbix_agent2.pid</span></span><br><span class="line"><span class="string">LogFile=/var/log/zabbix/zabbix_agent2.log</span></span><br><span class="line"><span class="string">LogFileSize=0</span></span><br><span class="line"><span class="string">Server=192.168.10.171</span></span><br><span class="line"><span class="string">ServerActive=192.168.10.171</span></span><br><span class="line"><span class="string">Include=/etc/zabbix/zabbix_agent2.d/*.conf</span></span><br><span class="line"><span class="string">ControlSocket=/tmp/agent.sock</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">systemctl restart zabbix-agent2.service</span><br></pre></td></tr></table></figure>
 
 <p><strong>配置自动发现规则</strong></p>
 <p>进入配置-自动发现</p>
@@ -6621,18 +6596,6 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6716,13 +6679,13 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7097,13 +7060,13 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7343,13 +7306,13 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8048,13 +8011,13 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8598,9 +8561,9 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8608,9 +8571,9 @@ systemctl restart zabbix-agent2.service<span aria-hidden="true" class="line-numb
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="现在有一个生产和一个预发环境，通过合并staging分支的代码到master分支来进行更新 但是出于方便回滚的目的，要一点一点代码进行合并测试 我应该如何精确让我提交的代码能够被合并，而不附带上别人的代码呢？ 1.提交已有的代码到staging  这个前缀是zsh的功能，不用管 git:(staging) sudo git commit -m &#39;add material to prod&#39; git:">
+    <meta name="description" content="现在有一个生产和一个预发环境，通过合并staging分支的代码到master分支来进行更新 但是出于方便回滚的目的，要一点一点代码进行合并测试 我应该如何精确让我提交的代码能够被合并，而不附带上别人的代码呢？ 123456789101112131415161718192021222324252627282930313233343536373839401.提交已有的代码到staging这个前缀是zs">
 <meta property="og:type" content="article">
 <meta property="og:title" content="git仓库使用cherry-pick进行单独代码合并">
 <meta property="og:url" content="https://akemi.zj.cn/2025/02/26/Git-cherry-pick/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="现在有一个生产和一个预发环境，通过合并staging分支的代码到master分支来进行更新 但是出于方便回滚的目的，要一点一点代码进行合并测试 我应该如何精确让我提交的代码能够被合并，而不附带上别人的代码呢？ 1.提交已有的代码到staging  这个前缀是zsh的功能，不用管 git:(staging) sudo git commit -m &#39;add material to prod&#39; git:">
+<meta property="og:description" content="现在有一个生产和一个预发环境，通过合并staging分支的代码到master分支来进行更新 但是出于方便回滚的目的，要一点一点代码进行合并测试 我应该如何精确让我提交的代码能够被合并，而不附带上别人的代码呢？ 123456789101112131415161718192021222324252627282930313233343536373839401.提交已有的代码到staging这个前缀是zs">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-02-26T11:24:44.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:44:42.766Z">
@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -493,46 +494,7 @@
         <p>现在有一个生产和一个预发环境，通过合并<strong>staging分支</strong>的代码到<strong>master分支</strong>来进行更新</p>
 <p>但是出于方便回滚的目的，要一点一点代码进行合并测试</p>
 <p>我应该如何精确让我提交的代码能够被合并，而不附带上别人的代码呢？</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.提交已有的代码到staging
-
-这个前缀是zsh的功能，不用管
-git:<span class="token punctuation">(</span>staging<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">'add material to prod'</span>
-git:<span class="token punctuation">(</span>staging<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> push
-
-并且记录提交代码的摘要，这个摘要可以通过git logs查看
-也可以在网页中查看
-63cbc67a
-d16ef0f7
-
-<span class="token number">2</span>.切换到master分支并且先同步
-git:<span class="token punctuation">(</span>staging<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> checkout master
-git:<span class="token punctuation">(</span>master<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> pull
-
-<span class="token number">3</span>.依据master分支创建一条本地分支
-git:<span class="token punctuation">(</span>master<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> checkout <span class="token parameter variable">-b</span> cherry-pick-63cbc67a
-
-<span class="token number">4</span>.检入之前提交的代码
-git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> cherry-pick 63cbc67a d16ef0f7
-
-自动合并 xxx
-<span class="token punctuation">[</span>cherry-pick-63cbc67a 1c846d7<span class="token punctuation">]</span> <span class="token function">add</span> material to prod
- Date: Wed Feb <span class="token number">26</span> <span class="token number">11</span>:06:16 <span class="token number">2025</span> +0800
- <span class="token number">1</span> <span class="token function">file</span> changed, <span class="token number">87</span> insertions<span class="token punctuation">(</span>+<span class="token punctuation">)</span>
-自动合并 xxx
-<span class="token punctuation">[</span>cherry-pick-63cbc67a 736afb7<span class="token punctuation">]</span> adjust rbac
- Date: Wed Feb <span class="token number">26</span> <span class="token number">11</span>:03:43 <span class="token number">2025</span> +0800
- <span class="token number">2</span> files changed, <span class="token number">5</span> insertions<span class="token punctuation">(</span>+<span class="token punctuation">)</span>, <span class="token number">4</span> deletions<span class="token punctuation">(</span>-<span class="token punctuation">)</span>
-
-<span class="token number">5</span>.（可选）如果有冲突，需要手动解决冲突
-git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> <span class="token function">add</span> <span class="token builtin class-name">.</span>
-git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="token punctuation">)</span> <span class="token function">sudo</span> <span class="token function">git</span> cherry-pick <span class="token parameter variable">--continue</span> 
-
-<span class="token number">6</span>.生成远程临时分支，因为这个分支目前只在本地有，仓库是没有的
-<span class="token function">git</span> push --set-upstream origin cherry-pick-63cbc67a
-
-<span class="token number">7</span>.将临时分支与master分支合并
-（不推荐）git:<span class="token punctuation">(</span>master<span class="token punctuation">)</span> <span class="token function">git</span> merge cherry-pick-63cbc67a
-（推荐）使用网页端，进入临时分支，发起合并请求<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">1.提交已有的代码到staging</span><br><span class="line"></span><br><span class="line">这个前缀是zsh的功能，不用管</span><br><span class="line">git:(staging) sudo git commit -m <span class="string">&#x27;add material to prod&#x27;</span></span><br><span class="line">git:(staging) sudo git push</span><br><span class="line"></span><br><span class="line">并且记录提交代码的摘要，这个摘要可以通过git logs查看</span><br><span class="line">也可以在网页中查看</span><br><span class="line">63cbc67a</span><br><span class="line">d16ef0f7</span><br><span class="line"></span><br><span class="line">2.切换到master分支并且先同步</span><br><span class="line">git:(staging) sudo git checkout master</span><br><span class="line">git:(master) sudo git pull</span><br><span class="line"></span><br><span class="line">3.依据master分支创建一条本地分支</span><br><span class="line">git:(master) sudo git checkout -b cherry-pick-63cbc67a</span><br><span class="line"></span><br><span class="line">4.检入之前提交的代码</span><br><span class="line">git:(cherry-pick-63cbc67a) sudo git cherry-pick 63cbc67a d16ef0f7</span><br><span class="line"></span><br><span class="line">自动合并 xxx</span><br><span class="line">[cherry-pick-63cbc67a 1c846d7] add material to prod</span><br><span class="line"> Date: Wed Feb 26 11:06:16 2025 +0800</span><br><span class="line"> 1 file changed, 87 insertions(+)</span><br><span class="line">自动合并 xxx</span><br><span class="line">[cherry-pick-63cbc67a 736afb7] adjust rbac</span><br><span class="line"> Date: Wed Feb 26 11:03:43 2025 +0800</span><br><span class="line"> 2 files changed, 5 insertions(+), 4 deletions(-)</span><br><span class="line"></span><br><span class="line">5.（可选）如果有冲突，需要手动解决冲突</span><br><span class="line">git:(cherry-pick-63cbc67a) sudo git add .</span><br><span class="line">git:(cherry-pick-63cbc67a) sudo git cherry-pick --<span class="built_in">continue</span> </span><br><span class="line"></span><br><span class="line">6.生成远程临时分支，因为这个分支目前只在本地有，仓库是没有的</span><br><span class="line">git push --set-upstream origin cherry-pick-63cbc67a</span><br><span class="line"></span><br><span class="line">7.将临时分支与master分支合并</span><br><span class="line">（不推荐）git:(master) git merge cherry-pick-63cbc67a</span><br><span class="line">（推荐）使用网页端，进入临时分支，发起合并请求</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6611,18 +6573,6 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6706,13 +6656,13 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7087,13 +7037,13 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7333,13 +7283,13 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8038,13 +7988,13 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8588,9 +8538,9 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8598,9 +8548,9 @@ git:<span class="token punctuation">(</span>cherry-pick-63cbc67a<span class="tok
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

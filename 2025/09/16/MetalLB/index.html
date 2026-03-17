@@ -201,12 +201,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -214,7 +216,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -509,76 +510,9 @@
 <li>Speaker：daemonset，负责对外广播service的IP地址</li>
 </ul>
 <h2 id="MetalLB部署—资源文件部署"><a href="#MetalLB部署—资源文件部署" class="headerlink" title="MetalLB部署—资源文件部署"></a><strong>MetalLB部署—资源文件部署</strong></h2><p>除了资源文件部署还可以通过helm部署，但是略过了，因为这个东西不需要手动配置什么，那helm肯定更加简单</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">如果使用的是calico，且使用的是ipvs模式
-需要修改kube-proxy配置
-kubectl get configmap kube-proxy <span class="token parameter variable">-n</span> kube-system <span class="token parameter variable">-o</span> yaml <span class="token operator">|</span> <span class="token punctuation">\</span>
-<span class="token function">sed</span> <span class="token parameter variable">-e</span> <span class="token string">"s/strictARP: false/strictARP: true/"</span> <span class="token operator">|</span> <span class="token punctuation">\</span>
-kubectl apply <span class="token parameter variable">-f</span> - <span class="token parameter variable">-n</span> kube-system
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">如果使用的是calico，且使用的是ipvs模式</span><br><span class="line">需要修改kube-proxy配置</span><br><span class="line">kubectl get configmap kube-proxy -n kube-system -o yaml | \</span><br><span class="line">sed -e <span class="string">&quot;s/strictARP: false/strictARP: true/&quot;</span> | \</span><br><span class="line">kubectl apply -f - -n kube-system</span><br><span class="line"></span><br><span class="line">kubectl -n kube-system rollout restart daemonset kube-proxy</span><br><span class="line"></span><br><span class="line">直接使用配置安装</span><br><span class="line">kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml</span><br><span class="line"></span><br><span class="line">我的MetalLB版本是v0.15.2</span><br><span class="line">需求镜像:</span><br><span class="line">quay.io/metallb/controller:v0.15.2</span><br><span class="line">quay.io/metallb/speaker:v0.15.2</span><br><span class="line"></span><br><span class="line">kubectl get pods -n metallb-system</span><br><span class="line">NAME                          READY   STATUS    RESTARTS   AGE</span><br><span class="line">controller-679d565488-xmhgj   1/1     Running   0          21m</span><br><span class="line">speaker-52q4b                 1/1     Running   0          21m</span><br><span class="line">speaker-8pqqc                 1/1     Running   0          21m</span><br><span class="line">speaker-d2t9s                 1/1     Running   0          21m</span><br><span class="line">speaker-hq86m                 1/1     Running   0          21m</span><br><span class="line">speaker-tvfl4                 1/1     Running   0          21m</span><br><span class="line">speaker-w9tbh                 1/1     Running   0          21m</span><br><span class="line"></span><br><span class="line">创建地址池资源</span><br><span class="line"><span class="built_in">cat</span> &gt; metaippool.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: metallb.io/v1beta1</span></span><br><span class="line"><span class="string">kind: IPAddressPool</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: ip-pool</span></span><br><span class="line"><span class="string">  namespace: metallb-system</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  addresses:</span></span><br><span class="line"><span class="string">    - 10.163.2.200-10.163.2.220</span></span><br><span class="line"><span class="string">---</span></span><br><span class="line"><span class="string">apiVersion: metallb.io/v1beta1</span></span><br><span class="line"><span class="string">kind: L2Advertisement</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: example</span></span><br><span class="line"><span class="string">  namespace: metallb-system</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  ipAddressPools:</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">kubectl apply -f metaippool.yaml</span><br><span class="line"></span><br><span class="line">kubectl get IPAddressPool -A</span><br><span class="line">NAMESPACE        NAME      AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES</span><br><span class="line">metallb-system   ip-pool   <span class="literal">true</span>          <span class="literal">false</span>             [<span class="string">&quot;10.163.2.200-10.163.2.220&quot;</span>]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-kubectl <span class="token parameter variable">-n</span> kube-system rollout restart daemonset kube-proxy
-
-直接使用配置安装
-kubectl apply <span class="token parameter variable">-f</span> https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
-
-我的MetalLB版本是v0.15.2
-需求镜像:
-quay.io/metallb/controller:v0.15.2
-quay.io/metallb/speaker:v0.15.2
-
-kubectl get pods <span class="token parameter variable">-n</span> metallb-system
-NAME                          READY   STATUS    RESTARTS   AGE
-controller-679d565488-xmhgj   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-speaker-52q4b                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-speaker-8pqqc                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-speaker-d2t9s                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-speaker-hq86m                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-speaker-tvfl4                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-speaker-w9tbh                 <span class="token number">1</span>/1     Running   <span class="token number">0</span>          21m
-
-创建地址池资源
-<span class="token function">cat</span> <span class="token operator">></span> metaippool.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: ip-pool
-  namespace: metallb-system
-spec:
-  addresses:
-    - 10.163.2.200-10.163.2.220
----
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: example
-  namespace: metallb-system
-spec:
-  ipAddressPools:
-EOF</span>
-kubectl apply <span class="token parameter variable">-f</span> metaippool.yaml
-
-kubectl get IPAddressPool <span class="token parameter variable">-A</span>
-NAMESPACE        NAME      AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES
-metallb-system   ip-pool   <span class="token boolean">true</span>          <span class="token boolean">false</span>             <span class="token punctuation">[</span><span class="token string">"10.163.2.200-10.163.2.220"</span><span class="token punctuation">]</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="创建测试service"><a href="#创建测试service" class="headerlink" title="创建测试service"></a>创建测试service</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cat</span> <span class="token operator">></span> empty-svc.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: empty-service
-spec:
-  type: LoadBalancer
-  ports:
-    targetPort: 80
-EOF</span>
-
-kubectl apply <span class="token parameter variable">-f</span> empty-svc.yaml
-kubectl get svc
-NAME                        TYPE           CLUSTER-IP      EXTERNAL-IP    PORT<span class="token punctuation">(</span>S<span class="token punctuation">)</span>        AGE
-csi-metrics-rbdplugin       ClusterIP      <span class="token number">10.233</span>.6.103    <span class="token operator">&lt;</span>none<span class="token operator">></span>         <span class="token number">8080</span>/TCP       22h
-csi-rbdplugin-provisioner   ClusterIP      <span class="token number">10.233</span>.38.11    <span class="token operator">&lt;</span>none<span class="token operator">></span>         <span class="token number">8080</span>/TCP       22h
-empty-service               LoadBalancer   <span class="token number">10.233</span>.32.246   <span class="token number">10.163</span>.2.200   <span class="token number">80</span>:31546/TCP   1s
-kubernetes                  ClusterIP      <span class="token number">10.233</span>.0.1      <span class="token operator">&lt;</span>none<span class="token operator">></span>         <span class="token number">443</span>/TCP        4d14h<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="创建测试service"><a href="#创建测试service" class="headerlink" title="创建测试service"></a>创建测试service</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt; empty-svc.yaml &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">apiVersion: v1</span></span><br><span class="line"><span class="string">kind: Service</span></span><br><span class="line"><span class="string">metadata:</span></span><br><span class="line"><span class="string">  name: empty-service</span></span><br><span class="line"><span class="string">spec:</span></span><br><span class="line"><span class="string">  type: LoadBalancer</span></span><br><span class="line"><span class="string">  ports:</span></span><br><span class="line"><span class="string">    targetPort: 80</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kubectl apply -f empty-svc.yaml</span><br><span class="line">kubectl get svc</span><br><span class="line">NAME                        TYPE           CLUSTER-IP      EXTERNAL-IP    PORT(S)        AGE</span><br><span class="line">csi-metrics-rbdplugin       ClusterIP      10.233.6.103    &lt;none&gt;         8080/TCP       22h</span><br><span class="line">csi-rbdplugin-provisioner   ClusterIP      10.233.38.11    &lt;none&gt;         8080/TCP       22h</span><br><span class="line">empty-service               LoadBalancer   10.233.32.246   10.163.2.200   80:31546/TCP   1s</span><br><span class="line">kubernetes                  ClusterIP      10.233.0.1      &lt;none&gt;         443/TCP        4d14h</span><br></pre></td></tr></table></figure>
 
 <p>可以看到这个空service已经获得了一个VIP</p>
 <h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>如果只用metallb还会存在一个问题，每个service都需要占用一个VIP，那服务一多不就炸了吗，所以可以与ingress结合，这样使用就可以只使用同一个IP&#x2F;域名</p>
@@ -6662,18 +6596,6 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6757,13 +6679,13 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7138,13 +7060,13 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7384,13 +7306,13 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8089,13 +8011,13 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8639,9 +8561,9 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8649,9 +8571,9 @@ kubernetes                  ClusterIP      <span class="token number">10.233</sp
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

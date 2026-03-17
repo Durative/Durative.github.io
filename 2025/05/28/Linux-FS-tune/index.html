@@ -202,12 +202,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -215,7 +217,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -545,67 +546,19 @@
 <td></td>
 </tr>
 </tbody></table>
-<h2 id="文件系统创建选项"><a href="#文件系统创建选项" class="headerlink" title="文件系统创建选项"></a>文件系统创建选项</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mkfs.xfs
-<span class="token parameter variable">-i</span> <span class="token assign-left variable">size</span><span class="token operator">=</span><span class="token number">512</span> 调整inode索引节点大小为512k
-<span class="token parameter variable">-n</span> <span class="token assign-left variable">size</span><span class="token operator">=</span><span class="token number">8192</span> 调整文件系统目录文件块大小
-<span class="token parameter variable">-d</span> <span class="token assign-left variable">su</span><span class="token operator">=</span>512k,sw<span class="token operator">=</span><span class="token number">2</span> RAID调优选项,2块数据盘,Chunk Size<span class="token punctuation">(</span>条带大小<span class="token punctuation">)</span>512k
+<h2 id="文件系统创建选项"><a href="#文件系统创建选项" class="headerlink" title="文件系统创建选项"></a>文件系统创建选项</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mkfs.xfs</span><br><span class="line">-i size=512 调整inode索引节点大小为512k</span><br><span class="line">-n size=8192 调整文件系统目录文件块大小</span><br><span class="line">-d su=512k,sw=2 RAID调优选项,2块数据盘,Chunk Size(条带大小)512k</span><br><span class="line"></span><br><span class="line">mkfs.ext4</span><br><span class="line">-I 128 调整inode大小为128k,默认256k</span><br><span class="line">-O ^extra_size 禁用extra_size特性，在每个inode中为扩展元数据保留空间，如果-I小于256则无效</span><br><span class="line">-O large_dir 提高目录的最大大小，默认禁用</span><br><span class="line">-O ^huge_file 允许文件大小大于2TB，默认启动</span><br><span class="line">-E stride=128,stripe-width=256 RAID调优项，指定步幅与条带宽度</span><br></pre></td></tr></table></figure>
 
-mkfs.ext4
-<span class="token parameter variable">-I</span> <span class="token number">128</span> 调整inode大小为128k,默认256k
-<span class="token parameter variable">-O</span> ^extra_size 禁用extra_size特性，在每个inode中为扩展元数据保留空间，如果-I小于256则无效
-<span class="token parameter variable">-O</span> large_dir 提高目录的最大大小，默认禁用
-<span class="token parameter variable">-O</span> ^huge_file 允许文件大小大于2TB，默认启动
-<span class="token parameter variable">-E</span> <span class="token assign-left variable">stride</span><span class="token operator">=</span><span class="token number">128</span>,stripe-width<span class="token operator">=</span><span class="token number">256</span> RAID调优项，指定步幅与条带宽度<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="文件系统挂载参数"><a href="#文件系统挂载参数" class="headerlink" title="文件系统挂载参数"></a>文件系统挂载参数</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 通用参数</span>
-atime 每次文件被访问时，系统会更新该文件的 atime 时间戳元数据
-relatime <span class="token punctuation">(</span>默认<span class="token punctuation">)</span>定时统一修改atime时间戳，减少元数据写入
-noatime 不更新atime元数据
-nodiratime 不更新目录的atime元数据
-
-<span class="token comment"># xfs参数</span>
-inode64 使indoe被放置在数据附加，最小化磁盘寻道<span class="token punctuation">(</span>仅针对HDD<span class="token punctuation">)</span>
-logbsize 日志缓冲区大小，越大，写入日志的IO次数就越少，默认32k
-norecovery 禁用日志恢复
-
-<span class="token comment"># ext4参数</span>
-i_version 启用64位inode支持，默认禁用
-journal_ioprio 控制日志IO的优先级，取值范围0~7，0最高，默认3
-
-<span class="token function">mount</span> <span class="token operator">|</span> <span class="token function">grep</span> rl-root
-<span class="token punctuation">(</span>rw,relatime,seclabel,attr2,inode64,logbufs<span class="token operator">=</span><span class="token number">8</span>,logbsize<span class="token operator">=</span>32k,noquota<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="文件系统挂载参数"><a href="#文件系统挂载参数" class="headerlink" title="文件系统挂载参数"></a>文件系统挂载参数</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 通用参数</span></span><br><span class="line">atime 每次文件被访问时，系统会更新该文件的 atime 时间戳元数据</span><br><span class="line">relatime (默认)定时统一修改atime时间戳，减少元数据写入</span><br><span class="line">noatime 不更新atime元数据</span><br><span class="line">nodiratime 不更新目录的atime元数据</span><br><span class="line"></span><br><span class="line"><span class="comment"># xfs参数</span></span><br><span class="line">inode64 使indoe被放置在数据附加，最小化磁盘寻道(仅针对HDD)</span><br><span class="line">logbsize 日志缓冲区大小，越大，写入日志的IO次数就越少，默认32k</span><br><span class="line">norecovery 禁用日志恢复</span><br><span class="line"></span><br><span class="line"><span class="comment"># ext4参数</span></span><br><span class="line">i_version 启用64位inode支持，默认禁用</span><br><span class="line">journal_ioprio 控制日志IO的优先级，取值范围0~7，0最高，默认3</span><br><span class="line"></span><br><span class="line">mount | grep rl-root</span><br><span class="line">(rw,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)</span><br></pre></td></tr></table></figure>
 
 <h2 id="文件系统日志"><a href="#文件系统日志" class="headerlink" title="文件系统日志"></a>文件系统日志</h2><p>在linux中，文件系统日志可以加快文件系统的恢复：<br>每次修改文件，都会被记录在日志中，所以恢复时，只需要检查日志和受日志影响的部分，而不是整个文件系统</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">xfs中提供norecovery选项，禁用日志恢复
-
-ext3、ext4支持多种模式下工作
-参数为date<span class="token operator">=</span>mode
-可选
-ordered 日志中只记录元数据，所有数据刷新到磁盘后才会提交日志条目
-writeback 日志中只记录元数据但不保留顺序。恢复后，可能会出现旧数据
-journal 数据在写入前存储在日志中，可靠性高但性能差<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">xfs中提供norecovery选项，禁用日志恢复</span><br><span class="line"></span><br><span class="line">ext3、ext4支持多种模式下工作</span><br><span class="line">参数为<span class="built_in">date</span>=mode</span><br><span class="line">可选</span><br><span class="line">ordered 日志中只记录元数据，所有数据刷新到磁盘后才会提交日志条目</span><br><span class="line">writeback 日志中只记录元数据但不保留顺序。恢复后，可能会出现旧数据</span><br><span class="line">journal 数据在写入前存储在日志中，可靠性高但性能差</span><br></pre></td></tr></table></figure>
 
 <p><strong>写屏障barriers</strong></p>
 <p>写屏障强制执行写顺序，当启用barriers时，保证数据与日志条目之间的提交顺序，确保文件系统可恢复</p>
 <p>默认打开，xfs中无法禁用，ext4可以使用nobarrier来禁用</p>
 <h3 id="使用外部journal"><a href="#使用外部journal" class="headerlink" title="使用外部journal"></a>使用外部journal</h3><p>对于大量随机写的工作负载，写操作与日志更新之间可能存在磁盘争用</p>
 <p>所以在一些场景，比如使用HDD的存储上，会选择将日志放在低延时设备上如SSD上 </p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">下面的创建中，我将使用/dev/sda2创建一个名为/dev/vdd1的日志分区
-
-xfs创建
-mkfs.xfs <span class="token parameter variable">-l</span> <span class="token assign-left variable">logdev</span><span class="token operator">=</span>/dev/vdd1 /dev/sda2
-/dev/vdd1是日志设备分区
-/dev/sda2是主文件系统分区
-
-xfs挂载
-<span class="token function">mount</span> <span class="token parameter variable">-o</span> <span class="token assign-left variable">logdev</span><span class="token operator">=</span>/dev/vdd1 /dev/sda2 /mnt
-需要再次指定日志设备分区
-
-ext4创建
-<span class="token number">1</span>.创建日志设备（必须使用相同块大小的设备）
-mkfs.ext4 <span class="token parameter variable">-O</span> journal_dev <span class="token parameter variable">-b</span> <span class="token number">4096</span> /dev/vdd1
-<span class="token number">2</span>.创建文件系统
-mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token assign-left variable">device</span><span class="token operator">=</span>/dev/vdd1 <span class="token parameter variable">-b</span> <span class="token number">4096</span> /dev/sda2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">下面的创建中，我将使用/dev/sda2创建一个名为/dev/vdd1的日志分区</span><br><span class="line"></span><br><span class="line">xfs创建</span><br><span class="line">mkfs.xfs -l logdev=/dev/vdd1 /dev/sda2</span><br><span class="line">/dev/vdd1是日志设备分区</span><br><span class="line">/dev/sda2是主文件系统分区</span><br><span class="line"></span><br><span class="line">xfs挂载</span><br><span class="line">mount -o logdev=/dev/vdd1 /dev/sda2 /mnt</span><br><span class="line">需要再次指定日志设备分区</span><br><span class="line"></span><br><span class="line">ext4创建</span><br><span class="line">1.创建日志设备（必须使用相同块大小的设备）</span><br><span class="line">mkfs.ext4 -O journal_dev -b 4096 /dev/vdd1</span><br><span class="line">2.创建文件系统</span><br><span class="line">mkfs.ext4 -J device=/dev/vdd1 -b 4096 /dev/sda2</span><br></pre></td></tr></table></figure>
 
 
     </article>
@@ -6686,18 +6639,6 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6781,13 +6722,13 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7162,13 +7103,13 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7408,13 +7349,13 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8113,13 +8054,13 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8663,9 +8604,9 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8673,9 +8614,9 @@ mkfs.ext4 <span class="token parameter variable">-J</span> <span class="token as
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

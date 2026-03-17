@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -500,12 +501,7 @@
 <p>**2.**使用cluster map来获取被检索到的pool列表与属性，决定在哪里存放对象</p>
 <p><strong>3.<strong>创建一个特定pool的输入&#x2F;输出上下文，</strong>Ceph集群使用CRUSH算法将这些pool映射到PG，然后将其映射到特定的OSD。</strong></p>
 <h2 id="副本池创建"><a href="#副本池创建" class="headerlink" title="副本池创建"></a>副本池创建</h2><p><strong>副本池&#x2F;纠删码池</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查看数据分布策略
-ceph osd pool get <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> crush_rule
-replicated_rule/ec_rule
-
-副本池 <span class="token punctuation">(</span>Replicated Pool<span class="token punctuation">)</span>：默认策略，数据复制多份（通常 <span class="token number">3</span> 副本）
-纠删码池 <span class="token punctuation">(</span>Erasure Coded Pool<span class="token punctuation">)</span>：类似 RAID5/6，节省空间但计算开销大<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">查看数据分布策略</span><br><span class="line">ceph osd pool get &lt;pool-name&gt; crush_rule</span><br><span class="line">replicated_rule/ec_rule</span><br><span class="line"></span><br><span class="line">副本池 (Replicated Pool)：默认策略，数据复制多份（通常 3 副本）</span><br><span class="line">纠删码池 (Erasure Coded Pool)：类似 RAID5/6，节省空间但计算开销大</span><br></pre></td></tr></table></figure>
 
 <p><strong>pool的相关参数</strong></p>
 <table>
@@ -542,174 +538,15 @@ replicated_rule/ec_rule
 <td>ceph osd pool set ec_pool allow_ec_overwrites true</td>
 </tr>
 </tbody></table>
-<h3 id="pool副本池的常用操作"><a href="#pool副本池的常用操作" class="headerlink" title="pool副本池的常用操作"></a><strong>pool副本池的常用操作</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">创建 Pool
-<span class="token comment"># 创建副本池（默认）</span>
-ceph osd pool create <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> <span class="token operator">&lt;</span>pg-num<span class="token operator">></span> <span class="token operator">&lt;</span>pgp-num<span class="token operator">></span> <span class="token punctuation">[</span>replicated<span class="token punctuation">]</span> <span class="token punctuation">[</span><span class="token operator">&lt;</span>crush-rule<span class="token operator">></span><span class="token punctuation">]</span>
-
-管理 Pool
-<span class="token comment"># 列出所有 Pool</span>
-ceph osd lspools
-<span class="token comment"># 查看 Pool 详情</span>
-ceph osd pool stats <span class="token operator">&lt;</span>pool-name<span class="token operator">></span>
-<span class="token comment"># 重命名 Pool</span>
-ceph osd pool <span class="token function">rename</span> <span class="token operator">&lt;</span>old-name<span class="token operator">></span> <span class="token operator">&lt;</span>new-name<span class="token operator">></span>
-
-<span class="token comment"># 修改对象副本数量</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool size <span class="token number">3</span>
-<span class="token comment"># 设置I/O所需的最小副本数 (默认: 2)</span>
-<span class="token comment"># 当可用副本数低于此值时将拒绝写入</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool min_size <span class="token number">2</span>
-<span class="token comment"># 防止意外删除存储池 (默认: false)</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool nodelete <span class="token boolean">true</span>
-<span class="token comment"># 调整pg数量</span>
-ceph ods pool <span class="token builtin class-name">set</span> <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> pg_num <span class="token number">128</span>
-<span class="token comment"># 防止修改PG数量 (默认: false)</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool nopgchange <span class="token boolean">true</span>
-<span class="token comment"># 防止修改副本数 (默认: false)</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool nosizechange <span class="token boolean">true</span>
-
-<span class="token comment"># 设置配额（最大对象数/字节数）</span>
-ceph osd pool set-quota <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> max_objects <span class="token number">1000000</span>
-ceph osd pool set-quota <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> max_bytes 1T
-
-<span class="token comment"># 删除对象后在缓存中保留的时间(秒)</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool cache_target_dirty_ratio <span class="token number">0.4</span>  <span class="token comment"># 内存中脏数据阈值</span>
-ceph osd pool <span class="token builtin class-name">set</span> mypool cache_target_full_ratio <span class="token number">0.8</span>  <span class="token comment"># 触发刷盘的阈值</span>
-
-删除 Pool
-<span class="token comment"># 需两步确认（防止误删）</span>
-ceph config <span class="token builtin class-name">set</span> mon mon_allow_pool_delete <span class="token boolean">true</span>
-ceph osd pool delete <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> --yes-i-really-really-mean-it
-
-快照管理
-<span class="token comment"># 创建 Pool 快照</span>
-ceph osd pool mksnap <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> <span class="token operator">&lt;</span>snap-name<span class="token operator">></span>
-
-<span class="token comment"># 恢复快照</span>
-rados <span class="token parameter variable">-p</span> <span class="token operator">&lt;</span>pool-name<span class="token operator">></span> rollback <span class="token operator">&lt;</span>obj-name<span class="token operator">></span> <span class="token operator">&lt;</span>snap-name<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="pool副本池的常用操作"><a href="#pool副本池的常用操作" class="headerlink" title="pool副本池的常用操作"></a><strong>pool副本池的常用操作</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">创建 Pool</span><br><span class="line"><span class="comment"># 创建副本池（默认）</span></span><br><span class="line">ceph osd pool create &lt;pool-name&gt; &lt;pg-num&gt; &lt;pgp-num&gt; [replicated] [&lt;crush-rule&gt;]</span><br><span class="line"></span><br><span class="line">管理 Pool</span><br><span class="line"><span class="comment"># 列出所有 Pool</span></span><br><span class="line">ceph osd lspools</span><br><span class="line"><span class="comment"># 查看 Pool 详情</span></span><br><span class="line">ceph osd pool stats &lt;pool-name&gt;</span><br><span class="line"><span class="comment"># 重命名 Pool</span></span><br><span class="line">ceph osd pool rename &lt;old-name&gt; &lt;new-name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改对象副本数量</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool size 3</span><br><span class="line"><span class="comment"># 设置I/O所需的最小副本数 (默认: 2)</span></span><br><span class="line"><span class="comment"># 当可用副本数低于此值时将拒绝写入</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool min_size 2</span><br><span class="line"><span class="comment"># 防止意外删除存储池 (默认: false)</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool nodelete <span class="literal">true</span></span><br><span class="line"><span class="comment"># 调整pg数量</span></span><br><span class="line">ceph ods pool <span class="built_in">set</span> &lt;pool-name&gt; pg_num 128</span><br><span class="line"><span class="comment"># 防止修改PG数量 (默认: false)</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool nopgchange <span class="literal">true</span></span><br><span class="line"><span class="comment"># 防止修改副本数 (默认: false)</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool nosizechange <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置配额（最大对象数/字节数）</span></span><br><span class="line">ceph osd pool set-quota &lt;pool-name&gt; max_objects 1000000</span><br><span class="line">ceph osd pool set-quota &lt;pool-name&gt; max_bytes 1T</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除对象后在缓存中保留的时间(秒)</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool cache_target_dirty_ratio 0.4  <span class="comment"># 内存中脏数据阈值</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> mypool cache_target_full_ratio 0.8  <span class="comment"># 触发刷盘的阈值</span></span><br><span class="line"></span><br><span class="line">删除 Pool</span><br><span class="line"><span class="comment"># 需两步确认（防止误删）</span></span><br><span class="line">ceph config <span class="built_in">set</span> mon mon_allow_pool_delete <span class="literal">true</span></span><br><span class="line">ceph osd pool delete &lt;pool-name&gt; &lt;pool-name&gt; --yes-i-really-really-mean-it</span><br><span class="line"></span><br><span class="line">快照管理</span><br><span class="line"><span class="comment"># 创建 Pool 快照</span></span><br><span class="line">ceph osd pool mksnap &lt;pool-name&gt; &lt;snap-name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 恢复快照</span></span><br><span class="line">rados -p &lt;pool-name&gt; rollback &lt;obj-name&gt; &lt;snap-name&gt;</span><br></pre></td></tr></table></figure>
 
 <h2 id="纠错码池配置与创建"><a href="#纠错码池配置与创建" class="headerlink" title="纠错码池配置与创建"></a>纠错码池配置与创建</h2><p>仅做记录，纠错码池的利用率比副本池的高，但<strong>生产中基本不使用，了解即可</strong>，而且它的机制还比副本池复杂</p>
 <p>1.每个对象数据被分割成k个数据chunks<br>2.计算生成m个coding chunks<br>3.coding chunk大小等于data chunk size大小<br>4.对象被存储在k+m个OSD中。</p>
 <p>Red Hat支持以下k+m值:<br>4+2(1:1.5)<br>8+3(1:1.375)<br>8+4(1:1.5)<br>erasure code开销的计算公式为nOSD * k &#x2F; (k+m) OSD Size<br>例如，如果你有64个4 TB的osd(总共256 TB)， k&#x3D;8, m&#x3D;4，那么公式为64 * 8&#x2F;(8+4)* 4 &#x3D; 170.67。然后用原始存储容量除以开销就得到了这个比率。256TB&#x2F;170.67TB &#x3D; 1.5。</p>
 <h3 id="纠错码池配置文件"><a href="#纠错码池配置文件" class="headerlink" title="纠错码池配置文件"></a>纠错码池配置文件</h3><p>erasure code配置文件配置了纠错码池对于存储对象的数据块和编码快的数量，以及使用的擦除编码插件和算法</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">纠错码池的创建命令格式
-ceph osd erasure-code-profile <span class="token builtin class-name">set</span> <span class="token operator">&lt;</span>profile-name<span class="token operator">></span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span><span class="token operator">&lt;</span>directory<span class="token operator">=</span>directory<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span><span class="token operator">&lt;</span>plugin<span class="token operator">=</span>plugin<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span><span class="token operator">&lt;</span>crush-device-class<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span><span class="token operator">&lt;</span>crush-failure-domain<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span><span class="token operator">&lt;</span>key<span class="token operator">=</span>value<span class="token operator">></span><span class="token punctuation">..</span>.<span class="token punctuation">]</span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span>--force<span class="token punctuation">]</span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">纠错码池的创建命令格式</span><br><span class="line">ceph osd erasure-code-profile <span class="built_in">set</span> &lt;profile-name&gt; \</span><br><span class="line">    [&lt;directory=directory&gt;] \</span><br><span class="line">    [&lt;plugin=plugin&gt;] \</span><br><span class="line">    [&lt;crush-device-class&gt;] \</span><br><span class="line">    [&lt;crush-failure-domain&gt;] \</span><br><span class="line">    [&lt;key=value&gt;...] \</span><br><span class="line">    [--force]</span><br><span class="line"></span><br><span class="line">查看默认配置</span><br><span class="line">ceph osd erasure-code-profile get default</span><br><span class="line">k=2</span><br><span class="line">m=2</span><br><span class="line">plugin=jerasure</span><br><span class="line">technique=reed_sol_van</span><br><span class="line"></span><br><span class="line">常用参数</span><br><span class="line">plugin：指定纠删码插件，默认为jerasure（其他可选：isa, lrc, shec等）。</span><br><span class="line">k：数据块的数量。</span><br><span class="line">m：编码块（校验块）的数量。</span><br><span class="line">crush-device-class：指定设备类别（如hdd、ssd），将数据分布到特定类型的设备上。</span><br><span class="line">crush-failure-domain：设置故障域（如host, osd, rack等），默认为host。</span><br><span class="line">technique：指定编码技术（如reed_sol_van, cauchy等，取决于插件）。</span><br><span class="line">w：指定jerasure插件中的编码包大小（可选）。</span><br><span class="line">l：在lrc插件中指定局部组的数据块数量（用于局部恢复）。</span><br><span class="line">crush-root：指定CRUSH规则中的根节点。</span><br><span class="line"></span><br><span class="line">创建纠错码池配置文件</span><br><span class="line">ceph osd erasure-code-profile <span class="built_in">set</span> &lt;profile-name&gt; \</span><br><span class="line">    plugin=&lt;plugin&gt; \</span><br><span class="line">    k=&lt;data-chunks&gt; \</span><br><span class="line">    m=&lt;coding-chunks&gt; \</span><br><span class="line">    [其他参数...]</span><br><span class="line"></span><br><span class="line">查看所有配置文件列表</span><br><span class="line">ceph osd erasure-code-profile <span class="built_in">ls</span></span><br><span class="line"></span><br><span class="line">查看特定配置文件的详细信息</span><br><span class="line">ceph osd erasure-code-profile get my-ec-profile</span><br><span class="line"></span><br><span class="line">删除纠删码配置文件（已使用的配置不能修改）</span><br><span class="line">ceph osd erasure-code-profile <span class="built_in">rm</span> my-ec-profile</span><br></pre></td></tr></table></figure>
 
-查看默认配置
-ceph osd erasure-code-profile get default
-<span class="token assign-left variable">k</span><span class="token operator">=</span><span class="token number">2</span>
-<span class="token assign-left variable">m</span><span class="token operator">=</span><span class="token number">2</span>
-<span class="token assign-left variable">plugin</span><span class="token operator">=</span>jerasure
-<span class="token assign-left variable">technique</span><span class="token operator">=</span>reed_sol_van
-
-常用参数
-plugin：指定纠删码插件，默认为jerasure（其他可选：isa, lrc, shec等）。
-k：数据块的数量。
-m：编码块（校验块）的数量。
-crush-device-class：指定设备类别（如hdd、ssd），将数据分布到特定类型的设备上。
-crush-failure-domain：设置故障域（如host, osd, rack等），默认为host。
-technique：指定编码技术（如reed_sol_van, cauchy等，取决于插件）。
-w：指定jerasure插件中的编码包大小（可选）。
-l：在lrc插件中指定局部组的数据块数量（用于局部恢复）。
-crush-root：指定CRUSH规则中的根节点。
-
-创建纠错码池配置文件
-ceph osd erasure-code-profile <span class="token builtin class-name">set</span> <span class="token operator">&lt;</span>profile-name<span class="token operator">></span> <span class="token punctuation">\</span>
-    <span class="token assign-left variable">plugin</span><span class="token operator">=</span><span class="token operator">&lt;</span>plugin<span class="token operator">></span> <span class="token punctuation">\</span>
-    <span class="token assign-left variable">k</span><span class="token operator">=</span><span class="token operator">&lt;</span>data-chunks<span class="token operator">></span> <span class="token punctuation">\</span>
-    <span class="token assign-left variable">m</span><span class="token operator">=</span><span class="token operator">&lt;</span>coding-chunks<span class="token operator">></span> <span class="token punctuation">\</span>
-    <span class="token punctuation">[</span>其他参数<span class="token punctuation">..</span>.<span class="token punctuation">]</span>
-
-查看所有配置文件列表
-ceph osd erasure-code-profile <span class="token function">ls</span>
-
-查看特定配置文件的详细信息
-ceph osd erasure-code-profile get my-ec-profile
-
-删除纠删码配置文件（已使用的配置不能修改）
-ceph osd erasure-code-profile <span class="token function">rm</span> my-ec-profile<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="管理和操作pool"><a href="#管理和操作pool" class="headerlink" title="管理和操作pool"></a>管理和操作pool</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ========================================</span>
-<span class="token comment"># 池重命名操作 (不影响池内数据)</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 重命名存储池（需更新相关用户的池权限）</span>
-ceph osd pool <span class="token function">rename</span> old-pool-name new-pool-name
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 池删除操作 (危险！永久删除数据)</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 1. 启用池删除功能（需在mon节点配置）</span>
-ceph config <span class="token builtin class-name">set</span> mon mon_allow_pool_delete <span class="token boolean">true</span>
-
-<span class="token comment"># 2. 删除存储池（双确认机制）</span>
-ceph osd pool delete pool-name pool-name --yes-i-really-really-mean-it
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 池防删除保护</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 启用防删除保护（安全锁）</span>
-ceph osd pool <span class="token builtin class-name">set</span> pool-name nodelete <span class="token boolean">true</span>
-<span class="token comment"># 禁用防删除保护（允许删除）</span>
-ceph osd pool <span class="token builtin class-name">set</span> pool-name nodelete <span class="token boolean">false</span>
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 池配置管理</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 查看池配置参数</span>
-ceph osd pool get pool-name size       <span class="token comment"># 查看副本数</span>
-ceph osd pool get pool-name min_size   <span class="token comment"># 查看最小可用副本数</span>
-
-<span class="token comment"># 修改池配置参数</span>
-ceph osd pool <span class="token builtin class-name">set</span> pool-name size <span class="token number">3</span>     <span class="token comment"># 设置副本数</span>
-ceph osd pool <span class="token builtin class-name">set</span> pool-name min_size <span class="token number">2</span> <span class="token comment"># 设置最小可用副本数</span>
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 池列表与信息查询</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 列出所有存储池（简略信息）</span>
-ceph osd lspools
-
-<span class="token comment"># 列出所有存储池详情</span>
-ceph osd pool <span class="token function">ls</span> detail
-
-<span class="token comment"># 查看存储池使用统计</span>
-ceph <span class="token function">df</span>  <span class="token comment"># 所有池容量统计</span>
-ceph osd pool stats  <span class="token comment"># 所有池IO性能统计</span>
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 应用程序关联</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 为存储池启用应用程序类型</span>
-ceph osd pool application <span class="token builtin class-name">enable</span> pool-name cephfs  <span class="token comment"># Ceph文件系统</span>
-ceph osd pool application <span class="token builtin class-name">enable</span> pool-name rbd     <span class="token comment"># Ceph块设备</span>
-ceph osd pool application <span class="token builtin class-name">enable</span> pool-name rgw     <span class="token comment"># RADOS网关</span>
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 配额管理</span>
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 设置存储容量配额（1TB限制）</span>
-ceph osd pool set-quota pool-name max_bytes 1T
-
-<span class="token comment"># 设置对象数量配额（100万对象限制）</span>
-ceph osd pool set-quota pool-name max_objects <span class="token number">1000000</span>
-
-<span class="token comment"># 删除配额限制</span>
-ceph osd pool set-quota pool-name max_bytes <span class="token number">0</span>
-ceph osd pool set-quota pool-name max_objects <span class="token number">0</span>
-
-<span class="token comment"># ========================================</span>
-<span class="token comment"># 默认池保护参数 (需在ceph.conf配置)</span>
-<span class="token comment"># ========================================</span>
-<span class="token punctuation">[</span>global<span class="token punctuation">]</span>
-osd_pool_default_flag_nodelete <span class="token operator">=</span> <span class="token boolean">true</span>
-osd_pool_default_flag_nopgchange <span class="token operator">=</span> <span class="token boolean">true</span>
-osd_pool_default_flag_nosizechange <span class="token operator">=</span> <span class="token boolean">true</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="管理和操作pool"><a href="#管理和操作pool" class="headerlink" title="管理和操作pool"></a>管理和操作pool</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池重命名操作 (不影响池内数据)</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 重命名存储池（需更新相关用户的池权限）</span></span><br><span class="line">ceph osd pool rename old-pool-name new-pool-name</span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池删除操作 (危险！永久删除数据)</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 1. 启用池删除功能（需在mon节点配置）</span></span><br><span class="line">ceph config <span class="built_in">set</span> mon mon_allow_pool_delete <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 删除存储池（双确认机制）</span></span><br><span class="line">ceph osd pool delete pool-name pool-name --yes-i-really-really-mean-it</span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池防删除保护</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 启用防删除保护（安全锁）</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name nodelete <span class="literal">true</span></span><br><span class="line"><span class="comment"># 禁用防删除保护（允许删除）</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name nodelete <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池配置管理</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 查看池配置参数</span></span><br><span class="line">ceph osd pool get pool-name size       <span class="comment"># 查看副本数</span></span><br><span class="line">ceph osd pool get pool-name min_size   <span class="comment"># 查看最小可用副本数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改池配置参数</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name size 3     <span class="comment"># 设置副本数</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name min_size 2 <span class="comment"># 设置最小可用副本数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池列表与信息查询</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 列出所有存储池（简略信息）</span></span><br><span class="line">ceph osd lspools</span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有存储池详情</span></span><br><span class="line">ceph osd pool <span class="built_in">ls</span> detail</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看存储池使用统计</span></span><br><span class="line">ceph <span class="built_in">df</span>  <span class="comment"># 所有池容量统计</span></span><br><span class="line">ceph osd pool stats  <span class="comment"># 所有池IO性能统计</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 应用程序关联</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 为存储池启用应用程序类型</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> pool-name cephfs  <span class="comment"># Ceph文件系统</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> pool-name rbd     <span class="comment"># Ceph块设备</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> pool-name rgw     <span class="comment"># RADOS网关</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 配额管理</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 设置存储容量配额（1TB限制）</span></span><br><span class="line">ceph osd pool set-quota pool-name max_bytes 1T</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置对象数量配额（100万对象限制）</span></span><br><span class="line">ceph osd pool set-quota pool-name max_objects 1000000</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除配额限制</span></span><br><span class="line">ceph osd pool set-quota pool-name max_bytes 0</span><br><span class="line">ceph osd pool set-quota pool-name max_objects 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 默认池保护参数 (需在ceph.conf配置)</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line">[global]</span><br><span class="line">osd_pool_default_flag_nodelete = <span class="literal">true</span></span><br><span class="line">osd_pool_default_flag_nopgchange = <span class="literal">true</span></span><br><span class="line">osd_pool_default_flag_nosizechange = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="Pool的命名空间"><a href="#Pool的命名空间" class="headerlink" title="Pool的命名空间"></a>Pool的命名空间</h2><p>在Ceph中，<strong>池的命名空间（Namespace）</strong>是RADOS 存储系统中的一种逻辑隔离机制，它允许在同一个存储池（Pool）内创建多个独立的对象命名空间。</p>
 <p><strong>一般来说，会为每个应用程序配置一个专用的池</strong>，也就是不会使用命名空间</p>
@@ -743,21 +580,7 @@ osd_pool_default_flag_nosizechange <span class="token operator">=</span> <span c
 <td>生产&#x2F;测试数据共存（production, staging）</td>
 </tr>
 </tbody></table>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在对象操作命令中，命名空间通过 <span class="token parameter variable">-N</span> 参数指定：
-<span class="token operator">&lt;</span>pool_name<span class="token operator">></span>/<span class="token operator">&lt;</span>namespace<span class="token operator">></span>/<span class="token operator">&lt;</span>object_name<span class="token operator">></span>
-
-<span class="token comment"># 创建财务部门命名空间</span>
-rados <span class="token parameter variable">-p</span> company_data <span class="token parameter variable">-N</span> finance put budget.xlsx /data/2023_budget.xlsx
-
-<span class="token comment"># 创建研发部门命名空间</span>
-rados <span class="token parameter variable">-p</span> company_data <span class="token parameter variable">-N</span> rnd put design.pdf /blueprints/projectX.pdf
-
-<span class="token comment"># 查看财务部门对象</span>
-rados <span class="token parameter variable">-p</span> company_data <span class="token parameter variable">-N</span> finance <span class="token function">ls</span>
-
-<span class="token comment"># 设置部门专属用户</span>
-ceph auth get-or-create client.finance_user <span class="token punctuation">\</span>
-  osd <span class="token string">'allow rw pool=company_data namespace=finance'</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">在对象操作命令中，命名空间通过 -N 参数指定：</span><br><span class="line">&lt;pool_name&gt;/&lt;namespace&gt;/&lt;object_name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建财务部门命名空间</span></span><br><span class="line">rados -p company_data -N finance put budget.xlsx /data/2023_budget.xlsx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建研发部门命名空间</span></span><br><span class="line">rados -p company_data -N rnd put design.pdf /blueprints/projectX.pdf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看财务部门对象</span></span><br><span class="line">rados -p company_data -N finance <span class="built_in">ls</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置部门专属用户</span></span><br><span class="line">ceph auth get-or-create client.finance_user \</span><br><span class="line">  osd <span class="string">&#x27;allow rw pool=company_data namespace=finance&#x27;</span></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6836,18 +6659,6 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6931,13 +6742,13 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7312,13 +7123,13 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7558,13 +7369,13 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8263,13 +8074,13 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8813,9 +8624,9 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8823,9 +8634,9 @@ ceph auth get-or-create client.finance_user <span class="token punctuation">\</s
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

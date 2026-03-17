@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="环境准备 管理网络10.163.2.0&#x2F;24 DHCP 存储网络172.16.0.0&#x2F;24 系统版本CentOS 8.5.2111 交换机用L2做，这样简单点 正常生产会使用两台L3，两条链路，两块网卡做bond  # 更新yum源 rm -rf &#x2F;etc&#x2F;yum.repos.d&#x2F;* curl -o &#x2F;etc&#x2F;yum.repos.d&#x2F;CentOS-Base.repo https:&#x2F;&#x2F;mirror">
+    <meta name="description" content="环境准备123456789101112131415161718192021222324252627282930313233343536373839404142434445管理网络10.163.2.0&#x2F;24 DHCP存储网络172.16.0.0&#x2F;24系统版本CentOS 8.5.2111交换机用L2做，这样简单点正常生产会使用两台L3，两条链路，两块网卡做bond# 更新yum源rm -rf &#x2F;e">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DRBD+Pacemaker+提供高可用NFS">
 <meta property="og:url" content="https://akemi.zj.cn/2025/08/26/Pacemaker-NFS/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="环境准备 管理网络10.163.2.0&#x2F;24 DHCP 存储网络172.16.0.0&#x2F;24 系统版本CentOS 8.5.2111 交换机用L2做，这样简单点 正常生产会使用两台L3，两条链路，两块网卡做bond  # 更新yum源 rm -rf &#x2F;etc&#x2F;yum.repos.d&#x2F;* curl -o &#x2F;etc&#x2F;yum.repos.d&#x2F;CentOS-Base.repo https:&#x2F;&#x2F;mirror">
+<meta property="og:description" content="环境准备123456789101112131415161718192021222324252627282930313233343536373839404142434445管理网络10.163.2.0&#x2F;24 DHCP存储网络172.16.0.0&#x2F;24系统版本CentOS 8.5.2111交换机用L2做，这样简单点正常生产会使用两台L3，两条链路，两块网卡做bond# 更新yum源rm -rf &#x2F;e">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250825202834524.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250826144830658.png">
@@ -203,12 +203,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -216,7 +218,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -494,396 +495,23 @@
                 <main class="main post-page">
     <article class="article-entry">
         <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250825202834524.png"></p>
-<h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">
-管理网络10.163.2.0/24 DHCP
-存储网络172.16.0.0/24
-系统版本CentOS <span class="token number">8.5</span>.2111
-交换机用L2做，这样简单点
-正常生产会使用两台L3，两条链路，两块网卡做bond
-
-<span class="token comment"># 更新yum源</span>
-<span class="token function">rm</span> <span class="token parameter variable">-rf</span> /etc/yum.repos.d/*
-<span class="token function">curl</span> <span class="token parameter variable">-o</span> /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo
-
-<span class="token comment"># 添加HA的软件源</span>
-<span class="token function">cat</span> <span class="token operator">></span> /etc/yum.repos.d/HighAvailability.repo <span class="token operator">&lt;&lt;</span> <span class="token string">'EOF'
-[HighAvailability]
-name=CentOS-8 - HighAvailability
-baseurl=http://vault.centos.org/8.5.2111/HighAvailability/$basearch/os/
-gpgcheck=0
-enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
-EOF</span>
-yum makecache
-yum update
-
-<span class="token function">cat</span> <span class="token operator">></span> /etc/hosts <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-10.163.2.100 pcs1
-10.163.2.106 pcs2
-10.163.2.102 pcs3
-172.16.0.1 drbd1
-172.16.0.2 drbd2
-172.16.0.3 drbd3
-EOF</span>
-
-<span class="token function">scp</span> /etc/hosts pcs2:/etc/
-<span class="token function">scp</span> /etc/hosts pcs3:/etc/
-
-nmcli connection <span class="token function">add</span> con-name eth1 ifname eth1 ipv4.addresses <span class="token number">172.16</span>.0.1/24 ipv4.method manual <span class="token builtin class-name">type</span> ethernet
-nmcli connection <span class="token function">add</span> con-name eth1 ifname eth1 ipv4.addresses <span class="token number">172.16</span>.0.2/24 ipv4.method manual <span class="token builtin class-name">type</span> ethernet
-nmcli connection <span class="token function">add</span> con-name eth1 ifname eth1 ipv4.addresses <span class="token number">172.16</span>.0.3/24 ipv4.method manual <span class="token builtin class-name">type</span> ethernet
-
-<span class="token comment"># 修改主机名</span>
-hostnamectl set-hostname drbd1 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-hostnamectl set-hostname drbd2 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-hostnamectl set-hostname drbd3 <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">管理网络10.163.2.0/24 DHCP</span><br><span class="line">存储网络172.16.0.0/24</span><br><span class="line">系统版本CentOS 8.5.2111</span><br><span class="line">交换机用L2做，这样简单点</span><br><span class="line">正常生产会使用两台L3，两条链路，两块网卡做bond</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新yum源</span></span><br><span class="line"><span class="built_in">rm</span> -rf /etc/yum.repos.d/*</span><br><span class="line">curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加HA的软件源</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/yum.repos.d/HighAvailability.repo &lt;&lt; <span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[HighAvailability]</span><br><span class="line">name=CentOS-8 - HighAvailability</span><br><span class="line">baseurl=http://vault.centos.org/8.5.2111/HighAvailability/<span class="variable">$basearch</span>/os/</span><br><span class="line">gpgcheck=0</span><br><span class="line">enabled=1</span><br><span class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial</span><br><span class="line">EOF</span><br><span class="line">yum makecache</span><br><span class="line">yum update</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/hosts &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span></span><br><span class="line"><span class="string">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span></span><br><span class="line"><span class="string">10.163.2.100 pcs1</span></span><br><span class="line"><span class="string">10.163.2.106 pcs2</span></span><br><span class="line"><span class="string">10.163.2.102 pcs3</span></span><br><span class="line"><span class="string">172.16.0.1 drbd1</span></span><br><span class="line"><span class="string">172.16.0.2 drbd2</span></span><br><span class="line"><span class="string">172.16.0.3 drbd3</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">scp /etc/hosts pcs2:/etc/</span><br><span class="line">scp /etc/hosts pcs3:/etc/</span><br><span class="line"></span><br><span class="line">nmcli connection add con-name eth1 ifname eth1 ipv4.addresses 172.16.0.1/24 ipv4.method manual <span class="built_in">type</span> ethernet</span><br><span class="line">nmcli connection add con-name eth1 ifname eth1 ipv4.addresses 172.16.0.2/24 ipv4.method manual <span class="built_in">type</span> ethernet</span><br><span class="line">nmcli connection add con-name eth1 ifname eth1 ipv4.addresses 172.16.0.3/24 ipv4.method manual <span class="built_in">type</span> ethernet</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改主机名</span></span><br><span class="line">hostnamectl set-hostname drbd1 &amp;&amp; bash</span><br><span class="line">hostnamectl set-hostname drbd2 &amp;&amp; bash</span><br><span class="line">hostnamectl set-hostname drbd3 &amp;&amp; bash</span><br></pre></td></tr></table></figure>
 
 <h2 id="部署DRBD"><a href="#部署DRBD" class="headerlink" title="部署DRBD"></a>部署DRBD</h2><p>每个节点执行</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum group <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token string">"Development Tools"</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> <span class="token function">wget</span> <span class="token function">vim</span> net-tools lvm2 epel-release
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> drbd
-
-<span class="token comment"># 下载与编译drbd的内核模块</span>
-<span class="token function">wget</span> https://pkg.linbit.com/downloads/drbd/9.0/drbd-9.0.32-1.tar.gz
-<span class="token function">tar</span> xf drbd-9.0.32-1.tar.gz 
-<span class="token builtin class-name">cd</span> drbd-9.0.32-1/
-<span class="token function">make</span> <span class="token operator">&amp;&amp;</span> <span class="token function">make</span> <span class="token function">install</span>
-
-<span class="token comment"># 加载模块</span>
-modprobe drbd
-lsmod <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-i</span> drbd
-
-<span class="token comment"># 持久化加载模块</span>
-<span class="token builtin class-name">echo</span> drbd <span class="token operator">></span> /etc/modules-load.d/drbd.conf
-
-<span class="token comment"># 修改全局配置文件</span>
-common <span class="token punctuation">&#123;</span>
-<span class="token punctuation">..</span>.
-        options <span class="token punctuation">&#123;</span>
-                auto-promote <span class="token function">yes</span><span class="token punctuation">;</span>
-        <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">..</span>.
-        net <span class="token punctuation">&#123;</span>
-                protocol C<span class="token punctuation">;</span>
-        <span class="token punctuation">&#125;</span>
-
-<span class="token comment"># 创建lvm</span>
-pvcreate /dev/sdb
-vgcreate nfs /dev/sdb
-lvcreate <span class="token parameter variable">-n</span> nfs <span class="token parameter variable">-L</span> 10G nfs
-
-<span class="token comment"># 添加子配置文件</span>
-<span class="token builtin class-name">echo</span> <span class="token string">"resource nfs &#123;
-meta-disk internal;
-device /dev/drbd1;
-net &#123;
-verify-alg sha256;
-&#125;
-on drbd1 &#123;
-node-id 0;
-address 172.16.0.1:7788;
-disk /dev/nfs/nfs;
-&#125;
-on drbd2 &#123;
-node-id 1;
-address 172.16.0.2:7788;
-disk /dev/nfs/nfs;
-&#125;
-on drbd3 &#123;
-node-id 2;
-address 172.16.0.3:7788;
-disk /dev/nfs/nfs;
-&#125;
-# 如果要3节点，需要额外定义connection块
-    connection &#123;
-        host drbd1 port 7788;
-        host drbd2 port 7788;
-    &#125;
-    connection &#123;
-        host drbd1 port 7788;
-        host drbd3 port 7788;
-    &#125;
-    connection &#123;
-        host drbd2 port 7788;
-        host drbd3 port 7788;
-    &#125;
-&#125;
-"</span> <span class="token operator">></span> /etc/drbd.d/nfs-drdb.res
-
-<span class="token comment"># 创建drbd资源</span>
-drbdadm create-md nfs
-drbdadm up nfs
-systemctl <span class="token builtin class-name">enable</span> drbd <span class="token parameter variable">--now</span>
-
-<span class="token comment"># 开启防火墙</span>
-firewall-cmd <span class="token parameter variable">--permanent</span> --add-port<span class="token operator">=</span><span class="token number">7788</span>/tcp
-firewall-cmd <span class="token parameter variable">--reload</span>
-
-<span class="token comment"># 设置其中一个节点为主</span>
-drbdadm primary nfs <span class="token parameter variable">--force</span>
-
-<span class="token comment"># 格式化以加快同步进程</span>
-mkfs.xfs /dev/drbd1
-
-<span class="token comment"># 同步完成</span>
-drbdadm status
-nfs role:Primary
-  disk:UpToDate
-  drbd2 role:Secondary
-    peer-disk:UpToDate
-  drbd3 role:Secondary
-    peer-disk:UpToDate
- 
- 
-<span class="token comment"># 测试挂载</span>
-<span class="token function">mkdir</span> /mnt/nfs
-<span class="token function">dd</span> <span class="token assign-left variable">if</span><span class="token operator">=</span>/dev/zero <span class="token assign-left variable">of</span><span class="token operator">=</span>/mnt/nfs/test-file.img <span class="token assign-left variable">bs</span><span class="token operator">=</span>10M <span class="token assign-left variable">count</span><span class="token operator">=</span><span class="token number">50</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line">yum group install -y <span class="string">&quot;Development Tools&quot;</span></span><br><span class="line">yum -y install wget vim net-tools lvm2 epel-release</span><br><span class="line">yum -y install drbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载与编译drbd的内核模块</span></span><br><span class="line">wget https://pkg.linbit.com/downloads/drbd/9.0/drbd-9.0.32-1.tar.gz</span><br><span class="line">tar xf drbd-9.0.32-1.tar.gz </span><br><span class="line"><span class="built_in">cd</span> drbd-9.0.32-1/</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载模块</span></span><br><span class="line">modprobe drbd</span><br><span class="line">lsmod | grep -i drbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 持久化加载模块</span></span><br><span class="line"><span class="built_in">echo</span> drbd &gt; /etc/modules-load.d/drbd.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改全局配置文件</span></span><br><span class="line">common &#123;</span><br><span class="line">...</span><br><span class="line">        options &#123;</span><br><span class="line">                auto-promote <span class="built_in">yes</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        ...</span><br><span class="line">        net &#123;</span><br><span class="line">                protocol C;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建lvm</span></span><br><span class="line">pvcreate /dev/sdb</span><br><span class="line">vgcreate nfs /dev/sdb</span><br><span class="line">lvcreate -n nfs -L 10G nfs</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加子配置文件</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;resource nfs &#123;</span></span><br><span class="line"><span class="string">meta-disk internal;</span></span><br><span class="line"><span class="string">device /dev/drbd1;</span></span><br><span class="line"><span class="string">net &#123;</span></span><br><span class="line"><span class="string">verify-alg sha256;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">on drbd1 &#123;</span></span><br><span class="line"><span class="string">node-id 0;</span></span><br><span class="line"><span class="string">address 172.16.0.1:7788;</span></span><br><span class="line"><span class="string">disk /dev/nfs/nfs;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">on drbd2 &#123;</span></span><br><span class="line"><span class="string">node-id 1;</span></span><br><span class="line"><span class="string">address 172.16.0.2:7788;</span></span><br><span class="line"><span class="string">disk /dev/nfs/nfs;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">on drbd3 &#123;</span></span><br><span class="line"><span class="string">node-id 2;</span></span><br><span class="line"><span class="string">address 172.16.0.3:7788;</span></span><br><span class="line"><span class="string">disk /dev/nfs/nfs;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"># 如果要3节点，需要额外定义connection块</span></span><br><span class="line"><span class="string">    connection &#123;</span></span><br><span class="line"><span class="string">        host drbd1 port 7788;</span></span><br><span class="line"><span class="string">        host drbd2 port 7788;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    connection &#123;</span></span><br><span class="line"><span class="string">        host drbd1 port 7788;</span></span><br><span class="line"><span class="string">        host drbd3 port 7788;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    connection &#123;</span></span><br><span class="line"><span class="string">        host drbd2 port 7788;</span></span><br><span class="line"><span class="string">        host drbd3 port 7788;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&quot;</span> &gt; /etc/drbd.d/nfs-drdb.res</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建drbd资源</span></span><br><span class="line">drbdadm create-md nfs</span><br><span class="line">drbdadm up nfs</span><br><span class="line">systemctl <span class="built_in">enable</span> drbd --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启防火墙</span></span><br><span class="line">firewall-cmd --permanent --add-port=7788/tcp</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置其中一个节点为主</span></span><br><span class="line">drbdadm primary nfs --force</span><br><span class="line"></span><br><span class="line"><span class="comment"># 格式化以加快同步进程</span></span><br><span class="line">mkfs.xfs /dev/drbd1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 同步完成</span></span><br><span class="line">drbdadm status</span><br><span class="line">nfs role:Primary</span><br><span class="line">  disk:UpToDate</span><br><span class="line">  drbd2 role:Secondary</span><br><span class="line">    peer-disk:UpToDate</span><br><span class="line">  drbd3 role:Secondary</span><br><span class="line">    peer-disk:UpToDate</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="comment"># 测试挂载</span></span><br><span class="line"><span class="built_in">mkdir</span> /mnt/nfs</span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=/mnt/nfs/test-file.img bs=10M count=50</span><br></pre></td></tr></table></figure>
 
 <p>此时如果drbd1挂了，需要手动或脚本将切换后的主节点的&#x2F;dev&#x2F;drbd1设备进行挂载，但是如果让Pacemaker接管，就可以避免这个问题</p>
-<h2 id="部署Pacemaker"><a href="#部署Pacemaker" class="headerlink" title="部署Pacemaker"></a>部署Pacemaker</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># epel会干扰安装Pacemaker</span>
-<span class="token function">rm</span> <span class="token parameter variable">-rf</span> /etc/yum.repos.d/epel*
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> pcs pacemaker corosync fence-agents-all
-systemctl <span class="token builtin class-name">enable</span> pcsd <span class="token parameter variable">--now</span>
+<h2 id="部署Pacemaker"><a href="#部署Pacemaker" class="headerlink" title="部署Pacemaker"></a>部署Pacemaker</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># epel会干扰安装Pacemaker</span></span><br><span class="line"><span class="built_in">rm</span> -rf /etc/yum.repos.d/epel*</span><br><span class="line">yum -y install pcs pacemaker corosync fence-agents-all</span><br><span class="line">systemctl <span class="built_in">enable</span> pcsd --now</span><br><span class="line"></span><br><span class="line">firewall-cmd --permanent --add-service=high-availability</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line"><span class="comment"># 集群认证</span></span><br><span class="line"><span class="built_in">echo</span> 123456 | passwd --stdin hacluster</span><br><span class="line">pcs host auth pcs1 pcs2 pcs3 -u hacluster -p 123456</span><br><span class="line"></span><br><span class="line"><span class="comment"># 搭建集群</span></span><br><span class="line">pcs cluster setup mycluster pcs1 pcs2 pcs3</span><br><span class="line">pcs cluster start --all</span><br><span class="line">pcs cluster <span class="built_in">enable</span> --all</span><br><span class="line"></span><br><span class="line">pcs property <span class="built_in">set</span> stonith-enabled=<span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证集群状态</span></span><br><span class="line">pcs cluster status</span><br><span class="line">Cluster Status:</span><br><span class="line"> Cluster Summary:</span><br><span class="line">   * Stack: corosync</span><br><span class="line">   * Current DC: pcs3 (version 2.1.0-8.el8-7c3f660707) - partition with quorum</span><br><span class="line">   * Last updated: Mon Aug 25 20:25:17 2025</span><br><span class="line">   * Last change:  Mon Aug 25 20:24:48 2025 by hacluster via crmd on pcs3</span><br><span class="line">   * 3 nodes configured</span><br><span class="line">   * 0 resource instances configured</span><br><span class="line"> Node List:</span><br><span class="line">   * Online: [ pcs1 pcs2 pcs3 ]</span><br><span class="line"></span><br><span class="line">PCSD Status:</span><br><span class="line">  pcs1: Online</span><br><span class="line">  pcs2: Online</span><br><span class="line">  pcs3: Online</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 3节点调优，每个节点都要执行</span></span><br><span class="line">vim /etc/corosync/corosync.conf</span><br><span class="line">quorum &#123;</span><br><span class="line">    provider: corosync_votequorum</span><br><span class="line">    wait_for_all=1</span><br><span class="line">    last_man_standing=1</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">pcs cluster <span class="built_in">sync</span></span><br><span class="line">pcs cluster reload corosync</span><br><span class="line">systemctl restart pacemaker.service</span><br><span class="line">systemctl restart pcsd</span><br></pre></td></tr></table></figure>
 
-firewall-cmd <span class="token parameter variable">--permanent</span> --add-service<span class="token operator">=</span>high-availability
-firewall-cmd <span class="token parameter variable">--reload</span>
+<h2 id="Pacemaker接管资源"><a href="#Pacemaker接管资源" class="headerlink" title="Pacemaker接管资源"></a>Pacemaker接管资源</h2><h3 id="接管drbd"><a href="#接管drbd" class="headerlink" title="接管drbd"></a>接管drbd</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用-f 配置文件的方式进行资源配置</span></span><br><span class="line"><span class="comment"># 此时只配置配置文件，而不是直接配置</span></span><br><span class="line">-f drbd_cfg</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用配置文件</span></span><br><span class="line">pcs cluster cib-push drbd_cfg --config</span><br><span class="line"></span><br><span class="line"><span class="comment"># pcs自带的资源类型中 不支持drbd的ocf</span></span><br><span class="line">pcs resource list | grep drbd</span><br><span class="line">service:drbd - systemd unit file <span class="keyword">for</span> drbd</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新装上epel，安装额外drbd依赖包</span></span><br><span class="line">yum -y remove epel-release &amp;&amp; yum -y install epel-release</span><br><span class="line">yum -y install drbd-pacemaker</span><br><span class="line"></span><br><span class="line">pcs resource list | grep drbd | grep ocf</span><br><span class="line">ocf:linbit:drbd - Manages a DRBD device as a Master/Slave resource</span><br><span class="line">ocf:linbit:drbd-attr - import DRBD state change events as transient node</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看用法与参数</span></span><br><span class="line">pcs resource describe ocf:linbit:drbd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建资源</span></span><br><span class="line">pcs -f drbd_cfg resource create nfs-drbd ocf:linbit:drbd drbd_resource=nfs \</span><br><span class="line">op monitor interval=<span class="string">&quot;29s&quot;</span> role=<span class="string">&quot;Master&quot;</span> \</span><br><span class="line">op monitor interval=<span class="string">&quot;31s&quot;</span> role=<span class="string">&quot;Slave&quot;</span> \</span><br><span class="line">op start interval=<span class="string">&quot;0s&quot;</span> <span class="built_in">timeout</span>=<span class="string">&quot;240s&quot;</span> \</span><br><span class="line">op stop interval=<span class="string">&quot;0s&quot;</span> <span class="built_in">timeout</span>=<span class="string">&quot;100s&quot;</span></span><br><span class="line">Master角色每29秒执行一次健康检查</span><br><span class="line">Slave角色每31秒执行一次健康检查</span><br><span class="line">启动超时240秒，停止超时100秒</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个可提升资源Promotable Resource</span></span><br><span class="line"><span class="comment"># 允许资源实例在不同的节点上以不同的角色运行</span></span><br><span class="line">pcs -f drbd_cfg resource promotable nfs-drbd \</span><br><span class="line">promoted-max=1 \</span><br><span class="line">promoted-node-max=1 \</span><br><span class="line">clone-max=3 \</span><br><span class="line">clone-node-max=1 \</span><br><span class="line">notify=<span class="literal">true</span></span><br><span class="line">设置只能有一个节点作为Master</span><br><span class="line">单个节点上最多可以运行1个Master示例</span><br><span class="line">资源实例的总数为3</span><br><span class="line">单个节点上最多可以运行1个资源实例</span><br><span class="line">当资源状态发生变化时，Pacemaker会通知所有实例</span><br><span class="line"></span><br><span class="line"><span class="comment"># 接管文件系统</span></span><br><span class="line">pcs -f drbd_cfg resource create nfsfs FileSystem \</span><br><span class="line">device=<span class="string">&#x27;/dev/drbd1&#x27;</span> directory=<span class="string">&#x27;/mnt/nfs&#x27;</span> fstype=<span class="string">&#x27;xfs&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加约束条件</span></span><br><span class="line"><span class="comment"># 指定文件系统依赖于可提升资源nfs-drbd-clone,且需要在角色master上</span></span><br><span class="line">pcs -f drbd_cfg constraint colocation add \</span><br><span class="line">nfsfs with nfs-drbd-clone INFINITY \</span><br><span class="line">with-rsc-role=Master</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看状态</span></span><br><span class="line">pcs resource cleanup nfs-drbd</span><br><span class="line">pcs resource cleanup nfs-drbd-clone</span><br><span class="line">pcs resource refresh</span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Masters: [ pcs2 ]</span><br><span class="line">    * Slaves: [ pcs1 pcs3 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭测试</span></span><br><span class="line">现在让pcs2关机systemctl poweroff</span><br><span class="line"> pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Masters: [ pcs3 ]</span><br><span class="line">    * Slaves: [ pcs1 ]</span><br><span class="line">    * Stopped: [ pcs2 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs3</span><br><span class="line"></span><br><span class="line">可以看到已经迁移到pcs3上了，并且nfsfs也过去了</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 集群认证</span>
-<span class="token builtin class-name">echo</span> <span class="token number">123456</span> <span class="token operator">|</span> <span class="token function">passwd</span> <span class="token parameter variable">--stdin</span> hacluster
-pcs <span class="token function">host</span> auth pcs1 pcs2 pcs3 <span class="token parameter variable">-u</span> hacluster <span class="token parameter variable">-p</span> <span class="token number">123456</span>
+<h3 id="创建nfs资源"><a href="#创建nfs资源" class="headerlink" title="创建nfs资源"></a>创建nfs资源</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">yum -y install nfs-utils</span><br><span class="line">systemctl <span class="built_in">enable</span> nfs-server.service --now</span><br><span class="line">firewall-cmd --add-service=nfs --permanent</span><br><span class="line">firewall-cmd --add-service=rpc-bind --permanent</span><br><span class="line">firewall-cmd --add-service=mountd --permanent</span><br><span class="line">firewall-cmd --add-port=30000-30050/tcp --permanent</span><br><span class="line">firewall-cmd --add-port=30000-30050/udp --permanent</span><br><span class="line">firewall-cmd --reload</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建nfs资源</span></span><br><span class="line">pcs -f drbd_cfg resource create nfs-server systemd:nfs-server \</span><br><span class="line">op monitor interval=<span class="string">&#x27;20s&#x27;</span> op start interval=<span class="string">&#x27;0s&#x27;</span> <span class="built_in">timeout</span>=<span class="string">&#x27;20s&#x27;</span> \</span><br><span class="line">op stop interval=<span class="string">&#x27;0s&#x27;</span> <span class="built_in">timeout</span>=<span class="string">&#x27;15s&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 约束条件，绑定nfs-server与nfsfs到同一节点，并在nfsfs后启动</span></span><br><span class="line">pcs -f drbd_cfg constraint colocation add nfs-server with nfsfs</span><br><span class="line">pcs -f drbd_cfg constraint order nfsfs <span class="keyword">then</span> nfs-server</span><br><span class="line"></span><br><span class="line"><span class="comment"># 手动在当前主节点启动nfs-server</span></span><br><span class="line">systemctl start nfs-server</span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Masters: [ pcs2 ]</span><br><span class="line">    * Slaves: [ pcs1 pcs3 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs2</span><br><span class="line">  * nfs-server  (systemd:nfs-server):    Started pcs2</span><br><span class="line">  </span><br><span class="line">可以测试一下故障转移，我试过了没问题</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 搭建集群</span>
-pcs cluster setup mycluster pcs1 pcs2 pcs3
-pcs cluster start <span class="token parameter variable">--all</span>
-pcs cluster <span class="token builtin class-name">enable</span> <span class="token parameter variable">--all</span>
+<h3 id="配置挂载点和VIP资源"><a href="#配置挂载点和VIP资源" class="headerlink" title="配置挂载点和VIP资源"></a>配置挂载点和VIP资源</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置nfs挂载点</span></span><br><span class="line">pcs -f drbd_cfg resource create exportsdir ocf:heartbeat:exportfs \</span><br><span class="line">directory=<span class="string">&#x27;/mnt/nfs&#x27;</span> fsid=<span class="string">&#x27;1&#x27;</span> \</span><br><span class="line">clientspec=<span class="string">&#x27;10.163.2.0/24&#x27;</span> unlock_on_stop=<span class="string">&#x27;1&#x27;</span> \</span><br><span class="line">options=<span class="string">&#x27;rw,sync&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 绑定挂载点与nfs-server，并且在nfs-server启动后启动</span></span><br><span class="line">pcs -f drbd_cfg constraint colocation add nfs-server with exportsdir</span><br><span class="line">pcs -f drbd_cfg constraint order exportsdir <span class="keyword">then</span> nfs-server</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置VIP</span></span><br><span class="line">pcs -f drbd_cfg resource create nfsClusterIP ocf:heartbeat:IPaddr2 \</span><br><span class="line">ip=10.163.2.150 cidr_netmask=24</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绑定VIP与挂载点到同一节点，并在挂载点启动后启动</span></span><br><span class="line">pcs -f drbd_cfg constraint colocation add nfsClusterIP with exportsdir </span><br><span class="line">pcs -f drbd_cfg constraint order exportsdir <span class="keyword">then</span> nfsClusterIP</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用配置</span></span><br><span class="line">pcs cluster cib-push drbd_cfg --config</span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Masters: [ pcs2 ]</span><br><span class="line">    * Slaves: [ pcs1 pcs3 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs2</span><br><span class="line">  * nfs-server  (systemd:nfs-server):    Started pcs2</span><br><span class="line">  * exportsdir  (ocf::heartbeat:exportfs):       Stopped</span><br><span class="line">  * nfsClusterIP        (ocf::heartbeat:IPaddr2):        Stopped</span><br><span class="line"></span><br><span class="line"><span class="comment"># 让nfs-drbd的尽量运行在pcs1（可选）</span></span><br><span class="line">pcs -f drbd_cfg constraint location nfs-drbd-clone \</span><br><span class="line">prefers pcs1=INFINITY pcs2=50</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在当前主节点上手动启配置</span></span><br><span class="line">pcs resource debug-start exportsdir</span><br><span class="line">pcs resource debug-start nfsClusterIP</span><br></pre></td></tr></table></figure>
 
-pcs property <span class="token builtin class-name">set</span> stonith-enabled<span class="token operator">=</span>false
+<h3 id="约束合集"><a href="#约束合集" class="headerlink" title="约束合集"></a>约束合集</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">pcs -f drbd_cfg constraint colocation add \</span><br><span class="line">nfsfs with nfs-drbd-clone INFINITY \</span><br><span class="line">with-rsc-role=Master</span><br><span class="line"></span><br><span class="line">pcs constraint order start nfsfs <span class="keyword">then</span> start nfs-server</span><br><span class="line">pcs constraint order start nfs-server <span class="keyword">then</span> start exportsdir</span><br><span class="line">pcs constraint order start exportsdir <span class="keyword">then</span> start nfsClusterIP</span><br><span class="line"></span><br><span class="line">pcs constraint colocation add nfs-server with nfsfs</span><br><span class="line">pcs constraint colocation add exportsdir with nfs-server</span><br><span class="line">pcs constraint colocation add nfsClusterIP with exportsdir</span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 验证集群状态</span>
-pcs cluster status
-Cluster Status:
- Cluster Summary:
-   * Stack: corosync
-   * Current DC: pcs3 <span class="token punctuation">(</span>version <span class="token number">2.1</span>.0-8.el8-7c3f660707<span class="token punctuation">)</span> - partition with quorum
-   * Last updated: Mon Aug <span class="token number">25</span> <span class="token number">20</span>:25:17 <span class="token number">2025</span>
-   * Last change:  Mon Aug <span class="token number">25</span> <span class="token number">20</span>:24:48 <span class="token number">2025</span> by hacluster via crmd on pcs3
-   * <span class="token number">3</span> nodes configured
-   * <span class="token number">0</span> resource instances configured
- Node List:
-   * Online: <span class="token punctuation">[</span> pcs1 pcs2 pcs3 <span class="token punctuation">]</span>
-
-PCSD Status:
-  pcs1: Online
-  pcs2: Online
-  pcs3: Online
-  
-<span class="token comment"># 3节点调优，每个节点都要执行</span>
-<span class="token function">vim</span> /etc/corosync/corosync.conf
-quorum <span class="token punctuation">&#123;</span>
-    provider: corosync_votequorum
-    <span class="token assign-left variable">wait_for_all</span><span class="token operator">=</span><span class="token number">1</span>
-    <span class="token assign-left variable">last_man_standing</span><span class="token operator">=</span><span class="token number">1</span>
-<span class="token punctuation">&#125;</span>
-
-pcs cluster <span class="token function">sync</span>
-pcs cluster reload corosync
-systemctl restart pacemaker.service
-systemctl restart pcsd<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="Pacemaker接管资源"><a href="#Pacemaker接管资源" class="headerlink" title="Pacemaker接管资源"></a>Pacemaker接管资源</h2><h3 id="接管drbd"><a href="#接管drbd" class="headerlink" title="接管drbd"></a>接管drbd</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 使用-f 配置文件的方式进行资源配置</span>
-<span class="token comment"># 此时只配置配置文件，而不是直接配置</span>
-<span class="token parameter variable">-f</span> drbd_cfg
-
-<span class="token comment"># 应用配置文件</span>
-pcs cluster cib-push drbd_cfg <span class="token parameter variable">--config</span>
-
-<span class="token comment"># pcs自带的资源类型中 不支持drbd的ocf</span>
-pcs resource list <span class="token operator">|</span> <span class="token function">grep</span> drbd
-service:drbd - systemd unit <span class="token function">file</span> <span class="token keyword">for</span> drbd
-<span class="token punctuation">..</span>.
-
-<span class="token comment"># 重新装上epel，安装额外drbd依赖包</span>
-yum <span class="token parameter variable">-y</span> remove epel-release <span class="token operator">&amp;&amp;</span> yum <span class="token parameter variable">-y</span> <span class="token function">install</span> epel-release
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> drbd-pacemaker
-
-pcs resource list <span class="token operator">|</span> <span class="token function">grep</span> drbd <span class="token operator">|</span> <span class="token function">grep</span> ocf
-ocf:linbit:drbd - Manages a DRBD device as a Master/Slave resource
-ocf:linbit:drbd-attr - <span class="token function">import</span> DRBD state change events as transient <span class="token function">node</span>
-
-<span class="token comment"># 查看用法与参数</span>
-pcs resource describe ocf:linbit:drbd
-
-<span class="token comment"># 创建资源</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg resource create nfs-drbd ocf:linbit:drbd <span class="token assign-left variable">drbd_resource</span><span class="token operator">=</span>nfs <span class="token punctuation">\</span>
-<span class="token function">op</span> monitor <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">"29s"</span> <span class="token assign-left variable">role</span><span class="token operator">=</span><span class="token string">"Master"</span> <span class="token punctuation">\</span>
-<span class="token function">op</span> monitor <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">"31s"</span> <span class="token assign-left variable">role</span><span class="token operator">=</span><span class="token string">"Slave"</span> <span class="token punctuation">\</span>
-<span class="token function">op</span> start <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">"0s"</span> <span class="token assign-left variable">timeout</span><span class="token operator">=</span><span class="token string">"240s"</span> <span class="token punctuation">\</span>
-<span class="token function">op</span> stop <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">"0s"</span> <span class="token assign-left variable">timeout</span><span class="token operator">=</span><span class="token string">"100s"</span>
-Master角色每29秒执行一次健康检查
-Slave角色每31秒执行一次健康检查
-启动超时240秒，停止超时100秒
-
-<span class="token comment"># 创建一个可提升资源Promotable Resource</span>
-<span class="token comment"># 允许资源实例在不同的节点上以不同的角色运行</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg resource promotable nfs-drbd <span class="token punctuation">\</span>
-promoted-max<span class="token operator">=</span><span class="token number">1</span> <span class="token punctuation">\</span>
-promoted-node-max<span class="token operator">=</span><span class="token number">1</span> <span class="token punctuation">\</span>
-clone-max<span class="token operator">=</span><span class="token number">3</span> <span class="token punctuation">\</span>
-clone-node-max<span class="token operator">=</span><span class="token number">1</span> <span class="token punctuation">\</span>
-<span class="token assign-left variable">notify</span><span class="token operator">=</span>true
-设置只能有一个节点作为Master
-单个节点上最多可以运行1个Master示例
-资源实例的总数为3
-单个节点上最多可以运行1个资源实例
-当资源状态发生变化时，Pacemaker会通知所有实例
-
-<span class="token comment"># 接管文件系统</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg resource create nfsfs FileSystem <span class="token punctuation">\</span>
-<span class="token assign-left variable">device</span><span class="token operator">=</span><span class="token string">'/dev/drbd1'</span> <span class="token assign-left variable">directory</span><span class="token operator">=</span><span class="token string">'/mnt/nfs'</span> <span class="token assign-left variable">fstype</span><span class="token operator">=</span><span class="token string">'xfs'</span>
-
-<span class="token comment"># 添加约束条件</span>
-<span class="token comment"># 指定文件系统依赖于可提升资源nfs-drbd-clone,且需要在角色master上</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint colocation <span class="token function">add</span> <span class="token punctuation">\</span>
-nfsfs with nfs-drbd-clone INFINITY <span class="token punctuation">\</span>
-with-rsc-role<span class="token operator">=</span>Master
-
-<span class="token comment"># 查看状态</span>
-pcs resource cleanup nfs-drbd
-pcs resource cleanup nfs-drbd-clone
-pcs resource refresh
-pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Masters: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-    * Slaves: <span class="token punctuation">[</span> pcs1 pcs3 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs2
-
-<span class="token comment"># 关闭测试</span>
-现在让pcs2关机systemctl poweroff
- pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Masters: <span class="token punctuation">[</span> pcs3 <span class="token punctuation">]</span>
-    * Slaves: <span class="token punctuation">[</span> pcs1 <span class="token punctuation">]</span>
-    * Stopped: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs3
-
-可以看到已经迁移到pcs3上了，并且nfsfs也过去了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="创建nfs资源"><a href="#创建nfs资源" class="headerlink" title="创建nfs资源"></a>创建nfs资源</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token parameter variable">-y</span> <span class="token function">install</span> nfs-utils
-systemctl <span class="token builtin class-name">enable</span> nfs-server.service <span class="token parameter variable">--now</span>
-firewall-cmd --add-service<span class="token operator">=</span>nfs <span class="token parameter variable">--permanent</span>
-firewall-cmd --add-service<span class="token operator">=</span>rpc-bind <span class="token parameter variable">--permanent</span>
-firewall-cmd --add-service<span class="token operator">=</span>mountd <span class="token parameter variable">--permanent</span>
-firewall-cmd --add-port<span class="token operator">=</span><span class="token number">30000</span>-30050/tcp <span class="token parameter variable">--permanent</span>
-firewall-cmd --add-port<span class="token operator">=</span><span class="token number">30000</span>-30050/udp <span class="token parameter variable">--permanent</span>
-firewall-cmd <span class="token parameter variable">--reload</span>
-
-<span class="token comment"># 创建nfs资源</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg resource create nfs-server systemd:nfs-server <span class="token punctuation">\</span>
-<span class="token function">op</span> monitor <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">'20s'</span> <span class="token function">op</span> start <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">'0s'</span> <span class="token assign-left variable">timeout</span><span class="token operator">=</span><span class="token string">'20s'</span> <span class="token punctuation">\</span>
-<span class="token function">op</span> stop <span class="token assign-left variable">interval</span><span class="token operator">=</span><span class="token string">'0s'</span> <span class="token assign-left variable">timeout</span><span class="token operator">=</span><span class="token string">'15s'</span>
-
-<span class="token comment"># 约束条件，绑定nfs-server与nfsfs到同一节点，并在nfsfs后启动</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint colocation <span class="token function">add</span> nfs-server with nfsfs
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint order nfsfs <span class="token keyword">then</span> nfs-server
-
-<span class="token comment"># 手动在当前主节点启动nfs-server</span>
-systemctl start nfs-server
-pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Masters: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-    * Slaves: <span class="token punctuation">[</span> pcs1 pcs3 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs2
-  * nfs-server  <span class="token punctuation">(</span>systemd:nfs-server<span class="token punctuation">)</span>:    Started pcs2
-  
-可以测试一下故障转移，我试过了没问题<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="配置挂载点和VIP资源"><a href="#配置挂载点和VIP资源" class="headerlink" title="配置挂载点和VIP资源"></a>配置挂载点和VIP资源</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 设置nfs挂载点</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg resource create exportsdir ocf:heartbeat:exportfs <span class="token punctuation">\</span>
-<span class="token assign-left variable">directory</span><span class="token operator">=</span><span class="token string">'/mnt/nfs'</span> <span class="token assign-left variable">fsid</span><span class="token operator">=</span><span class="token string">'1'</span> <span class="token punctuation">\</span>
-<span class="token assign-left variable">clientspec</span><span class="token operator">=</span><span class="token string">'10.163.2.0/24'</span> <span class="token assign-left variable">unlock_on_stop</span><span class="token operator">=</span><span class="token string">'1'</span> <span class="token punctuation">\</span>
-<span class="token assign-left variable">options</span><span class="token operator">=</span><span class="token string">'rw,sync'</span>
-
-<span class="token comment"># 绑定挂载点与nfs-server，并且在nfs-server启动后启动</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint colocation <span class="token function">add</span> nfs-server with exportsdir
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint order exportsdir <span class="token keyword">then</span> nfs-server
-
-<span class="token comment"># 配置VIP</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg resource create nfsClusterIP ocf:heartbeat:IPaddr2 <span class="token punctuation">\</span>
-<span class="token assign-left variable">ip</span><span class="token operator">=</span><span class="token number">10.163</span>.2.150 <span class="token assign-left variable">cidr_netmask</span><span class="token operator">=</span><span class="token number">24</span>
-
-<span class="token comment"># 绑定VIP与挂载点到同一节点，并在挂载点启动后启动</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint colocation <span class="token function">add</span> nfsClusterIP with exportsdir 
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint order exportsdir <span class="token keyword">then</span> nfsClusterIP
-
-<span class="token comment"># 应用配置</span>
-pcs cluster cib-push drbd_cfg <span class="token parameter variable">--config</span>
-pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Masters: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-    * Slaves: <span class="token punctuation">[</span> pcs1 pcs3 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs2
-  * nfs-server  <span class="token punctuation">(</span>systemd:nfs-server<span class="token punctuation">)</span>:    Started pcs2
-  * exportsdir  <span class="token punctuation">(</span>ocf::heartbeat:exportfs<span class="token punctuation">)</span>:       Stopped
-  * nfsClusterIP        <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Stopped
-
-<span class="token comment"># 让nfs-drbd的尽量运行在pcs1（可选）</span>
-pcs <span class="token parameter variable">-f</span> drbd_cfg constraint location nfs-drbd-clone <span class="token punctuation">\</span>
-prefers <span class="token assign-left variable">pcs1</span><span class="token operator">=</span>INFINITY <span class="token assign-left variable">pcs2</span><span class="token operator">=</span><span class="token number">50</span>
-
-<span class="token comment"># 在当前主节点上手动启配置</span>
-pcs resource debug-start exportsdir
-pcs resource debug-start nfsClusterIP<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="约束合集"><a href="#约束合集" class="headerlink" title="约束合集"></a>约束合集</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pcs <span class="token parameter variable">-f</span> drbd_cfg constraint colocation <span class="token function">add</span> <span class="token punctuation">\</span>
-nfsfs with nfs-drbd-clone INFINITY <span class="token punctuation">\</span>
-with-rsc-role<span class="token operator">=</span>Master
-
-pcs constraint order start nfsfs <span class="token keyword">then</span> start nfs-server
-pcs constraint order start nfs-server <span class="token keyword">then</span> start exportsdir
-pcs constraint order start exportsdir <span class="token keyword">then</span> start nfsClusterIP
-
-pcs constraint colocation <span class="token function">add</span> nfs-server with nfsfs
-pcs constraint colocation <span class="token function">add</span> exportsdir with nfs-server
-pcs constraint colocation <span class="token function">add</span> nfsClusterIP with exportsdir<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="测试资源迁移"><a href="#测试资源迁移" class="headerlink" title="测试资源迁移"></a>测试资源迁移</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">pcs property <span class="token builtin class-name">set</span> no-quorum-policy<span class="token operator">=</span>ignore
-pcs property <span class="token builtin class-name">set</span> stonith-enabled<span class="token operator">=</span>false
-
-pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Masters: <span class="token punctuation">[</span> pcs3 <span class="token punctuation">]</span>
-    * Slaves: <span class="token punctuation">[</span> pcs1 pcs2 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs3
-  * nfs-server  <span class="token punctuation">(</span>systemd:nfs-server<span class="token punctuation">)</span>:    Started pcs3
-  * exportsdir  <span class="token punctuation">(</span>ocf::heartbeat:exportfs<span class="token punctuation">)</span>:       Started pcs3
-  * nfsClusterIP        <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Started pcs3
-
-<span class="token comment"># 关闭pcs3，可见立即切换到了pcs1</span>
-pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Masters: <span class="token punctuation">[</span> pcs1 <span class="token punctuation">]</span>
-    * Slaves: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-    * Stopped: <span class="token punctuation">[</span> pcs3 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs1
-  * nfs-server  <span class="token punctuation">(</span>systemd:nfs-server<span class="token punctuation">)</span>:    Started pcs1
-  * exportsdir  <span class="token punctuation">(</span>ocf::heartbeat:exportfs<span class="token punctuation">)</span>:       Started pcs1
-  * nfsClusterIP        <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Started pcs1
-
-<span class="token comment"># 等待10秒，关闭pcs1</span>
-pcs resource status
-  * Clone Set: nfs-drbd-clone <span class="token punctuation">[</span>nfs-drbd<span class="token punctuation">]</span> <span class="token punctuation">(</span>promotable<span class="token punctuation">)</span>:
-    * Slaves: <span class="token punctuation">[</span> pcs2 <span class="token punctuation">]</span>
-    * Stopped: <span class="token punctuation">[</span> pcs1 pcs3 <span class="token punctuation">]</span>
-  * nfsfs       <span class="token punctuation">(</span>ocf::heartbeat:Filesystem<span class="token punctuation">)</span>:     Started pcs2
-  * nfs-server  <span class="token punctuation">(</span>systemd:nfs-server<span class="token punctuation">)</span>:    Started pcs2
-  * exportsdir  <span class="token punctuation">(</span>ocf::heartbeat:exportfs<span class="token punctuation">)</span>:       Started pcs2
-  * nfsClusterIP        <span class="token punctuation">(</span>ocf::heartbeat:IPaddr2<span class="token punctuation">)</span>:        Started pcs2
-
-可以看到现在pcs2孤岛模式运行也没有问题
-通过ping VIP，发现在两次切换中，只有8个包未送达
-因为我们的VIP是最后才起来的，可以认为是前面的服务都已经就绪了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="测试资源迁移"><a href="#测试资源迁移" class="headerlink" title="测试资源迁移"></a>测试资源迁移</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">pcs property <span class="built_in">set</span> no-quorum-policy=ignore</span><br><span class="line">pcs property <span class="built_in">set</span> stonith-enabled=<span class="literal">false</span></span><br><span class="line"></span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Masters: [ pcs3 ]</span><br><span class="line">    * Slaves: [ pcs1 pcs2 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs3</span><br><span class="line">  * nfs-server  (systemd:nfs-server):    Started pcs3</span><br><span class="line">  * exportsdir  (ocf::heartbeat:exportfs):       Started pcs3</span><br><span class="line">  * nfsClusterIP        (ocf::heartbeat:IPaddr2):        Started pcs3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭pcs3，可见立即切换到了pcs1</span></span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Masters: [ pcs1 ]</span><br><span class="line">    * Slaves: [ pcs2 ]</span><br><span class="line">    * Stopped: [ pcs3 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs1</span><br><span class="line">  * nfs-server  (systemd:nfs-server):    Started pcs1</span><br><span class="line">  * exportsdir  (ocf::heartbeat:exportfs):       Started pcs1</span><br><span class="line">  * nfsClusterIP        (ocf::heartbeat:IPaddr2):        Started pcs1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等待10秒，关闭pcs1</span></span><br><span class="line">pcs resource status</span><br><span class="line">  * Clone Set: nfs-drbd-clone [nfs-drbd] (promotable):</span><br><span class="line">    * Slaves: [ pcs2 ]</span><br><span class="line">    * Stopped: [ pcs1 pcs3 ]</span><br><span class="line">  * nfsfs       (ocf::heartbeat:Filesystem):     Started pcs2</span><br><span class="line">  * nfs-server  (systemd:nfs-server):    Started pcs2</span><br><span class="line">  * exportsdir  (ocf::heartbeat:exportfs):       Started pcs2</span><br><span class="line">  * nfsClusterIP        (ocf::heartbeat:IPaddr2):        Started pcs2</span><br><span class="line"></span><br><span class="line">可以看到现在pcs2孤岛模式运行也没有问题</span><br><span class="line">通过ping VIP，发现在两次切换中，只有8个包未送达</span><br><span class="line">因为我们的VIP是最后才起来的，可以认为是前面的服务都已经就绪了</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250826144830658.png"></p>
 
@@ -6965,18 +6593,6 @@ pcs resource status
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7060,13 +6676,13 @@ pcs resource status
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7441,13 +7057,13 @@ pcs resource status
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7687,13 +7303,13 @@ pcs resource status
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8392,13 +8008,13 @@ pcs resource status
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8942,9 +8558,9 @@ pcs resource status
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8952,9 +8568,9 @@ pcs resource status
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

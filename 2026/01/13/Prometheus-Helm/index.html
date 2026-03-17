@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="环境准备# 使用kind部署k8s集群，版本v1.31，有代理 curl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.k8s.io&#x2F;dl&#x2F;v0.31.0&#x2F;kind-linux-amd64 chmod +x .&#x2F;kind sudo mv .&#x2F;kind &#x2F;usr&#x2F;local&#x2F;bin&#x2F;kind  cat &gt; kind-config.yaml &lt;&lt;EOF kind: Cluste">
+    <meta name="description" content="环境准备123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354# 使用kind部署k8s集群，版本v1.31，有代理curl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.k8s.io&#x2F;dl&#x2F;v0.31.0&#x2F;kind-linux-amd64ch">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Helm部署Prometheus与自定义告警">
 <meta property="og:url" content="https://akemi.zj.cn/2026/01/13/Prometheus-Helm/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="环境准备# 使用kind部署k8s集群，版本v1.31，有代理 curl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.k8s.io&#x2F;dl&#x2F;v0.31.0&#x2F;kind-linux-amd64 chmod +x .&#x2F;kind sudo mv .&#x2F;kind &#x2F;usr&#x2F;local&#x2F;bin&#x2F;kind  cat &gt; kind-config.yaml &lt;&lt;EOF kind: Cluste">
+<meta property="og:description" content="环境准备123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354# 使用kind部署k8s集群，版本v1.31，有代理curl -Lo .&#x2F;kind https:&#x2F;&#x2F;kind.sigs.k8s.io&#x2F;dl&#x2F;v0.31.0&#x2F;kind-linux-amd64ch">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260112192444813.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260112194031288.png">
@@ -210,12 +210,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -223,7 +225,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -502,158 +503,13 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <h1 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 使用kind部署k8s集群，版本v1.31，有代理</span>
-<span class="token function">curl</span> <span class="token parameter variable">-Lo</span> ./kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
-<span class="token function">chmod</span> +x ./kind
-<span class="token function">sudo</span> <span class="token function">mv</span> ./kind /usr/local/bin/kind
-
-<span class="token function">cat</span> <span class="token operator">></span> kind-config.yaml <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-networking:
-  apiServerAddress: "192.168.10.100"  # 允许外部访问，kind默认只允许本机访问
-  apiServerPort: 6443                 # 固定一个外部端口（可选）
-nodes:
-- role: control-plane
-  image: kindest/node:v1.31.0
-  extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
-- role: worker
-  image: kindest/node:v1.31.0
-  extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
-- role: worker
-  image: kindest/node:v1.31.0
-  extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
-EOF</span>
-
-kind create cluster <span class="token parameter variable">--config</span> kind-config.yaml  <span class="token parameter variable">--name</span> ws-k8s
-kubectl get nodes
-NAME                   STATUS   ROLES           AGE   VERSION
-ws-k8s-control-plane   Ready    control-plane   18m   v1.31.0
-ws-k8s-worker          Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>          18m   v1.31.0
-ws-k8s-worker2         Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>          18m   v1.31.0
-
-<span class="token comment"># 顺手装一个metrics-server（可选）</span>
-<span class="token function">wget</span> https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-<span class="token comment"># 找到spec.template.spec.containers[0].args中添加</span>
-          - --kubelet-insecure-tls
-          - --kubelet-insecure-tls<span class="token operator">=</span>true
-kubectl apply <span class="token parameter variable">-f</span> components.yaml
-
-<span class="token comment"># 安装helm</span>
-<span class="token function">wget</span> https://get.helm.sh/helm-v4.0.4-linux-amd64.tar.gz
-<span class="token function">tar</span> <span class="token parameter variable">-xf</span> helm-v4.0.4-linux-amd64.tar.gz
-<span class="token function">cp</span> linux-amd64/helm /usr/bin/
-helm version
-
-<span class="token comment"># 添加仓库</span>
-helm repo <span class="token function">add</span> prometheus-community https://prometheus-community.github.io/helm-charts
-helm search repo kube-prometheus-stack
-NAME                                            CHART VERSION   APP VERSION     DESCRIPTION         
-prometheus-community/kube-prometheus-stack      <span class="token number">80.13</span>.2         v0.87.1         kube-prometheus-stack collects Kubernetes manif<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+        <h1 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用kind部署k8s集群，版本v1.31，有代理</span></span><br><span class="line">curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64</span><br><span class="line"><span class="built_in">chmod</span> +x ./kind</span><br><span class="line">sudo <span class="built_in">mv</span> ./kind /usr/local/bin/kind</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> &gt; kind-config.yaml &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">kind: Cluster</span></span><br><span class="line"><span class="string">apiVersion: kind.x-k8s.io/v1alpha4</span></span><br><span class="line"><span class="string">networking:</span></span><br><span class="line"><span class="string">  apiServerAddress: &quot;192.168.10.100&quot;  # 允许外部访问，kind默认只允许本机访问</span></span><br><span class="line"><span class="string">  apiServerPort: 6443                 # 固定一个外部端口（可选）</span></span><br><span class="line"><span class="string">nodes:</span></span><br><span class="line"><span class="string">- role: control-plane</span></span><br><span class="line"><span class="string">  image: kindest/node:v1.31.0</span></span><br><span class="line"><span class="string">  extraMounts:</span></span><br><span class="line"><span class="string">    - hostPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">      containerPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">- role: worker</span></span><br><span class="line"><span class="string">  image: kindest/node:v1.31.0</span></span><br><span class="line"><span class="string">  extraMounts:</span></span><br><span class="line"><span class="string">    - hostPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">      containerPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">- role: worker</span></span><br><span class="line"><span class="string">  image: kindest/node:v1.31.0</span></span><br><span class="line"><span class="string">  extraMounts:</span></span><br><span class="line"><span class="string">    - hostPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">      containerPath: /var/run/docker.sock</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">kind create cluster --config kind-config.yaml  --name ws-k8s</span><br><span class="line">kubectl get nodes</span><br><span class="line">NAME                   STATUS   ROLES           AGE   VERSION</span><br><span class="line">ws-k8s-control-plane   Ready    control-plane   18m   v1.31.0</span><br><span class="line">ws-k8s-worker          Ready    &lt;none&gt;          18m   v1.31.0</span><br><span class="line">ws-k8s-worker2         Ready    &lt;none&gt;          18m   v1.31.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 顺手装一个metrics-server（可选）</span></span><br><span class="line">wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml</span><br><span class="line"><span class="comment"># 找到spec.template.spec.containers[0].args中添加</span></span><br><span class="line">          - --kubelet-insecure-tls</span><br><span class="line">          - --kubelet-insecure-tls=<span class="literal">true</span></span><br><span class="line">kubectl apply -f components.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装helm</span></span><br><span class="line">wget https://get.helm.sh/helm-v4.0.4-linux-amd64.tar.gz</span><br><span class="line">tar -xf helm-v4.0.4-linux-amd64.tar.gz</span><br><span class="line"><span class="built_in">cp</span> linux-amd64/helm /usr/bin/</span><br><span class="line">helm version</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加仓库</span></span><br><span class="line">helm repo add prometheus-community https://prometheus-community.github.io/helm-charts</span><br><span class="line">helm search repo kube-prometheus-stack</span><br><span class="line">NAME                                            CHART VERSION   APP VERSION     DESCRIPTION         </span><br><span class="line">prometheus-community/kube-prometheus-stack      80.13.2         v0.87.1         kube-prometheus-stack collects Kubernetes manif...</span><br></pre></td></tr></table></figure>
 
 <h2 id="Helm部署"><a href="#Helm部署" class="headerlink" title="Helm部署"></a>Helm部署</h2><p>helm部署默认安装主要组件（依赖values.yaml中的变量），包括Prometheus、altermanager、grafana。</p>
 <p>同时还会部署监控组件node_exporter，kube-state-metrics等组件，并且默认带了对于k8s系统组件比如dns、etcd、apiserver等的监控</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 下载到本地</span>
-helm pull prometheus-community/kube-prometheus-stack <span class="token parameter variable">--version</span> <span class="token number">80.13</span>.2
-<span class="token function">tar</span> <span class="token parameter variable">-xf</span> kube-prometheus-stack-80.13.2.tgz
-<span class="token builtin class-name">cd</span> kube-prometheus-stack/
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载到本地</span></span><br><span class="line">helm pull prometheus-community/kube-prometheus-stack --version 80.13.2</span><br><span class="line">tar -xf kube-prometheus-stack-80.13.2.tgz</span><br><span class="line"><span class="built_in">cd</span> kube-prometheus-stack/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装release</span></span><br><span class="line">helm install prometheus ./ -f values.yaml</span><br><span class="line">NAME: prometheus</span><br><span class="line">LAST DEPLOYED: Fri Jan  9 17:19:43 2026</span><br><span class="line">NAMESPACE: default</span><br><span class="line">STATUS: deployed</span><br><span class="line">REVISION: 1</span><br><span class="line">DESCRIPTION: Install complete</span><br><span class="line">NOTES:</span><br><span class="line">kube-prometheus-stack has been installed. Check its status by running:</span><br><span class="line">  kubectl --namespace default get pods -l <span class="string">&quot;release=prometheus&quot;</span></span><br><span class="line"></span><br><span class="line">Get Grafana <span class="string">&#x27;admin&#x27;</span> user password by running:</span><br><span class="line"></span><br><span class="line">  kubectl --namespace default get secrets prometheus-grafana -o jsonpath=<span class="string">&quot;&#123;.data.admin-password&#125;&quot;</span> | <span class="built_in">base64</span> -d ; <span class="built_in">echo</span></span><br><span class="line"></span><br><span class="line">Access Grafana <span class="built_in">local</span> instance:</span><br><span class="line"></span><br><span class="line">  <span class="built_in">export</span> POD_NAME=$(kubectl --namespace default get pod -l <span class="string">&quot;app.kubernetes.io/name=grafana,app.kubernetes.io/instance=prometheus&quot;</span> -oname)</span><br><span class="line">  kubectl --namespace default port-forward <span class="variable">$POD_NAME</span> 3000</span><br><span class="line"></span><br><span class="line">Get your grafana admin user password by running:</span><br><span class="line"></span><br><span class="line">  kubectl get secret --namespace default -l app.kubernetes.io/component=admin-secret -o jsonpath=<span class="string">&quot;&#123;.items[0].data.admin-password&#125;&quot;</span> | <span class="built_in">base64</span> --decode ; <span class="built_in">echo</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看服务状态</span></span><br><span class="line">kubectl get pods</span><br><span class="line">NAME                                                     READY   STATUS    RESTARTS   AGE</span><br><span class="line">alertmanager-prometheus-kube-prometheus-alertmanager-0   2/2     Running   0          5m47s</span><br><span class="line">prometheus-grafana-fd588f886-zjlpf                       3/3     Running   0          6m17s</span><br><span class="line">prometheus-kube-prometheus-operator-65685b655d-8sbvv     1/1     Running   0          6m17s</span><br><span class="line">prometheus-kube-state-metrics-698d844f6b-xbx5v           1/1     Running   0          6m17s</span><br><span class="line">prometheus-prometheus-kube-prometheus-prometheus-0       2/2     Running   0          5m47s</span><br><span class="line">prometheus-prometheus-node-exporter-pgzkx                1/1     Running   0          6m17s</span><br><span class="line">prometheus-prometheus-node-exporter-rq2pt                1/1     Running   0          6m17s</span><br><span class="line">prometheus-prometheus-node-exporter-wzwfm                1/1     Running   0          6m17s</span><br><span class="line"></span><br><span class="line">kubectl get svc</span><br><span class="line">NAME                                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE</span><br><span class="line">alertmanager-operated                     ClusterIP   None            &lt;none&gt;        9093/TCP,9094/TCP,9094/UDP   5m53s</span><br><span class="line">prometheus-grafana                        ClusterIP   10.96.61.96     &lt;none&gt;        80/TCP                       6m23s</span><br><span class="line">prometheus-kube-prometheus-alertmanager   ClusterIP   10.96.212.51    &lt;none&gt;        9093/TCP,8080/TCP            6m23s</span><br><span class="line">prometheus-kube-prometheus-operator       ClusterIP   10.96.19.63     &lt;none&gt;        443/TCP                      6m23s</span><br><span class="line">prometheus-kube-prometheus-prometheus     ClusterIP   10.96.120.45    &lt;none&gt;        9090/TCP,8080/TCP            6m23s</span><br><span class="line">prometheus-kube-state-metrics             ClusterIP   10.96.89.145    &lt;none&gt;        8080/TCP                     6m23s</span><br><span class="line">prometheus-operated                       ClusterIP   None            &lt;none&gt;        9090/TCP                     5m53s</span><br><span class="line">prometheus-prometheus-node-exporter       ClusterIP   10.96.161.171   &lt;none&gt;        9100/TCP                     6m23s</span><br><span class="line"></span><br><span class="line"><span class="comment"># 端口映射到本地以访问网页</span></span><br><span class="line">kubectl port-forward --address=0.0.0.0 svc/prometheus-kube-prometheus-prometheus 9090:9090 &amp;</span><br><span class="line">kubectl port-forward --address=0.0.0.0 svc/prometheus-grafana 3000:80 &amp;</span><br><span class="line">kubectl port-forward --address=0.0.0.0 svc/prometheus-kube-prometheus-alertmanager 9093:9093 &amp;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 安装release</span>
-helm <span class="token function">install</span> prometheus ./ <span class="token parameter variable">-f</span> values.yaml
-NAME: prometheus
-LAST DEPLOYED: Fri Jan  <span class="token number">9</span> <span class="token number">17</span>:19:43 <span class="token number">2026</span>
-NAMESPACE: default
-STATUS: deployed
-REVISION: <span class="token number">1</span>
-DESCRIPTION: Install complete
-NOTES:
-kube-prometheus-stack has been installed. Check its status by running:
-  kubectl <span class="token parameter variable">--namespace</span> default get pods <span class="token parameter variable">-l</span> <span class="token string">"release=prometheus"</span>
-
-Get Grafana <span class="token string">'admin'</span> user password by running:
-
-  kubectl <span class="token parameter variable">--namespace</span> default get secrets prometheus-grafana <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.data.admin-password&#125;"</span> <span class="token operator">|</span> base64 <span class="token parameter variable">-d</span> <span class="token punctuation">;</span> <span class="token builtin class-name">echo</span>
-
-Access Grafana <span class="token builtin class-name">local</span> instance:
-
-  <span class="token builtin class-name">export</span> <span class="token assign-left variable">POD_NAME</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl <span class="token parameter variable">--namespace</span> default get pod <span class="token parameter variable">-l</span> <span class="token string">"app.kubernetes.io/name=grafana,app.kubernetes.io/instance=prometheus"</span> <span class="token parameter variable">-oname</span><span class="token variable">)</span></span>
-  kubectl <span class="token parameter variable">--namespace</span> default port-forward <span class="token variable">$POD_NAME</span> <span class="token number">3000</span>
-
-Get your grafana admin user password by running:
-
-  kubectl get secret <span class="token parameter variable">--namespace</span> default <span class="token parameter variable">-l</span> app.kubernetes.io/component<span class="token operator">=</span>admin-secret <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">"&#123;.items[0].data.admin-password&#125;"</span> <span class="token operator">|</span> base64 <span class="token parameter variable">--decode</span> <span class="token punctuation">;</span> <span class="token builtin class-name">echo</span>
-
-<span class="token comment"># 查看服务状态</span>
-kubectl get pods
-NAME                                                     READY   STATUS    RESTARTS   AGE
-alertmanager-prometheus-kube-prometheus-alertmanager-0   <span class="token number">2</span>/2     Running   <span class="token number">0</span>          5m47s
-prometheus-grafana-fd588f886-zjlpf                       <span class="token number">3</span>/3     Running   <span class="token number">0</span>          6m17s
-prometheus-kube-prometheus-operator-65685b655d-8sbvv     <span class="token number">1</span>/1     Running   <span class="token number">0</span>          6m17s
-prometheus-kube-state-metrics-698d844f6b-xbx5v           <span class="token number">1</span>/1     Running   <span class="token number">0</span>          6m17s
-prometheus-prometheus-kube-prometheus-prometheus-0       <span class="token number">2</span>/2     Running   <span class="token number">0</span>          5m47s
-prometheus-prometheus-node-exporter-pgzkx                <span class="token number">1</span>/1     Running   <span class="token number">0</span>          6m17s
-prometheus-prometheus-node-exporter-rq2pt                <span class="token number">1</span>/1     Running   <span class="token number">0</span>          6m17s
-prometheus-prometheus-node-exporter-wzwfm                <span class="token number">1</span>/1     Running   <span class="token number">0</span>          6m17s
-
-kubectl get svc
-NAME                                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span class="token punctuation">(</span>S<span class="token punctuation">)</span>                      AGE
-alertmanager-operated                     ClusterIP   None            <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">9093</span>/TCP,9094/TCP,9094/UDP   5m53s
-prometheus-grafana                        ClusterIP   <span class="token number">10.96</span>.61.96     <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">80</span>/TCP                       6m23s
-prometheus-kube-prometheus-alertmanager   ClusterIP   <span class="token number">10.96</span>.212.51    <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">9093</span>/TCP,8080/TCP            6m23s
-prometheus-kube-prometheus-operator       ClusterIP   <span class="token number">10.96</span>.19.63     <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">443</span>/TCP                      6m23s
-prometheus-kube-prometheus-prometheus     ClusterIP   <span class="token number">10.96</span>.120.45    <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">9090</span>/TCP,8080/TCP            6m23s
-prometheus-kube-state-metrics             ClusterIP   <span class="token number">10.96</span>.89.145    <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">8080</span>/TCP                     6m23s
-prometheus-operated                       ClusterIP   None            <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">9090</span>/TCP                     5m53s
-prometheus-prometheus-node-exporter       ClusterIP   <span class="token number">10.96</span>.161.171   <span class="token operator">&lt;</span>none<span class="token operator">></span>        <span class="token number">9100</span>/TCP                     6m23s
-
-<span class="token comment"># 端口映射到本地以访问网页</span>
-kubectl port-forward <span class="token parameter variable">--address</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0 svc/prometheus-kube-prometheus-prometheus <span class="token number">9090</span>:9090 <span class="token operator">&amp;</span>
-kubectl port-forward <span class="token parameter variable">--address</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0 svc/prometheus-grafana <span class="token number">3000</span>:80 <span class="token operator">&amp;</span>
-kubectl port-forward <span class="token parameter variable">--address</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0 svc/prometheus-kube-prometheus-alertmanager <span class="token number">9093</span>:9093 <span class="token operator">&amp;</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="变量文件参数说明"><a href="#变量文件参数说明" class="headerlink" title="变量文件参数说明"></a>变量文件参数说明</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># values.yaml</span>
-<span class="token punctuation">..</span>.
-prometheus:
-  <span class="token punctuation">..</span>.
-  prometheusSpec:
-    <span class="token punctuation">..</span>.
-    scrapeInterval: <span class="token string">""</span> 		<span class="token comment"># 全局采集间隔，默认30s</span>
-    evaluationInterval: 30s  <span class="token comment"># 规则评估间隔，默认30s</span>
-    retention: 10d 			<span class="token comment"># 数据保留时间，默认10天</span>
-    retentionSize: <span class="token string">""</span>		<span class="token comment"># 数据保留大小（可选），如50GiB</span>
-    storageSpec：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> 		   <span class="token comment"># 存储卷配置，可以选用供应商来提供存储</span>
-    additionalScrapeConfigs: <span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment"># 手动添加的监控项job</span>
-    serviceMonitorSelectorNilUsesHelmValues: True <span class="token comment"># 是否开启serviceMonitor的自动发现</span>
-    serviceMonitorSelector: <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token comment"># serviceMonitor匹配的自动标签</span>
-    ruleSelectorNilUsesHelmValues：<span class="token comment"># 控制 PrometheusRule 的自动发现行为</span>
-<span class="token punctuation">..</span>.
-altermanager:
-  enabled: <span class="token boolean">true</span> <span class="token comment"># 是否部署</span>
-  <span class="token punctuation">..</span>. 
-  config:
-    global:
-      resolve_timeout: 5m <span class="token comment"># 告警恢复时间</span>
-    inhibit_rules: <span class="token comment"># 告警抑制规则</span>
-		<span class="token punctuation">..</span>.
-    route: <span class="token comment"># 主路由规则</span>
-      group_by: <span class="token punctuation">[</span><span class="token string">'namespace'</span><span class="token punctuation">]</span>
-      group_wait: 30s <span class="token comment"># 同一组内第一个告警等待 30 秒再发送（收集更多告警）</span>
-      group_interval: 5m <span class="token comment"># 同一组告警发送间隔（避免频繁通知）</span>
-      repeat_interval: 12h <span class="token comment"># 已解决告警重新发送的间隔</span>
-      <span class="token punctuation">..</span>.
-grafana: <span class="token comment"># 略，grafana没啥好配置的</span>
-  enabled: <span class="token boolean">true</span>
-<span class="token punctuation">..</span>.
-defaultRules: <span class="token comment"># 默认规则，是否打开，选择false，后面我们自己创建规则</span>
-  create: <span class="token boolean">false</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="变量文件参数说明"><a href="#变量文件参数说明" class="headerlink" title="变量文件参数说明"></a>变量文件参数说明</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># values.yaml</span></span><br><span class="line">...</span><br><span class="line">prometheus:</span><br><span class="line">  ...</span><br><span class="line">  prometheusSpec:</span><br><span class="line">    ...</span><br><span class="line">    scrapeInterval: <span class="string">&quot;&quot;</span> 		<span class="comment"># 全局采集间隔，默认30s</span></span><br><span class="line">    evaluationInterval: 30s  <span class="comment"># 规则评估间隔，默认30s</span></span><br><span class="line">    retention: 10d 			<span class="comment"># 数据保留时间，默认10天</span></span><br><span class="line">    retentionSize: <span class="string">&quot;&quot;</span>		<span class="comment"># 数据保留大小（可选），如50GiB</span></span><br><span class="line">    storageSpec：&#123;&#125; 		   <span class="comment"># 存储卷配置，可以选用供应商来提供存储</span></span><br><span class="line">    additionalScrapeConfigs: [] <span class="comment"># 手动添加的监控项job</span></span><br><span class="line">    serviceMonitorSelectorNilUsesHelmValues: True <span class="comment"># 是否开启serviceMonitor的自动发现</span></span><br><span class="line">    serviceMonitorSelector: &#123;&#125; <span class="comment"># serviceMonitor匹配的自动标签</span></span><br><span class="line">    ruleSelectorNilUsesHelmValues：<span class="comment"># 控制 PrometheusRule 的自动发现行为</span></span><br><span class="line">...</span><br><span class="line">altermanager:</span><br><span class="line">  enabled: <span class="literal">true</span> <span class="comment"># 是否部署</span></span><br><span class="line">  ... </span><br><span class="line">  config:</span><br><span class="line">    global:</span><br><span class="line">      resolve_timeout: 5m <span class="comment"># 告警恢复时间</span></span><br><span class="line">    inhibit_rules: <span class="comment"># 告警抑制规则</span></span><br><span class="line">		...</span><br><span class="line">    route: <span class="comment"># 主路由规则</span></span><br><span class="line">      group_by: [<span class="string">&#x27;namespace&#x27;</span>]</span><br><span class="line">      group_wait: 30s <span class="comment"># 同一组内第一个告警等待 30 秒再发送（收集更多告警）</span></span><br><span class="line">      group_interval: 5m <span class="comment"># 同一组告警发送间隔（避免频繁通知）</span></span><br><span class="line">      repeat_interval: 12h <span class="comment"># 已解决告警重新发送的间隔</span></span><br><span class="line">      ...</span><br><span class="line">grafana: <span class="comment"># 略，grafana没啥好配置的</span></span><br><span class="line">  enabled: <span class="literal">true</span></span><br><span class="line">...</span><br><span class="line">defaultRules: <span class="comment"># 默认规则，是否打开，选择false，后面我们自己创建规则</span></span><br><span class="line">  create: <span class="literal">false</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h1 id="Prometheus监控k8s"><a href="#Prometheus监控k8s" class="headerlink" title="Prometheus监控k8s"></a>Prometheus监控k8s</h1><p>helm安装时，会安装名为<strong>monitoring.coreos.com&#x2F;v1</strong>的CRD，这是官方推荐的方式，可以通过crd直接创建kind为ServiceMonitor和PodMonitor的监控规则</p>
 <p>Prometheus提供3种方法进行监控：</p>
@@ -687,276 +543,25 @@ defaultRules: <span class="token comment"># 默认规则，是否打开，选择
 <td>只能监控基础HTTP状态（非内部指标）</td>
 </tr>
 </tbody></table>
-<h3 id="部署nginx"><a href="#部署nginx" class="headerlink" title="部署nginx"></a>部署nginx</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建一个nginx，nginx-deployment.yaml</span>
-<span class="token comment"># nginx-deployment.yaml</span>
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx
-spec:
-  replicas: <span class="token number">1</span>
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
-        ports:
-        - containerPort: <span class="token number">80</span>
-        - containerPort: <span class="token number">8080</span>  <span class="token comment"># 暴露 stub_status 端口</span>
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d/nginx_status.conf
-          subPath: nginx_status.conf  <span class="token comment"># 仅挂载单个文件</span>
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config  <span class="token comment"># 引用ConfigMap</span>
-<span class="token comment"># nginx-service.yaml</span>
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-spec:
-  selector:
-    app: nginx
-  ports:
-    - name: http
-      protocol: TCP
-      port: <span class="token number">80</span>
-      targetPort: <span class="token number">80</span>
-    - name: http-status  <span class="token comment"># 暴露 stub_status 端口</span>
-      protocol: TCP
-      port: <span class="token number">8080</span>
-      targetPort: <span class="token number">8080</span>
-kubectl apply <span class="token parameter variable">-f</span> nginx-deployment.yaml
-
-<span class="token comment"># 创建nginx配置文件，打开stub_status模块</span>
-<span class="token comment"># nginx-configmap.yaml</span>
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  nginx_status.conf: <span class="token operator">|</span>
-    server <span class="token punctuation">&#123;</span>
-        listen <span class="token number">8080</span><span class="token punctuation">;</span>
-        server_name localhost<span class="token punctuation">;</span>
-        location /nginx_status <span class="token punctuation">&#123;</span>
-            stub_status on<span class="token punctuation">;</span>
-            access_log off<span class="token punctuation">;</span>
-            allow all<span class="token punctuation">;</span>
-            deny all<span class="token punctuation">;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-    
-kubectl apply <span class="token parameter variable">-f</span> nginx-configmap.yaml
-
-<span class="token comment"># 打个端口转发测试一下nginx_status的功能</span>
-kubectl port-forward services/nginx-service <span class="token number">8080</span>:8080
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="部署nginx"><a href="#部署nginx" class="headerlink" title="部署nginx"></a>部署nginx</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建一个nginx，nginx-deployment.yaml</span></span><br><span class="line"><span class="comment"># nginx-deployment.yaml</span></span><br><span class="line">---</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: nginx</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: nginx</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: nginx</span><br><span class="line">        image: nginx:latest</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 80</span><br><span class="line">        - containerPort: 8080  <span class="comment"># 暴露 stub_status 端口</span></span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: nginx-config</span><br><span class="line">          mountPath: /etc/nginx/conf.d/nginx_status.conf</span><br><span class="line">          subPath: nginx_status.conf  <span class="comment"># 仅挂载单个文件</span></span><br><span class="line">      volumes:</span><br><span class="line">      - name: nginx-config</span><br><span class="line">        configMap:</span><br><span class="line">          name: nginx-config  <span class="comment"># 引用ConfigMap</span></span><br><span class="line"><span class="comment"># nginx-service.yaml</span></span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-service</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx</span><br><span class="line">  ports:</span><br><span class="line">    - name: http</span><br><span class="line">      protocol: TCP</span><br><span class="line">      port: 80</span><br><span class="line">      targetPort: 80</span><br><span class="line">    - name: http-status  <span class="comment"># 暴露 stub_status 端口</span></span><br><span class="line">      protocol: TCP</span><br><span class="line">      port: 8080</span><br><span class="line">      targetPort: 8080</span><br><span class="line">kubectl apply -f nginx-deployment.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建nginx配置文件，打开stub_status模块</span></span><br><span class="line"><span class="comment"># nginx-configmap.yaml</span></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-config</span><br><span class="line">data:</span><br><span class="line">  nginx_status.conf: |</span><br><span class="line">    server &#123;</span><br><span class="line">        listen 8080;</span><br><span class="line">        server_name localhost;</span><br><span class="line">        location /nginx_status &#123;</span><br><span class="line">            stub_status on;</span><br><span class="line">            access_log off;</span><br><span class="line">            allow all;</span><br><span class="line">            deny all;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">kubectl apply -f nginx-configmap.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 打个端口转发测试一下nginx_status的功能</span></span><br><span class="line">kubectl port-forward services/nginx-service 8080:8080</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260112192444813.png"></p>
 <h3 id="部署nginx-exporter"><a href="#部署nginx-exporter" class="headerlink" title="部署nginx_exporter"></a>部署nginx_exporter</h3><p>Exporter的方式可以使用单独部署或者sidecar部署的方式，我这里使用单独部署方式</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># nginx-exporter-deployment.yaml</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span>
-  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
-      <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter
-  <span class="token key atrule">template</span><span class="token punctuation">:</span>
-    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-        <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter
-    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
-      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> exporter
-        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx/nginx<span class="token punctuation">-</span>prometheus<span class="token punctuation">-</span>exporter<span class="token punctuation">:</span>latest
-        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">9113</span>
-        <span class="token key atrule">args</span><span class="token punctuation">:</span>
-        <span class="token comment"># 通过Service访问Nginx的stub_status</span>
-        <span class="token punctuation">-</span> <span class="token punctuation">-</span>nginx.scrape<span class="token punctuation">-</span>uri=http<span class="token punctuation">:</span>//nginx<span class="token punctuation">-</span>service.default.svc.cluster.local<span class="token punctuation">:</span>8080/nginx_status
-<span class="token punctuation">---</span>
-<span class="token comment"># nginx-exporter-service.yaml</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter<span class="token punctuation">-</span>service
-  <span class="token key atrule">labels</span><span class="token punctuation">:</span> <span class="token comment"># 与serviceMonitor的匹配标签对应</span>
-    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter
-  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9113</span>
-    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">9113</span>
-
-kubectl apply <span class="token punctuation">-</span>f nginx<span class="token punctuation">-</span>exporter<span class="token punctuation">-</span>deployment.yaml
-
-<span class="token comment"># 测试</span>
-kubectl port<span class="token punctuation">-</span>forward services/nginx<span class="token punctuation">-</span>exporter<span class="token punctuation">-</span>service 9113<span class="token punctuation">:</span><span class="token number">9113</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># nginx-exporter-deployment.yaml</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-exporter</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx-exporter</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx-exporter</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">exporter</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx/nginx-prometheus-exporter:latest</span></span><br><span class="line">        <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9113</span></span><br><span class="line">        <span class="attr">args:</span></span><br><span class="line">        <span class="comment"># 通过Service访问Nginx的stub_status</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">-nginx.scrape-uri=http://nginx-service.default.svc.cluster.local:8080/nginx_status</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># nginx-exporter-service.yaml</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-exporter-service</span></span><br><span class="line">  <span class="attr">labels:</span> <span class="comment"># 与serviceMonitor的匹配标签对应</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nginx-exporter</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nginx-exporter</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="attr">port:</span> <span class="number">9113</span></span><br><span class="line">    <span class="attr">targetPort:</span> <span class="number">9113</span></span><br><span class="line"></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">nginx-exporter-deployment.yaml</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">port-forward</span> <span class="string">services/nginx-exporter-service</span> <span class="number">9113</span><span class="string">:9113</span></span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260112194031288.png"></p>
-<h3 id="创建ServiceMonitor"><a href="#创建ServiceMonitor" class="headerlink" title="创建ServiceMonitor"></a>创建ServiceMonitor</h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># nginx-servicemonitor.yaml</span>
-<span class="token punctuation">---</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> monitoring.coreos.com/v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> ServiceMonitor
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter<span class="token punctuation">-</span>monitor
-  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-    <span class="token key atrule">release</span><span class="token punctuation">:</span> prometheus  <span class="token comment"># 需要与prometheus.prometheusSpec.serviceMonitorSelector标签匹配</span>
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
-      <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>exporter  <span class="token comment"># 匹配nginx-exporter-service标签</span>
-  <span class="token key atrule">namespaceSelector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">any</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>  <span class="token comment"># 允许跨命名空间监控</span>
-  <span class="token key atrule">endpoints</span><span class="token punctuation">:</span>
-    <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> metrics  <span class="token comment"># 对应 nginx-exporter-service 的端口名</span>
-      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 30s  <span class="token comment"># 抓取间隔</span>
-      <span class="token key atrule">path</span><span class="token punctuation">:</span> /metrics  <span class="token comment"># 指标路径</span>
-
-kubectl apply <span class="token punctuation">-</span>f nginx<span class="token punctuation">-</span>servicemonitor.yaml
-
-<span class="token comment"># 修改prometheus.prometheusSpec.serviceMonitorSelector配置</span>
-<span class="token key atrule">prometheus</span><span class="token punctuation">:</span>
-  <span class="token key atrule">prometheusSpec</span><span class="token punctuation">:</span>
-    <span class="token key atrule">serviceMonitorSelector</span><span class="token punctuation">:</span>
-      <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
-        <span class="token key atrule">release</span><span class="token punctuation">:</span> prometheus
-<span class="token comment"># 升级release</span>
-helm upgrade prometheus ./ <span class="token punctuation">-</span>f values.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="创建ServiceMonitor"><a href="#创建ServiceMonitor" class="headerlink" title="创建ServiceMonitor"></a>创建ServiceMonitor</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># nginx-servicemonitor.yaml</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">monitoring.coreos.com/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ServiceMonitor</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-exporter-monitor</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">release:</span> <span class="string">prometheus</span>  <span class="comment"># 需要与prometheus.prometheusSpec.serviceMonitorSelector标签匹配</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx-exporter</span>  <span class="comment"># 匹配nginx-exporter-service标签</span></span><br><span class="line">  <span class="attr">namespaceSelector:</span></span><br><span class="line">    <span class="attr">any:</span> <span class="literal">true</span>  <span class="comment"># 允许跨命名空间监控</span></span><br><span class="line">  <span class="attr">endpoints:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="string">metrics</span>  <span class="comment"># 对应 nginx-exporter-service 的端口名</span></span><br><span class="line">      <span class="attr">interval:</span> <span class="string">30s</span>  <span class="comment"># 抓取间隔</span></span><br><span class="line">      <span class="attr">path:</span> <span class="string">/metrics</span>  <span class="comment"># 指标路径</span></span><br><span class="line"></span><br><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">nginx-servicemonitor.yaml</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改prometheus.prometheusSpec.serviceMonitorSelector配置</span></span><br><span class="line"><span class="attr">prometheus:</span></span><br><span class="line">  <span class="attr">prometheusSpec:</span></span><br><span class="line">    <span class="attr">serviceMonitorSelector:</span></span><br><span class="line">      <span class="attr">matchLabels:</span></span><br><span class="line">        <span class="attr">release:</span> <span class="string">prometheus</span></span><br><span class="line"><span class="comment"># 升级release</span></span><br><span class="line"><span class="string">helm</span> <span class="string">upgrade</span> <span class="string">prometheus</span> <span class="string">./</span> <span class="string">-f</span> <span class="string">values.yaml</span></span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260113120154362.png"></p>
-<h3 id="自定义nginx告警规则"><a href="#自定义nginx告警规则" class="headerlink" title="自定义nginx告警规则"></a><strong>自定义nginx告警规则</strong></h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建PrometheusRule</span>
-<span class="token comment"># nginx-alert-rules.yaml</span>
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: nginx-alert-rules
-  labels:
-    release: prometheus  <span class="token comment"># 匹配的选择器</span>
-spec:
-  groups:
-    rules:
-    - alert: NginxHigh5xxErrorRate  <span class="token comment"># 告警名称</span>
-      expr: <span class="token operator">|</span>
-        sum<span class="token punctuation">(</span>rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">&#123;</span>status<span class="token operator">=~</span><span class="token string">"5.."</span><span class="token punctuation">&#125;</span><span class="token punctuation">[</span>1m<span class="token punctuation">]</span><span class="token punctuation">))</span> by <span class="token punctuation">(</span>host<span class="token punctuation">)</span> 
-        / 
-        sum<span class="token punctuation">(</span>rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">[</span>1m<span class="token punctuation">]</span><span class="token punctuation">))</span> by <span class="token punctuation">(</span>host<span class="token punctuation">)</span> 
-        <span class="token operator">></span> <span class="token number">0.05</span>  <span class="token comment"># 5xx 错误率 > 5%</span>
-      for: 2m  <span class="token comment"># 持续 2 分钟触发告警</span>
-      labels:
-        severity: critical  <span class="token comment"># 告警级别</span>
-      annotations:
-        summary: <span class="token string">"Nginx &#123;&#123; <span class="token variable">$labels</span>.host &#125;&#125; 5xx 错误率过高"</span>
-        description: <span class="token string">"5xx 错误率 &#123;&#123; <span class="token variable">$value</span> &#125;&#125; > 5%，持续 2 分钟"</span>
-
-    - alert: NginxHighResponseRate
-      expr: <span class="token operator">|</span>
-        sum<span class="token punctuation">(</span>rate<span class="token punctuation">(</span>nginx_http_requests_total<span class="token punctuation">[</span>1m<span class="token punctuation">]</span><span class="token punctuation">))</span> by <span class="token punctuation">(</span>host<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">500</span>  <span class="token comment"># 每秒请求数 > 500</span>
-      for: 10s
-      labels:
-        severity: warning
-      annotations:
-        summary: <span class="token string">"Nginx &#123;&#123; <span class="token variable">$labels</span>.host &#125;&#125; 请求量过高"</span>
-        description: <span class="token string">"每秒请求数 &#123;&#123; <span class="token variable">$value</span> &#125;&#125; > 500"</span>
-        
-kubectl apply <span class="token parameter variable">-f</span> nginx-alert-rules.yaml
-
-
-<span class="token comment"># 修改chart变量文件，添加自动发现规则，并升级release</span>
-prometheus:
-  prometheusSpec:
-    ruleSelector:
-      matchLabels:
-        release: prometheus
-        
-helm upgrade prometheus ./ <span class="token parameter variable">-f</span> values.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="自定义nginx告警规则"><a href="#自定义nginx告警规则" class="headerlink" title="自定义nginx告警规则"></a><strong>自定义nginx告警规则</strong></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建PrometheusRule</span></span><br><span class="line"><span class="comment"># nginx-alert-rules.yaml</span></span><br><span class="line">---</span><br><span class="line">apiVersion: monitoring.coreos.com/v1</span><br><span class="line">kind: PrometheusRule</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-alert-rules</span><br><span class="line">  labels:</span><br><span class="line">    release: prometheus  <span class="comment"># 匹配的选择器</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="built_in">groups</span>:</span><br><span class="line">    rules:</span><br><span class="line">    - alert: NginxHigh5xxErrorRate  <span class="comment"># 告警名称</span></span><br><span class="line">      <span class="built_in">expr</span>: |</span><br><span class="line">        <span class="built_in">sum</span>(rate(nginx_http_requests_total&#123;status=~<span class="string">&quot;5..&quot;</span>&#125;[1m])) by (host) </span><br><span class="line">        / </span><br><span class="line">        <span class="built_in">sum</span>(rate(nginx_http_requests_total[1m])) by (host) </span><br><span class="line">        &gt; 0.05  <span class="comment"># 5xx 错误率 &gt; 5%</span></span><br><span class="line">      <span class="keyword">for</span>: 2m  <span class="comment"># 持续 2 分钟触发告警</span></span><br><span class="line">      labels:</span><br><span class="line">        severity: critical  <span class="comment"># 告警级别</span></span><br><span class="line">      annotations:</span><br><span class="line">        summary: <span class="string">&quot;Nginx &#123;&#123; <span class="variable">$labels</span>.host &#125;&#125; 5xx 错误率过高&quot;</span></span><br><span class="line">        description: <span class="string">&quot;5xx 错误率 &#123;&#123; <span class="variable">$value</span> &#125;&#125; &gt; 5%，持续 2 分钟&quot;</span></span><br><span class="line"></span><br><span class="line">    - alert: NginxHighResponseRate</span><br><span class="line">      <span class="built_in">expr</span>: |</span><br><span class="line">        <span class="built_in">sum</span>(rate(nginx_http_requests_total[1m])) by (host) &gt; 500  <span class="comment"># 每秒请求数 &gt; 500</span></span><br><span class="line">      <span class="keyword">for</span>: 10s</span><br><span class="line">      labels:</span><br><span class="line">        severity: warning</span><br><span class="line">      annotations:</span><br><span class="line">        summary: <span class="string">&quot;Nginx &#123;&#123; <span class="variable">$labels</span>.host &#125;&#125; 请求量过高&quot;</span></span><br><span class="line">        description: <span class="string">&quot;每秒请求数 &#123;&#123; <span class="variable">$value</span> &#125;&#125; &gt; 500&quot;</span></span><br><span class="line">        </span><br><span class="line">kubectl apply -f nginx-alert-rules.yaml</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改chart变量文件，添加自动发现规则，并升级release</span></span><br><span class="line">prometheus:</span><br><span class="line">  prometheusSpec:</span><br><span class="line">    ruleSelector:</span><br><span class="line">      matchLabels:</span><br><span class="line">        release: prometheus</span><br><span class="line">        </span><br><span class="line">helm upgrade prometheus ./ -f values.yaml</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260113124023960.png"></p>
-<h3 id="模拟测试告警"><a href="#模拟测试告警" class="headerlink" title="模拟测试告警"></a>模拟测试告警</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl port-forward services/nginx-service <span class="token number">8081</span>:80 <span class="token operator">&amp;</span>
-
-<span class="token comment"># 安装ab 模拟高错误率，(略过)</span>
-yum <span class="token function">install</span> httpd-tools <span class="token parameter variable">-y</span>
-ab <span class="token parameter variable">-n</span> <span class="token number">1000</span> <span class="token parameter variable">-c</span> <span class="token number">10</span> localhost:8081/error <span class="token comment"># 我手动加了段能返回500的配置段</span>
-<span class="token function">cat</span> <span class="token operator">></span> /etc/nginx/conf.d/default.conf <span class="token operator">&lt;&lt;</span><span class="token string">EOF
-server &#123;
-    listen       80;
-    listen  [::]:80;
-    server_name  localhost;
-    location /error &#123;
-        return 502;
-    &#125;
-    location / &#123;
-        root   /usr/share/nginx/html;
-        index  index.html index.htm;
-    &#125;
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html &#123;
-        root   /usr/share/nginx/html;
-    &#125;
-&#125;
-EOF</span>
-
-<span class="token comment"># 安装siege 模拟高并发</span>
-yum <span class="token function">install</span> siege <span class="token parameter variable">-y</span>
-siege <span class="token parameter variable">-c</span> <span class="token number">255</span> <span class="token parameter variable">-r</span> <span class="token number">100</span> http://localhost:8081
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="模拟测试告警"><a href="#模拟测试告警" class="headerlink" title="模拟测试告警"></a>模拟测试告警</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">kubectl port-forward services/nginx-service 8081:80 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装ab 模拟高错误率，(略过)</span></span><br><span class="line">yum install httpd-tools -y</span><br><span class="line">ab -n 1000 -c 10 localhost:8081/error <span class="comment"># 我手动加了段能返回500的配置段</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/nginx/conf.d/default.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">server &#123;</span></span><br><span class="line"><span class="string">    listen       80;</span></span><br><span class="line"><span class="string">    listen  [::]:80;</span></span><br><span class="line"><span class="string">    server_name  localhost;</span></span><br><span class="line"><span class="string">    location /error &#123;</span></span><br><span class="line"><span class="string">        return 502;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    location / &#123;</span></span><br><span class="line"><span class="string">        root   /usr/share/nginx/html;</span></span><br><span class="line"><span class="string">        index  index.html index.htm;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    error_page   500 502 503 504  /50x.html;</span></span><br><span class="line"><span class="string">    location = /50x.html &#123;</span></span><br><span class="line"><span class="string">        root   /usr/share/nginx/html;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装siege 模拟高并发</span></span><br><span class="line">yum install siege -y</span><br><span class="line">siege -c 255 -r 100 http://localhost:8081</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260113185056548.png"></p>
-<h3 id="配置altermanager"><a href="#配置altermanager" class="headerlink" title="配置altermanager"></a>配置altermanager</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 在values.yaml中添加</span>
-<span class="token comment"># alertmanager.config.global</span>
-alertmanager:
-  config:
-  config:
-    global:
-      resolve_timeout: 5m
-      smtp_smarthost: <span class="token string">'smtp.163.com:25'</span>
-      smtp_from: <span class="token string">'alertwarning@163.com'</span>
-      smtp_auth_username: <span class="token string">'alertwarning@163.com'</span>
-      smtp_auth_password: <span class="token string">'GAANBCIHILSARBYD'</span>
-      smtp_require_tls: <span class="token boolean">false</span>
-      <span class="token punctuation">..</span>.
-    route:
-      receiver: <span class="token string">'default-email'</span>  <span class="token comment"># 默认接收器</span>
-      group_by: <span class="token punctuation">[</span><span class="token string">'namespace'</span><span class="token punctuation">]</span>
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 12h
-      routes:
-        - receiver: <span class="token string">'null'</span>
-          matchers:
-            - alertname <span class="token operator">=</span> <span class="token string">"Watchdog"</span>
-          continue: <span class="token boolean">false</span>  <span class="token comment"># 匹配后不再继续</span>
-    receivers:
-      - name: <span class="token string">'null'</span>  <span class="token comment"># 必须定义null接收器</span>
-      - name: <span class="token string">'default-email'</span>
-        email_configs:
-          - to: <span class="token string">'1320991378@qq.com'</span>
-            send_resolved: <span class="token boolean">true</span>
-            headers:
-              Subject: <span class="token string">'[&#123;&#123; .Status &#125;&#125;] &#123;&#123; .Labels.alertname &#125;&#125;'</span>
-            html: <span class="token string">'&#123;&#123; template "email.default.html" . &#125;&#125;'</span>
-    templates: 
-      - <span class="token string">'/etc/alertmanager/config/*.tmpl'</span>
-<span class="token comment"># 升级release</span>
-helm upgrade prometheus ./ <span class="token parameter variable">-f</span> values.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="配置altermanager"><a href="#配置altermanager" class="headerlink" title="配置altermanager"></a>配置altermanager</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在values.yaml中添加</span></span><br><span class="line"><span class="comment"># alertmanager.config.global</span></span><br><span class="line">alertmanager:</span><br><span class="line">  config:</span><br><span class="line">  config:</span><br><span class="line">    global:</span><br><span class="line">      resolve_timeout: 5m</span><br><span class="line">      smtp_smarthost: <span class="string">&#x27;smtp.163.com:25&#x27;</span></span><br><span class="line">      smtp_from: <span class="string">&#x27;alertwarning@163.com&#x27;</span></span><br><span class="line">      smtp_auth_username: <span class="string">&#x27;alertwarning@163.com&#x27;</span></span><br><span class="line">      smtp_auth_password: <span class="string">&#x27;GAANBCIHILSARBYD&#x27;</span></span><br><span class="line">      smtp_require_tls: <span class="literal">false</span></span><br><span class="line">      ...</span><br><span class="line">    route:</span><br><span class="line">      receiver: <span class="string">&#x27;default-email&#x27;</span>  <span class="comment"># 默认接收器</span></span><br><span class="line">      group_by: [<span class="string">&#x27;namespace&#x27;</span>]</span><br><span class="line">      group_wait: 30s</span><br><span class="line">      group_interval: 5m</span><br><span class="line">      repeat_interval: 12h</span><br><span class="line">      routes:</span><br><span class="line">        - receiver: <span class="string">&#x27;null&#x27;</span></span><br><span class="line">          matchers:</span><br><span class="line">            - alertname = <span class="string">&quot;Watchdog&quot;</span></span><br><span class="line">          <span class="built_in">continue</span>: <span class="literal">false</span>  <span class="comment"># 匹配后不再继续</span></span><br><span class="line">    receivers:</span><br><span class="line">      - name: <span class="string">&#x27;null&#x27;</span>  <span class="comment"># 必须定义null接收器</span></span><br><span class="line">      - name: <span class="string">&#x27;default-email&#x27;</span></span><br><span class="line">        email_configs:</span><br><span class="line">          - to: <span class="string">&#x27;1320991378@qq.com&#x27;</span></span><br><span class="line">            send_resolved: <span class="literal">true</span></span><br><span class="line">            headers:</span><br><span class="line">              Subject: <span class="string">&#x27;[&#123;&#123; .Status &#125;&#125;] &#123;&#123; .Labels.alertname &#125;&#125;&#x27;</span></span><br><span class="line">            html: <span class="string">&#x27;&#123;&#123; template &quot;email.default.html&quot; . &#125;&#125;&#x27;</span></span><br><span class="line">    templates: </span><br><span class="line">      - <span class="string">&#x27;/etc/alertmanager/config/*.tmpl&#x27;</span></span><br><span class="line"><span class="comment"># 升级release</span></span><br><span class="line">helm upgrade prometheus ./ -f values.yaml</span><br></pre></td></tr></table></figure>
 
-<h3 id="模拟测试发送邮件"><a href="#模拟测试发送邮件" class="headerlink" title="模拟测试发送邮件"></a>模拟测试发送邮件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">siege <span class="token parameter variable">-c</span> <span class="token number">255</span> <span class="token parameter variable">-r</span> <span class="token number">10000</span> http://localhost:8081<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="模拟测试发送邮件"><a href="#模拟测试发送邮件" class="headerlink" title="模拟测试发送邮件"></a>模拟测试发送邮件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">siege -c 255 -r 10000 http://localhost:8081</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260113201644435.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260113205832818.png"></p>
@@ -7040,18 +6645,6 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7135,13 +6728,13 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7516,13 +7109,13 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7762,13 +7355,13 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8467,13 +8060,13 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -9017,9 +8610,9 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -9027,9 +8620,9 @@ helm upgrade prometheus ./ <span class="token parameter variable">-f</span> valu
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

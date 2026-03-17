@@ -203,12 +203,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -216,7 +218,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -500,19 +501,7 @@
 <li><strong>基于kerberos的集中认证系统</strong><br>kerberos是一种网络认证协议，使用票据来验证用户身份，有一个专门的kerberos服务器负责颁发和管理票据</li>
 <li><strong>基于OAuth或OpenID Connect的集中认证系统（互联网APP常用）</strong><br>用于互联网应用和云服务中的身份认证与授权。<br>OAuth允许用户授权第三方应用访问其在另一个服务提供商上的资源<br>OpenID Connect在OAuth基础上，提供了简单的身份验证机制</li>
 </ul>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">集中认证系统技术演进
-│
-├── 企业内网时代
-│   ├── LDAP <span class="token punctuation">(</span>用户信息存储<span class="token punctuation">)</span>
-│   ├── Kerberos <span class="token punctuation">(</span>强认证协议<span class="token punctuation">)</span>  
-│   └── FreeIPA/Samba AD <span class="token punctuation">(</span>集大成者<span class="token punctuation">)</span>
-│
-├── Web单点登录时代
-│   └── SAML <span class="token punctuation">(</span>企业级SSO标准<span class="token punctuation">)</span>
-│
-└── 现代互联网时代
-    ├── OAuth <span class="token number">2.0</span> <span class="token punctuation">(</span>授权框架<span class="token punctuation">)</span>
-    └── OpenID Connect <span class="token punctuation">(</span>认证层，基于OAuth<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">集中认证系统技术演进</span><br><span class="line">│</span><br><span class="line">├── 企业内网时代</span><br><span class="line">│   ├── LDAP (用户信息存储)</span><br><span class="line">│   ├── Kerberos (强认证协议)  </span><br><span class="line">│   └── FreeIPA/Samba AD (集大成者)</span><br><span class="line">│</span><br><span class="line">├── Web单点登录时代</span><br><span class="line">│   └── SAML (企业级SSO标准)</span><br><span class="line">│</span><br><span class="line">└── 现代互联网时代</span><br><span class="line">    ├── OAuth 2.0 (授权框架)</span><br><span class="line">    └── OpenID Connect (认证层，基于OAuth)</span><br></pre></td></tr></table></figure>
 
 <table>
 <thead>
@@ -574,113 +563,14 @@
 <p>如果将FreeIPA服务器的领域设置为COMPANY.LOCAL，域名设置为company.local</p>
 <p>那么客户端也应该使用company.local作为其DNS搜索域，并且主机名应该是该域名下的一个FQDN（完全合格域名），例如client1.company.local。</p>
 <h3 id="部署freeipa-server"><a href="#部署freeipa-server" class="headerlink" title="部署freeipa-server"></a><strong>部署freeipa-server</strong></h3><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20251011161403166.png"></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 环境初始化</span>
-hostnamectl set-hostname ipa-server.company.local <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-timedatectl set-timezone Asia/Shanghai
-systemctl disable firewalld.service <span class="token parameter variable">--now</span>
-
-<span class="token comment"># ipa-server</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> freeipa-server freeipa-server-dns freeipa-client
-
-<span class="token comment"># </span>
-ipa-server-install 参数说明
-  <span class="token parameter variable">--realm</span> <span class="token comment"># 指定 Kerberos 领域</span>
-  --ds-password  <span class="token comment"># 设置目录服务器密码</span>
-  --admin-password <span class="token comment"># 设置管理员账户密码  </span>
-  <span class="token parameter variable">--unattended</span> <span class="token comment"># 无人值守模式</span>
-  --setup-dns <span class="token comment"># 集成bind作为权威dns服务器</span>
-  --auto-forwarders <span class="token comment"># 开启dns后，使用本机dns配置作为外部dns转发器</span>
-  
-ipa-server-install <span class="token punctuation">\</span>
-  <span class="token parameter variable">--realm</span> COMPANY.LOCAL <span class="token punctuation">\</span>
-  <span class="token parameter variable">--domain</span> company.local <span class="token punctuation">\</span>
-  --ds-password wangsheng12345 <span class="token punctuation">\</span>
-  --admin-password wangsheng <span class="token punctuation">\</span>
-  <span class="token parameter variable">--hostname</span> ipa-server.company.local <span class="token punctuation">\</span>
-  --setup-dns <span class="token punctuation">\</span>
-  --auto-forwarders <span class="token punctuation">\</span>
-  <span class="token parameter variable">--unattended</span>
-  
-在windows上添加解析:
-<span class="token number">10.163</span>.2.100 ipa-server.company.local
-通过网页访问:
-https://ipa-server.company.local
-用户admin
-密码wangsheng<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 环境初始化</span></span><br><span class="line">hostnamectl set-hostname ipa-server.company.local &amp;&amp; bash</span><br><span class="line">timedatectl set-timezone Asia/Shanghai</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># ipa-server</span></span><br><span class="line">yum -y install freeipa-server freeipa-server-dns freeipa-client</span><br><span class="line"></span><br><span class="line"><span class="comment"># </span></span><br><span class="line">ipa-server-install 参数说明</span><br><span class="line">  --realm <span class="comment"># 指定 Kerberos 领域</span></span><br><span class="line">  --ds-password  <span class="comment"># 设置目录服务器密码</span></span><br><span class="line">  --admin-password <span class="comment"># 设置管理员账户密码  </span></span><br><span class="line">  --unattended <span class="comment"># 无人值守模式</span></span><br><span class="line">  --setup-dns <span class="comment"># 集成bind作为权威dns服务器</span></span><br><span class="line">  --auto-forwarders <span class="comment"># 开启dns后，使用本机dns配置作为外部dns转发器</span></span><br><span class="line">  </span><br><span class="line">ipa-server-install \</span><br><span class="line">  --realm COMPANY.LOCAL \</span><br><span class="line">  --domain company.local \</span><br><span class="line">  --ds-password wangsheng12345 \</span><br><span class="line">  --admin-password wangsheng \</span><br><span class="line">  --hostname ipa-server.company.local \</span><br><span class="line">  --setup-dns \</span><br><span class="line">  --auto-forwarders \</span><br><span class="line">  --unattended</span><br><span class="line">  </span><br><span class="line">在windows上添加解析:</span><br><span class="line">10.163.2.100 ipa-server.company.local</span><br><span class="line">通过网页访问:</span><br><span class="line">https://ipa-server.company.local</span><br><span class="line">用户admin</span><br><span class="line">密码wangsheng</span><br></pre></td></tr></table></figure>
 
 <h3 id="创建用户"><a href="#创建用户" class="headerlink" title="创建用户"></a><strong>创建用户</strong></h3><p>创建用户可以在web端进行手动创建，也可以通过命令行进行创建，这里介绍使用命令行创建的方法</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># ipa-server</span>
-kinit admin
-<span class="token comment"># 添加用户</span>
-ipa user-add xhy <span class="token parameter variable">--first</span><span class="token operator">=</span>xue <span class="token parameter variable">--last</span><span class="token operator">=</span>huiying <span class="token parameter variable">--email</span><span class="token operator">=</span>test@example.com <span class="token parameter variable">--password</span>
-Password:
-Enter Password again to verify:
-----------------
-Added user <span class="token string">"xhy"</span>
-----------------
-  User login: xhy
-  First name: xue
-  Last name: huiying
-  Full name: xue huiying
-  Display name: xue huiying
-  Initials: xh
-  Home directory: /home/xhy
-  GECOS: xue huiying
-  Login shell: /bin/sh
-  Principal name: xhy@COMPANY.LOCAL
-  Principal alias: xhy@COMPANY.LOCAL
-  User password expiration: 20251011081813Z
-  Email address: test@example.com
-  <span class="token environment constant">UID</span><span class="token builtin class-name">:</span> <span class="token number">1251600003</span>
-  GID: <span class="token number">1251600003</span>
-  Password: True
-  Member of groups: ipausers
-  Kerberos keys available: True
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ipa-server</span></span><br><span class="line">kinit admin</span><br><span class="line"><span class="comment"># 添加用户</span></span><br><span class="line">ipa user-add xhy --first=xue --last=huiying --email=<span class="built_in">test</span>@example.com --password</span><br><span class="line">Password:</span><br><span class="line">Enter Password again to verify:</span><br><span class="line">----------------</span><br><span class="line">Added user <span class="string">&quot;xhy&quot;</span></span><br><span class="line">----------------</span><br><span class="line">  User login: xhy</span><br><span class="line">  First name: xue</span><br><span class="line">  Last name: huiying</span><br><span class="line">  Full name: xue huiying</span><br><span class="line">  Display name: xue huiying</span><br><span class="line">  Initials: xh</span><br><span class="line">  Home directory: /home/xhy</span><br><span class="line">  GECOS: xue huiying</span><br><span class="line">  Login shell: /bin/sh</span><br><span class="line">  Principal name: xhy@COMPANY.LOCAL</span><br><span class="line">  Principal <span class="built_in">alias</span>: xhy@COMPANY.LOCAL</span><br><span class="line">  User password expiration: 20251011081813Z</span><br><span class="line">  Email address: <span class="built_in">test</span>@example.com</span><br><span class="line">  UID: 1251600003</span><br><span class="line">  GID: 1251600003</span><br><span class="line">  Password: True</span><br><span class="line">  Member of <span class="built_in">groups</span>: ipausers</span><br><span class="line">  Kerberos keys available: True</span><br><span class="line"></span><br><span class="line"><span class="built_in">id</span> xhy</span><br><span class="line">uid=1251600003(xhy) gid=1251600003(xhy) <span class="built_in">groups</span>=1251600003(xhy)</span><br></pre></td></tr></table></figure>
 
-<span class="token function">id</span> xhy
-<span class="token assign-left variable">uid</span><span class="token operator">=</span><span class="token number">1251600003</span><span class="token punctuation">(</span>xhy<span class="token punctuation">)</span> <span class="token assign-left variable">gid</span><span class="token operator">=</span><span class="token number">1251600003</span><span class="token punctuation">(</span>xhy<span class="token punctuation">)</span> <span class="token assign-left variable">groups</span><span class="token operator">=</span><span class="token number">1251600003</span><span class="token punctuation">(</span>xhy<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="client加入域"><a href="#client加入域" class="headerlink" title="client加入域"></a>client加入域</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># client1.company.local</span></span><br><span class="line">hostnamectl set-hostname client1.company.local &amp;&amp; bash</span><br><span class="line">timedatectl set-timezone Asia/Shanghai</span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装客户端</span></span><br><span class="line">yum install ipa-client -y</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置DNS，指向FreeIPA服务器</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;nameserver 10.163.2.100&quot;</span> &gt; /etc/resolv.conf</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;search company.local&quot;</span> &gt;&gt; /etc/resolv.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试，可以解析到server的地址</span></span><br><span class="line">host ipa-server</span><br><span class="line">ipa-server.company.local has address 10.163.2.100</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加入域</span></span><br><span class="line">ipa-client-install \</span><br><span class="line">  --domain=company.local \</span><br><span class="line">  --realm=COMPANY.LOCAL \</span><br><span class="line">  --server=ipa-server.company.local \</span><br><span class="line">  --principal=admin \</span><br><span class="line">  --password=wangsheng \</span><br><span class="line">  --unattended</span><br><span class="line">...</span><br><span class="line">The ipa-client-install <span class="built_in">command</span> was successful</span><br></pre></td></tr></table></figure>
 
-<h3 id="client加入域"><a href="#client加入域" class="headerlink" title="client加入域"></a>client加入域</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># client1.company.local</span>
-hostnamectl set-hostname client1.company.local <span class="token operator">&amp;&amp;</span> <span class="token function">bash</span>
-timedatectl set-timezone Asia/Shanghai
-systemctl disable firewalld.service <span class="token parameter variable">--now</span>
-
-<span class="token comment"># 安装客户端</span>
-yum <span class="token function">install</span> ipa-client <span class="token parameter variable">-y</span>
-
-<span class="token comment"># 配置DNS，指向FreeIPA服务器</span>
-<span class="token builtin class-name">echo</span> <span class="token string">"nameserver 10.163.2.100"</span> <span class="token operator">></span> /etc/resolv.conf
-<span class="token builtin class-name">echo</span> <span class="token string">"search company.local"</span> <span class="token operator">>></span> /etc/resolv.conf
-
-<span class="token comment"># 测试，可以解析到server的地址</span>
-<span class="token function">host</span> ipa-server
-ipa-server.company.local has address <span class="token number">10.163</span>.2.100
-
-<span class="token comment"># 加入域</span>
-ipa-client-install <span class="token punctuation">\</span>
-  <span class="token parameter variable">--domain</span><span class="token operator">=</span>company.local <span class="token punctuation">\</span>
-  <span class="token parameter variable">--realm</span><span class="token operator">=</span>COMPANY.LOCAL <span class="token punctuation">\</span>
-  <span class="token parameter variable">--server</span><span class="token operator">=</span>ipa-server.company.local <span class="token punctuation">\</span>
-  <span class="token parameter variable">--principal</span><span class="token operator">=</span>admin <span class="token punctuation">\</span>
-  <span class="token parameter variable">--password</span><span class="token operator">=</span>wangsheng <span class="token punctuation">\</span>
-  <span class="token parameter variable">--unattended</span>
-<span class="token punctuation">..</span>.
-The ipa-client-install <span class="token builtin class-name">command</span> was successful<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="验证：在client上使用xhy用户"><a href="#验证：在client上使用xhy用户" class="headerlink" title="验证：在client上使用xhy用户"></a>验证：在client上使用xhy用户</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># client1.company.local</span>
-<span class="token function">ssh</span> xhy@client1.company.local
-<span class="token punctuation">(</span>xhy@client1.company.local<span class="token punctuation">)</span> Password:
-<span class="token punctuation">(</span>xhy@client1.company.local<span class="token punctuation">)</span> Password expired. Change your password now.
-Current Password:
-<span class="token punctuation">(</span>xhy@client1.company.local<span class="token punctuation">)</span> New password:
-<span class="token punctuation">(</span>xhy@client1.company.local<span class="token punctuation">)</span> Retype new password:
-Last failed login: Sat Oct <span class="token number">11</span> <span class="token number">16</span>:28:51 CST <span class="token number">2025</span> from <span class="token number">10.163</span>.2.106 on ssh:notty
-There were <span class="token number">2</span> failed login attempts since the last successful login.
-Last login: Sat Oct <span class="token number">11</span> <span class="token number">16</span>:23:29 <span class="token number">2025</span>
-Could not chdir to home directory /home/xhy: No such <span class="token function">file</span> or directory
-<span class="token punctuation">[</span>xhy@client1 /<span class="token punctuation">]</span>$
-
-成功登录了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="验证：在client上使用xhy用户"><a href="#验证：在client上使用xhy用户" class="headerlink" title="验证：在client上使用xhy用户"></a>验证：在client上使用xhy用户</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># client1.company.local</span></span><br><span class="line">ssh xhy@client1.company.local</span><br><span class="line">(xhy@client1.company.local) Password:</span><br><span class="line">(xhy@client1.company.local) Password expired. Change your password now.</span><br><span class="line">Current Password:</span><br><span class="line">(xhy@client1.company.local) New password:</span><br><span class="line">(xhy@client1.company.local) Retype new password:</span><br><span class="line">Last failed login: Sat Oct 11 16:28:51 CST 2025 from 10.163.2.106 on ssh:notty</span><br><span class="line">There were 2 failed login attempts since the last successful login.</span><br><span class="line">Last login: Sat Oct 11 16:23:29 2025</span><br><span class="line">Could not <span class="built_in">chdir</span> to home directory /home/xhy: No such file or directory</span><br><span class="line">[xhy@client1 /]$</span><br><span class="line"></span><br><span class="line">成功登录了</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6759,18 +6649,6 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6854,13 +6732,13 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7235,13 +7113,13 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7481,13 +7359,13 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8186,13 +8064,13 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8736,9 +8614,9 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8746,9 +8624,9 @@ Could not chdir to home directory /home/xhy: No such <span class="token function
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="连接gitlab使用http连接git仓库 在凭据中添加git项目开发者的账号密码  执行构建后，代码就会被自动拉取到对应项目的工作目录下 ls &#x2F;var&#x2F;lib&#x2F;jenkins&#x2F;workspace&#x2F;free_style_job bin           conf             lib      NOTICE     RELEASE-NOTES  temp BUILDING.txt">
+    <meta name="description" content="连接gitlab使用http连接git仓库 在凭据中添加git项目开发者的账号密码  执行构建后，代码就会被自动拉取到对应项目的工作目录下 123ls &#x2F;var&#x2F;lib&#x2F;jenkins&#x2F;workspace&#x2F;free_style_jobbin           conf             lib      NOTICE     RELEASE-NOTES  tempBUILDING.txt">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Jenkins构建自由风格项目——拉取gitlab代码、使用脚本上传代码">
 <meta property="og:url" content="https://akemi.zj.cn/2024/10/08/Jenkins-freestyle/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="连接gitlab使用http连接git仓库 在凭据中添加git项目开发者的账号密码  执行构建后，代码就会被自动拉取到对应项目的工作目录下 ls &#x2F;var&#x2F;lib&#x2F;jenkins&#x2F;workspace&#x2F;free_style_job bin           conf             lib      NOTICE     RELEASE-NOTES  temp BUILDING.txt">
+<meta property="og:description" content="连接gitlab使用http连接git仓库 在凭据中添加git项目开发者的账号密码  执行构建后，代码就会被自动拉取到对应项目的工作目录下 123ls &#x2F;var&#x2F;lib&#x2F;jenkins&#x2F;workspace&#x2F;free_style_jobbin           conf             lib      NOTICE     RELEASE-NOTES  tempBUILDING.txt">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/10/23b01446947eb77cda1d870b17d240a8.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/10/767e33e5201b3b188c23e81878856d7f.png">
@@ -203,12 +203,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -216,7 +218,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -497,36 +498,14 @@
 <p>在凭据中添加git项目开发者的账号密码</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/10/23b01446947eb77cda1d870b17d240a8.png"></p>
 <p>执行构建后，代码就会被自动拉取到对应项目的工作目录下</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ls</span> /var/lib/jenkins/workspace/free_style_job
-bin           conf             lib      NOTICE     RELEASE-NOTES  temp
-BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> /var/lib/jenkins/workspace/free_style_job</span><br><span class="line">bin           conf             lib      NOTICE     RELEASE-NOTES  temp</span><br><span class="line">BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps</span><br></pre></td></tr></table></figure>
 
 <h2 id="shell脚本上传代码"><a href="#shell脚本上传代码" class="headerlink" title="shell脚本上传代码"></a>shell脚本上传代码</h2><p><strong>准备脚本</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> /root/script
-<span class="token function">cat</span> <span class="token operator">></span> /root/script/deploy.sh<span class="token operator">&lt;&lt;</span><span class="token string">'EOF'
-#!/bin/sh
-CODE_DIR=/var/lib/jenkins/workspace/free_style_job/
-WEB_DIR=/usr/local/tomcat
-IP=192.168.10.102 #测试主机地址
-TIME=$(date +%F-%H-%M-%S)
-cd $&#123;CODE_DIR&#125; &amp;&amp; tar -zcf /tmp/tomcat-$&#123;TIME&#125;.tar.gz ./*
-ssh root@$&#123;IP&#125; "mkdir -p $&#123;WEB_DIR&#125;/tomcat-$&#123;TIME&#125;"
-scp /tmp/tomcat-$&#123;TIME&#125;.tar.gz $&#123;IP&#125;:$&#123;WEB_DIR&#125;
-ssh root@$&#123;IP&#125; "cd $&#123;WEB_DIR&#125; &amp;&amp; tar -xf tomcat-$&#123;TIME&#125;.tar.gz -C tomcat-$&#123;TIME&#125; &amp;&amp; rm -rf tomcat-$&#123;TIME&#125;.tar.gz"
-#ssh root@$&#123;IP&#125; "cd $&#123;WEB_DIR&#125; &amp;&amp; rm -rf html
-EOF</span>
-<span class="token function">chmod</span> +x /root/script/deploy.sh
-<span class="token comment">#做免密</span>
-ssh-copy-id <span class="token parameter variable">-i</span> /root/.ssh/id_rsa.pub <span class="token number">192.168</span>.10.102<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> /root/script</span><br><span class="line"><span class="built_in">cat</span> &gt; /root/script/deploy.sh&lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line"><span class="comment">#!/bin/sh</span></span><br><span class="line">CODE_DIR=/var/lib/jenkins/workspace/free_style_job/</span><br><span class="line">WEB_DIR=/usr/local/tomcat</span><br><span class="line">IP=192.168.10.102 <span class="comment">#测试主机地址</span></span><br><span class="line">TIME=$(<span class="built_in">date</span> +%F-%H-%M-%S)</span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$&#123;CODE_DIR&#125;</span> &amp;&amp; tar -zcf /tmp/tomcat-<span class="variable">$&#123;TIME&#125;</span>.tar.gz ./*</span><br><span class="line">ssh root@<span class="variable">$&#123;IP&#125;</span> <span class="string">&quot;mkdir -p <span class="variable">$&#123;WEB_DIR&#125;</span>/tomcat-<span class="variable">$&#123;TIME&#125;</span>&quot;</span></span><br><span class="line">scp /tmp/tomcat-<span class="variable">$&#123;TIME&#125;</span>.tar.gz <span class="variable">$&#123;IP&#125;</span>:<span class="variable">$&#123;WEB_DIR&#125;</span></span><br><span class="line">ssh root@<span class="variable">$&#123;IP&#125;</span> <span class="string">&quot;cd <span class="variable">$&#123;WEB_DIR&#125;</span> &amp;&amp; tar -xf tomcat-<span class="variable">$&#123;TIME&#125;</span>.tar.gz -C tomcat-<span class="variable">$&#123;TIME&#125;</span> &amp;&amp; rm -rf tomcat-<span class="variable">$&#123;TIME&#125;</span>.tar.gz&quot;</span></span><br><span class="line"><span class="comment">#ssh root@$&#123;IP&#125; &quot;cd $&#123;WEB_DIR&#125; &amp;&amp; rm -rf html</span></span><br><span class="line">EOF</span><br><span class="line"><span class="built_in">chmod</span> +x /root/script/deploy.sh</span><br><span class="line"><span class="comment">#做免密</span></span><br><span class="line">ssh-copy-id -i /root/.ssh/id_rsa.pub 192.168.10.102</span><br></pre></td></tr></table></figure>
 
 <p><strong>在jenkins项目中使用shell构建</strong></p>
 <p><code>/bin/bash /root/script/deploy.sh</code></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@test tomcat-2024-10-04-14-23-21<span class="token punctuation">]</span><span class="token comment"># pwd</span>
-/usr/local/tomcat/tomcat-2024-10-04-14-23-21
-<span class="token punctuation">[</span>root@test tomcat-2024-10-04-14-23-21<span class="token punctuation">]</span><span class="token comment"># ls</span>
-bin           conf             lib      NOTICE     RELEASE-NOTES  temp
-BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@<span class="built_in">test</span> tomcat-2024-10-04-14-23-21]<span class="comment"># pwd</span></span><br><span class="line">/usr/local/tomcat/tomcat-2024-10-04-14-23-21</span><br><span class="line">[root@<span class="built_in">test</span> tomcat-2024-10-04-14-23-21]<span class="comment"># ls</span></span><br><span class="line">bin           conf             lib      NOTICE     RELEASE-NOTES  temp</span><br><span class="line">BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/2024/10/767e33e5201b3b188c23e81878856d7f.png"></p>
 
@@ -6608,18 +6587,6 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6703,13 +6670,13 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7084,13 +7051,13 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7330,13 +7297,13 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8035,13 +8002,13 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8585,9 +8552,9 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8595,9 +8562,9 @@ BUILDING.txt  CONTRIBUTING.md  LICENSE  README.md  RUNNING.txt    webapps
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

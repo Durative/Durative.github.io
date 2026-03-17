@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -503,107 +504,18 @@
 <p>6.ceph支持集群中多主MDS，以保证高可用性</p>
 <h2 id="部署cephFS"><a href="#部署cephFS" class="headerlink" title="部署cephFS"></a>部署cephFS</h2><h3 id="使用volume方式创建cephfs"><a href="#使用volume方式创建cephfs" class="headerlink" title="使用volume方式创建cephfs"></a>使用volume方式创建cephfs</h3><p>更简单<br>ceph fs volume create fs-name –placement&#x3D;”<hosts-name>“</p>
 <h3 id="使用手动创建（推荐）"><a href="#使用手动创建（推荐）" class="headerlink" title="使用手动创建（推荐）"></a>使用手动创建（推荐）</h3><p>更好地控制部署过程，可以手动创建与cephfs相关的池</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.创建数据和元数据的pools
-ceph osd pool create cephfs_data
-ceph osd pool create cephfs_metadata
-
-<span class="token number">2</span>.创建cephfs并部署MDS服务
-ceph fs new <span class="token operator">&lt;</span>fs-name<span class="token operator">></span> <span class="token operator">&lt;</span>mds-pool<span class="token operator">></span> <span class="token operator">&lt;</span>data-pool<span class="token operator">></span>
-
-ceph fs new ws-cephfs cephfs_metadata cephfs_data
-  Pool <span class="token string">'cephfs_data'</span> <span class="token punctuation">(</span>id <span class="token string">'11'</span><span class="token punctuation">)</span> has pg autoscale mode <span class="token string">'on'</span> but is not marked as bulk.
-  Consider setting the flag by running
-    <span class="token comment"># ceph osd pool set cephfs_data bulk true</span>
-new fs with metadata pool <span class="token number">12</span> and data pool <span class="token number">11</span>
-
-<span class="token number">3</span>.部署MDS服务
-ceph orch apply mds <span class="token operator">&lt;</span>fs-name<span class="token operator">></span> <span class="token parameter variable">--placement</span><span class="token operator">=</span><span class="token string">"&lt;hosts-name>"</span>
-
-ceph orch apply mds ws-cephfs <span class="token parameter variable">--placement</span><span class="token operator">=</span><span class="token string">"cephadm-1,cephadm-2,cephadm-3"</span>
-Scheduled mds.ws-cephfs update<span class="token punctuation">..</span>.
-
-<span class="token number">4</span>.验证
-ceph orch <span class="token function">ls</span> <span class="token operator">|</span> <span class="token function">grep</span> mds
-mds.ws-cephfs                             <span class="token number">3</span>/3  24s ago    61s  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3        <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">1.创建数据和元数据的pools</span><br><span class="line">ceph osd pool create cephfs_data</span><br><span class="line">ceph osd pool create cephfs_metadata</span><br><span class="line"></span><br><span class="line">2.创建cephfs并部署MDS服务</span><br><span class="line">ceph fs new &lt;fs-name&gt; &lt;mds-pool&gt; &lt;data-pool&gt;</span><br><span class="line"></span><br><span class="line">ceph fs new ws-cephfs cephfs_metadata cephfs_data</span><br><span class="line">  Pool <span class="string">&#x27;cephfs_data&#x27;</span> (<span class="built_in">id</span> <span class="string">&#x27;11&#x27;</span>) has pg autoscale mode <span class="string">&#x27;on&#x27;</span> but is not marked as bulk.</span><br><span class="line">  Consider setting the flag by running</span><br><span class="line">    <span class="comment"># ceph osd pool set cephfs_data bulk true</span></span><br><span class="line">new fs with metadata pool 12 and data pool 11</span><br><span class="line"></span><br><span class="line">3.部署MDS服务</span><br><span class="line">ceph orch apply mds &lt;fs-name&gt; --placement=<span class="string">&quot;&lt;hosts-name&gt;&quot;</span></span><br><span class="line"></span><br><span class="line">ceph orch apply mds ws-cephfs --placement=<span class="string">&quot;cephadm-1,cephadm-2,cephadm-3&quot;</span></span><br><span class="line">Scheduled mds.ws-cephfs update...</span><br><span class="line"></span><br><span class="line">4.验证</span><br><span class="line">ceph orch <span class="built_in">ls</span> | grep mds</span><br><span class="line">mds.ws-cephfs                             3/3  24s ago    61s  cephadm-1;cephadm-2;cephadm-3        </span><br></pre></td></tr></table></figure>
 
 <h3 id="使用服务规范文件创建"><a href="#使用服务规范文件创建" class="headerlink" title="使用服务规范文件创建"></a>使用服务规范文件创建</h3><p>首先也需要手动创建两个所需的池</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">service_type: mds
-service_id: fs-name
-placements:
-	hosts:
-		- cephadm-1
-		- cephadm-2
-		- cephadm-3
-<span class="token punctuation">..</span>.
-
-ceph orch <span class="token parameter variable">-i</span> filename.yaml
-
-最后再使用
-ceph fs new<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">service_type: mds</span><br><span class="line">service_id: fs-name</span><br><span class="line">placements:</span><br><span class="line">	hosts:</span><br><span class="line">		- cephadm-1</span><br><span class="line">		- cephadm-2</span><br><span class="line">		- cephadm-3</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">ceph orch -i filename.yaml</span><br><span class="line"></span><br><span class="line">最后再使用</span><br><span class="line">ceph fs new</span><br></pre></td></tr></table></figure>
 
 <h2 id="挂载CephFS"><a href="#挂载CephFS" class="headerlink" title="挂载CephFS"></a>挂载CephFS</h2><p>挂载说明</p>
 <p>如果内核版本大于等于4，就可以使用内核客户端<br>如果内核版本小于4，需要使用FUSE客户端</p>
 <p><strong>使用内核客户端进行挂载</strong></p>
 <p>需要安装好ceph-common<br>需要准备好keyring或在命令行中使用明文</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">命令格式
-<span class="token function">mount</span> <span class="token parameter variable">-t</span> ceph <span class="token operator">&lt;</span>monitor_addresses<span class="token operator">></span>:<span class="token operator">&lt;</span>fs_path<span class="token operator">></span> <span class="token operator">&lt;</span>mount_point<span class="token operator">></span> <span class="token parameter variable">-o</span> <span class="token operator">&lt;</span>options<span class="token operator">></span>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">命令格式</span><br><span class="line">mount -t ceph &lt;monitor_addresses&gt;:&lt;fs_path&gt; &lt;mount_point&gt; -o &lt;options&gt;</span><br><span class="line"></span><br><span class="line">-t ceph 声明文件系统类型</span><br><span class="line">monitor_addresses mon地址+端口，可写多个</span><br><span class="line">fs_path ceph文件系统路径</span><br><span class="line">mount_point 挂载本地路径</span><br><span class="line"></span><br><span class="line">可选options:</span><br><span class="line">name=name</span><br><span class="line">fs=fs-name</span><br><span class="line">secret=secret_value 即密钥</span><br><span class="line">secretfile=secret_key_file 即keyring文件</span><br><span class="line">rsize=bytes 最大可读字节</span><br><span class="line">wsize=bytes 最大可写字节</span><br><span class="line"></span><br><span class="line">1.创建cephfs的新用户</span><br><span class="line">格式:</span><br><span class="line">ceph fs authorize &lt;fs-name&gt; &lt;keyring-name&gt; &lt;path&gt; &lt;permission&gt;</span><br><span class="line"></span><br><span class="line">ceph fs authorize ws-cephfs client.cephfs / rwps</span><br><span class="line">[client.cephfs]</span><br><span class="line">        key = AQCoXG5o6SzNARAAY51PjUORXStYTrlFbE7VpA==</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;AQCoXG5o6SzNARAAY51PjUORXStYTrlFbE7VpA==&quot;</span> &gt; /etc/ceph/ceph.client.cephfs.keyring</span><br><span class="line"><span class="built_in">chmod</span> 600 /etc/ceph/ceph.client.cephfs.keyring</span><br><span class="line"></span><br><span class="line">2.进行挂载</span><br><span class="line"><span class="built_in">mkdir</span> /mnt/cephfs-data</span><br><span class="line">mount -t ceph \</span><br><span class="line">  cephadm-1:6789,cephadm-2:6789,cephadm-3:6789:/ \</span><br><span class="line">  /mnt/cephfs-data \</span><br><span class="line">  -o name=cephfs,secretfile=/etc/ceph/ceph.client.cephfs.keyring,_netdev,fs=ws-cephfs</span><br><span class="line">  </span><br><span class="line">3.验证</span><br><span class="line"><span class="built_in">df</span> -Th | grep ceph</span><br><span class="line">192.168.10.141:6789,192.168.10.142:6789,192.168.10.143:6789:/ ceph      169G     0  169G   0% /mnt/cephfs-data</span><br><span class="line"></span><br><span class="line">4.持久化挂载</span><br><span class="line">vim /etc/fstab</span><br><span class="line">cephadm-1,cephadm-2,cephadm-3:/ /mnt/cephfs-data ceph name=cephfs,secretfile=/etc/ceph/ceph.client.cephfs.keyring,_netdev 0 0</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">卸载之前挂载的</span><br><span class="line">umount /mnt/cephfs-data</span><br><span class="line">mount -a</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th</span><br><span class="line">192.168.10.141,192.168.10.142,192.168.10.143:/ ceph      169G     0  169G   0% /mnt/cephfs-data</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<span class="token parameter variable">-t</span> ceph 声明文件系统类型
-monitor_addresses mon地址+端口，可写多个
-fs_path ceph文件系统路径
-mount_point 挂载本地路径
-
-可选options:
-<span class="token assign-left variable">name</span><span class="token operator">=</span>name
-<span class="token assign-left variable">fs</span><span class="token operator">=</span>fs-name
-<span class="token assign-left variable">secret</span><span class="token operator">=</span>secret_value 即密钥
-<span class="token assign-left variable">secretfile</span><span class="token operator">=</span>secret_key_file 即keyring文件
-<span class="token assign-left variable">rsize</span><span class="token operator">=</span>bytes 最大可读字节
-<span class="token assign-left variable">wsize</span><span class="token operator">=</span>bytes 最大可写字节
-
-<span class="token number">1</span>.创建cephfs的新用户
-格式:
-ceph fs authorize <span class="token operator">&lt;</span>fs-name<span class="token operator">></span> <span class="token operator">&lt;</span>keyring-name<span class="token operator">></span> <span class="token operator">&lt;</span>path<span class="token operator">></span> <span class="token operator">&lt;</span>permission<span class="token operator">></span>
-
-ceph fs authorize ws-cephfs client.cephfs / rwps
-<span class="token punctuation">[</span>client.cephfs<span class="token punctuation">]</span>
-        key <span class="token operator">=</span> <span class="token assign-left variable">AQCoXG5o6SzNARAAY51PjUORXStYTrlFbE7VpA</span><span class="token operator">==</span>
-
-<span class="token builtin class-name">echo</span> <span class="token string">"AQCoXG5o6SzNARAAY51PjUORXStYTrlFbE7VpA=="</span> <span class="token operator">></span> /etc/ceph/ceph.client.cephfs.keyring
-<span class="token function">chmod</span> <span class="token number">600</span> /etc/ceph/ceph.client.cephfs.keyring
-
-<span class="token number">2</span>.进行挂载
-<span class="token function">mkdir</span> /mnt/cephfs-data
-<span class="token function">mount</span> <span class="token parameter variable">-t</span> ceph <span class="token punctuation">\</span>
-  cephadm-1:6789,cephadm-2:6789,cephadm-3:6789:/ <span class="token punctuation">\</span>
-  /mnt/cephfs-data <span class="token punctuation">\</span>
-  <span class="token parameter variable">-o</span> <span class="token assign-left variable">name</span><span class="token operator">=</span>cephfs,secretfile<span class="token operator">=</span>/etc/ceph/ceph.client.cephfs.keyring,_netdev,fs<span class="token operator">=</span>ws-cephfs
-  
-<span class="token number">3</span>.验证
-<span class="token function">df</span> <span class="token parameter variable">-Th</span> <span class="token operator">|</span> <span class="token function">grep</span> ceph
-<span class="token number">192.168</span>.10.141:6789,192.168.10.142:6789,192.168.10.143:6789:/ ceph      169G     <span class="token number">0</span>  169G   <span class="token number">0</span>% /mnt/cephfs-data
-
-<span class="token number">4</span>.持久化挂载
-<span class="token function">vim</span> /etc/fstab
-cephadm-1,cephadm-2,cephadm-3:/ /mnt/cephfs-data ceph <span class="token assign-left variable">name</span><span class="token operator">=</span>cephfs,secretfile<span class="token operator">=</span>/etc/ceph/ceph.client.cephfs.keyring,_netdev <span class="token number">0</span> <span class="token number">0</span>
-
-systemctl daemon-reload
-卸载之前挂载的
-<span class="token function">umount</span> /mnt/cephfs-data
-<span class="token function">mount</span> <span class="token parameter variable">-a</span>
-
-<span class="token function">df</span> <span class="token parameter variable">-Th</span>
-<span class="token number">192.168</span>.10.141,192.168.10.142,192.168.10.143:/ ceph      169G     <span class="token number">0</span>  169G   <span class="token number">0</span>% /mnt/cephfs-data
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="删除cephFS"><a href="#删除cephFS" class="headerlink" title="删除cephFS"></a>删除cephFS</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">如果需要，你可以删除一个cephfs文件系统
-首先要备份所有数据，删除cephfs文件系统会破坏所有数据
-
-删除cephfs的步骤是首先将其标记为down
-ceph fs <span class="token builtin class-name">set</span> fs-name down <span class="token boolean">true</span>
-
-然后，你可以用下面的命令删除它
-ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="删除cephFS"><a href="#删除cephFS" class="headerlink" title="删除cephFS"></a>删除cephFS</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">如果需要，你可以删除一个cephfs文件系统</span><br><span class="line">首先要备份所有数据，删除cephfs文件系统会破坏所有数据</span><br><span class="line"></span><br><span class="line">删除cephfs的步骤是首先将其标记为down</span><br><span class="line">ceph fs <span class="built_in">set</span> fs-name down <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">然后，你可以用下面的命令删除它</span><br><span class="line">ceph fs <span class="built_in">rm</span> fs-name --yes-i-really-mean-it</span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6682,18 +6594,6 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6777,13 +6677,13 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7158,13 +7058,13 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7404,13 +7304,13 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8109,13 +8009,13 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8659,9 +8559,9 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8669,9 +8569,9 @@ ceph fs <span class="token function">rm</span> fs-name --yes-i-really-mean-it<sp
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

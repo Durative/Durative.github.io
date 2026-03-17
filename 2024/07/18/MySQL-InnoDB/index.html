@@ -210,12 +210,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -223,7 +225,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -567,103 +568,24 @@
 <p>解决了脏读、不可重复读，但不安全</p>
 <h3 id="串行化Serialization（表锁）"><a href="#串行化Serialization（表锁）" class="headerlink" title="串行化Serialization（表锁）"></a>串行化Serialization（表锁）</h3><p>事务串行化执行，隔离级别最高，牺牲了系统的并发性能</p>
 <p>可以解决所有问题</p>
-<h3 id="查看与设置数据库的隔离级别"><a href="#查看与设置数据库的隔离级别" class="headerlink" title="查看与设置数据库的隔离级别"></a>查看与设置数据库的隔离级别</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">show global variables like <span class="token string">'tx_isolation'</span><span class="token punctuation">;</span>
-+---------------+-----------------+
-<span class="token operator">|</span> Variable_name <span class="token operator">|</span> Value           <span class="token operator">|</span>
-+---------------+-----------------+
-<span class="token operator">|</span> tx_isolation  <span class="token operator">|</span> REPEATABLE-READ <span class="token operator">|</span>
-+---------------+-----------------+
-可以看到默认为重复读
+<h3 id="查看与设置数据库的隔离级别"><a href="#查看与设置数据库的隔离级别" class="headerlink" title="查看与设置数据库的隔离级别"></a>查看与设置数据库的隔离级别</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">show global variables like <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">| Variable_name | Value           |</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">| tx_isolation  | REPEATABLE-READ |</span><br><span class="line">+---------------+-----------------+</span><br><span class="line">可以看到默认为重复读</span><br><span class="line"></span><br><span class="line">设置参数</span><br><span class="line"><span class="built_in">set</span> global tx_isolation=<span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line"><span class="built_in">set</span> session tx_isolation=<span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line">或添加my.cnf</span><br><span class="line">tx_isolation=</span><br><span class="line">READ-UNCOMMITTED</span><br><span class="line">READ-COMMITTED</span><br><span class="line">REPEATABLE-READ</span><br><span class="line">SERIALIZABLE</span><br></pre></td></tr></table></figure>
 
-设置参数
-<span class="token builtin class-name">set</span> global <span class="token assign-left variable">tx_isolation</span><span class="token operator">=</span><span class="token string">'READ-COMMITTED'</span><span class="token punctuation">;</span>
-<span class="token builtin class-name">set</span> session <span class="token assign-left variable">tx_isolation</span><span class="token operator">=</span><span class="token string">'READ-COMMITTED'</span><span class="token punctuation">;</span>
-或添加my.cnf
-<span class="token assign-left variable">tx_isolation</span><span class="token operator">=</span>
-READ-UNCOMMITTED
-READ-COMMITTED
-REPEATABLE-READ
-SERIALIZABLE<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="事务的操作命令"><a href="#事务的操作命令" class="headerlink" title="事务的操作命令"></a>事务的操作命令</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">start transaction<span class="token punctuation">;</span>手动开始执行事务操作
-rollback<span class="token punctuation">;</span>         在事务未提交前回滚，放弃修改
-savepoint a<span class="token punctuation">;</span>      设置当前位置节点保存点为a
-rollback to a<span class="token punctuation">;</span>    回滚至保存点a
-commit<span class="token punctuation">;</span>           提交事务
-
-查看是否自动提交事务
-<span class="token builtin class-name">set</span> global <span class="token assign-left variable">autocommit</span><span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>
-打开自动提交风险很大<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="事务的操作命令"><a href="#事务的操作命令" class="headerlink" title="事务的操作命令"></a>事务的操作命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">start transaction;手动开始执行事务操作</span><br><span class="line">rollback;         在事务未提交前回滚，放弃修改</span><br><span class="line">savepoint a;      设置当前位置节点保存点为a</span><br><span class="line">rollback to a;    回滚至保存点a</span><br><span class="line">commit;           提交事务</span><br><span class="line"></span><br><span class="line">查看是否自动提交事务</span><br><span class="line"><span class="built_in">set</span> global autocommit=0;</span><br><span class="line">打开自动提交风险很大</span><br></pre></td></tr></table></figure>
 
 <h2 id="事务隔离等级演示"><a href="#事务隔离等级演示" class="headerlink" title="事务隔离等级演示"></a>事务隔离等级演示</h2><p><strong>读未提交</strong></p>
-<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">开两个窗口A和B
-<span class="token keyword">use</span> wsdb<span class="token punctuation">;</span>
-<span class="token keyword">set</span> <span class="token keyword">global</span> autocommit<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>
-<span class="token keyword">set</span> <span class="token keyword">session</span> tx_isolation<span class="token operator">=</span><span class="token string">'READ-UNCOMMITTED'</span><span class="token punctuation">;</span>
-<span class="token keyword">show</span> <span class="token keyword">session</span> variables <span class="token operator">like</span> <span class="token string">'tx_isolation'</span><span class="token punctuation">;</span>
-<span class="token operator">+</span><span class="token comment">---------------+------------------+</span>
-<span class="token operator">|</span> Variable_name <span class="token operator">|</span> <span class="token keyword">Value</span>            <span class="token operator">|</span>
-<span class="token operator">+</span><span class="token comment">---------------+------------------+ </span>
-<span class="token operator">|</span> tx_isolation  <span class="token operator">|</span> <span class="token keyword">READ</span><span class="token operator">-</span><span class="token keyword">UNCOMMITTED</span> <span class="token operator">|</span>
-<span class="token operator">+</span><span class="token comment">---------------+------------------+</span>
-A窗口
-<span class="token keyword">insert</span> <span class="token keyword">into</span> wst1 <span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token string">'ws1'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-此时尚未提交，A和B都能查询到未提交的数据，这是脏数据
-
-A回滚事务
-<span class="token keyword">rollback</span><span class="token punctuation">;</span>
-此时A和B都无法查询到数据<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">开两个窗口A和B</span><br><span class="line">use wsdb;</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> autocommit<span class="operator">=</span><span class="number">0</span>;</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;READ-UNCOMMITTED&#x27;</span>;</span><br><span class="line"><span class="keyword">show</span> session variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name <span class="operator">|</span> <span class="keyword">Value</span>            <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+ </span></span><br><span class="line"><span class="operator">|</span> tx_isolation  <span class="operator">|</span> READ<span class="operator">-</span>UNCOMMITTED <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------+</span></span><br><span class="line">A窗口</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">1</span>,<span class="string">&#x27;ws1&#x27;</span>);</span><br><span class="line">此时尚未提交，A和B都能查询到未提交的数据，这是脏数据</span><br><span class="line"></span><br><span class="line">A回滚事务</span><br><span class="line"><span class="keyword">rollback</span>;</span><br><span class="line">此时A和B都无法查询到数据</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145820.png"></p>
 <p><strong>读已提交</strong></p>
-<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">退出会话，重新进入
-mysql <span class="token operator">-</span>uroot <span class="token operator">-</span>p
-切换隔离级别
-<span class="token keyword">set</span> <span class="token keyword">session</span> tx_isolation<span class="token operator">=</span><span class="token string">'READ-COMMITTED'</span><span class="token punctuation">;</span>
-<span class="token keyword">show</span> <span class="token keyword">session</span> variables <span class="token operator">like</span> <span class="token string">'tx_isolation'</span><span class="token punctuation">;</span>
-<span class="token keyword">insert</span> <span class="token keyword">into</span> wst1 <span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token string">'ws2'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-可见未提交状态下，A终端可以查询到，而B终端无法查询到
-
-但此时又会有重复读问题，因为<span class="token keyword">commit</span>后，重复读时值会变化<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;READ-COMMITTED&#x27;</span>;</span><br><span class="line"><span class="keyword">show</span> session variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">2</span>,<span class="string">&#x27;ws2&#x27;</span>);</span><br><span class="line">可见未提交状态下，A终端可以查询到，而B终端无法查询到</span><br><span class="line"></span><br><span class="line">但此时又会有重复读问题，因为<span class="keyword">commit</span>后，重复读时值会变化</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145838.png"></p>
 <p><strong>可重复读</strong></p>
-<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">退出会话，重新进入
-mysql <span class="token operator">-</span>uroot <span class="token operator">-</span>p
-切换隔离级别
-<span class="token keyword">set</span> <span class="token keyword">session</span> tx_isolation<span class="token operator">=</span><span class="token string">'REPEATABLE-READ'</span><span class="token punctuation">;</span>
-
-开始事务
-<span class="token keyword">start</span> <span class="token keyword">transaction</span><span class="token punctuation">;</span>
-
-A窗口插入数据
-<span class="token keyword">insert</span> <span class="token keyword">into</span> wst1 <span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token string">'ws3'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-此时A能查到，B无法查到
-
-A窗口提交数据
-<span class="token keyword">commit</span><span class="token punctuation">;</span>
-
-此时A能查到，B依然无法查到（因为B处于事务状态）<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;REPEATABLE-READ&#x27;</span>;</span><br><span class="line"></span><br><span class="line">开始事务</span><br><span class="line"><span class="keyword">start</span> transaction;</span><br><span class="line"></span><br><span class="line">A窗口插入数据</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">3</span>,<span class="string">&#x27;ws3&#x27;</span>);</span><br><span class="line"></span><br><span class="line">此时A能查到，B无法查到</span><br><span class="line"></span><br><span class="line">A窗口提交数据</span><br><span class="line"><span class="keyword">commit</span>;</span><br><span class="line"></span><br><span class="line">此时A能查到，B依然无法查到（因为B处于事务状态）</span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145903.png"></p>
 <p><strong>串行化</strong></p>
-<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">退出会话，重新进入
-mysql <span class="token operator">-</span>uroot <span class="token operator">-</span>p
-切换隔离级别
-<span class="token keyword">set</span> <span class="token keyword">session</span> tx_isolation<span class="token operator">=</span><span class="token string">'SERIALIZABLE'</span><span class="token punctuation">;</span>
-
-AB窗口开始事务
-<span class="token keyword">start</span> <span class="token keyword">transaction</span><span class="token punctuation">;</span>
-
-A窗口插入
-<span class="token keyword">insert</span> <span class="token keyword">into</span> wst1 <span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token string">'ws4'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-B窗口<span class="token keyword">select</span>查询，发现被锁，处于阻塞状态
-
-A窗口<span class="token keyword">commit</span><span class="token punctuation">;</span>
-此时B窗口查询成功
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">退出会话，重新进入</span><br><span class="line">mysql <span class="operator">-</span>uroot <span class="operator">-</span>p</span><br><span class="line">切换隔离级别</span><br><span class="line"><span class="keyword">set</span> session tx_isolation<span class="operator">=</span><span class="string">&#x27;SERIALIZABLE&#x27;</span>;</span><br><span class="line"></span><br><span class="line">AB窗口开始事务</span><br><span class="line"><span class="keyword">start</span> transaction;</span><br><span class="line"></span><br><span class="line">A窗口插入</span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> wst1 <span class="keyword">values</span>(<span class="number">4</span>,<span class="string">&#x27;ws4&#x27;</span>);</span><br><span class="line"></span><br><span class="line">B窗口<span class="keyword">select</span>查询，发现被锁，处于阻塞状态</span><br><span class="line"></span><br><span class="line">A窗口<span class="keyword">commit</span>;</span><br><span class="line">此时B窗口查询成功</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240725145917.png"></p>
 <h1 id="MVCC多版本并发控制"><a href="#MVCC多版本并发控制" class="headerlink" title="MVCC多版本并发控制"></a>MVCC多版本并发控制</h1><p>MVCC（Multi-Version Concurrency Control），即多版本并发控制，是一种用于提高数据库并发性能的技术。它允许在数据库中存在数据的多个版本，从而在不阻塞读写操作的情况下，处理并发事务中的读写冲突。</p>
@@ -6785,18 +6707,6 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6880,13 +6790,13 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7261,13 +7171,13 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7507,13 +7417,13 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8212,13 +8122,13 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8762,9 +8672,9 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8772,9 +8682,9 @@ A窗口<span class="token keyword">commit</span><span class="token punctuation">
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

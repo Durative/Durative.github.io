@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -507,172 +508,11 @@
 <p>接收到的数据，定义最大接收字节数</p>
 <p><strong>方法——socket.close()关闭套接子</strong></p>
 <p><strong>方法——conn.close()关闭连接</strong></p>
-<h2 id="案例：多线程聊天服务器"><a href="#案例：多线程聊天服务器" class="headerlink" title="案例：多线程聊天服务器"></a>案例：多线程聊天服务器</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token comment"># 服务器端</span>
-<span class="token comment">#coding=utf-8</span>
-<span class="token keyword">import</span> socket
-<span class="token keyword">import</span> threading
-<span class="token comment"># 定义多线程函数</span>
-<span class="token keyword">def</span> <span class="token function">handle_connection</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span>addr<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'客户端</span><span class="token interpolation"><span class="token punctuation">&#123;</span>addr<span class="token punctuation">&#125;</span></span><span class="token string">已连接'</span></span><span class="token punctuation">)</span>
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-            msg<span class="token operator">=</span>conn<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
-            <span class="token comment"># 如果没有收到消息</span>
-            <span class="token keyword">if</span> <span class="token keyword">not</span> msg<span class="token punctuation">:</span>
-                <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'客户端</span><span class="token interpolation"><span class="token punctuation">&#123;</span>addr<span class="token punctuation">&#125;</span></span><span class="token string">已断开'</span></span><span class="token punctuation">)</span>
-                <span class="token keyword">break</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"收到客户端</span><span class="token interpolation"><span class="token punctuation">&#123;</span>addr<span class="token punctuation">&#125;</span></span><span class="token string">消息:</span><span class="token interpolation"><span class="token punctuation">&#123;</span>msg<span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span>
-    <span class="token keyword">finally</span><span class="token punctuation">:</span>
-        conn<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"客户端</span><span class="token interpolation"><span class="token punctuation">&#123;</span>addr<span class="token punctuation">&#125;</span></span><span class="token string">已关闭"</span></span><span class="token punctuation">)</span>
-<span class="token comment"># 创建tcp套接字</span>
-server<span class="token operator">=</span>socket<span class="token punctuation">.</span>socket<span class="token punctuation">(</span>socket<span class="token punctuation">.</span>AF_INET<span class="token punctuation">,</span>socket<span class="token punctuation">.</span>SOCK_STREAM<span class="token punctuation">)</span>
-<span class="token keyword">try</span><span class="token punctuation">:</span>
-    server<span class="token punctuation">.</span>bind<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">'localhost'</span><span class="token punctuation">,</span><span class="token number">8081</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    server<span class="token punctuation">.</span>listen<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'聊天服务器启动，等待客户端连接'</span><span class="token punctuation">)</span>
-    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-        conn<span class="token punctuation">,</span>addr<span class="token operator">=</span>server<span class="token punctuation">.</span>accept<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token comment"># 为每个客户端创建一个线程,target即新线程使用后面的函数处理</span>
-        client_thread<span class="token operator">=</span>threading<span class="token punctuation">.</span>Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>handle_connection<span class="token punctuation">,</span>args<span class="token operator">=</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span>addr<span class="token punctuation">)</span><span class="token punctuation">)</span>
-        client_thread<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'服务错误:</span><span class="token interpolation"><span class="token punctuation">&#123;</span>e<span class="token punctuation">&#125;</span></span><span class="token string">'</span></span><span class="token punctuation">)</span>
-<span class="token keyword">finally</span><span class="token punctuation">:</span>
-    server<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<h2 id="案例：多线程聊天服务器"><a href="#案例：多线程聊天服务器" class="headerlink" title="案例：多线程聊天服务器"></a>案例：多线程聊天服务器</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 服务器端</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> threading</span><br><span class="line"><span class="comment"># 定义多线程函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">handle_connection</span>(<span class="params">conn,addr</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;客户端<span class="subst">&#123;addr&#125;</span>已连接&#x27;</span>)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            msg=conn.recv(<span class="number">1024</span>)</span><br><span class="line">            <span class="comment"># 如果没有收到消息</span></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> msg:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&#x27;客户端<span class="subst">&#123;addr&#125;</span>已断开&#x27;</span>)</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;收到客户端<span class="subst">&#123;addr&#125;</span>消息:<span class="subst">&#123;msg.decode()&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        <span class="built_in">print</span>(e)</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        conn.close()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;客户端<span class="subst">&#123;addr&#125;</span>已关闭&quot;</span>)</span><br><span class="line"><span class="comment"># 创建tcp套接字</span></span><br><span class="line">server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)</span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    server.bind((<span class="string">&#x27;localhost&#x27;</span>,<span class="number">8081</span>))</span><br><span class="line">    server.listen(<span class="number">5</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;聊天服务器启动，等待客户端连接&#x27;</span>)</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        conn,addr=server.accept()</span><br><span class="line">        <span class="comment"># 为每个客户端创建一个线程,target即新线程使用后面的函数处理</span></span><br><span class="line">        client_thread=threading.Thread(target=handle_connection,args=(conn,addr))</span><br><span class="line">        client_thread.start()</span><br><span class="line"><span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;服务错误:<span class="subst">&#123;e&#125;</span>&#x27;</span>)</span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    server.close()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 客户端</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">start_client</span>():</span><br><span class="line">    client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        client_socket.connect((<span class="string">&#x27;localhost&#x27;</span>,<span class="number">8081</span>))</span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            msg=<span class="built_in">input</span>(<span class="string">&quot;输入消息或exit退出:&quot;</span>)</span><br><span class="line">            <span class="comment"># 筛出exit，直接跳出，进入finally</span></span><br><span class="line">            <span class="keyword">if</span> msg == <span class="string">&quot;exit&quot;</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            client_socket.send(msg.encode(<span class="string">&#x27;utf-8&#x27;</span>))</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;msg:<span class="subst">&#123;msg&#125;</span> is send&quot;</span>)</span><br><span class="line">            response=client_socket.recv(<span class="number">1024</span>)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;服务器响应内容<span class="subst">&#123;response.decode(<span class="string">&#x27;utf-8&#x27;</span>)&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;客户端出现错误:<span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        client_socket.close()</span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    start_client()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<span class="token comment"># 客户端</span>
-<span class="token comment">#coding=utf-8</span>
-<span class="token keyword">import</span> socket
-<span class="token keyword">def</span> <span class="token function">start_client</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    client_socket<span class="token operator">=</span>socket<span class="token punctuation">.</span>socket<span class="token punctuation">(</span>socket<span class="token punctuation">.</span>AF_INET<span class="token punctuation">,</span> socket<span class="token punctuation">.</span>SOCK_STREAM<span class="token punctuation">)</span>
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        client_socket<span class="token punctuation">.</span>connect<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">'localhost'</span><span class="token punctuation">,</span><span class="token number">8081</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-            msg<span class="token operator">=</span><span class="token builtin">input</span><span class="token punctuation">(</span><span class="token string">"输入消息或exit退出:"</span><span class="token punctuation">)</span>
-            <span class="token comment"># 筛出exit，直接跳出，进入finally</span>
-            <span class="token keyword">if</span> msg <span class="token operator">==</span> <span class="token string">"exit"</span><span class="token punctuation">:</span>
-                <span class="token keyword">break</span>
-            client_socket<span class="token punctuation">.</span>send<span class="token punctuation">(</span>msg<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"msg:</span><span class="token interpolation"><span class="token punctuation">&#123;</span>msg<span class="token punctuation">&#125;</span></span><span class="token string"> is send"</span></span><span class="token punctuation">)</span>
-            response<span class="token operator">=</span>client_socket<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"服务器响应内容</span><span class="token interpolation"><span class="token punctuation">&#123;</span>response<span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"客户端出现错误:</span><span class="token interpolation"><span class="token punctuation">&#123;</span>e<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-    <span class="token keyword">finally</span><span class="token punctuation">:</span>
-        client_socket<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
-    start_client<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="案例：多线程双工聊天服务器"><a href="#案例：多线程双工聊天服务器" class="headerlink" title="案例：多线程双工聊天服务器"></a>案例：多线程双工聊天服务器</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 服务器端</span></span><br><span class="line"><span class="comment">#coding=UTF-8</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">from</span> threading <span class="keyword">import</span> Thread</span><br><span class="line"><span class="comment"># 定义两个函数，分别管收发</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">recv_data</span>():</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        re_data = tcp_client_socket.recv(<span class="number">1024</span>).decode(<span class="string">&quot;utf-8&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;B:<span class="subst">&#123;re_data&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> re_data == <span class="string">&#x27;EOF&#x27;</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">send_data</span>():</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        msg = <span class="built_in">input</span>(<span class="string">&quot;发送信息或输入EOF退出:&quot;</span>)</span><br><span class="line">        tcp_client_socket.send(msg.encode(<span class="string">&quot;utf-8&quot;</span>))</span><br><span class="line">        <span class="keyword">if</span> msg == <span class="string">&quot;EOF&quot;</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    tcp_server_socket = socket(AF_INET, SOCK_STREAM)</span><br><span class="line">    tcp_server_socket.bind((<span class="string">&quot;127.0.0.1&quot;</span>,<span class="number">9000</span>)) <span class="comment"># 绑定端口</span></span><br><span class="line">    tcp_server_socket.listen(<span class="number">5</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;等待连接&quot;</span>)</span><br><span class="line">    tcp_client_socket,host = tcp_server_socket.accept()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;连接成功&quot;</span>)</span><br><span class="line">    t1 = Thread(target=recv_data)</span><br><span class="line">    t2 = Thread(target=send_data)</span><br><span class="line">    t1.start()</span><br><span class="line">    t2.start()</span><br><span class="line">    t1.join() <span class="comment"># 等待并行</span></span><br><span class="line">    t2.join()</span><br><span class="line">    tcp_client_socket.close()</span><br><span class="line">    tcp_server_socket.close()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 客户端</span></span><br><span class="line"><span class="comment">#coding=UTF-8</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">from</span> threading <span class="keyword">import</span> Thread</span><br><span class="line"><span class="comment"># 定义两个函数，分别管收发</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">recv_data</span>():</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        recv_data = tcp_client_socket.recv(<span class="number">1024</span>).decode(<span class="string">&quot;utf-8&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;A:<span class="subst">&#123;recv_data&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> recv_data == <span class="string">&#x27;EOF&#x27;</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">send_data</span>():</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        msg = <span class="built_in">input</span>(<span class="string">&quot;发送信息或输入EOF退出:&quot;</span>)</span><br><span class="line">        tcp_client_socket.send(msg.encode(<span class="string">&quot;utf-8&quot;</span>))</span><br><span class="line">        <span class="keyword">if</span> msg == <span class="string">&#x27;EOF&#x27;</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    tcp_client_socket = socket(AF_INET, SOCK_STREAM)</span><br><span class="line">    tcp_client_socket.connect((<span class="string">&quot;127.0.0.1&quot;</span>,<span class="number">9000</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;连接成功&quot;</span>)</span><br><span class="line">    t1 = Thread(target=recv_data)</span><br><span class="line">    t2 = Thread(target=send_data)</span><br><span class="line">    t1.start()</span><br><span class="line">    t2.start()</span><br><span class="line">    t1.join()</span><br><span class="line">    t2.join()</span><br><span class="line">    tcp_client_socket.close()</span><br></pre></td></tr></table></figure>
 
-<h2 id="案例：多线程双工聊天服务器"><a href="#案例：多线程双工聊天服务器" class="headerlink" title="案例：多线程双工聊天服务器"></a>案例：多线程双工聊天服务器</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token comment"># 服务器端</span>
-<span class="token comment">#coding=UTF-8</span>
-<span class="token keyword">import</span> socket
-<span class="token keyword">from</span> threading <span class="token keyword">import</span> Thread
-<span class="token comment"># 定义两个函数，分别管收发</span>
-<span class="token keyword">def</span> <span class="token function">recv_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-        re_data <span class="token operator">=</span> tcp_client_socket<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"B:</span><span class="token interpolation"><span class="token punctuation">&#123;</span>re_data<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-        <span class="token keyword">if</span> re_data <span class="token operator">==</span> <span class="token string">'EOF'</span><span class="token punctuation">:</span>
-            <span class="token keyword">break</span>
-<span class="token keyword">def</span> <span class="token function">send_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-        msg <span class="token operator">=</span> <span class="token builtin">input</span><span class="token punctuation">(</span><span class="token string">"发送信息或输入EOF退出:"</span><span class="token punctuation">)</span>
-        tcp_client_socket<span class="token punctuation">.</span>send<span class="token punctuation">(</span>msg<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">if</span> msg <span class="token operator">==</span> <span class="token string">"EOF"</span><span class="token punctuation">:</span>
-            <span class="token keyword">break</span>
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
-    tcp_server_socket <span class="token operator">=</span> socket<span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">)</span>
-    tcp_server_socket<span class="token punctuation">.</span>bind<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1"</span><span class="token punctuation">,</span><span class="token number">9000</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment"># 绑定端口</span>
-    tcp_server_socket<span class="token punctuation">.</span>listen<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"等待连接"</span><span class="token punctuation">)</span>
-    tcp_client_socket<span class="token punctuation">,</span>host <span class="token operator">=</span> tcp_server_socket<span class="token punctuation">.</span>accept<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"连接成功"</span><span class="token punctuation">)</span>
-    t1 <span class="token operator">=</span> Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>recv_data<span class="token punctuation">)</span>
-    t2 <span class="token operator">=</span> Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>send_data<span class="token punctuation">)</span>
-    t1<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    t2<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    t1<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment"># 等待并行</span>
-    t2<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    tcp_client_socket<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    tcp_server_socket<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 客户端</span>
-<span class="token comment">#coding=UTF-8</span>
-<span class="token keyword">import</span> socket
-<span class="token keyword">from</span> threading <span class="token keyword">import</span> Thread
-<span class="token comment"># 定义两个函数，分别管收发</span>
-<span class="token keyword">def</span> <span class="token function">recv_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-        recv_data <span class="token operator">=</span> tcp_client_socket<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"A:</span><span class="token interpolation"><span class="token punctuation">&#123;</span>recv_data<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
-        <span class="token keyword">if</span> recv_data <span class="token operator">==</span> <span class="token string">'EOF'</span><span class="token punctuation">:</span>
-            <span class="token keyword">break</span>
-<span class="token keyword">def</span> <span class="token function">send_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-        msg <span class="token operator">=</span> <span class="token builtin">input</span><span class="token punctuation">(</span><span class="token string">"发送信息或输入EOF退出:"</span><span class="token punctuation">)</span>
-        tcp_client_socket<span class="token punctuation">.</span>send<span class="token punctuation">(</span>msg<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">if</span> msg <span class="token operator">==</span> <span class="token string">'EOF'</span><span class="token punctuation">:</span>
-            <span class="token keyword">break</span>
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
-    tcp_client_socket <span class="token operator">=</span> socket<span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">)</span>
-    tcp_client_socket<span class="token punctuation">.</span>connect<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1"</span><span class="token punctuation">,</span><span class="token number">9000</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"连接成功"</span><span class="token punctuation">)</span>
-    t1 <span class="token operator">=</span> Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>recv_data<span class="token punctuation">)</span>
-    t2 <span class="token operator">=</span> Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>send_data<span class="token punctuation">)</span>
-    t1<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    t2<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    t1<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    t2<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    tcp_client_socket<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="案例：文件传输服务器"><a href="#案例：文件传输服务器" class="headerlink" title="案例：文件传输服务器"></a>案例：文件传输服务器</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token comment"># 创建tcp服务器</span>
-<span class="token comment">#coding=utf-8</span>
-<span class="token keyword">import</span> socket
-filename <span class="token operator">=</span> <span class="token string">'deployment.yaml'</span>
-<span class="token comment"># 定义发送函数</span>
-<span class="token keyword">def</span> <span class="token function">send_file</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span> filename<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">with</span> <span class="token builtin">open</span><span class="token punctuation">(</span>filename<span class="token punctuation">,</span><span class="token string">'rb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
-        <span class="token comment"># 海象运算符，将后面的值赋给前面，即逐块读取文件</span>
-        <span class="token keyword">while</span><span class="token punctuation">(</span>chunk <span class="token operator">:=</span> f<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-            conn<span class="token punctuation">.</span>send<span class="token punctuation">(</span>chunk<span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'文件传输完成'</span><span class="token punctuation">)</span>
-
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
-    <span class="token comment"># 创建与绑定套接子</span>
-    server<span class="token operator">=</span>socket<span class="token punctuation">.</span>socket<span class="token punctuation">(</span>socket<span class="token punctuation">.</span>AF_INET<span class="token punctuation">,</span>socket<span class="token punctuation">.</span>SOCK_STREAM<span class="token punctuation">)</span>
-    server<span class="token punctuation">.</span>bind<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">'localhost'</span><span class="token punctuation">,</span><span class="token number">8000</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    server<span class="token punctuation">.</span>listen<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"文件服务器已启动，等待连接"</span><span class="token punctuation">)</span>
-    conn<span class="token punctuation">,</span>addr<span class="token operator">=</span>server<span class="token punctuation">.</span>accept<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"客户端</span><span class="token interpolation"><span class="token punctuation">&#123;</span>addr<span class="token punctuation">&#125;</span></span><span class="token string">已连接"</span></span><span class="token punctuation">)</span>
-    send_file<span class="token punctuation">(</span>conn<span class="token punctuation">,</span>filename<span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"文件</span><span class="token interpolation"><span class="token punctuation">&#123;</span>filename<span class="token punctuation">&#125;</span></span><span class="token string">已发送"</span></span><span class="token punctuation">)</span>
-    conn<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    server<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment"># 文件传输客户端</span>
-<span class="token comment">#coding=utf-8</span>
-<span class="token keyword">import</span> socket
-<span class="token comment"># 接受文件</span>
-<span class="token keyword">def</span> <span class="token function">receive_file</span><span class="token punctuation">(</span>conn<span class="token punctuation">,</span>filename<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">with</span> <span class="token builtin">open</span><span class="token punctuation">(</span>filename<span class="token punctuation">,</span><span class="token string">'wb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
-        <span class="token comment"># 每次接受数据并写入，没有数据就结束</span>
-        <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-            data<span class="token operator">=</span>conn<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
-            <span class="token keyword">if</span> <span class="token keyword">not</span> data<span class="token punctuation">:</span>
-                <span class="token keyword">break</span>
-            f<span class="token punctuation">.</span>write<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"文件成功传输"</span><span class="token punctuation">)</span>
-
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
-    tcp_client<span class="token operator">=</span>socket<span class="token punctuation">.</span>socket<span class="token punctuation">(</span>socket<span class="token punctuation">.</span>AF_INET<span class="token punctuation">,</span>socket<span class="token punctuation">.</span>SOCK_STREAM<span class="token punctuation">)</span>
-    tcp_client<span class="token punctuation">.</span>connect<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">'localhost'</span><span class="token punctuation">,</span><span class="token number">8000</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    receive_file<span class="token punctuation">(</span>conn<span class="token operator">=</span>tcp_client<span class="token punctuation">,</span>filename<span class="token operator">=</span><span class="token string">'receive_file'</span><span class="token punctuation">)</span>
-    tcp_client<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="案例：文件传输服务器"><a href="#案例：文件传输服务器" class="headerlink" title="案例：文件传输服务器"></a>案例：文件传输服务器</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建tcp服务器</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line">filename = <span class="string">&#x27;deployment.yaml&#x27;</span></span><br><span class="line"><span class="comment"># 定义发送函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">send_file</span>(<span class="params">conn, filename</span>):</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(filename,<span class="string">&#x27;rb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="comment"># 海象运算符，将后面的值赋给前面，即逐块读取文件</span></span><br><span class="line">        <span class="keyword">while</span>(chunk := f.read(<span class="number">1024</span>)):</span><br><span class="line">            conn.send(chunk)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;文件传输完成&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="comment"># 创建与绑定套接子</span></span><br><span class="line">    server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)</span><br><span class="line">    server.bind((<span class="string">&#x27;localhost&#x27;</span>,<span class="number">8000</span>))</span><br><span class="line">    server.listen(<span class="number">3</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;文件服务器已启动，等待连接&quot;</span>)</span><br><span class="line">    conn,addr=server.accept()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;客户端<span class="subst">&#123;addr&#125;</span>已连接&quot;</span>)</span><br><span class="line">    send_file(conn,filename)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;文件<span class="subst">&#123;filename&#125;</span>已发送&quot;</span>)</span><br><span class="line">    conn.close()</span><br><span class="line">    server.close()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 文件传输客户端</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="comment"># 接受文件</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">receive_file</span>(<span class="params">conn,filename</span>):</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(filename,<span class="string">&#x27;wb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="comment"># 每次接受数据并写入，没有数据就结束</span></span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            data=conn.recv(<span class="number">1024</span>)</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> data:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            f.write(data)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;文件成功传输&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    tcp_client=socket.socket(socket.AF_INET,socket.SOCK_STREAM)</span><br><span class="line">    tcp_client.connect((<span class="string">&#x27;localhost&#x27;</span>,<span class="number">8000</span>))</span><br><span class="line">    receive_file(conn=tcp_client,filename=<span class="string">&#x27;receive_file&#x27;</span>)</span><br><span class="line">    tcp_client.close()</span><br></pre></td></tr></table></figure>
 
 
     </article>
@@ -6753,18 +6593,6 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6848,13 +6676,13 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7229,13 +7057,13 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7475,13 +7303,13 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8180,13 +8008,13 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8730,9 +8558,9 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8740,9 +8568,9 @@ filename <span class="token operator">=</span> <span class="token string">'deplo
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

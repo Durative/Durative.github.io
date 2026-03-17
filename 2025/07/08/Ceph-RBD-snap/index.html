@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="RBD镜像格式2的镜像可以支持几个可选的特性 其中layering特性是RBD镜像的核心特性 rbd feature enable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layering rbd feature disable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layering  镜像快照snap先说如果没有快照的情况下，数据对RBD的读写会直接写入磁盘">
+    <meta name="description" content="RBD镜像格式2的镜像可以支持几个可选的特性 其中layering特性是RBD镜像的核心特性 12rbd feature enable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layeringrbd feature disable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layering  镜像快照snap先说如果没有快照的情况下，数据对">
 <meta property="og:type" content="article">
 <meta property="og:title" content="RBD镜像快照与克隆--COW&#x2F;COR">
 <meta property="og:url" content="https://akemi.zj.cn/2025/07/08/Ceph-RBD-snap/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="RBD镜像格式2的镜像可以支持几个可选的特性 其中layering特性是RBD镜像的核心特性 rbd feature enable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layering rbd feature disable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layering  镜像快照snap先说如果没有快照的情况下，数据对RBD的读写会直接写入磁盘">
+<meta property="og:description" content="RBD镜像格式2的镜像可以支持几个可选的特性 其中layering特性是RBD镜像的核心特性 12rbd feature enable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layeringrbd feature disable &lt;pool-name&gt;&#x2F;&lt;rbd-name&gt; layering  镜像快照snap先说如果没有快照的情况下，数据对">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-07-07T16:16:02.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:06:24.121Z">
@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -492,8 +493,7 @@
     <article class="article-entry">
         <p>RBD镜像格式2的镜像可以支持几个可选的特性</p>
 <p>其中<strong>layering特性</strong>是RBD镜像的核心特性</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">rbd feature <span class="token builtin class-name">enable</span> <span class="token operator">&lt;</span>pool-name<span class="token operator">></span>/<span class="token operator">&lt;</span>rbd-name<span class="token operator">></span> layering
-rbd feature disable <span class="token operator">&lt;</span>pool-name<span class="token operator">></span>/<span class="token operator">&lt;</span>rbd-name<span class="token operator">></span> layering<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rbd feature <span class="built_in">enable</span> &lt;pool-name&gt;/&lt;rbd-name&gt; layering</span><br><span class="line">rbd feature <span class="built_in">disable</span> &lt;pool-name&gt;/&lt;rbd-name&gt; layering</span><br></pre></td></tr></table></figure>
 
 <h2 id="镜像快照snap"><a href="#镜像快照snap" class="headerlink" title="镜像快照snap"></a>镜像快照snap</h2><p>先说如果没有快照的情况下，数据对RBD的读写会直接写入磁盘</p>
 <p><strong>首先快照是什么</strong></p>
@@ -509,69 +509,7 @@ rbd feature disable <span class="token operator">&lt;</span>pool-name<span class
 <p>根据上面说的写入数据的机制，可以知道snap将这些数据块元数据已经做了修改，将其指向block_new的位置</p>
 <h2 id="镜像克隆"><a href="#镜像克隆" class="headerlink" title="镜像克隆"></a>镜像克隆</h2><p><strong>RBD 克隆扁平化（Flattening）</strong> 是指将基于快照创建的克隆镜像与其父快照之间的依赖关系断开，使克隆镜像成为一个完全独立的镜像的过程。当执行扁平化操作时，系统会将所有从父快照继承的数据块复制到克隆镜像中，从而消除对原始快照的依赖。</p>
 <p>根据上面说的COW的读取数据，镜像克隆其实就是读数据最后读成一个完整镜像的过程，最后克隆出来的结果就是一个RBD镜像</p>
-<h2 id="RBD快照操作"><a href="#RBD快照操作" class="headerlink" title="RBD快照操作"></a>RBD快照操作</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在创建快照前，需要先冻结文件系统
-<span class="token assign-left variable">MOUNT_POINT</span><span class="token operator">=</span><span class="token string">"/mnt/rbd"</span>  
-fsfreeze <span class="token parameter variable">--freeze</span> <span class="token variable">$&#123;MOUNT_POINT&#125;</span>
-
-解冻文件系统
-fsfreeze <span class="token parameter variable">--unfreeze</span> <span class="token variable">$&#123;MOUNT_POINT&#125;</span>
-
-<span class="token comment"># 1. 创建快照</span>
-<span class="token comment"># 语法：rbd snap create &lt;pool-name>/&lt;image-name>@&lt;snap-name></span>
-rbd snap create mypool/myimage@mysnap_20230901  <span class="token comment"># 为镜像 myimage 创建名为 mysnap_20230901 的快照</span>
-
-<span class="token comment"># 2. 列出快照</span>
-<span class="token comment"># 语法：rbd snap ls &lt;pool-name>/&lt;image-name></span>
-rbd snap <span class="token function">ls</span> mypool/myimage  <span class="token comment"># 查看 myimage 的所有快照</span>
-
-<span class="token comment"># 3. 回滚到快照（覆盖当前数据）</span>
-<span class="token comment"># 语法：rbd snap rollback &lt;pool-name>/&lt;image-name>@&lt;snap-name></span>
-rbd snap rollback mypool/myimage@mysnap_20230901  <span class="token comment"># 将镜像回滚到指定快照状态</span>
-<span class="token comment"># 注意：回滚需要先卸载设备，且会覆盖当前数据！</span>
-
-<span class="token comment"># 4. 克隆快照（基于快照创建新镜像）</span>
-<span class="token comment"># 语法：rbd clone &lt;pool>/&lt;parent-image>@&lt;snap> &lt;pool>/&lt;child-image></span>
-rbd clone mypool/myimage@mysnap_20230901 mypool/cloned_image  <span class="token comment"># 基于快照创建克隆镜像</span>
-<span class="token comment"># 需先启用克隆功能：rbd feature disable mypool/myimage object-map,fast-diff,deep-flatten</span>
-
-<span class="token comment"># 5. 扁平化克隆（断开与父快照的依赖）</span>
-<span class="token comment"># 语法：rbd flatten &lt;pool-name>/&lt;child-image-name></span>
-rbd flatten mypool/cloned_image  <span class="token comment"># 将克隆镜像转为独立镜像（释放父快照依赖）</span>
-
-<span class="token comment"># 6. 保护快照（防止被删除）</span>
-<span class="token comment"># 语法：rbd snap protect &lt;pool-name>/&lt;image-name>@&lt;snap-name></span>
-rbd snap protect mypool/myimage@mysnap_20230901  <span class="token comment"># 保护快照（克隆操作必需）</span>
-
-<span class="token comment"># 7. 解除快照保护</span>
-<span class="token comment"># 语法：rbd snap unprotect &lt;pool-name>/&lt;image-name>@&lt;snap-name></span>
-rbd snap unprotect mypool/myimage@mysnap_20230901  <span class="token comment"># 解除保护（删除前必需）</span>
-
-<span class="token comment"># 8. 删除快照</span>
-<span class="token comment"># 语法：rbd snap rm &lt;pool-name>/&lt;image-name>@&lt;snap-name></span>
-rbd snap <span class="token function">rm</span> mypool/myimage@mysnap_20230901  <span class="token comment"># 删除未保护的快照</span>
-<span class="token comment"># 强制删除（危险！）：rbd snap purge mypool/myimage  # 删除该镜像所有快照</span>
-
-<span class="token comment"># 9. 查看快照信息</span>
-<span class="token comment"># 语法：rbd info &lt;pool-name>/&lt;image-name>@&lt;snap-name></span>
-rbd info mypool/myimage@mysnap_20230901  <span class="token comment"># 显示快照详细信息</span>
-
-<span class="token comment"># 10. 差异对比</span>
-<span class="token comment"># 语法：rbd diff &lt;pool-name>/&lt;image-name>[@&lt;snap-name>]</span>
-rbd <span class="token function">diff</span> mypool/myimage@mysnap_20230901  <span class="token comment"># 计算快照与当前镜像的差异块</span>
-rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_20230901  <span class="token comment"># 对比两个快照间的差异</span>
-
-<span class="token comment"># ================================</span>
-<span class="token comment"># 操作流程示例：</span>
-<span class="token comment"># 创建镜像 → 创建快照 → 克隆 → 扁平化 → 清理</span>
-<span class="token comment"># ================================</span>
-<span class="token comment"># rbd create mypool/newimage --size 1024</span>
-<span class="token comment"># rbd snap create mypool/newimage@base_snap</span>
-<span class="token comment"># rbd snap protect mypool/newimage@base_snap</span>
-<span class="token comment"># rbd clone mypool/newimage@base_snap mypool/cloned_image</span>
-<span class="token comment"># rbd flatten mypool/cloned_image</span>
-<span class="token comment"># rbd snap unprotect mypool/newimage@base_snap</span>
-<span class="token comment"># rbd snap rm mypool/newimage@base_snap</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="RBD快照操作"><a href="#RBD快照操作" class="headerlink" title="RBD快照操作"></a>RBD快照操作</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line">在创建快照前，需要先冻结文件系统</span><br><span class="line">MOUNT_POINT=<span class="string">&quot;/mnt/rbd&quot;</span>  </span><br><span class="line">fsfreeze --freeze <span class="variable">$&#123;MOUNT_POINT&#125;</span></span><br><span class="line"></span><br><span class="line">解冻文件系统</span><br><span class="line">fsfreeze --unfreeze <span class="variable">$&#123;MOUNT_POINT&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 创建快照</span></span><br><span class="line"><span class="comment"># 语法：rbd snap create &lt;pool-name&gt;/&lt;image-name&gt;@&lt;snap-name&gt;</span></span><br><span class="line">rbd snap create mypool/myimage@mysnap_20230901  <span class="comment"># 为镜像 myimage 创建名为 mysnap_20230901 的快照</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 列出快照</span></span><br><span class="line"><span class="comment"># 语法：rbd snap ls &lt;pool-name&gt;/&lt;image-name&gt;</span></span><br><span class="line">rbd snap <span class="built_in">ls</span> mypool/myimage  <span class="comment"># 查看 myimage 的所有快照</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 回滚到快照（覆盖当前数据）</span></span><br><span class="line"><span class="comment"># 语法：rbd snap rollback &lt;pool-name&gt;/&lt;image-name&gt;@&lt;snap-name&gt;</span></span><br><span class="line">rbd snap rollback mypool/myimage@mysnap_20230901  <span class="comment"># 将镜像回滚到指定快照状态</span></span><br><span class="line"><span class="comment"># 注意：回滚需要先卸载设备，且会覆盖当前数据！</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 克隆快照（基于快照创建新镜像）</span></span><br><span class="line"><span class="comment"># 语法：rbd clone &lt;pool&gt;/&lt;parent-image&gt;@&lt;snap&gt; &lt;pool&gt;/&lt;child-image&gt;</span></span><br><span class="line">rbd <span class="built_in">clone</span> mypool/myimage@mysnap_20230901 mypool/cloned_image  <span class="comment"># 基于快照创建克隆镜像</span></span><br><span class="line"><span class="comment"># 需先启用克隆功能：rbd feature disable mypool/myimage object-map,fast-diff,deep-flatten</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 扁平化克隆（断开与父快照的依赖）</span></span><br><span class="line"><span class="comment"># 语法：rbd flatten &lt;pool-name&gt;/&lt;child-image-name&gt;</span></span><br><span class="line">rbd flatten mypool/cloned_image  <span class="comment"># 将克隆镜像转为独立镜像（释放父快照依赖）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 保护快照（防止被删除）</span></span><br><span class="line"><span class="comment"># 语法：rbd snap protect &lt;pool-name&gt;/&lt;image-name&gt;@&lt;snap-name&gt;</span></span><br><span class="line">rbd snap protect mypool/myimage@mysnap_20230901  <span class="comment"># 保护快照（克隆操作必需）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 7. 解除快照保护</span></span><br><span class="line"><span class="comment"># 语法：rbd snap unprotect &lt;pool-name&gt;/&lt;image-name&gt;@&lt;snap-name&gt;</span></span><br><span class="line">rbd snap unprotect mypool/myimage@mysnap_20230901  <span class="comment"># 解除保护（删除前必需）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 8. 删除快照</span></span><br><span class="line"><span class="comment"># 语法：rbd snap rm &lt;pool-name&gt;/&lt;image-name&gt;@&lt;snap-name&gt;</span></span><br><span class="line">rbd snap <span class="built_in">rm</span> mypool/myimage@mysnap_20230901  <span class="comment"># 删除未保护的快照</span></span><br><span class="line"><span class="comment"># 强制删除（危险！）：rbd snap purge mypool/myimage  # 删除该镜像所有快照</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 9. 查看快照信息</span></span><br><span class="line"><span class="comment"># 语法：rbd info &lt;pool-name&gt;/&lt;image-name&gt;@&lt;snap-name&gt;</span></span><br><span class="line">rbd info mypool/myimage@mysnap_20230901  <span class="comment"># 显示快照详细信息</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 10. 差异对比</span></span><br><span class="line"><span class="comment"># 语法：rbd diff &lt;pool-name&gt;/&lt;image-name&gt;[@&lt;snap-name&gt;]</span></span><br><span class="line">rbd diff mypool/myimage@mysnap_20230901  <span class="comment"># 计算快照与当前镜像的差异块</span></span><br><span class="line">rbd diff mypool/myimage --from-snap mysnap_20230901  <span class="comment"># 对比两个快照间的差异</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ================================</span></span><br><span class="line"><span class="comment"># 操作流程示例：</span></span><br><span class="line"><span class="comment"># 创建镜像 → 创建快照 → 克隆 → 扁平化 → 清理</span></span><br><span class="line"><span class="comment"># ================================</span></span><br><span class="line"><span class="comment"># rbd create mypool/newimage --size 1024</span></span><br><span class="line"><span class="comment"># rbd snap create mypool/newimage@base_snap</span></span><br><span class="line"><span class="comment"># rbd snap protect mypool/newimage@base_snap</span></span><br><span class="line"><span class="comment"># rbd clone mypool/newimage@base_snap mypool/cloned_image</span></span><br><span class="line"><span class="comment"># rbd flatten mypool/cloned_image</span></span><br><span class="line"><span class="comment"># rbd snap unprotect mypool/newimage@base_snap</span></span><br><span class="line"><span class="comment"># rbd snap rm mypool/newimage@base_snap</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6650,18 +6588,6 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6745,13 +6671,13 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7126,13 +7052,13 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7372,13 +7298,13 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8077,13 +8003,13 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8627,9 +8553,9 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8637,9 +8563,9 @@ rbd <span class="token function">diff</span> mypool/myimage --from-snap mysnap_2
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

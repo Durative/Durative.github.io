@@ -200,12 +200,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -213,7 +215,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -528,82 +529,7 @@
 <td>需开放 Ceph 集群多个端口（6789, 6800+）</td>
 </tr>
 </tbody></table>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">fs: ws-cephfs
-nfs配置池: nfs-ganesha-config
-nfs集群: cephfs-nfs
-目标挂载点: /mnt/cephfs-nfs
-
-创建身份验证
-ceph auth get-or-create client.nfs-ganesha <span class="token punctuation">\</span>
-  mon <span class="token string">'allow r'</span> <span class="token punctuation">\</span>
-  osd <span class="token string">'allow rw'</span> <span class="token punctuation">\</span>
-  mds <span class="token string">'allow rw fsname=ws-cephfs'</span> <span class="token punctuation">\</span>
-  <span class="token parameter variable">-o</span> /etc/ceph/ceph.client.nfs-ganesha.keyring
-
-创建nfs的配置池nfs-ganesha-config
-ceph osd pool create nfs-ganesha-config <span class="token number">16</span> <span class="token number">16</span>
-
-开启nfs特性
-ceph osd pool application <span class="token builtin class-name">enable</span> nfs-ganesha-config nfs
-
-部署nfs cluster
-ceph nfs cluster create cephfs-nfs <span class="token string">"cephadm-1,cephadm-2,cephadm-3"</span>
-
-验证
-ceph orch <span class="token function">ls</span> <span class="token operator">|</span><span class="token function">grep</span> nfs
-nfs.cephfs-nfs           ?:2049           <span class="token number">3</span>/3  100s ago   35m  cephadm-1<span class="token punctuation">;</span>cephadm-2<span class="token punctuation">;</span>cephadm-3        
-
-ceph nfs cluster info cephfs-nfs
-<span class="token punctuation">&#123;</span>
-    <span class="token string">"cephfs-nfs"</span><span class="token builtin class-name">:</span> <span class="token punctuation">&#123;</span>
-        <span class="token string">"virtual_ip"</span><span class="token builtin class-name">:</span> null,
-        <span class="token string">"backend"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span>
-            <span class="token punctuation">&#123;</span>
-                <span class="token string">"hostname"</span><span class="token builtin class-name">:</span> <span class="token string">"cephadm-1"</span>,
-                <span class="token string">"ip"</span><span class="token builtin class-name">:</span> <span class="token string">"192.168.10.141"</span>,
-                <span class="token string">"port"</span><span class="token builtin class-name">:</span> <span class="token number">2049</span>
-            <span class="token punctuation">&#125;</span>,
-            <span class="token punctuation">&#123;</span>
-                <span class="token string">"hostname"</span><span class="token builtin class-name">:</span> <span class="token string">"cephadm-2"</span>,
-                <span class="token string">"ip"</span><span class="token builtin class-name">:</span> <span class="token string">"192.168.10.142"</span>,
-                <span class="token string">"port"</span><span class="token builtin class-name">:</span> <span class="token number">2049</span>
-            <span class="token punctuation">&#125;</span>,
-            <span class="token punctuation">&#123;</span>
-                <span class="token string">"hostname"</span><span class="token builtin class-name">:</span> <span class="token string">"cephadm-3"</span>,
-                <span class="token string">"ip"</span><span class="token builtin class-name">:</span> <span class="token string">"192.168.10.143"</span>,
-                <span class="token string">"port"</span><span class="token builtin class-name">:</span> <span class="token number">2049</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">]</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-
-应用导出配置
-ceph nfs <span class="token builtin class-name">export</span> create cephfs <span class="token operator">&lt;</span>cluster_id<span class="token operator">></span> <span class="token operator">&lt;</span>pseudo_path<span class="token operator">></span> <span class="token operator">&lt;</span>fsname<span class="token operator">></span> <span class="token punctuation">[</span><span class="token operator">&lt;</span>path<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">[</span>--readonly<span class="token punctuation">]</span> <span class="token punctuation">[</span>--client_addr <span class="token operator">&lt;</span>value<span class="token operator">></span><span class="token punctuation">..</span>.<span class="token punctuation">]</span> <span class="token punctuation">[</span>--squash <span class="token operator">&lt;</span>value<span class="token operator">></span><span class="token punctuation">]</span> <span class="token punctuation">[</span>--sectype <span class="token operator">&lt;</span>value<span class="token operator">></span><span class="token punctuation">..</span>.<span class="token punctuation">]</span>
-
-ceph nfs <span class="token builtin class-name">export</span> create cephfs cephfs-nfs /mnt/cephfs-nfs ws-cephfs
-<span class="token punctuation">&#123;</span>
-    <span class="token string">"bind"</span><span class="token builtin class-name">:</span> <span class="token string">"/mnt/cephfs-nfs"</span>,
-    <span class="token string">"fs"</span><span class="token builtin class-name">:</span> <span class="token string">"ws-cephfs"</span>,
-    <span class="token string">"path"</span><span class="token builtin class-name">:</span> <span class="token string">"/"</span>,
-    <span class="token string">"cluster"</span><span class="token builtin class-name">:</span> <span class="token string">"cephfs-nfs"</span>,
-    <span class="token string">"mode"</span><span class="token builtin class-name">:</span> <span class="token string">"RW"</span>
-<span class="token punctuation">&#125;</span>
-
-验证导出
-ceph nfs <span class="token builtin class-name">export</span> <span class="token function">ls</span> cephfs-nfs
-<span class="token punctuation">[</span>
-  <span class="token string">"/mnt/cephfs-nfs"</span>
-<span class="token punctuation">]</span>
-
- 
-测试挂载
-<span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /mnt/ceph-nfs
-使用任一后端挂载，也可以使用VIP挂载
-<span class="token function">mount</span> <span class="token parameter variable">-t</span> nfs <span class="token number">192.168</span>.10.141:/mnt/cephfs-nfs /mnt/ceph-nfs
-
-<span class="token function">df</span> <span class="token parameter variable">-Th</span> <span class="token operator">|</span> <span class="token function">grep</span> ceph
-<span class="token number">192.168</span>.10.141:/mnt/cephfs-nfs nfs4      168G     <span class="token number">0</span>  168G   <span class="token number">0</span>% /mnt/ceph-nfs
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line">fs: ws-cephfs</span><br><span class="line">nfs配置池: nfs-ganesha-config</span><br><span class="line">nfs集群: cephfs-nfs</span><br><span class="line">目标挂载点: /mnt/cephfs-nfs</span><br><span class="line"></span><br><span class="line">创建身份验证</span><br><span class="line">ceph auth get-or-create client.nfs-ganesha \</span><br><span class="line">  mon <span class="string">&#x27;allow r&#x27;</span> \</span><br><span class="line">  osd <span class="string">&#x27;allow rw&#x27;</span> \</span><br><span class="line">  mds <span class="string">&#x27;allow rw fsname=ws-cephfs&#x27;</span> \</span><br><span class="line">  -o /etc/ceph/ceph.client.nfs-ganesha.keyring</span><br><span class="line"></span><br><span class="line">创建nfs的配置池nfs-ganesha-config</span><br><span class="line">ceph osd pool create nfs-ganesha-config 16 16</span><br><span class="line"></span><br><span class="line">开启nfs特性</span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> nfs-ganesha-config nfs</span><br><span class="line"></span><br><span class="line">部署nfs cluster</span><br><span class="line">ceph nfs cluster create cephfs-nfs <span class="string">&quot;cephadm-1,cephadm-2,cephadm-3&quot;</span></span><br><span class="line"></span><br><span class="line">验证</span><br><span class="line">ceph orch <span class="built_in">ls</span> |grep nfs</span><br><span class="line">nfs.cephfs-nfs           ?:2049           3/3  100s ago   35m  cephadm-1;cephadm-2;cephadm-3        </span><br><span class="line"></span><br><span class="line">ceph nfs cluster info cephfs-nfs</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;cephfs-nfs&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;virtual_ip&quot;</span>: null,</span><br><span class="line">        <span class="string">&quot;backend&quot;</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">&quot;hostname&quot;</span>: <span class="string">&quot;cephadm-1&quot;</span>,</span><br><span class="line">                <span class="string">&quot;ip&quot;</span>: <span class="string">&quot;192.168.10.141&quot;</span>,</span><br><span class="line">                <span class="string">&quot;port&quot;</span>: 2049</span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">&quot;hostname&quot;</span>: <span class="string">&quot;cephadm-2&quot;</span>,</span><br><span class="line">                <span class="string">&quot;ip&quot;</span>: <span class="string">&quot;192.168.10.142&quot;</span>,</span><br><span class="line">                <span class="string">&quot;port&quot;</span>: 2049</span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="string">&quot;hostname&quot;</span>: <span class="string">&quot;cephadm-3&quot;</span>,</span><br><span class="line">                <span class="string">&quot;ip&quot;</span>: <span class="string">&quot;192.168.10.143&quot;</span>,</span><br><span class="line">                <span class="string">&quot;port&quot;</span>: 2049</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">应用导出配置</span><br><span class="line">ceph nfs <span class="built_in">export</span> create cephfs &lt;cluster_id&gt; &lt;pseudo_path&gt; &lt;fsname&gt; [&lt;path&gt;] [--<span class="built_in">readonly</span>] [--client_addr &lt;value&gt;...] [--squash &lt;value&gt;] [--sectype &lt;value&gt;...]</span><br><span class="line"></span><br><span class="line">ceph nfs <span class="built_in">export</span> create cephfs cephfs-nfs /mnt/cephfs-nfs ws-cephfs</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;bind&quot;</span>: <span class="string">&quot;/mnt/cephfs-nfs&quot;</span>,</span><br><span class="line">    <span class="string">&quot;fs&quot;</span>: <span class="string">&quot;ws-cephfs&quot;</span>,</span><br><span class="line">    <span class="string">&quot;path&quot;</span>: <span class="string">&quot;/&quot;</span>,</span><br><span class="line">    <span class="string">&quot;cluster&quot;</span>: <span class="string">&quot;cephfs-nfs&quot;</span>,</span><br><span class="line">    <span class="string">&quot;mode&quot;</span>: <span class="string">&quot;RW&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">验证导出</span><br><span class="line">ceph nfs <span class="built_in">export</span> <span class="built_in">ls</span> cephfs-nfs</span><br><span class="line">[</span><br><span class="line">  <span class="string">&quot;/mnt/cephfs-nfs&quot;</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"> </span><br><span class="line">测试挂载</span><br><span class="line"><span class="built_in">mkdir</span> -p /mnt/ceph-nfs</span><br><span class="line">使用任一后端挂载，也可以使用VIP挂载</span><br><span class="line">mount -t nfs 192.168.10.141:/mnt/cephfs-nfs /mnt/ceph-nfs</span><br><span class="line"></span><br><span class="line"><span class="built_in">df</span> -Th | grep ceph</span><br><span class="line">192.168.10.141:/mnt/cephfs-nfs nfs4      168G     0  168G   0% /mnt/ceph-nfs</span><br><span class="line"></span><br></pre></td></tr></table></figure>
     </article>
     <!-- license -->
     
@@ -6682,18 +6608,6 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6777,13 +6691,13 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7158,13 +7072,13 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7404,13 +7318,13 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8109,13 +8023,13 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8659,9 +8573,9 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8669,9 +8583,9 @@ ceph nfs <span class="token builtin class-name">export</span> <span class="token
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">

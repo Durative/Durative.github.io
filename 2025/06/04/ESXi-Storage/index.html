@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="本地存储即安装ESXI时，服务器上的本地磁盘但是使用时，需要格式化成VMFS文件系统以下是创建本地存储的步骤：选择之后会列出本地可见的块存储，然后可以选择创建指定大小的文件系统我这里因为没有本地存储就略过了，毕竟很简单  NFS存储Centos7搭建NFS服务器# 搭建NFS yum -y install nfs-utils mkdir &#x2F;public chmod 777 &#x2F;public ech">
+    <meta name="description" content="本地存储即安装ESXI时，服务器上的本地磁盘但是使用时，需要格式化成VMFS文件系统以下是创建本地存储的步骤：选择之后会列出本地可见的块存储，然后可以选择创建指定大小的文件系统我这里因为没有本地存储就略过了，毕竟很简单  NFS存储Centos7搭建NFS服务器12345678910111213# 搭建NFSyum -y install nfs-utilsmkdir &#x2F;publicchmod 7">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ESXI存储--使用NFS与ISCSI提供存储">
 <meta property="og:url" content="https://akemi.zj.cn/2025/06/04/ESXi-Storage/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="本地存储即安装ESXI时，服务器上的本地磁盘但是使用时，需要格式化成VMFS文件系统以下是创建本地存储的步骤：选择之后会列出本地可见的块存储，然后可以选择创建指定大小的文件系统我这里因为没有本地存储就略过了，毕竟很简单  NFS存储Centos7搭建NFS服务器# 搭建NFS yum -y install nfs-utils mkdir &#x2F;public chmod 777 &#x2F;public ech">
+<meta property="og:description" content="本地存储即安装ESXI时，服务器上的本地磁盘但是使用时，需要格式化成VMFS文件系统以下是创建本地存储的步骤：选择之后会列出本地可见的块存储，然后可以选择创建指定大小的文件系统我这里因为没有本地存储就略过了，毕竟很简单  NFS存储Centos7搭建NFS服务器12345678910111213# 搭建NFSyum -y install nfs-utilsmkdir &#x2F;publicchmod 7">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604162323754.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604162419713.png">
@@ -211,12 +211,14 @@
     <link rel="preload" href="/css/dark.css?v=20211217" as="style">
     <link rel="stylesheet" href="/css/dark.css">
     <link rel="stylesheet" href="/css/mobile.css?v=20211217" media="(max-width: 960px)">
+    <!-- 自定义代码样式 -->
+    <link rel="stylesheet" href="/css/custom-code.css">
     <link rel="preload" href="/libs/fancybox/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="/libs/jquery/jquery.min.js" as="script">
     <link rel="preload" href="/scripts/main.js?v=20211217" as="script">
     <link rel="preload" href="/scripts/dark.js?v=20211217" as="script">
     <link rel="preload" href="/font/Oswald-Regular.ttf" as="font" crossorigin>
-    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin>
+    <link rel="preload" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" as="font" crossorigin">
     <!-- algolia -->
     
     <!-- 百度统计  -->
@@ -224,7 +226,6 @@
     <!-- 谷歌统计  -->
     
 <meta name="generator" content="Hexo 7.2.0"></head>
-
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         if (typeof window.$ == undefined) {
@@ -504,19 +505,7 @@
         <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604162323754.png"></p>
 <h2 id="本地存储"><a href="#本地存储" class="headerlink" title="本地存储"></a>本地存储</h2><p>即安装ESXI时，服务器上的本地磁盘<br>但是使用时，需要格式化成<strong>VMFS</strong>文件系统<br>以下是创建本地存储的步骤：<br>选择之后会列出本地可见的块存储，然后可以选择创建指定大小的文件系统<br>我这里因为没有本地存储就略过了，毕竟很简单</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604162419713.png"></p>
-<h2 id="NFS存储"><a href="#NFS存储" class="headerlink" title="NFS存储"></a>NFS存储</h2><h3 id="Centos7搭建NFS服务器"><a href="#Centos7搭建NFS服务器" class="headerlink" title="Centos7搭建NFS服务器"></a>Centos7搭建NFS服务器</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 搭建NFS</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> nfs-utils
-<span class="token function">mkdir</span> /public
-<span class="token function">chmod</span> <span class="token number">777</span> /public
-<span class="token builtin class-name">echo</span> <span class="token string">'/public 10.163.2.0/24(rw)'</span> <span class="token operator">></span> /etc/exports
-systemctl <span class="token builtin class-name">enable</span> nfs-server.service <span class="token parameter variable">--now</span>
-
-systemctl disable firewalld.service <span class="token parameter variable">--now</span>
-setenforce <span class="token number">0</span>
-
-<span class="token comment"># 验证</span>
-exportfs <span class="token parameter variable">-arv</span>
-exporting <span class="token number">10.163</span>.2.0/24:/public<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="NFS存储"><a href="#NFS存储" class="headerlink" title="NFS存储"></a>NFS存储</h2><h3 id="Centos7搭建NFS服务器"><a href="#Centos7搭建NFS服务器" class="headerlink" title="Centos7搭建NFS服务器"></a>Centos7搭建NFS服务器</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 搭建NFS</span></span><br><span class="line">yum -y install nfs-utils</span><br><span class="line"><span class="built_in">mkdir</span> /public</span><br><span class="line"><span class="built_in">chmod</span> 777 /public</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;/public 10.163.2.0/24(rw)&#x27;</span> &gt; /etc/exports</span><br><span class="line">systemctl <span class="built_in">enable</span> nfs-server.service --now</span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service --now</span><br><span class="line">setenforce 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证</span></span><br><span class="line">exportfs -arv</span><br><span class="line">exporting 10.163.2.0/24:/public</span><br></pre></td></tr></table></figure>
 
 <h3 id="ESXI添加存储网络"><a href="#ESXI添加存储网络" class="headerlink" title="ESXI添加存储网络"></a>ESXI添加存储网络</h3><p>1.添加虚拟交换机Storage-绑定到vmnic1(第二块网卡)</p>
 <p>2.添加端口组storage-隶属于虚拟交换机Storage</p>
@@ -527,35 +516,7 @@ exporting <span class="token number">10.163</span>.2.0/24:/public<span aria-hidd
 <h3 id="创建NFS存储"><a href="#创建NFS存储" class="headerlink" title="创建NFS存储"></a>创建NFS存储</h3><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604163544787.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604165942594.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604165908772.png"></p>
-<h2 id="IPSAN存储"><a href="#IPSAN存储" class="headerlink" title="IPSAN存储"></a>IPSAN存储</h2><h3 id="搭建iscsi"><a href="#搭建iscsi" class="headerlink" title="搭建iscsi"></a>搭建iscsi</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 还是原本那台服务器</span>
-yum <span class="token parameter variable">-y</span> <span class="token function">install</span> targetcli
-systemctl <span class="token builtin class-name">enable</span> target <span class="token parameter variable">--now</span>
-
-<span class="token comment"># 查看磁盘使用情况</span>
-lsblk
-NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-fd0               <span class="token number">2</span>:0    <span class="token number">1</span>    4K  <span class="token number">0</span> disk
-sda               <span class="token number">8</span>:0    <span class="token number">0</span>   10G  <span class="token number">0</span> disk
-├─sda1            <span class="token number">8</span>:1    <span class="token number">0</span>    1G  <span class="token number">0</span> part /boot
-└─sda2            <span class="token number">8</span>:2    <span class="token number">0</span>    9G  <span class="token number">0</span> part
-  ├─centos-root <span class="token number">253</span>:0    <span class="token number">0</span>    8G  <span class="token number">0</span> lvm  /
-  └─centos-swap <span class="token number">253</span>:1    <span class="token number">0</span>    1G  <span class="token number">0</span> lvm  <span class="token punctuation">[</span>SWAP<span class="token punctuation">]</span>
-sdb               <span class="token number">8</span>:16   <span class="token number">0</span>  500G  <span class="token number">0</span> disk
-sdc               <span class="token number">8</span>:32   <span class="token number">0</span>  500G  <span class="token number">0</span> disk
-sdd               <span class="token number">8</span>:48   <span class="token number">0</span>  500G  <span class="token number">0</span> disk
-
-<span class="token comment"># 准备使用sdb，配置iscsi</span>
-targetcli
-/<span class="token operator">></span> /backstores/block create ipsan /dev/sdb
-/<span class="token operator">></span> /iscsi/iqn.1998-01.com.linux:localhost:1786971024:66/tpg1/
-/<span class="token operator">></span> /iscsi/iqn.1998-01.com.linux:localhost:1786971024:66/tpg1/luns create /backstores/block/ipsan
-/<span class="token operator">></span> /iscsi/iqn.1998-01.com.linux:localhost:1786971024:66/tpg1/acls create iqn.1998-01.com.vmware:localhost:1786971024:65
-
-这个是vmware的iqn，后面能看到
-
-ss <span class="token parameter variable">-tunlp</span>  <span class="token operator">|</span><span class="token function">grep</span> <span class="token number">32</span>
-tcp    LISTEN     <span class="token number">0</span>      <span class="token number">256</span>       *:3260                  *:*
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="IPSAN存储"><a href="#IPSAN存储" class="headerlink" title="IPSAN存储"></a>IPSAN存储</h2><h3 id="搭建iscsi"><a href="#搭建iscsi" class="headerlink" title="搭建iscsi"></a>搭建iscsi</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 还是原本那台服务器</span></span><br><span class="line">yum -y install targetcli</span><br><span class="line">systemctl <span class="built_in">enable</span> target --now</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看磁盘使用情况</span></span><br><span class="line">lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">fd0               2:0    1    4K  0 disk</span><br><span class="line">sda               8:0    0   10G  0 disk</span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0    9G  0 part</span><br><span class="line">  ├─centos-root 253:0    0    8G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0    1G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0  500G  0 disk</span><br><span class="line">sdc               8:32   0  500G  0 disk</span><br><span class="line">sdd               8:48   0  500G  0 disk</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备使用sdb，配置iscsi</span></span><br><span class="line">targetcli</span><br><span class="line">/&gt; /backstores/block create ipsan /dev/sdb</span><br><span class="line">/&gt; /iscsi/iqn.1998-01.com.linux:localhost:1786971024:66/tpg1/</span><br><span class="line">/&gt; /iscsi/iqn.1998-01.com.linux:localhost:1786971024:66/tpg1/luns create /backstores/block/ipsan</span><br><span class="line">/&gt; /iscsi/iqn.1998-01.com.linux:localhost:1786971024:66/tpg1/acls create iqn.1998-01.com.vmware:localhost:1786971024:65</span><br><span class="line"></span><br><span class="line">这个是vmware的iqn，后面能看到</span><br><span class="line"></span><br><span class="line">ss -tunlp  |grep 32</span><br><span class="line">tcp    LISTEN     0      256       *:3260                  *:*</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h3 id="添加iscsi"><a href="#添加iscsi" class="headerlink" title="添加iscsi"></a>添加iscsi</h3><p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604172903770.png"></p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20250604173050279.png"></p>
@@ -6639,18 +6600,6 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -6734,13 +6683,13 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">02/11</span>
-            <a class="archive-post-title" href="/2026/02/11/Linux-nftables/">Linux软件防火墙-arptables、ebtables、nftables介绍与使用</a>
+            <a class="archive-post-title" href="/2026/02/11/Linux-selinux/">Linux软件防火墙-selinux</a>
         </li>
     
         
@@ -7115,13 +7064,13 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/14</span>
-            <a class="archive-post-title" href="/2025/07/14/Ceph-MGR/">MGR进行集群监控和维护</a>
+            <a class="archive-post-title" href="/2025/07/14/Ceph-OSD-Replace/">Ceph-OSD更换</a>
         </li>
     
         
@@ -7361,13 +7310,13 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/29</span>
-            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-2/">系统性能追踪工具systemtap/eBPF</a>
+            <a class="archive-post-title" href="/2025/04/29/System-Performance-Tracing-1/">系统性能追踪工具perf/strace</a>
         </li>
     
         
@@ -8066,13 +8015,13 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/24</span>
-            <a class="archive-post-title" href="/2024/09/24/Redis-Cluster/">Redis-Cluster集群模式</a>
+            <a class="archive-post-title" href="/2024/09/24/Redis-ASK/">Redis ASK机制、cluster-node-timeout参数</a>
         </li>
     
         
@@ -8616,9 +8565,9 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="k8s">
+            <span class="sidebar-tag-name" data-tags="前端">
                 <span class="iconfont-archer">&#xe606;</span>
-                k8s
+                前端
             </span>
         
             <span class="sidebar-tag-name" data-tags="Linux服务">
@@ -8626,9 +8575,9 @@ tcp    LISTEN     <span class="token number">0</span>      <span class="token nu
                 Linux服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="前端">
+            <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
-                前端
+                k8s
             </span>
         
             <span class="sidebar-tag-name" data-tags="存储">
