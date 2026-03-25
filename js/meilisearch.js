@@ -121,6 +121,8 @@
 
     // 搜索 Meilisearch
     async function searchMeilisearch(query) {
+        console.log('Meilisearch: 开始搜索', query);
+        
         const response = await fetch(`${config.host}/indexes/${config.indexName}/search`, {
             method: 'POST',
             headers: {
@@ -130,7 +132,7 @@
             body: JSON.stringify({
                 q: query,
                 limit: 10,
-                attributesToRetrieve: ['title', 'excerpt', 'date', 'tags', 'path'],
+                attributesToRetrieve: ['*'],  // 获取所有字段
                 attributesToHighlight: ['title', 'excerpt']
             })
         });
@@ -140,30 +142,52 @@
         }
 
         const data = await response.json();
+        console.log('Meilisearch: 搜索结果', data);
+        
         return data.hits.map(hit => {
             // 生成文章 URL
             let url;
+            
+            // 检查所有可能的路径字段
             if (hit.path) {
-                // 如果有 path 字段，直接使用
                 url = hit.path;
-            } else if (hit.date && hit.title) {
-                // 根据 date 和 title 生成 URL（格式：:year/:month/:day/:title/）
+            } else if (hit.slug) {
+                // 使用 slug 字段
                 const dateObj = new Date(hit.date);
                 const year = dateObj.getFullYear();
                 const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                 const day = String(dateObj.getDate()).padStart(2, '0');
-                const titleSlug = hit.title.toLowerCase()
+                url = `/${year}/${month}/${day}/${hit.slug}/`;
+            } else if (hit.filename) {
+                // 使用 filename 字段（去掉 .md 后缀）
+                const dateObj = new Date(hit.date);
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const filename = hit.filename.replace(/\.md$/, '');
+                url = `/${year}/${month}/${day}/${filename}/`;
+            } else if (hit.date && hit.title) {
+                // 根据 date 和 title 生成 URL（尝试匹配实际文件名）
+                const dateObj = new Date(hit.date);
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                
+                // 尝试从标题中提取文件名（这是一个猜测，可能不准确）
+                // 更好的方法是在 Meilisearch 索引中添加文件名字段
+                const titleSlug = hit.title
                     .replace(/[^\w\s-]/g, '') // 移除特殊字符
                     .replace(/\s+/g, '-') // 空格替换为连字符
                     .replace(/-+/g, '-') // 多个连字符合并为一个
                     .trim();
+                
+                console.warn(`Meilisearch: 使用标题生成 URL（可能不准确）: ${titleSlug}`);
                 url = `/${year}/${month}/${day}/${titleSlug}/`;
             } else {
-                // 默认使用 #
                 url = `#${encodeURIComponent(hit.title)}`;
             }
 
-            return {
+            const result = {
                 id: hit.id,
                 title: hit._formatted?.title || hit.title,
                 excerpt: hit._formatted?.excerpt || hit.excerpt,
@@ -171,6 +195,9 @@
                 tags: hit.tags || [],
                 url: url
             };
+            
+            console.log('Meilisearch: 处理后的结果', result);
+            return result;
         });
     }
 
