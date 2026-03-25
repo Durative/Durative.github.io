@@ -130,7 +130,7 @@
             body: JSON.stringify({
                 q: query,
                 limit: 10,
-                attributesToRetrieve: ['title', 'excerpt', 'date', 'tags'],
+                attributesToRetrieve: ['title', 'excerpt', 'date', 'tags', 'path'],
                 attributesToHighlight: ['title', 'excerpt']
             })
         });
@@ -140,13 +140,38 @@
         }
 
         const data = await response.json();
-        return data.hits.map(hit => ({
-            id: hit.id,
-            title: hit._formatted?.title || hit.title,
-            excerpt: hit._formatted?.excerpt || hit.excerpt,
-            date: hit.date,
-            tags: hit.tags || []
-        }));
+        return data.hits.map(hit => {
+            // 生成文章 URL
+            let url;
+            if (hit.path) {
+                // 如果有 path 字段，直接使用
+                url = hit.path;
+            } else if (hit.date && hit.title) {
+                // 根据 date 和 title 生成 URL（格式：:year/:month/:day/:title/）
+                const dateObj = new Date(hit.date);
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const titleSlug = hit.title.toLowerCase()
+                    .replace(/[^\w\s-]/g, '') // 移除特殊字符
+                    .replace(/\s+/g, '-') // 空格替换为连字符
+                    .replace(/-+/g, '-') // 多个连字符合并为一个
+                    .trim();
+                url = `/${year}/${month}/${day}/${titleSlug}/`;
+            } else {
+                // 默认使用 #
+                url = `#${encodeURIComponent(hit.title)}`;
+            }
+
+            return {
+                id: hit.id,
+                title: hit._formatted?.title || hit.title,
+                excerpt: hit._formatted?.excerpt || hit.excerpt,
+                date: hit.date,
+                tags: hit.tags || [],
+                url: url
+            };
+        });
     }
 
     // 模拟搜索（用于演示）
@@ -161,21 +186,24 @@
                 title: `${query} 相关文章 1`,
                 excerpt: `这是一篇关于 ${query} 的详细教程，涵盖了基础知识和实战案例...`,
                 date: '2026-03-20',
-                tags: ['k8s', '容器']
+                tags: ['k8s', '容器'],
+                url: `/#${encodeURIComponent(query + ' 相关文章 1')}`
             },
             {
                 id: 2,
                 title: `${query} 进阶指南`,
                 excerpt: `深入学习 ${query} 的高级特性和最佳实践，提升你的技能...`,
                 date: '2026-03-15',
-                tags: ['开发', '教程']
+                tags: ['开发', '教程'],
+                url: `/#${encodeURIComponent(query + ' 进阶指南')}`
             },
             {
                 id: 3,
                 title: `${query} 问题排查`,
                 excerpt: `解决 ${query} 使用过程中遇到的常见问题和错误...`,
                 date: '2026-03-10',
-                tags: ['实战', '问题解决']
+                tags: ['实战', '问题解决'],
+                url: `/#${encodeURIComponent(query + ' 问题排查')}`
             }
         ];
 
