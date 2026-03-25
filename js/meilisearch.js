@@ -23,7 +23,7 @@
     let isLoading = false;
 
     // 如果配置未设置，使用模拟数据
-    const useMockData = !config.host || !config.apiKey;
+    const useMockData = !config.host;
 
     if (!searchBox || !searchInput) {
         console.warn('Meilisearch: 未找到搜索框元素');
@@ -124,8 +124,8 @@
         const response = await fetch(`${config.host}/indexes/${config.indexName}/search`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`
+                'Content-Type': 'application/json'
+                // Authorization 头由 Nginx 反向代理自动添加，前端无需传递
             },
             body: JSON.stringify({
                 q: query,
