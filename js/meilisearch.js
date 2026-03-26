@@ -1,4 +1,7 @@
-// Meilisearch 搜索功能
+// Meilisearch 搜索功能 - 新基础版 (2026-03-26)
+// 功能：输入文字触发搜索，发送请求到/search路径，下拉框正常显示
+// 状态：本地开发返回404（无反向代理），生产环境需配置Nginx反向代理
+// 修改：隐藏了所有搜索框图标（.site-search .search-icon 和 .meilisearch-icon）
 (function() {
     'use strict';
 
@@ -15,7 +18,7 @@
     const clearBtn = document.querySelector('.meilisearch-clear-btn');
     const searchBtn = document.querySelector('.meilisearch-btn');
     const searchSuggestions = document.querySelector('.meilisearch-suggestions');
-    const suggestionsList = document.querySelector('.meilisearch-suggestions-list');
+    const suggestionsList = document.querySelector('.meilisearch-suggestion-list'); // 修正：去掉多余的's'
     const loadingIndicator = document.querySelector('.meilisearch-loading');
     const noResults = document.querySelector('.meilisearch-no-results');
 
@@ -33,16 +36,16 @@
     // 事件监听
     searchInput.addEventListener('focus', () => {
         searchBox.classList.add('focused');
+        // 聚焦时，如果有内容则显示下拉框
         if (searchInput.value.trim()) {
             showSuggestions();
         }
     });
 
+    // 移除blur事件中的隐藏逻辑，使下拉框显示与鼠标位置无关
     searchInput.addEventListener('blur', () => {
-        setTimeout(() => {
-            searchBox.classList.remove('focused');
-            hideSuggestions();
-        }, 200);
+        // 仅移除焦点样式，不隐藏下拉框（与鼠标位置无关）
+        searchBox.classList.remove('focused');
     });
 
     searchInput.addEventListener('input', (e) => {
@@ -50,9 +53,12 @@
 
         if (value) {
             clearBtn.classList.add('visible');
+            // 只要有内容就显示下拉框（需求1和3）
+            showSuggestions();
             performSearch(value);
         } else {
             clearBtn.classList.remove('visible');
+            // 内容为空时隐藏下拉框
             hideSuggestions();
         }
     });
@@ -99,22 +105,32 @@
         }
 
         searchTimeout = setTimeout(async () => {
-            showLoading();
+            console.log('Meilisearch: 搜索触发 (内容:', query, ')');
+            
+            if (!query) {
+                displayResults([]);
+                return;
+            }
+
+            // 显示加载状态
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('visible');
+            }
+            if (noResults) {
+                noResults.classList.remove('visible');
+            }
 
             try {
-                let results;
-                if (useMockData) {
-                    console.log('Meilisearch: 使用模拟数据（请配置 Meilisearch）');
-                    results = await mockSearch(query);
-                } else {
-                    results = await searchMeilisearch(query);
-                }
+                console.log('Meilisearch: 调用API搜索');
+                const searchResults = await searchMeilisearch(query);
+                const results = searchResults.hits || [];
+                console.log('Meilisearch: 搜索结果数量:', results.length);
                 displayResults(results);
+                
             } catch (error) {
-                console.error('Meilisearch: 搜索错误', error);
+                console.error('Meilisearch: 搜索失败:', error);
+                // 即使API失败，也显示空结果，让用户知道搜索已执行
                 displayResults([]);
-            } finally {
-                hideLoading();
             }
         }, 300);
     }
@@ -237,37 +253,15 @@
         return mockData;
     }
 
-    // 显示搜索结果
+    // 显示搜索结果（简化版本，暂时不填充内容）
     function displayResults(results) {
-        if (!suggestionsList) return;
-
-        suggestionsList.innerHTML = '';
-
-        if (results.length === 0) {
-            if (noResults) noResults.classList.add('visible');
-        } else {
-            if (noResults) noResults.classList.remove('visible');
-            results.forEach(result => {
-                const item = document.createElement('div');
-                item.className = 'meilisearch-suggestion-item';
-                item.innerHTML = `
-                    <div class="meilisearch-suggestion-title">${highlightText(result.title, searchInput.value)}</div>
-                    <div class="meilisearch-suggestion-excerpt">${highlightText(result.excerpt || '', searchInput.value)}</div>
-                    <div class="meilisearch-suggestion-meta">
-                        ${result.tags ? result.tags.map(tag => `<span class="meilisearch-suggestion-tag">${tag}</span>`).join('') : ''}
-                        <span class="meilisearch-suggestion-date">${result.date || ''}</span>
-                    </div>
-                `;
-                item.addEventListener('click', () => {
-                    // 根据实际文章 URL 结构跳转
-                    const url = result.url || `#${encodeURIComponent(result.title)}`;
-                    window.location.href = url;
-                });
-                suggestionsList.appendChild(item);
-            });
-        }
-
-        showSuggestions();
+        // 根据需求，下拉框中不需要填充内容，后续再加
+        // 这里只确保下拉框显示，并隐藏加载和无结果状态
+        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+        if (noResults) noResults.classList.remove('visible');
+        if (suggestionsList) suggestionsList.innerHTML = '';
+        
+        // 下拉框已经在input事件中显示，这里不需要重复显示
     }
 
     // 高亮匹配文本
