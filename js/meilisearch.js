@@ -1,0 +1,400 @@
+// Meilisearch 搜索功能 - 新基础版 (2026-03-26)
+// 功能：输入文字触发搜索，发送请求到/search路径，下拉框正常显示
+// 状态：本地开发返回404（无反向代理），生产环境需配置Nginx反向代理
+// 修改：隐藏了所有搜索框图标（.site-search .search-icon 和 .meilisearch-icon）
+(function() {
+    'use strict';
+
+    // Meilisearch 配置（从主题配置中读取）
+    const config = {
+        host: window.theme.meilisearch?.host || '',
+        apiKey: window.theme.meilisearch?.apiKey || '',
+        indexName: window.theme.meilisearch?.indexName || 'posts'
+    };
+
+    // DOM 元素
+    const searchBox = document.querySelector('.meilisearch-box');
+    const searchInput = document.querySelector('.meilisearch-input');
+    const clearBtn = document.querySelector('.meilisearch-clear-btn');
+    const searchBtn = document.querySelector('.meilisearch-btn');
+    const searchSuggestions = document.querySelector('.meilisearch-suggestions');
+    const suggestionsList = document.querySelector('.meilisearch-suggestion-list'); // 修正：去掉多余的's'
+    const loadingIndicator = document.querySelector('.meilisearch-loading');
+    const noResults = document.querySelector('.meilisearch-no-results');
+
+    let searchTimeout = null;
+    let isLoading = false;
+
+    // 如果配置未设置，使用模拟数据
+    const useMockData = !config.host;
+
+    if (!searchBox || !searchInput) {
+        console.warn('Meilisearch: 未找到搜索框元素');
+        return;
+    }
+
+    // 事件监听
+    searchInput.addEventListener('focus', () => {
+        searchBox.classList.add('focused');
+        // 聚焦时，如果有内容则显示下拉框
+        if (searchInput.value.trim()) {
+            showSuggestions();
+        }
+    });
+
+    // 移除blur事件中的隐藏逻辑，使下拉框显示与鼠标位置无关
+    searchInput.addEventListener('blur', () => {
+        // 仅移除焦点样式，不隐藏下拉框（与鼠标位置无关）
+        searchBox.classList.remove('focused');
+    });
+
+    searchInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+
+        if (value) {
+            clearBtn.classList.add('visible');
+            // 只要有内容就显示下拉框（需求1和3）
+            showSuggestions();
+            performSearch(value);
+        } else {
+            clearBtn.classList.remove('visible');
+            // 内容为空时隐藏下拉框
+            hideSuggestions();
+        }
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.classList.remove('visible');
+            hideSuggestions();
+            searchInput.focus();
+        });
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                performSearch(query);
+            }
+        });
+    }
+
+    // 快捷键监听
+    document.addEventListener('keydown', (e) => {
+        // Cmd/Ctrl + K 聚焦搜索框
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+
+        // Escape 清除搜索
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            if (clearBtn) clearBtn.classList.remove('visible');
+            hideSuggestions();
+            searchInput.blur();
+        }
+    });
+
+    // 执行搜索
+    async function performSearch(query) {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        searchTimeout = setTimeout(async () => {
+            console.log('Meilisearch: 搜索触发 (内容:', query, ')');
+            
+            if (!query) {
+                displayResults([]);
+                return;
+            }
+
+            // 显示加载状态
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('visible');
+            }
+            if (noResults) {
+                noResults.classList.remove('visible');
+            }
+
+            try {
+                console.log('Meilisearch: 调用API搜索');
+                const results = await searchMeilisearch(query);
+                console.log('Meilisearch: 搜索结果数量:', results.length);
+                console.log('Meilisearch: 处理后的结果:', results);
+                displayResults(results);
+                
+            } catch (error) {
+                console.error('Meilisearch: 搜索失败:', error);
+                // 即使API失败，也显示空结果，让用户知道搜索已执行
+                displayResults([]);
+            }
+        }, 300);
+    }
+
+    // 搜索 Meilisearch
+    async function searchMeilisearch(query) {
+        console.log('Meilisearch: 开始搜索', query);
+        
+        const response = await fetch(`${config.host}/indexes/${config.indexName}/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                // X-MEILI-API-KEY 头由 Nginx 反向代理自动添加，前端无需传递
+            },
+            body: JSON.stringify({
+                q: query,
+                limit: 5,  // 最多返回5个结果
+                sort: ['date:desc'],  // 按时间降序（相关性是默认的）
+                attributesToRetrieve: ['*'],  // 获取所有字段
+                attributesToHighlight: ['title']  // 只高亮标题，因为excerpt字段可能不存在
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('搜索请求失败');
+        }
+
+        const data = await response.json();
+        console.log('Meilisearch: 搜索结果', data);
+        
+        // 处理API返回的hits数组
+        // 注意：生产环境API返回的数据结构：{title, tags, categories, id, date, url}
+        // 没有_formatted字段，除非请求高亮
+        const hits = data.hits || [];
+        console.log('🔍 处理hits数组，数量:', hits.length);
+        
+        return hits.map(hit => {
+            console.log('处理hit对象:', hit.id, hit.title);
+            
+            // 安全地获取字段
+            const result = {
+                id: hit.id || '',
+                title: hit.title || '无标题',
+                excerpt: hit.excerpt || '',  // 注意：生产环境可能没有excerpt字段
+                date: hit.date || '',
+                tags: hit.tags || [],
+                url: hit.url || `#${encodeURIComponent(hit.title || '')}`
+            };
+            
+            console.log('✅ 处理后的结果:', result);
+            return result;
+        });
+    }
+
+    // 模拟搜索（用于演示）
+    async function mockSearch(query) {
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // 模拟结果数据
+        const mockData = [
+            {
+                id: 1,
+                title: `${query} 相关文章 1`,
+                excerpt: `这是一篇关于 ${query} 的详细教程，涵盖了基础知识和实战案例...`,
+                date: '2026-03-20',
+                tags: ['k8s', '容器'],
+                url: `/#${encodeURIComponent(query + ' 相关文章 1')}`
+            },
+            {
+                id: 2,
+                title: `${query} 进阶指南`,
+                excerpt: `深入学习 ${query} 的高级特性和最佳实践，提升你的技能...`,
+                date: '2026-03-15',
+                tags: ['开发', '教程'],
+                url: `/#${encodeURIComponent(query + ' 进阶指南')}`
+            },
+            {
+                id: 3,
+                title: `${query} 问题排查`,
+                excerpt: `解决 ${query} 使用过程中遇到的常见问题和错误...`,
+                date: '2026-03-10',
+                tags: ['实战', '问题解决'],
+                url: `/#${encodeURIComponent(query + ' 问题排查')}`
+            }
+        ];
+
+        return mockData;
+    }
+
+    // 显示搜索结果
+    function displayResults(results) {
+        console.log('📋 displayResults被调用，结果数量:', results.length);
+        console.log('📋 第一个结果:', results[0]);
+        
+        // 隐藏加载状态
+        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+        
+        // 清空现有内容
+        if (suggestionsList) {
+            suggestionsList.innerHTML = '';
+        }
+        
+        // 处理无结果情况
+        if (!results || results.length === 0) {
+            if (noResults) {
+                noResults.classList.add('visible');
+            }
+            return;
+        }
+        
+        // 隐藏无结果提示
+        if (noResults) {
+            noResults.classList.remove('visible');
+        }
+        
+        // 显示结果
+        results.forEach((result, index) => {
+            const item = document.createElement('div');
+            item.className = 'meilisearch-suggestion-item';
+            item.dataset.index = index;
+            
+            // 创建标题链接
+            const titleLink = document.createElement('a');
+            titleLink.className = 'meilisearch-suggestion-title-link';
+            
+            // 构建正确的Hexo文章URL
+            let fullUrl = '';
+            console.log('🔗 原始数据:', {title: result.title, date: result.date, url: result.url});
+            
+            if (result.date && result.title) {
+                // 从日期提取年、月、日
+                const dateObj = new Date(result.date);
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                
+                console.log(`📅 解析日期: ${result.date} → ${year}/${month}/${day}`);
+                
+                // 从标题生成URL友好的slug
+                // 移除特殊字符，用连字符替换空格
+                let slug = result.title
+                    .toLowerCase()
+                    .replace(/[^\w\u4e00-\u9fa5\s]/g, '')  // 移除非字母数字和中文
+                    .replace(/\s+/g, '-')                     // 空格转连字符
+                    .replace(/--+/g, '-')                     // 多个连字符转单个
+                    .replace(/^-|-$/g, '');                   // 移除首尾连字符
+                
+                console.log(`🏷️ 从标题生成slug: "${result.title}" → "${slug}"`);
+                
+                // 优先从原始URL中提取slug（Hexo使用文件名作为slug）
+                if (result.url) {
+                    // 从 /posts/K8s-crt/ 提取 K8s-crt
+                    const match = result.url.match(/\/([^\/]+)\/?$/);
+                    if (match) {
+                        slug = match[1];
+                        console.log(`🔗 从URL提取slug: "${result.url}" → "${slug}"`);
+                    }
+                }
+                
+                // 如果URL中没有slug，使用标题生成的slug
+                if (!slug) {
+                    console.log(`🏷️ 使用标题生成slug: "${result.title}" → "${slug}"`);
+                }
+                
+                if (slug) {
+                    // 构建Hexo格式URL: /年/月/日/文章slug/
+                    fullUrl = `/${year}/${month}/${day}/${slug}/`;
+                    console.log(`🌐 生成URL: ${fullUrl}`);
+                } else {
+                    console.log('❌ 无法生成slug');
+                }
+            } else {
+                console.log('❌ 缺少日期或标题');
+            }
+            
+            // 如果动态生成失败，使用原始URL
+            if (!fullUrl && result.url) {
+                fullUrl = result.url;
+                console.log(`🔄 使用原始URL: ${fullUrl}`);
+            }
+            
+            // 确保是完整URL
+            if (fullUrl && !fullUrl.startsWith('http')) {
+                const baseUrl = window.location.origin;
+                fullUrl = baseUrl + fullUrl;
+            }
+            
+            titleLink.href = fullUrl || '#';
+            titleLink.textContent = result.title || '无标题';
+            titleLink.target = '_blank'; // 新窗口打开
+            
+            // 创建标签显示
+            if (result.tags && result.tags.length > 0) {
+                const tagsDisplay = document.createElement('div');
+                tagsDisplay.className = 'meilisearch-suggestion-tags';
+                
+                // 格式化标签：最多显示3个，用逗号分隔
+                const displayTags = result.tags.slice(0, 3);
+                tagsDisplay.textContent = `标签: ${displayTags.join(', ')}`;
+                
+                // 如果有更多标签，添加提示
+                if (result.tags.length > 3) {
+                    tagsDisplay.textContent += ` 等${result.tags.length}个标签`;
+                }
+                
+                item.appendChild(tagsDisplay);
+            } else {
+                // 如果没有标签，显示占位符
+                const noTagsDisplay = document.createElement('div');
+                noTagsDisplay.className = 'meilisearch-suggestion-tags';
+                noTagsDisplay.textContent = '标签: 无';
+                item.appendChild(noTagsDisplay);
+            }
+            
+            // 组装元素
+            item.appendChild(titleLink);
+            
+            if (suggestionsList) {
+                suggestionsList.appendChild(item);
+            }
+        });
+        
+        console.log('Meilisearch: 显示搜索结果', results.length, '条');
+    }
+
+    // 高亮匹配文本
+    function highlightText(text, query) {
+        if (!text || !query) return text || '';
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="meilisearch-highlight">$1</span>');
+    }
+
+    // 显示/隐藏建议
+    function showSuggestions() {
+        if (searchSuggestions) {
+            searchSuggestions.classList.add('visible');
+        }
+    }
+
+    function hideSuggestions() {
+        if (searchSuggestions) {
+            searchSuggestions.classList.remove('visible');
+        }
+    }
+
+    // 加载状态
+    function showLoading() {
+        isLoading = true;
+        if (loadingIndicator) loadingIndicator.classList.add('visible');
+        if (noResults) noResults.classList.remove('visible');
+    }
+
+    function hideLoading() {
+        isLoading = false;
+        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+    }
+
+    // 初始化
+    console.log('Meilisearch: 搜索功能已加载');
+    console.log('Meilisearch: 快捷键提示 - 按 Cmd/Ctrl + K 快速聚焦搜索框');
+
+    if (useMockData) {
+        console.warn('Meilisearch: 未配置 Meilisearch 连接，使用模拟数据');
+        console.warn('Meilisearch: 请在主题配置中设置 host、apiKey 和 indexName');
+    }
+})();
