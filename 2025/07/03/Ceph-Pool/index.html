@@ -213,7 +213,7 @@
     
     <!-- 谷歌统计  -->
     
-<meta name="generator" content="Hexo 7.2.0"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
+<meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
 </head>
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
@@ -538,7 +538,7 @@
 </ul>
 <h2 id="Ceph客户端访问pool的流程"><a href="#Ceph客户端访问pool的流程" class="headerlink" title="Ceph客户端访问pool的流程"></a><strong>Ceph客户端访问pool的流程</strong></h2><p>**1.**从ceph配置文件中读取cluster name与ceph mon地址，来连接到集群</p>
 <p>**2.**使用cluster map来获取被检索到的pool列表与属性，决定在哪里存放对象</p>
-<p><strong>3.<strong>创建一个特定pool的输入&#x2F;输出上下文，</strong>Ceph集群使用CRUSH算法将这些pool映射到PG，然后将其映射到特定的OSD。</strong></p>
+<p>**3.**创建一个特定pool的输入&#x2F;输出上下文，<strong>Ceph集群使用CRUSH算法将这些pool映射到PG，然后将其映射到特定的OSD。</strong></p>
 <h2 id="副本池创建"><a href="#副本池创建" class="headerlink" title="副本池创建"></a>副本池创建</h2><p><strong>副本池&#x2F;纠删码池</strong></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">查看数据分布策略</span><br><span class="line">ceph osd pool get &lt;pool-name&gt; crush_rule</span><br><span class="line">replicated_rule/ec_rule</span><br><span class="line"></span><br><span class="line">副本池 (Replicated Pool)：默认策略，数据复制多份（通常 3 副本）</span><br><span class="line">纠删码池 (Erasure Coded Pool)：类似 RAID5/6，节省空间但计算开销大</span><br></pre></td></tr></table></figure>
 
@@ -587,7 +587,7 @@
 
 <h2 id="管理和操作pool"><a href="#管理和操作pool" class="headerlink" title="管理和操作pool"></a>管理和操作pool</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池重命名操作 (不影响池内数据)</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 重命名存储池（需更新相关用户的池权限）</span></span><br><span class="line">ceph osd pool rename old-pool-name new-pool-name</span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池删除操作 (危险！永久删除数据)</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 1. 启用池删除功能（需在mon节点配置）</span></span><br><span class="line">ceph config <span class="built_in">set</span> mon mon_allow_pool_delete <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 删除存储池（双确认机制）</span></span><br><span class="line">ceph osd pool delete pool-name pool-name --yes-i-really-really-mean-it</span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池防删除保护</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 启用防删除保护（安全锁）</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name nodelete <span class="literal">true</span></span><br><span class="line"><span class="comment"># 禁用防删除保护（允许删除）</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name nodelete <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池配置管理</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 查看池配置参数</span></span><br><span class="line">ceph osd pool get pool-name size       <span class="comment"># 查看副本数</span></span><br><span class="line">ceph osd pool get pool-name min_size   <span class="comment"># 查看最小可用副本数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改池配置参数</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name size 3     <span class="comment"># 设置副本数</span></span><br><span class="line">ceph osd pool <span class="built_in">set</span> pool-name min_size 2 <span class="comment"># 设置最小可用副本数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 池列表与信息查询</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 列出所有存储池（简略信息）</span></span><br><span class="line">ceph osd lspools</span><br><span class="line"></span><br><span class="line"><span class="comment"># 列出所有存储池详情</span></span><br><span class="line">ceph osd pool <span class="built_in">ls</span> detail</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看存储池使用统计</span></span><br><span class="line">ceph <span class="built_in">df</span>  <span class="comment"># 所有池容量统计</span></span><br><span class="line">ceph osd pool stats  <span class="comment"># 所有池IO性能统计</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 应用程序关联</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 为存储池启用应用程序类型</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> pool-name cephfs  <span class="comment"># Ceph文件系统</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> pool-name rbd     <span class="comment"># Ceph块设备</span></span><br><span class="line">ceph osd pool application <span class="built_in">enable</span> pool-name rgw     <span class="comment"># RADOS网关</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 配额管理</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 设置存储容量配额（1TB限制）</span></span><br><span class="line">ceph osd pool set-quota pool-name max_bytes 1T</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置对象数量配额（100万对象限制）</span></span><br><span class="line">ceph osd pool set-quota pool-name max_objects 1000000</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除配额限制</span></span><br><span class="line">ceph osd pool set-quota pool-name max_bytes 0</span><br><span class="line">ceph osd pool set-quota pool-name max_objects 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line"><span class="comment"># 默认池保护参数 (需在ceph.conf配置)</span></span><br><span class="line"><span class="comment"># ========================================</span></span><br><span class="line">[global]</span><br><span class="line">osd_pool_default_flag_nodelete = <span class="literal">true</span></span><br><span class="line">osd_pool_default_flag_nopgchange = <span class="literal">true</span></span><br><span class="line">osd_pool_default_flag_nosizechange = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="Pool的命名空间"><a href="#Pool的命名空间" class="headerlink" title="Pool的命名空间"></a>Pool的命名空间</h2><p>在Ceph中，<strong>池的命名空间（Namespace）</strong>是RADOS 存储系统中的一种逻辑隔离机制，它允许在同一个存储池（Pool）内创建多个独立的对象命名空间。</p>
+<h2 id="Pool的命名空间"><a href="#Pool的命名空间" class="headerlink" title="Pool的命名空间"></a>Pool的命名空间</h2><p>在Ceph中，**池的命名空间（Namespace）**是RADOS 存储系统中的一种逻辑隔离机制，它允许在同一个存储池（Pool）内创建多个独立的对象命名空间。</p>
 <p><strong>一般来说，会为每个应用程序配置一个专用的池</strong>，也就是不会使用命名空间</p>
 <p><strong>特点</strong>：</p>
 <ul>
@@ -658,9 +658,9 @@
                         </span>
                     </a>
                 
-                    <a href="/2025/07/10/Ceph-CephFS/" class="related-item">
-                        <span class="related-date">2025-07-10</span>
-                        <span class="related-title">部署CephFS与挂载</span>
+                    <a href="/2025/08/06/Ceph-Cephfs-NFS/" class="related-item">
+                        <span class="related-date">2025-08-06</span>
+                        <span class="related-title">使用NFS-Ganesha挂载cephFS</span>
                         <span class="related-tags">
                             
                                 <span class="tag">#存储</span>
@@ -7246,22 +7246,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7924,13 +7908,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
         </li>
     
         
@@ -8248,13 +8232,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
         </li>
     
         
@@ -9383,14 +9367,14 @@
                 网络
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Python">
-                <span class="iconfont-archer">&#xe606;</span>
-                Python
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="容器">
                 <span class="iconfont-archer">&#xe606;</span>
                 容器
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Python">
+                <span class="iconfont-archer">&#xe606;</span>
+                Python
             </span>
         
             <span class="sidebar-tag-name" data-tags="Dify">
@@ -9463,14 +9447,14 @@
                 Fluentd
             </span>
         
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Fluent Bit">
                 <span class="iconfont-archer">&#xe606;</span>
                 Fluent Bit
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="安全">
+                <span class="iconfont-archer">&#xe606;</span>
+                安全
             </span>
         
             <span class="sidebar-tag-name" data-tags="纳甲六爻">

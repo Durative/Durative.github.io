@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问&#123;JENKINS_URL&#125;&#x2F;computer&#x2F;&#123;NODE_NAME&#125;&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 123456789101112131415161718192021222324">
+    <meta name="description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问{JENKINS_URL}&#x2F;computer&#x2F;{NODE_NAME}&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 123456789101112131415161718192021222324def adjust_executors">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Jenkins从节点并发构建数改0消失故障">
 <meta property="og:url" content="https://akemi.zj.cn/2025/04/22/Jenkins-Trouble1/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问&#123;JENKINS_URL&#125;&#x2F;computer&#x2F;&#123;NODE_NAME&#125;&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 123456789101112131415161718192021222324">
+<meta property="og:description" content="故障现象： 修改了jenkins从节点numExecutors字段（并发构建数）后 节点从列表中消失，无法分配任务，并且访问{JENKINS_URL}&#x2F;computer&#x2F;{NODE_NAME}&#x2F;config.xml也报404，无法再通过api对节点进行操作 以下是引发该问题的脚本 123456789101112131415161718192021222324def adjust_executors">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-04-22T13:59:27.000Z">
 <meta property="article:modified_time" content="2026-03-17T12:56:09.000Z">
@@ -213,7 +213,7 @@
     
     <!-- 谷歌统计  -->
     
-<meta name="generator" content="Hexo 7.2.0"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
+<meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
 </head>
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
@@ -369,7 +369,7 @@
                 <!-- 文章字数统计 -->
                 
                     <div class="post-intro-read">
-                        <span>字数统计: <span class="post-count word-count">492</span>阅读时长: <span class="post-count reading-time">2 min</span></span>
+                        <span>字数统计: <span class="post-count word-count">486</span>阅读时长: <span class="post-count reading-time">2 min</span></span>
                     </div>
                 
                 <div class="post-intro-meta">
@@ -532,7 +532,7 @@
     <article class="article-entry">
         <p><strong>故障现象：</strong></p>
 <p>修改了jenkins从节点numExecutors字段（并发构建数）后</p>
-<p>节点从列表中消失，无法分配任务，并且访问<code>&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml</code>也报404，无法再通过api对节点进行操作</p>
+<p>节点从列表中消失，无法分配任务，并且访问<code>{JENKINS_URL}/computer/{NODE_NAME}/config.xml</code>也报404，无法再通过api对节点进行操作</p>
 <p>以下是引发该问题的脚本</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">def adjust_executors(target_num):</span><br><span class="line">    <span class="string">&quot;&quot;</span><span class="string">&quot;调整节点并发执行器数量&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    config_url = f<span class="string">&quot;&#123;JENKINS_URL&#125;/computer/&#123;NODE_NAME&#125;/config.xml&quot;</span></span><br><span class="line">    </span><br><span class="line">    try:</span><br><span class="line">        <span class="comment"># 获取当前节点配置</span></span><br><span class="line">        response = session.get(config_url, headers=crumb_header)</span><br><span class="line">        root = ET.fromstring(response.content)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 定位并发数配置节点</span></span><br><span class="line">        num_exec = root.find(<span class="string">&quot;.//numExecutors&quot;</span>)</span><br><span class="line">        num_exec.text = str(target_num)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 提交修改后的配置</span></span><br><span class="line">        response = session.post(</span><br><span class="line">            config_url,</span><br><span class="line">            headers=&#123;<span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;text/xml&#x27;</span>&#125;,</span><br><span class="line">            data=ET.tostring(root),</span><br><span class="line">            auth=session.auth</span><br><span class="line">        )</span><br><span class="line">        <span class="built_in">return</span> response.status_code == 200</span><br><span class="line">    except Exception as e:</span><br><span class="line">        <span class="built_in">print</span>(f<span class="string">&quot;× 调整并发数失败: &#123;e&#125;&quot;</span>)</span><br><span class="line">        <span class="built_in">return</span> False</span><br></pre></td></tr></table></figure>
 
@@ -540,7 +540,7 @@
 <p>在jenkins中将从节点并发构建数改为0是非法操作：在web上根本不允许</p>
 <p>但是如果使用修改config.xml的方式强行修改，就会出现这样的情况</p>
 <p><strong>解决方法：</strong></p>
-<p>进入<code>&#123;JENKINS_URL&#125;/script</code> 脚本控制台，使用groovy脚本运行下面这段脚本</p>
+<p>进入<code>{JENKINS_URL}/script</code> 脚本控制台，使用groovy脚本运行下面这段脚本</p>
 <p>其原理是通过主节点的jenkins节点目录，一般是<code>/var/lib/jenkins/nodes/slave-5/</code> 来找到config.xml，随后使用该config.xml重新创建节点</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">import jenkins.model.Jenkins</span><br><span class="line">def nodeName = <span class="string">&quot;slave-5&quot;</span></span><br><span class="line">def instance = Jenkins.instance</span><br><span class="line">def node = instance.getNode(nodeName)</span><br><span class="line"><span class="keyword">if</span> (node == null) &#123;</span><br><span class="line">  println <span class="string">&quot;节点 <span class="variable">$&#123;nodeName&#125;</span> 不存在&quot;</span></span><br><span class="line">  <span class="built_in">return</span></span><br><span class="line">&#125;</span><br><span class="line">try &#123;</span><br><span class="line">  // 1. 通过文件系统路径读取配置</span><br><span class="line">  def configFilePath = <span class="string">&quot;<span class="variable">$&#123;instance.rootDir&#125;</span>/nodes/<span class="variable">$&#123;nodeName&#125;</span>/config.xml&quot;</span></span><br><span class="line">  def configFile = new File(configFilePath)</span><br><span class="line">  <span class="keyword">if</span> (!configFile.exists()) &#123;</span><br><span class="line">    throw new Exception(<span class="string">&quot;配置文件 <span class="variable">$&#123;configFilePath&#125;</span> 不存在&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  def configXml = configFile.text</span><br><span class="line">  println <span class="string">&quot;备份配置成功:\n<span class="variable">$&#123;configXml&#125;</span>&quot;</span></span><br><span class="line">  // 2. 删除原节点</span><br><span class="line">  instance.removeNode(node)</span><br><span class="line">  println <span class="string">&quot;节点已删除&quot;</span></span><br><span class="line">  // 3. 从 XML 重建节点</span><br><span class="line">  def newNode = Jenkins.XSTREAM.fromXML(configXml)</span><br><span class="line">  instance.addNode(newNode)</span><br><span class="line">  println <span class="string">&quot;节点已成功重建&quot;</span></span><br><span class="line">&#125; catch (Exception e) &#123;</span><br><span class="line">  println <span class="string">&quot;操作失败: <span class="variable">$&#123;e.message&#125;</span>&quot;</span></span><br><span class="line">  e.printStackTrace()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
     </article>
@@ -7169,22 +7169,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7847,13 +7831,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
         </li>
     
         
@@ -8171,13 +8155,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
         </li>
     
         
@@ -9306,14 +9290,14 @@
                 网络
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Python">
-                <span class="iconfont-archer">&#xe606;</span>
-                Python
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="容器">
                 <span class="iconfont-archer">&#xe606;</span>
                 容器
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Python">
+                <span class="iconfont-archer">&#xe606;</span>
+                Python
             </span>
         
             <span class="sidebar-tag-name" data-tags="Dify">
@@ -9386,14 +9370,14 @@
                 Fluentd
             </span>
         
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Fluent Bit">
                 <span class="iconfont-archer">&#xe606;</span>
                 Fluent Bit
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="安全">
+                <span class="iconfont-archer">&#xe606;</span>
+                安全
             </span>
         
             <span class="sidebar-tag-name" data-tags="纳甲六爻">

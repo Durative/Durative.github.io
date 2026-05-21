@@ -213,7 +213,7 @@
     
     <!-- 谷歌统计  -->
     
-<meta name="generator" content="Hexo 7.2.0"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
+<meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
 </head>
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
@@ -558,7 +558,7 @@
 </li>
 </ul>
 <h3 id="CFS完全公平调度器"><a href="#CFS完全公平调度器" class="headerlink" title="CFS完全公平调度器"></a>CFS完全公平调度器</h3><p>完全公平调度器(CFS)是在Linux kernel 2.6.23中引入的，是<strong>RHEL系统的默认调度器</strong>。</p>
-<p><strong>CFS使用SCHED_NORMAL(即SCHED_OTHER)调度策略，</strong>当调度上下文在系统生命周期内发生变化时，CFS将动态计算正在运行的进程的计算时间。</p>
+<p>**CFS使用SCHED_NORMAL(即SCHED_OTHER)调度策略，**当调度上下文在系统生命周期内发生变化时，CFS将动态计算正在运行的进程的计算时间。</p>
 <ul>
 <li><strong>管理策略</strong>：<ul>
 <li>SCHED_OTHER：普通进程，通过 nice 值调整权重。</li>
@@ -581,7 +581,7 @@
 <h3 id="tuna"><a href="#tuna" class="headerlink" title="tuna"></a>tuna</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看线程</span></span><br><span class="line">tuna --show_threads</span><br><span class="line">                      thread       ctxt_switches</span><br><span class="line">    pid SCHED_ rtpri affinity voluntary nonvoluntary             cmd</span><br><span class="line">  1      OTHER     0      0,1     28604         4275         systemd</span><br><span class="line">  2      OTHER     0      0,1      3926            0        kthreadd</span><br><span class="line">  3      OTHER     0      0,1         2            0          rcu_gp</span><br><span class="line">  4      OTHER     0      0,1         2            0      rcu_par_gp</span><br><span class="line">  5      OTHER     0      0,1         2            0    slub_flushwq</span><br><span class="line">  7      OTHER     0        0         4            0 kworker/0:0H-events_highpri</span><br><span class="line">  9      OTHER     0      0,1    200038           19 kworker/u4:0-events_unbound</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">将 PID 1000 的调度策略改为 SCHED_FIFO，优先级 90</span></span><br><span class="line">sudo tuna --threads=1000 --sched=FIFO --priority=90 --run</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">将进程名包含 <span class="string">&quot;realtime&quot;</span> 的线程设为 SCHED_RR，优先级 80</span></span><br><span class="line">sudo tuna --threads=&quot;*realtime*&quot; --sched=RR --priority=80 --run</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <h3 id="systemd"><a href="#systemd" class="headerlink" title="systemd"></a>systemd</h3><ul>
-<li>**CPUSchedulingPolicy&#x3D;**：设置调度策略（可选值：other&#x2F;batch&#x2F;idle&#x2F;fifo&#x2F;rr）。</li>
+<li><strong>CPUSchedulingPolicy&#x3D;</strong>：设置调度策略（可选值：other&#x2F;batch&#x2F;idle&#x2F;fifo&#x2F;rr）。</li>
 </ul>
 <figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="comment"># CPUSchedulingPolicy=：设置调度策略</span></span><br><span class="line"><span class="comment"># 可选值：other/batch/idle/fifo/rr</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定调度策略为 SCHED_FIFO，优先级为 90</span></span><br><span class="line"><span class="attr">CPUSchedulingPolicy</span>=fifo</span><br><span class="line"><span class="attr">CPUSchedulingPriority</span>=<span class="number">90</span></span><br><span class="line"><span class="comment"># 绑定到 CPU 核心 0 和 1</span></span><br><span class="line"><span class="attr">CPUAffinity</span>=<span class="number">0</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整静态优先级（范围 -20 到 19，仅对 SCHED_OTHER/SCHED_BATCH 有效）。</span></span><br><span class="line"><span class="attr">Nice</span>=<span class="number">0</span></span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart xxx</span><br></pre></td></tr></table></figure>
     </article>
@@ -7210,22 +7210,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7888,13 +7872,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
         </li>
     
         
@@ -8212,13 +8196,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
         </li>
     
         
@@ -9347,14 +9331,14 @@
                 网络
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Python">
-                <span class="iconfont-archer">&#xe606;</span>
-                Python
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="容器">
                 <span class="iconfont-archer">&#xe606;</span>
                 容器
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Python">
+                <span class="iconfont-archer">&#xe606;</span>
+                Python
             </span>
         
             <span class="sidebar-tag-name" data-tags="Dify">
@@ -9427,14 +9411,14 @@
                 Fluentd
             </span>
         
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Fluent Bit">
                 <span class="iconfont-archer">&#xe606;</span>
                 Fluent Bit
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="安全">
+                <span class="iconfont-archer">&#xe606;</span>
+                安全
             </span>
         
             <span class="sidebar-tag-name" data-tags="纳甲六爻">

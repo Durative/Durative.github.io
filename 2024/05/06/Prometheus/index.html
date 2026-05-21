@@ -242,7 +242,7 @@
     
     <!-- 谷歌统计  -->
     
-<meta name="generator" content="Hexo 7.2.0"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
+<meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
 </head>
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
@@ -620,14 +620,14 @@
 <p>PromQL 表达式计算出来的值有以下几种类型：<br>瞬时向量 (Instant vector): 一组时序，每个时序只有一个采样值<br>区间向量 (Range vector): 一组时序，每个时序包含一段时间内的多个采样值<br>标量数据 (Scalar): 一个浮点数<br>字符串 (String): 一个字符串，暂时未用</p>
 <h2 id="瞬时向量"><a href="#瞬时向量" class="headerlink" title="瞬时向量"></a>瞬时向量</h2><p>用在Prometheus的UI界面进行查找</p>
 <p>如apiserver_request_total<br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506162351.png"></p>
-<p>可以在查询语句后添加大括号，在其中进行筛选条件<br><code>apiserver_request_total&#123;job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;&#125;</code><br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506162440.png"></p>
-<p>支持使用正则进行匹配：<br>&#x3D;: 完全相等<br>! &#x3D;: 不相等<br>&#x3D;<del>: 正则表达式匹配<br>!</del>: 正则表达式不匹配<br><code>container_processes&#123;container=~&quot;kube-scheduler|kube-proxy&quot;&#125;</code></p>
+<p>可以在查询语句后添加大括号，在其中进行筛选条件<br><code>apiserver_request_total{job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;}</code><br><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506162440.png"></p>
+<p>支持使用正则进行匹配：<br>&#x3D;: 完全相等<br>! &#x3D;: 不相等<br>&#x3D;<del>: 正则表达式匹配<br>!</del>: 正则表达式不匹配<br><code>container_processes{container=~&quot;kube-scheduler|kube-proxy&quot;}</code></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506162902.png"></p>
-<h2 id="区间向量"><a href="#区间向量" class="headerlink" title="区间向量"></a>区间向量</h2><p>区间向量选择就是在瞬时向量的基础上加上方括号[]<br><code>apiserver_request_total&#123;job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;&#125;[1m]</code><br>能看到过去一分钟发送的请求</p>
+<h2 id="区间向量"><a href="#区间向量" class="headerlink" title="区间向量"></a>区间向量</h2><p>区间向量选择就是在瞬时向量的基础上加上方括号[]<br><code>apiserver_request_total{job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;}[1m]</code><br>能看到过去一分钟发送的请求</p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506162939.png"></p>
 <h2 id="偏移向量选择器"><a href="#偏移向量选择器" class="headerlink" title="偏移向量选择器"></a>偏移向量选择器</h2><p>前两种都是以当前时间为基准时间，偏移向量选择器可以调整基础时间，可以查询之前的时间区间</p>
-<p>五分钟之前的采样<br><code>apiserver_request_total&#123;job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;&#125;offset 5m</code></p>
-<p>一周(week)前的这个时间点过去五分钟的采样<br><code>apiserver_request_total&#123;job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;&#125;[5m] offset 1w</code></p>
+<p>五分钟之前的采样<br><code>apiserver_request_total{job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;}offset 5m</code></p>
+<p>一周(week)前的这个时间点过去五分钟的采样<br><code>apiserver_request_total{job=&quot;kubernetes-apiserver&quot;,resource=&quot;pods&quot;}[5m] offset 1w</code></p>
 <p><img src="https://cdn.jsdelivr.net/gh/durative/picture-warehouse@main/images/20240506163004.png"></p>
 <h2 id="聚合操作符与函数"><a href="#聚合操作符与函数" class="headerlink" title="聚合操作符与函数"></a>聚合操作符与函数</h2><p>PromQL用来将向量里的元素聚合的更少</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 操作符</span></span><br><span class="line"><span class="built_in">sum</span></span><br><span class="line">max</span><br><span class="line">min</span><br><span class="line">avg</span><br><span class="line">stddev 标准差</span><br><span class="line">stdvar 方差</span><br><span class="line">count 元素个数</span><br><span class="line">count——values 等于某值的元素个数</span><br><span class="line">bottomk 最小的k个元素</span><br><span class="line">topk 最大的k个元素</span><br><span class="line">quantile 分位数</span><br><span class="line"></span><br><span class="line"><span class="comment">#常用函数</span></span><br><span class="line">abs()：绝对值</span><br><span class="line">sqrt()：平方根</span><br><span class="line">exp()：指数计算</span><br><span class="line"><span class="built_in">ln</span>()：自然对数</span><br><span class="line">ceil()：向上取整</span><br><span class="line">floor()：向下取整</span><br><span class="line">round()：四舍五入取整</span><br><span class="line">delta()：计算区间向量里每一个时序第一个和最后一个的差值</span><br><span class="line"><span class="built_in">sort</span>()：排序</span><br></pre></td></tr></table></figure>
@@ -759,9 +759,9 @@
                         </span>
                     </a>
                 
-                    <a href="/2026/01/09/Prometheus-federate/" class="related-item">
-                        <span class="related-date">2026-01-09</span>
-                        <span class="related-title">Prometheus联邦</span>
+                    <a href="/2026/01/13/Prometheus-Helm/" class="related-item">
+                        <span class="related-date">2026-01-13</span>
+                        <span class="related-title">Helm部署Prometheus与自定义告警</span>
                         <span class="related-tags">
                             
                                 <span class="tag">#监控</span>
@@ -7347,22 +7347,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -8025,13 +8009,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
         </li>
     
         
@@ -8349,13 +8333,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
         </li>
     
         
@@ -9484,14 +9468,14 @@
                 网络
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Python">
-                <span class="iconfont-archer">&#xe606;</span>
-                Python
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="容器">
                 <span class="iconfont-archer">&#xe606;</span>
                 容器
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Python">
+                <span class="iconfont-archer">&#xe606;</span>
+                Python
             </span>
         
             <span class="sidebar-tag-name" data-tags="Dify">
@@ -9564,14 +9548,14 @@
                 Fluentd
             </span>
         
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Fluent Bit">
                 <span class="iconfont-archer">&#xe606;</span>
                 Fluent Bit
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="安全">
+                <span class="iconfont-archer">&#xe606;</span>
+                安全
             </span>
         
             <span class="sidebar-tag-name" data-tags="纳甲六爻">

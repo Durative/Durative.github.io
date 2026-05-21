@@ -213,7 +213,7 @@
     
     <!-- 谷歌统计  -->
     
-<meta name="generator" content="Hexo 7.2.0"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
+<meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Akemi" type="application/atom+xml">
 </head>
     <script src="/libs/jquery/jquery.min.js"></script>
     <script type="text/javascript">
@@ -534,7 +534,7 @@
 <p>通过<code>--show-labels</code>先筛选出想要的查看的节点</p>
 <p>通过describe node，查看<strong>allocatable总可用资源</strong></p>
 <p>查看Allocated resources字段中<strong>request部分</strong>，这一部分是qos设定的<br>即k8s调度器的视角，只要request没超过<strong>总可用资源</strong>，那么就可以源源不断的调度</p>
-<p>查看Allocated resources字段中<strong>limits部分，</strong>这一部分是qos设定的<br>节点上所有服务的limits不应超过<strong>总可用资源</strong>，不然就会存在OOM的风险</p>
+<p>查看Allocated resources字段中<strong>limits部分，<strong>这一部分是qos设定的<br>节点上所有服务的limits不应超过</strong>总可用资源</strong>，不然就会存在OOM的风险</p>
 <p><strong>limits一般设定为request的1.5倍，也可以相同</strong></p>
 <p>CPU资源不太严格，毕竟CPU可以分片，但内存资源最好严格执行</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line">config=~/.kube/config</span><br><span class="line"><span class="comment"># 获取所有节点列表</span></span><br><span class="line">NODES=$(kubectl --kubeconfig <span class="variable">$config</span> get nodes -o name | <span class="built_in">cut</span> -d<span class="string">&#x27;/&#x27;</span> -f2)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义单位转换函数</span></span><br><span class="line"><span class="function"><span class="title">memory_to_gib</span></span>() &#123;</span><br><span class="line">  <span class="built_in">local</span> value=<span class="variable">$1</span></span><br><span class="line">  <span class="keyword">if</span> [[ <span class="variable">$value</span> == *Ki ]]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;scale=2; <span class="variable">$&#123;value%Ki&#125;</span>/1024/1024&quot;</span> | bc</span><br><span class="line">  <span class="keyword">elif</span> [[ <span class="variable">$value</span> == *Mi ]]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;scale=2; <span class="variable">$&#123;value%Mi&#125;</span>/1024&quot;</span> | bc</span><br><span class="line">  <span class="keyword">elif</span> [[ <span class="variable">$value</span> == *Gi ]]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$&#123;value%Gi&#125;</span>&quot;</span></span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;0&quot;</span></span><br><span class="line">  <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 输出表头</span></span><br><span class="line"><span class="built_in">printf</span> <span class="string">&quot;%-30s | %-10s | %-10s | %-15s | %-15s | %s\n&quot;</span> \</span><br><span class="line">  <span class="string">&quot;Node&quot;</span> <span class="string">&quot;Req CPU(m)&quot;</span> <span class="string">&quot;Avail CPU(m)&quot;</span> <span class="string">&quot;Req Mem(GiB)&quot;</span> <span class="string">&quot;Avail Mem(GiB)&quot;</span> <span class="string">&quot;Warnings&quot;</span></span><br><span class="line"><span class="built_in">printf</span> <span class="string">&quot;%-30s-+-%-10s-+-%-10s-+-%-15s-+-%-15s-+-%s\n&quot;</span> \</span><br><span class="line">  <span class="string">&quot;------------------------------&quot;</span> <span class="string">&quot;----------&quot;</span> <span class="string">&quot;----------&quot;</span> <span class="string">&quot;---------------&quot;</span> <span class="string">&quot;---------------&quot;</span> <span class="string">&quot;--------&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 遍历所有节点</span></span><br><span class="line"><span class="keyword">for</span> node <span class="keyword">in</span> <span class="variable">$NODES</span>; <span class="keyword">do</span></span><br><span class="line">  <span class="comment"># 获取节点描述信息</span></span><br><span class="line">  node_json=$(kubectl --kubeconfig <span class="variable">$config</span> get node <span class="variable">$node</span> -o json)</span><br><span class="line"></span><br><span class="line">  <span class="comment"># 提取关键数据</span></span><br><span class="line">  allocatable_cpu=$(<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$node_json</span>&quot;</span> | jq -r <span class="string">&#x27;.status.allocatable.cpu&#x27;</span>)</span><br><span class="line">  allocatable_mem=$(<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$node_json</span>&quot;</span> | jq -r <span class="string">&#x27;.status.allocatable.memory&#x27;</span>)</span><br><span class="line">  requested_cpu=$(kubectl --kubeconfig <span class="variable">$config</span> describe node <span class="variable">$node</span> | \</span><br><span class="line">  grep <span class="string">&quot;Allocated resources&quot;</span> -A 9 | grep cpu | awk <span class="string">&#x27;&#123;print $2&#125;&#x27;</span>)</span><br><span class="line">  requested_mem=$(kubectl --kubeconfig <span class="variable">$config</span> describe node <span class="variable">$node</span> | \</span><br><span class="line">  grep <span class="string">&quot;Allocated resources&quot;</span> -A 9 | grep mem | awk <span class="string">&#x27;&#123;print $2&#125;&#x27;</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment"># 转换CPU单位</span></span><br><span class="line">  <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$allocatable_cpu</span>&quot;</span> == *m ]]; <span class="keyword">then</span></span><br><span class="line">    alloc_millicores=<span class="variable">$&#123;allocatable_cpu%m&#125;</span></span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    alloc_millicores=$((allocatable_cpu * <span class="number">1000</span>))</span><br><span class="line">  <span class="keyword">fi</span></span><br><span class="line">  req_millicores=<span class="variable">$&#123;requested_cpu%m&#125;</span></span><br><span class="line">  available_cpu=$((alloc_millicores - req_millicores))</span><br><span class="line"></span><br><span class="line">  <span class="comment"># 转换内存单位</span></span><br><span class="line">  alloc_mem_gib=$(memory_to_gib <span class="string">&quot;<span class="variable">$allocatable_mem</span>&quot;</span>)</span><br><span class="line">  req_mem_gib=$(memory_to_gib <span class="string">&quot;<span class="variable">$requested_mem</span>&quot;</span>)</span><br><span class="line">  available_mem_gib=$(<span class="built_in">echo</span> <span class="string">&quot;scale=2; <span class="variable">$alloc_mem_gib</span> - <span class="variable">$req_mem_gib</span>&quot;</span> | bc)</span><br><span class="line"></span><br><span class="line">  <span class="comment"># 生成警告信息</span></span><br><span class="line">  warnings=<span class="string">&quot;&quot;</span></span><br><span class="line">  [ <span class="variable">$available_cpu</span> -lt 500 ] &amp;&amp; warnings+=<span class="string">&quot;Low CPU &quot;</span></span><br><span class="line">  (( $(echo &quot;<span class="variable">$available_mem_gib</span> &lt; <span class="number">2</span>&quot; | bc -l) )) &amp;&amp; warnings+=<span class="string">&quot;Low Mem&quot;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment"># 输出结果</span></span><br><span class="line">  <span class="built_in">printf</span> <span class="string">&quot;%-30s | %10s | %10s | %15s | %15s | %s\n&quot;</span> \</span><br><span class="line">    <span class="string">&quot;<span class="variable">$node</span>&quot;</span> \</span><br><span class="line">    <span class="string">&quot;<span class="variable">$&#123;requested_cpu&#125;</span>&quot;</span> \</span><br><span class="line">    <span class="string">&quot;<span class="variable">$&#123;available_cpu&#125;</span>m&quot;</span> \</span><br><span class="line">    <span class="string">&quot;<span class="variable">$req_mem_gib</span>&quot;</span> \</span><br><span class="line">    <span class="string">&quot;<span class="variable">$available_mem_gib</span>&quot;</span> \</span><br><span class="line">    <span class="string">&quot;<span class="variable">$warnings</span>&quot;</span></span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
@@ -7168,22 +7168,6 @@
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     
     
     
@@ -7846,13 +7830,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">07/01</span>
-            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-Cluster-/">Ceph集群配置方式介绍</a>
+            <a class="archive-post-title" href="/2025/07/01/Ceph-Configure-MON-Network/">Ceph集群MON、Network配置</a>
         </li>
     
         
@@ -8170,13 +8154,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/28</span>
-            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-2/">Unbound假装自己是DNS权威服务器</a>
+            <a class="archive-post-title" href="/2025/03/28/DNS-unbound-1/">Unbound搭建DNS缓存服务器</a>
         </li>
     
         
@@ -9305,14 +9289,14 @@
                 网络
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Python">
-                <span class="iconfont-archer">&#xe606;</span>
-                Python
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="容器">
                 <span class="iconfont-archer">&#xe606;</span>
                 容器
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Python">
+                <span class="iconfont-archer">&#xe606;</span>
+                Python
             </span>
         
             <span class="sidebar-tag-name" data-tags="Dify">
@@ -9385,14 +9369,14 @@
                 Fluentd
             </span>
         
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="Fluent Bit">
                 <span class="iconfont-archer">&#xe606;</span>
                 Fluent Bit
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="安全">
+                <span class="iconfont-archer">&#xe606;</span>
+                安全
             </span>
         
             <span class="sidebar-tag-name" data-tags="纳甲六爻">
