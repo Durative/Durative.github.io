@@ -19,12 +19,12 @@
         <meta name="keywords" content="容器,云计算,云原生">
     
     <meta name="description" content="">
-    <meta name="description" content="为什么要搞这个手上有套 kube-prometheus-stack 跑在 kind 集群里，Prometheus v3.9.1。一直听说 VictoriaMetrics 压缩率比 Prometheus 高 7 倍，内存占用也低不少，正好有空从零搭一套，顺便把告警链路跑通。 因为是学习用，最终目标是替代现有的 Prometheus，所以直接上 k8s-stack 全家桶。不过先从最简单的单机版开始，">
+    <meta name="description" content="手上有套 kube-prometheus-stack 跑在 kind 集群里，Prometheus v3.9.1。一直听说 VictoriaMetrics 压缩率比 Prometheus 高 7 倍，内存占用也低不少，正好有空从零搭一套，顺便把告警链路跑通。 因为是学习用，最终目标是替代现有的 Prometheus，所以直接上 k8s-stack 全家桶。不过先从最简单的单机版开始，一步步来。 单">
 <meta property="og:type" content="article">
 <meta property="og:title" content="VictoriaMetrics从零到告警邮件实战">
 <meta property="og:url" content="https://akemi.zj.cn/2026/06/01/victoria-metrics-install/index.html">
 <meta property="og:site_name" content="Akemi">
-<meta property="og:description" content="为什么要搞这个手上有套 kube-prometheus-stack 跑在 kind 集群里，Prometheus v3.9.1。一直听说 VictoriaMetrics 压缩率比 Prometheus 高 7 倍，内存占用也低不少，正好有空从零搭一套，顺便把告警链路跑通。 因为是学习用，最终目标是替代现有的 Prometheus，所以直接上 k8s-stack 全家桶。不过先从最简单的单机版开始，">
+<meta property="og:description" content="手上有套 kube-prometheus-stack 跑在 kind 集群里，Prometheus v3.9.1。一直听说 VictoriaMetrics 压缩率比 Prometheus 高 7 倍，内存占用也低不少，正好有空从零搭一套，顺便把告警链路跑通。 因为是学习用，最终目标是替代现有的 Prometheus，所以直接上 k8s-stack 全家桶。不过先从最简单的单机版开始，一步步来。 单">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601101133309.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601101406382.png">
@@ -34,7 +34,7 @@
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601164151228.png">
 <meta property="og:image" content="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601183619815.png">
 <meta property="article:published_time" content="2026-06-01T11:00:00.000Z">
-<meta property="article:modified_time" content="2026-06-01T11:11:45.196Z">
+<meta property="article:modified_time" content="2026-06-04T06:41:58.397Z">
 <meta property="article:author" content="王盛">
 <meta property="article:tag" content="Prometheus">
 <meta property="article:tag" content="VictoriaMetrics">
@@ -544,27 +544,15 @@
             <div class="container container-unloaded">
                 <main class="main post-page">
     <article class="article-entry">
-        <h2 id="为什么要搞这个"><a href="#为什么要搞这个" class="headerlink" title="为什么要搞这个"></a>为什么要搞这个</h2><p>手上有套 kube-prometheus-stack 跑在 kind 集群里，Prometheus v3.9.1。一直听说 VictoriaMetrics 压缩率比 Prometheus 高 7 倍，内存占用也低不少，正好有空从零搭一套，顺便把告警链路跑通。</p>
+        <p>手上有套 kube-prometheus-stack 跑在 kind 集群里，Prometheus v3.9.1。一直听说 VictoriaMetrics 压缩率比 Prometheus 高 7 倍，内存占用也低不少，正好有空从零搭一套，顺便把告警链路跑通。</p>
 <p>因为是学习用，最终目标是替代现有的 Prometheus，所以直接上 k8s-stack 全家桶。不过先从最简单的单机版开始，一步步来。</p>
-<h2 id="单机版部署"><a href="#单机版部署" class="headerlink" title="单机版部署"></a>单机版部署</h2><p>clone helm chart：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 国内 clone GitHub 需要代理</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=<span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="built_in">export</span> https_proxy=<span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/VictoriaMetrics/helm-charts.git</span><br><span class="line"></span><br><span class="line"><span class="built_in">unset</span> http_proxy</span><br><span class="line"><span class="built_in">unset</span> https_proxy</span><br><span class="line"></span><br><span class="line"><span class="built_in">mv</span> helm-charts victoria-metrics</span><br><span class="line"><span class="built_in">cd</span> victoria-metrics/charts/victoria-metrics-single/</span><br></pre></td></tr></table></figure>
-
-<p>进 chart 目录，只改一个字段试水：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># values.yaml</span></span><br><span class="line"><span class="attr">server:</span></span><br><span class="line">  <span class="attr">scrape:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">true</span>  <span class="comment"># 开启自监控抓取</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl create namespace victoria-metrics</span><br><span class="line">helm upgrade --install victoria-metrics-single . -f values.yaml -n victoria-metrics</span><br></pre></td></tr></table></figure>
+<h2 id="单机版部署"><a href="#单机版部署" class="headerlink" title="单机版部署"></a>单机版部署</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># clone helm chart，国内GitHub需要代理</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=<span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line"><span class="built_in">export</span> https_proxy=<span class="string">&quot;http://192.168.10.238:7897&quot;</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/VictoriaMetrics/helm-charts.git</span><br><span class="line"><span class="built_in">unset</span> http_proxy</span><br><span class="line"><span class="built_in">unset</span> https_proxy</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进chart目录</span></span><br><span class="line"><span class="built_in">mv</span> helm-charts victoria-metrics</span><br><span class="line"><span class="built_in">cd</span> victoria-metrics/charts/victoria-metrics-single/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只改一个字段试水，开启自监控抓取</span></span><br><span class="line"><span class="comment"># values.yaml → server.scrape.enabled: true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建namespace并安装</span></span><br><span class="line">kubectl create namespace victoria-metrics</span><br><span class="line">helm upgrade --install victoria-metrics-single . -f values.yaml -n victoria-metrics</span><br></pre></td></tr></table></figure>
 
 <p>然后就报错了：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Error: found in Chart.yaml, but missing in charts/ directory: victoria-metrics-common</span><br></pre></td></tr></table></figure>
 
 <p>git clone 只拉源码，不会自动下载 helm chart 的依赖包。<del>又是一个”我以为clone就够了”的教训。</del></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 先拉取依赖</span></span><br><span class="line">helm dependency build</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再安装</span></span><br><span class="line">helm upgrade --install victoria-metrics-single . -f values.yaml -n victoria-metrics</span><br></pre></td></tr></table></figure>
-
-<p>这次成功了：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">NAME: victoria-metrics-single</span><br><span class="line">LAST DEPLOYED: Mon Jun 1 10:08:44 2026</span><br><span class="line">NAMESPACE: victoria-metrics</span><br><span class="line">STATUS: deployed</span><br><span class="line">REVISION: 1</span><br></pre></td></tr></table></figure>
-
-<p>kind 集群需要 port-forward 才能从外部访问：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/victoria-metrics-single-server 8428:8428 &amp;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 先拉取依赖</span></span><br><span class="line">helm dependency build</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再安装</span></span><br><span class="line">helm upgrade --install victoria-metrics-single . -f values.yaml -n victoria-metrics</span><br><span class="line"></span><br><span class="line"><span class="comment"># 这次成功了</span></span><br><span class="line">NAME: victoria-metrics-single</span><br><span class="line">LAST DEPLOYED: Mon Jun 1 10:08:44 2026</span><br><span class="line">NAMESPACE: victoria-metrics</span><br><span class="line">STATUS: deployed</span><br><span class="line">REVISION: 1</span><br><span class="line"></span><br><span class="line"><span class="comment"># kind集群需要port-forward才能从外部访问</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/victoria-metrics-single-server 8428:8428 &amp;</span><br></pre></td></tr></table></figure>
 
 <p>访问 <code>http://192.168.10.100:8428/vmui</code>，VMUI 出来了，长得跟 Prometheus 的查询界面差不多。</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601101133309.png" alt="VMUI查询界面"></p>
@@ -573,15 +561,11 @@
 <p>其他入口直接访问 8428 端口就能看到：</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601101754860.png" alt="8428端口入口"></p>
 <h2 id="接入现有监控栈"><a href="#接入现有监控栈" class="headerlink" title="接入现有监控栈"></a>接入现有监控栈</h2><p>单机版跑起来了，下一步让它接 Prometheus 的数据。思路很简单：Prometheus 继续负责采集，通过 <strong>remote_write</strong> 把数据写一份到 VM，Grafana 查 VM 的数据。</p>
-<p>kube-prometheus-stack 的 values.yaml 加一行：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">prometheus:</span></span><br><span class="line">  <span class="attr">prometheusSpec:</span></span><br><span class="line">    <span class="attr">remoteWrite:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">url:</span> <span class="string">http://victoria-metrics-single-server.victoria-metrics.svc.cluster.local:8428/api/v1/write</span></span><br></pre></td></tr></table></figure>
-
-<p>Grafana 里加个新数据源，类型选 Prometheus，URL 指向 VM。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Prometheus (v3.9.1) ──remote_write──→ VM (8428)</span><br><span class="line"> ↑</span><br><span class="line">Grafana (12.3.1) ──────────────────────┘</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># kube-prometheus-stack的values.yaml加一行remote_write</span></span><br><span class="line"><span class="comment"># prometheus.prometheusSpec.remoteWrite[].url: http://victoria-metrics-single-server.victoria-metrics.svc.cluster.local:8428/api/v1/write</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Grafana里加个新数据源，类型选Prometheus，URL指向VM</span></span><br><span class="line"><span class="comment"># 数据链路：</span></span><br><span class="line"><span class="comment"># Prometheus (v3.9.1) ──remote_write──→ VM (8428)</span></span><br><span class="line"><span class="comment">#        ↑</span></span><br><span class="line"><span class="comment"># Grafana (12.3.1) ──────────────────────┘</span></span><br></pre></td></tr></table></figure>
 
 <p>数据链路通了，Grafana 查 VM 数据源已经有数据：</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601110849268.png" alt="Grafana查询VM数据"></p>
-<p>这里有个坑：VM 的 <code>scrape.enabled</code> 和 Prometheus 的 <code>remote_write</code> 不能同时开。开了 scrape，VM 自己也采集一遍，加上 remote_write 过来的数据，同一批指标写两遍，浪费存储。<del>别问我怎么知道的。</del> 正确做法是二选一：</p>
+<p>这里有个坑：VM 的 <code>scrape.enabled</code> 和 Prometheus 的 <code>remote_write</code> 不能同时开。开了 scrape，VM 自己也采集一遍，加上 remote_write 过来的数据，同一批指标写两遍，浪费存储。<del>别问我怎么知道的。</del></p>
 <table>
 <thead>
 <tr>
@@ -601,6 +585,7 @@
 <td>✅ 开</td>
 </tr>
 </tbody></table>
+<p>二选一就行。</p>
 <h2 id="MetricsQL：PromQL-的超集"><a href="#MetricsQL：PromQL-的超集" class="headerlink" title="MetricsQL：PromQL 的超集"></a>MetricsQL：PromQL 的超集</h2><p>VM 的查询语言叫 <strong>MetricsQL</strong>，兼容 PromQL 但加了不少好东西。挑几个实用的：</p>
 <p><strong>WITH 表达式</strong>——相当于 SQL 的 CTE，复杂查询不用复制粘贴：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">WITH (</span><br><span class="line">  errors = sum(rate(http_requests_total&#123;status=~&quot;5..&quot;&#125;)),</span><br><span class="line">  total = sum(rate(http_requests_total))</span><br><span class="line">)</span><br><span class="line">errors / total * 100</span><br></pre></td></tr></table></figure>
@@ -648,16 +633,13 @@
 </tr>
 </tbody></table>
 <h2 id="切到-k8s-stack-全家桶"><a href="#切到-k8s-stack-全家桶" class="headerlink" title="切到 k8s-stack 全家桶"></a>切到 k8s-stack 全家桶</h2><p>单机版用够了，想上 vmalert 告警。<strong>k8s-stack</strong> 一个 chart 全搞定：Operator + vmcluster + vmagent + vmalert + Grafana。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删掉单机版</span></span><br><span class="line">helm delete victoria-metrics-single -n victoria-metrics</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> /root/victoria-metrics/charts/victoria-metrics-k8s-stack/</span><br><span class="line">helm dependency build</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删掉单机版</span></span><br><span class="line">helm delete victoria-metrics-single -n victoria-metrics</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进k8s-stack目录，拉依赖</span></span><br><span class="line"><span class="built_in">cd</span> /root/victoria-metrics/charts/victoria-metrics-k8s-stack/</span><br><span class="line">helm dependency build</span><br></pre></td></tr></table></figure>
 
 <p>values.yaml 的关键改动：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 关单机，开集群</span></span><br><span class="line"><span class="attr">vmsingle:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">vmcluster:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">spec:</span></span><br><span class="line">    <span class="attr">replicationFactor:</span> <span class="number">1</span>      <span class="comment"># 学习环境不需要副本</span></span><br><span class="line">    <span class="attr">vmstorage:</span></span><br><span class="line">      <span class="attr">replicaCount:</span> <span class="number">1</span></span><br><span class="line">    <span class="attr">vmselect:</span></span><br><span class="line">      <span class="attr">replicaCount:</span> <span class="number">1</span></span><br><span class="line">    <span class="attr">vminsert:</span></span><br><span class="line">      <span class="attr">replicaCount:</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 关 node-exporter（端口跟 Prometheus 冲突，9100被占了）</span></span><br><span class="line"><span class="attr">prometheus-node-exporter:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 关单机，开集群</span></span><br><span class="line"><span class="attr">vmsingle:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">vmcluster:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">spec:</span></span><br><span class="line">    <span class="attr">replicationFactor:</span> <span class="number">1</span>      <span class="comment"># 学习环境不需要副本</span></span><br><span class="line">    <span class="attr">vmstorage:</span></span><br><span class="line">      <span class="attr">replicaCount:</span> <span class="number">1</span></span><br><span class="line">    <span class="attr">vmselect:</span></span><br><span class="line">      <span class="attr">replicaCount:</span> <span class="number">1</span></span><br><span class="line">    <span class="attr">vminsert:</span></span><br><span class="line">      <span class="attr">replicaCount:</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 关node-exporter，端口跟Prometheus冲突，9100被占了</span></span><br><span class="line"><span class="attr">prometheus-node-exporter:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
 
 <p>集群版的三组件：<strong>vminsert</strong> 负责写入路由，<strong>vmstorage</strong> 负责存储，<strong>vmselect</strong> 负责查询。三者可以独立扩缩容。学习环境各一个副本够了。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade --install victoria-metrics-k8s-stack ./ -f values.yaml -n victoria-metrics</span><br></pre></td></tr></table></figure>
-
-<p>部署完之后 port-forward 几个关键端口：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># vmselect — 查询界面（VMUI）</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/vmselect-victoria-metrics-k8s-stack 8481:8481 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># vmalert — 告警规则界面</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/vmalert-victoria-metrics-k8s-stack 8080:8080 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># vmagent — 采集目标界面</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/vmagent-victoria-metrics-k8s-stack 8429:8429 &amp;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade --install victoria-metrics-k8s-stack ./ -f values.yaml -n victoria-metrics</span><br><span class="line"></span><br><span class="line"><span class="comment"># port-forward几个关键端口</span></span><br><span class="line"><span class="comment"># vmselect — 查询界面（VMUI）</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/vmselect-victoria-metrics-k8s-stack 8481:8481 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># vmalert — 告警规则界面</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/vmalert-victoria-metrics-k8s-stack 8080:8080 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># vmagent — 采集目标界面</span></span><br><span class="line">kubectl port-forward --address 0.0.0.0 -n victoria-metrics svc/vmagent-victoria-metrics-k8s-stack 8429:8429 &amp;</span><br></pre></td></tr></table></figure>
 
 <p>集群版的 VMUI 路径跟单机版不一样，要带租户 ID：<code>http://192.168.10.100:8481/select/0/vmui</code>。<del>第一次访问直接 404，看了报错才明白。</del></p>
 <h2 id="Operator-模式"><a href="#Operator-模式" class="headerlink" title="Operator 模式"></a>Operator 模式</h2><p>k8s-stack 用的是 <strong>Operator</strong> 模式，跟 kube-prometheus-stack 的套路一模一样：</p>
@@ -695,20 +677,20 @@
 
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f process-memory-alert.yaml</span><br></pre></td></tr></table></figure>
 
-<h3 id="stress-压测触发告警"><a href="#stress-压测触发告警" class="headerlink" title="stress 压测触发告警"></a>stress 压测触发告警</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">stress --vm 1 --vm-bytes 6500M --<span class="built_in">timeout</span> 600s</span><br></pre></td></tr></table></figure>
+<h3 id="stress-压测触发告警"><a href="#stress-压测触发告警" class="headerlink" title="stress 压测触发告警"></a>stress 压测触发告警</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">stress --vm 1 --vm-bytes 6500M --<span class="built_in">timeout</span> 600s</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等了一两分钟，vmalert页面上ProcessHighMemory变成firing了</span></span><br></pre></td></tr></table></figure>
 
-<p>等了一两分钟，vmalert 页面上 ProcessHighMemory 变成 firing 了：</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601164151228.png" alt="vmalert firing状态"></p>
 <p>触发的是 milvus（5.3GB），stress 也在 pending 状态（resident 在 5-6GB 之间波动）。</p>
 <p>告警链路验证通过：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">process-exporter(宿主机) → vmagent(K8s) → VM(vmstorage) → vmalert → firing ✅</span><br></pre></td></tr></table></figure>
 
 <h2 id="邮件通知"><a href="#邮件通知" class="headerlink" title="邮件通知"></a>邮件通知</h2><p>告警触发了但没通知等于白搭。<strong>vmalert</strong> 会把 firing 的告警推给 <strong>Alertmanager</strong>，Alertmanager 负责发通知。</p>
-<p>在 values.yaml 的 <code>alertmanager.config</code> 下配 SMTP：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">alertmanager:</span></span><br><span class="line">  <span class="attr">config:</span></span><br><span class="line">    <span class="attr">global:</span></span><br><span class="line">      <span class="attr">smtp_smarthost:</span> <span class="string">&#x27;smtp.163.com:25&#x27;</span></span><br><span class="line">      <span class="attr">smtp_from:</span> <span class="string">&#x27;alertwarning@163.com&#x27;</span></span><br><span class="line">      <span class="attr">smtp_auth_username:</span> <span class="string">&#x27;alertwarning@163.com&#x27;</span></span><br><span class="line">      <span class="attr">smtp_auth_password:</span> <span class="string">&#x27;xxxx&#x27;</span>  <span class="comment">#服务授权码</span></span><br><span class="line">      <span class="attr">smtp_require_tls:</span> <span class="literal">false</span></span><br><span class="line">    <span class="attr">route:</span></span><br><span class="line">      <span class="attr">receiver:</span> <span class="string">&#x27;default-email&#x27;</span></span><br><span class="line">      <span class="attr">group_wait:</span> <span class="string">30s</span></span><br><span class="line">      <span class="attr">group_interval:</span> <span class="string">5m</span></span><br><span class="line">      <span class="attr">repeat_interval:</span> <span class="string">4h</span></span><br><span class="line">    <span class="attr">receivers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&#x27;default-email&#x27;</span></span><br><span class="line">        <span class="attr">email_configs:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">to:</span> <span class="string">&#x27;1320991378@qq.com&#x27;</span></span><br><span class="line">            <span class="attr">send_resolved:</span> <span class="literal">true</span></span><br><span class="line">            <span class="attr">headers:</span></span><br><span class="line">              <span class="attr">Subject:</span> <span class="string">&#x27;Alert: <span class="template-variable">&#123;&#123; .CommonLabels.alertname &#125;&#125;</span>&#x27;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&#x27;blackhole&#x27;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># values.yaml → alertmanager.config</span></span><br><span class="line"><span class="attr">alertmanager:</span></span><br><span class="line">  <span class="attr">config:</span></span><br><span class="line">    <span class="attr">global:</span></span><br><span class="line">      <span class="attr">smtp_smarthost:</span> <span class="string">&#x27;smtp.163.com:25&#x27;</span></span><br><span class="line">      <span class="attr">smtp_from:</span> <span class="string">&#x27;alertwarning@163.com&#x27;</span></span><br><span class="line">      <span class="attr">smtp_auth_username:</span> <span class="string">&#x27;alertwarning@163.com&#x27;</span></span><br><span class="line">      <span class="attr">smtp_auth_password:</span> <span class="string">&#x27;xxxx&#x27;</span>  <span class="comment"># 服务授权码</span></span><br><span class="line">      <span class="attr">smtp_require_tls:</span> <span class="literal">false</span></span><br><span class="line">    <span class="attr">route:</span></span><br><span class="line">      <span class="attr">receiver:</span> <span class="string">&#x27;default-email&#x27;</span></span><br><span class="line">      <span class="attr">group_wait:</span> <span class="string">30s</span></span><br><span class="line">      <span class="attr">group_interval:</span> <span class="string">5m</span></span><br><span class="line">      <span class="attr">repeat_interval:</span> <span class="string">4h</span></span><br><span class="line">    <span class="attr">receivers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&#x27;default-email&#x27;</span></span><br><span class="line">        <span class="attr">email_configs:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">to:</span> <span class="string">&#x27;1320991378@qq.com&#x27;</span></span><br><span class="line">            <span class="attr">send_resolved:</span> <span class="literal">true</span></span><br><span class="line">            <span class="attr">headers:</span></span><br><span class="line">              <span class="attr">Subject:</span> <span class="string">&#x27;Alert: <span class="template-variable">&#123;&#123; .CommonLabels.alertname &#125;&#125;</span>&#x27;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&#x27;blackhole&#x27;</span></span><br></pre></td></tr></table></figure>
 
 <p>踩了个坑：values.yaml 里有两个 <code>receivers:</code> 段，YAML 不合并重复 key，后面的直接覆盖前面的。<del>改了半天发现配置没生效，最后发现是被自己的 YAML 坑了。</del> 删掉第二个就好了。</p>
-<p>helm upgrade 之后再跑一次 stress，QQ 邮箱收到告警邮件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># helm upgrade之后再跑一次stress</span></span><br><span class="line">helm upgrade --install victoria-metrics-k8s-stack ./ -f values.yaml -n victoria-metrics</span><br><span class="line">stress --vm 1 --vm-bytes 6500M --<span class="built_in">timeout</span> 600s</span><br></pre></td></tr></table></figure>
+
+<p>QQ 邮箱收到告警邮件：</p>
 <p><img src="https://ws-blog-img.oss-cn-hangzhou.aliyuncs.com/wangsheng/20260601183619815.png" alt="收到邮件告警"></p>
 <h2 id="整体链路"><a href="#整体链路" class="headerlink" title="整体链路"></a>整体链路</h2><p>从零到告警邮件收到，整个链路跑通了：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">采集(process-exporter/vmagent) → 存储(VM) → 查询(MetricsQL) → 告警(vmalert) → 通知(Alertmanager → 邮件)</span><br></pre></td></tr></table></figure>
@@ -724,7 +706,7 @@
             <p>原文作者：<a href="https://akemi.zj.cn">王盛</a>
             <p>原文链接：<a href="https://akemi.zj.cn/2026/06/01/victoria-metrics-install/">https://akemi.zj.cn/2026/06/01/victoria-metrics-install/</a>
             <p>发表日期：<a href="https://akemi.zj.cn/2026/06/01/victoria-metrics-install/">June 1st 2026, 7:00:00 pm</a>
-            <p>更新日期：<a href="https://akemi.zj.cn/2026/06/01/victoria-metrics-install/">June 1st 2026, 7:11:45 pm</a>
+            <p>更新日期：<a href="https://akemi.zj.cn/2026/06/01/victoria-metrics-install/">June 4th 2026, 2:41:58 pm</a>
             <p>版权声明：本文采用<a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
         </div>
     
@@ -917,7 +899,7 @@
                 <div class="toc-catalog">
                     <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
                 </div>
-                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%90%9E%E8%BF%99%E4%B8%AA"><span class="toc-number">1.</span> <span class="toc-text">为什么要搞这个</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E6%9C%BA%E7%89%88%E9%83%A8%E7%BD%B2"><span class="toc-number">2.</span> <span class="toc-text">单机版部署</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E5%85%A5%E7%8E%B0%E6%9C%89%E7%9B%91%E6%8E%A7%E6%A0%88"><span class="toc-number">3.</span> <span class="toc-text">接入现有监控栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MetricsQL%EF%BC%9APromQL-%E7%9A%84%E8%B6%85%E9%9B%86"><span class="toc-number">4.</span> <span class="toc-text">MetricsQL：PromQL 的超集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%87%E5%88%B0-k8s-stack-%E5%85%A8%E5%AE%B6%E6%A1%B6"><span class="toc-number">5.</span> <span class="toc-text">切到 k8s-stack 全家桶</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Operator-%E6%A8%A1%E5%BC%8F"><span class="toc-number">6.</span> <span class="toc-text">Operator 模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6%E5%AE%9E%E6%88%98%EF%BC%9Aprocess-exporter-stress"><span class="toc-number">7.</span> <span class="toc-text">告警实战：process-exporter + stress</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A9-vmagent-%E9%87%87%E9%9B%86%E5%A4%96%E9%83%A8%E7%9B%AE%E6%A0%87"><span class="toc-number">7.1.</span> <span class="toc-text">让 vmagent 采集外部目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%99-VMRule"><span class="toc-number">7.2.</span> <span class="toc-text">写 VMRule</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stress-%E5%8E%8B%E6%B5%8B%E8%A7%A6%E5%8F%91%E5%91%8A%E8%AD%A6"><span class="toc-number">7.3.</span> <span class="toc-text">stress 压测触发告警</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%82%AE%E4%BB%B6%E9%80%9A%E7%9F%A5"><span class="toc-number">8.</span> <span class="toc-text">邮件通知</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E9%93%BE%E8%B7%AF"><span class="toc-number">9.</span> <span class="toc-text">整体链路</span></a></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E6%9C%BA%E7%89%88%E9%83%A8%E7%BD%B2"><span class="toc-number">1.</span> <span class="toc-text">单机版部署</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E5%85%A5%E7%8E%B0%E6%9C%89%E7%9B%91%E6%8E%A7%E6%A0%88"><span class="toc-number">2.</span> <span class="toc-text">接入现有监控栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MetricsQL%EF%BC%9APromQL-%E7%9A%84%E8%B6%85%E9%9B%86"><span class="toc-number">3.</span> <span class="toc-text">MetricsQL：PromQL 的超集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%87%E5%88%B0-k8s-stack-%E5%85%A8%E5%AE%B6%E6%A1%B6"><span class="toc-number">4.</span> <span class="toc-text">切到 k8s-stack 全家桶</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Operator-%E6%A8%A1%E5%BC%8F"><span class="toc-number">5.</span> <span class="toc-text">Operator 模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6%E5%AE%9E%E6%88%98%EF%BC%9Aprocess-exporter-stress"><span class="toc-number">6.</span> <span class="toc-text">告警实战：process-exporter + stress</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A9-vmagent-%E9%87%87%E9%9B%86%E5%A4%96%E9%83%A8%E7%9B%AE%E6%A0%87"><span class="toc-number">6.1.</span> <span class="toc-text">让 vmagent 采集外部目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%99-VMRule"><span class="toc-number">6.2.</span> <span class="toc-text">写 VMRule</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stress-%E5%8E%8B%E6%B5%8B%E8%A7%A6%E5%8F%91%E5%91%8A%E8%AD%A6"><span class="toc-number">6.3.</span> <span class="toc-text">stress 压测触发告警</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%82%AE%E4%BB%B6%E9%80%9A%E7%9F%A5"><span class="toc-number">7.</span> <span class="toc-text">邮件通知</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E9%93%BE%E8%B7%AF"><span class="toc-number">8.</span> <span class="toc-text">整体链路</span></a></li></ol>
             </div>
         
         <!-- sidebar -->
@@ -7363,6 +7345,40 @@
         
         
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
     
     
@@ -7392,13 +7408,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/30</span>
-            <a class="archive-post-title" href="/2026/04/30/Fortune-2/">纳甲六爻-十二地支的冲合、十二长生</a>
+            <a class="archive-post-title" href="/2026/04/30/Fortune-1/">纳甲六爻-从传统起卦到日月能量</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/30</span>
-            <a class="archive-post-title" href="/2026/04/30/Fortune-1/">纳甲六爻-从传统起卦到日月能量</a>
+            <a class="archive-post-title" href="/2026/04/30/Fortune-2/">纳甲六爻-十二地支的冲合、十二长生</a>
         </li>
     
         
@@ -7452,13 +7468,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/31</span>
-            <a class="archive-post-title" href="/2026/03/31/Fortune-AI/">纳甲六爻-AI算卦方法与缺点</a>
+            <a class="archive-post-title" href="/2026/03/31/Fortune-basic/">纳甲六爻-基础知识笔记</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/31</span>
-            <a class="archive-post-title" href="/2026/03/31/Fortune-basic/">纳甲六爻-基础知识笔记</a>
+            <a class="archive-post-title" href="/2026/03/31/Fortune-AI/">纳甲六爻-AI算卦方法与缺点</a>
         </li>
     
         
@@ -7542,13 +7558,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/04</span>
-            <a class="archive-post-title" href="/2026/03/04/LinuxLog-logrotate/">日志轮转logrotate与即时清理truncate</a>
+            <a class="archive-post-title" href="/2026/03/04/LinuxLog-systemd-journald/">Linux日志管理systemd-journald</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">03/04</span>
-            <a class="archive-post-title" href="/2026/03/04/LinuxLog-systemd-journald/">Linux日志管理systemd-journald</a>
+            <a class="archive-post-title" href="/2026/03/04/LinuxLog-logrotate/">日志轮转logrotate与即时清理truncate</a>
         </li>
     
         
@@ -7929,13 +7945,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">08/07</span>
-            <a class="archive-post-title" href="/2025/08/07/Pacemaker-Install/">Pacemaker组件介绍与部署</a>
+            <a class="archive-post-title" href="/2025/08/07/Pacemaker-node-Manage/">Pacemaker节点管理与仲裁机制</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">08/07</span>
-            <a class="archive-post-title" href="/2025/08/07/Pacemaker-node-Manage/">Pacemaker节点管理与仲裁机制</a>
+            <a class="archive-post-title" href="/2025/08/07/Pacemaker-Install/">Pacemaker组件介绍与部署</a>
         </li>
     
         
@@ -8277,13 +8293,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/15</span>
-            <a class="archive-post-title" href="/2025/04/15/SMB-linux/">SMB文件共享协议--在linux上通过SMB实现共享</a>
+            <a class="archive-post-title" href="/2025/04/15/SMB-windows/">SMB文件共享协议--在windows上通过SMB实现共享</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">04/15</span>
-            <a class="archive-post-title" href="/2025/04/15/SMB-windows/">SMB文件共享协议--在windows上通过SMB实现共享</a>
+            <a class="archive-post-title" href="/2025/04/15/SMB-linux/">SMB文件共享协议--在linux上通过SMB实现共享</a>
         </li>
     
         
@@ -8928,13 +8944,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/22</span>
-            <a class="archive-post-title" href="/2024/09/22/Redis-Replication/">Redis主从复制</a>
+            <a class="archive-post-title" href="/2024/09/22/Redis-Sentinel/">Redis哨兵模式</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/22</span>
-            <a class="archive-post-title" href="/2024/09/22/Redis-Sentinel/">Redis哨兵模式</a>
+            <a class="archive-post-title" href="/2024/09/22/Redis-Replication/">Redis主从复制</a>
         </li>
     
         
@@ -9006,13 +9022,13 @@
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
         </li>
     
         
         <li class="archive-post-item">
             <span class="archive-post-date">09/12</span>
-            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Template/">Zabbix自定义模板</a>
+            <a class="archive-post-title" href="/2024/09/12/Zabbix-Custom-Monitor/">Zabbix自定义监控</a>
         </li>
     
         
@@ -9460,14 +9476,14 @@
                 web服务
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Linux服务">
-                <span class="iconfont-archer">&#xe606;</span>
-                Linux服务
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="k8s">
                 <span class="iconfont-archer">&#xe606;</span>
                 k8s
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Linux服务">
+                <span class="iconfont-archer">&#xe606;</span>
+                Linux服务
             </span>
         
             <span class="sidebar-tag-name" data-tags="前端">
@@ -9480,24 +9496,24 @@
                 存储
             </span>
         
-            <span class="sidebar-tag-name" data-tags="虚拟化">
-                <span class="iconfont-archer">&#xe606;</span>
-                虚拟化
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="网络">
                 <span class="iconfont-archer">&#xe606;</span>
                 网络
             </span>
         
-            <span class="sidebar-tag-name" data-tags="Python">
+            <span class="sidebar-tag-name" data-tags="虚拟化">
                 <span class="iconfont-archer">&#xe606;</span>
-                Python
+                虚拟化
             </span>
         
             <span class="sidebar-tag-name" data-tags="容器">
                 <span class="iconfont-archer">&#xe606;</span>
                 容器
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="Python">
+                <span class="iconfont-archer">&#xe606;</span>
+                Python
             </span>
         
             <span class="sidebar-tag-name" data-tags="Dify">
@@ -9545,6 +9561,16 @@
                 Kibana
             </span>
         
+            <span class="sidebar-tag-name" data-tags="GeoIP">
+                <span class="iconfont-archer">&#xe606;</span>
+                GeoIP
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="数据清洗">
+                <span class="iconfont-archer">&#xe606;</span>
+                数据清洗
+            </span>
+        
             <span class="sidebar-tag-name" data-tags="elasticsearch">
                 <span class="iconfont-archer">&#xe606;</span>
                 elasticsearch
@@ -9565,21 +9591,6 @@
                 Fluent Bit
             </span>
         
-            <span class="sidebar-tag-name" data-tags="GeoIP">
-                <span class="iconfont-archer">&#xe606;</span>
-                GeoIP
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="数据清洗">
-                <span class="iconfont-archer">&#xe606;</span>
-                数据清洗
-            </span>
-        
-            <span class="sidebar-tag-name" data-tags="安全">
-                <span class="iconfont-archer">&#xe606;</span>
-                安全
-            </span>
-        
             <span class="sidebar-tag-name" data-tags="纳甲六爻">
                 <span class="iconfont-archer">&#xe606;</span>
                 纳甲六爻
@@ -9595,14 +9606,19 @@
                 六爻
             </span>
         
-            <span class="sidebar-tag-name" data-tags="AI">
+            <span class="sidebar-tag-name" data-tags="安全">
                 <span class="iconfont-archer">&#xe606;</span>
-                AI
+                安全
             </span>
         
             <span class="sidebar-tag-name" data-tags="占卜">
                 <span class="iconfont-archer">&#xe606;</span>
                 占卜
+            </span>
+        
+            <span class="sidebar-tag-name" data-tags="AI">
+                <span class="iconfont-archer">&#xe606;</span>
+                AI
             </span>
         
             <span class="sidebar-tag-name" data-tags="Milvus">
